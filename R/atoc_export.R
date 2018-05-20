@@ -9,11 +9,15 @@
 schedule2routes = function(mca,path_out){
   #list(HD,TI,TA,TD,AA,BS,BX,LO,LI,LT,CR,ZZ)
 
+  #break out the relevant parts of the mca file
   schedule = mca[[6]]
   #schedule.extra = mca[[7]]
   station.origin = mca[[8]]
   station.intermediate = mca[[9]]
   station.terminal = mca[[10]]
+
+  ### SECTION 1: ###############################################################################
+  # make stop_times.txt from the three station files
 
   # Remove Passing Stops as GTFS is only intrested in actual stops
   station.intermediate = station.intermediate[is.na(station.intermediate$`Scheduled Pass`),]
@@ -33,13 +37,20 @@ schedule2routes = function(mca,path_out){
   rm(station.origin,station.intermediate,station.terminal)
   #stop_times$trip_id = NA
 
-  stop_times = stop_times[order(stop_times$rowID),]
 
-  # Join the schedule and schedule.extra into on df
-  #schedule.extra$schedulerowID = schedule.extra$rowID - 1
-  #schedule.extra$rowID = NULL
-  #schedule = dplyr::left_join(schedule, schedule.extra, by = c("rowID" = "schedulerowID"))
+
+  # match routes
+  # for each station in the stop_times, match the rowID in the schdeduel
+  # data must be sorted
+  stop_times = stop_times[order(stop_times$rowID),]
   schedule = schedule[order(schedule$rowID),]
+  trip_ids = matchRoutes(schedule.rowID = schedule$rowID, stop_times.rowID = stop_times$rowID)
+
+  stop_times = dplyr::left_join(stop_times,trip_ids, by = c("rowID" = "stop_times.rowID"))
+  names(stop_times) = c("departure_time","stop_id","rowID","arrival_time","trip_id")
+
+  ### SECTION 2: ###############################################################################
+  # make make the calendar.txt and calendar_dates.txt file from the schedule
 
   # build the calendar file
   calendar = schedule[,c("Train UID","Date Runs From", "Date Runs To","Days Run","STP indicator","rowID")]
@@ -119,84 +130,58 @@ schedule2routes = function(mca,path_out){
 
   calendar = cbind(res.calendar,days)
   calendar$Days = NULL
-  #########################
-  # check for schdules that don over lay with the day they rund i.e. Mon - Sat schduel for a sunday only service
 
-  checkrows = function(i){
-    tmp = calendar[i,]
-    if(tmp$duration < 7){
-      days.valid = weekdays(seq.POSIXt(from = as.POSIXct.Date(tmp$start_date), to = as.POSIXct.Date(tmp$end_date), by = "DSTday"))
-      days.valid = tolower(days.valid)
-      days.match = tmp[,c("monday","tuesday", "wednesday","thursday", "friday", "saturday", "sunday")]
-      days.match = sapply(days.match,function(x){x == 1})
-      days.match = days.match[days.match]
-      days.match = names(days.match)
-      if(any(days.valid %in% days.match)){
-        return(TRUE)
-      }else{
-        return(FALSE)
-      }
-    }else{
-      return(TRUE)
-    }
-  }
 
   calendar$keep = sapply(seq(1,nrow(calendar)),checkrows)
   calendar = calendar[calendar$keep,]
 
 
-  # match routes
 
-  lookup = matrix(c(schedule$rowID,
-                    schedule$rowID[2:length(schedule$rowID)],
-                    lookup[nrow(lookup),1]+1000),
-                  ncol = 2)
-  lookup <- cbind(lookup,lookup[,2]-lookup[,1])
-  lookup.df = data.frame(rowID = seq(from = lookup[1,1],
-                                     to = lookup[nrow(lookup),2]-1),
-                         trip_id = rep(schedule$`Train UID`,times = as.integer(lookup[,3]) ))
+
+
+
+  # Join the schedule and schedule.extra into on df
+  #schedule.extra$schedulerowID = schedule.extra$rowID - 1
+  #schedule.extra$rowID = NULL
+  #schedule = dplyr::left_join(schedule, schedule.extra, by = c("rowID" = "schedulerowID"))
+
+  #}
+
+  # lookup = matrix(c(schedule$rowID,
+  #                   schedule$rowID[2:length(schedule$rowID)],
+  #                   lookup[nrow(lookup),1]+1000),
+  #                 ncol = 2)
+  # lookup <- cbind(lookup,lookup[,2]-lookup[,1])
+  # lookup.df = data.frame(rowID = seq(from = lookup[1,1],
+  #                                    to = lookup[nrow(lookup),2]-1),
+  #                        trip_id = rep(schedule$`Train UID`,times = as.integer(lookup[,3]) ))
 
   stop_times = dplyr::left_join(stop_times,lookup.df, by = c("rowID" = "rowID"))
   stop_times = stop_times[,c("trip_id","arrival_time","departure_time","stop_id","rowID")]
 
+  ### SECTION 3: ###############################################################################
+  # make make the trips.txt  file by matching the calnedar to the stop_times
 
-  trips = calendar[c("start_date","end_date","UID", "STP","rowID")]
-  trip_id = strsplit(trips$UID,  " ")
-  trip_id = lapply(trip_id, `[[`, 1)
-  trip_id = unlist(trip_id)
-
-  trips$trip_id = trip_id
-
-  matchRoutes = function(i){
-    if(i != length_todo){
-      schedule.sub = schedule[c(i,i+1), ]
-      sub.rowID1 = schedule.sub$rowID[1]
-      sub.rowID2 = schedule.sub$rowID[2]
-      sub.UID = schedule.sub$`Train UID`[1]
-      stop_times.sub = stop_times[stop_times$rowID > sub.rowID1,]
-      rows.todo = stop_times.sub$rowID[stop_times.sub$rowID < sub.rowID2]
-    }else{
-      schedule.sub = schedule[i, ]
-      sub.rowID1 = schedule.sub$rowID[1]
-      sub.UID = schedule.sub$`Train UID`[1]
-      rows.todo = stop_times$rowID[stop_times$rowID > sub.rowID1]
-    }
-
-    res = data.frame(rowID = rows.todo, trip_id = sub.UID)
-    return(res)
-
-    #if(!silent){
-    #  if(i %% 1000 == 0){
-    #    message(paste0(Sys.time()," matched ",round(i/length_todo,1),"% of routes"))
-    #  }
-    #}
-    #End of loop
-    #rm(schedule.sub,sub.rowID1,sub.UID,res)
-  }
+  trips = calendar[c("UID","rowID")]
+  names(trips) = c("service_id","trip_id")
+  # trip_id = strsplit(trips$UID,  " ")
+  # trip_id = lapply(trip_id, `[[`, 1)
+  # trip_id = unlist(trip_id)
+  #
+  # trips$trip_id = trip_id
 
 
+  ### SECTION 4: ###############################################################################
+  # make make the routes.txt
+  # a route is all the trips with a common start and end i.e. scheduels original UID
+
+  routes = schedule[!duplicated(schedule$`Train UID`),]
+  routes = routes[,c("rowID","Train UID","Train Status","Train Category")]
+
+  routes = dplyr::left_join(routes,stop_times,by = c("rowID" = "trip_id"))
+  head(routes)
+  #end of function
 }
-
 
 
 #' Export ATOC stations as GTFS stops.txt
@@ -314,4 +299,87 @@ splitDates = function(cal){
 
   return(cal.new)
 
+}
+
+
+
+#' internal function for matching stop_times to the basic schdule
+#'
+#' @details
+#' Takes in a row of the schdedule and then gets the next row (schedule must be sored by rowID)
+#'
+#' @param i interger row number from schdules
+#' @param length_todo max number of rows
+#'
+matchRoutes = function(schedule.rowID, stop_times.rowID){
+  schedule_tmp = matrix(c(schedule.rowID, schedule.rowID[2:length(schedule.rowID)],max(schedule.rowID)+99999), ncol = 2)
+  matches = lapply(1:nrow(schedule_tmp),function(x){stop_times.rowID[ dplyr::between(stop_times.rowID,
+                                                                                     schedule_tmp[x,1],
+                                                                                     schedule_tmp[x,2]) ]})
+  #names(matches) = schedule_tmp[1:10]
+  result = data.frame(stop_times.rowID = unlist(matches),
+                      schedule.rowID = rep(schedule.rowID, times = lengths(matches)))
+
+  return(result)
+}
+
+# matchRoutes = function(i,length_todo){
+#   if(i != length_todo){
+#     schedule.sub = schedule[c(i,i+1), ]
+#     #if(schedule.sub$`STP indicator`[1] != "C"){ #Cancelations don have stop pattern
+#       sub.rowID1 = schedule.sub$rowID[1]
+#       sub.rowID2 = schedule.sub$rowID[2]
+#       #sub.UID = schedule.sub$`Train UID`[1]
+#       #rows.todo = stop_times$rowID[which(stop_times$rowID > sub.rowID1)]
+#       #rows.todo = rows.todo[which(rows.todo < sub.rowID2)]
+#       rows.todo = stop_times$rowID[dplyr::between(stop_times$rowID, sub.rowID1, sub.rowID2)]
+#     #}else{
+#     #  rows.todo = NA
+#     #}
+#   }else{
+#     schedule.sub = schedule[i, ]
+#     sub.rowID1 = schedule.sub$rowID[1]
+#     sub.UID = schedule.sub$`Train UID`[1]
+#     rows.todo = stop_times$rowID[stop_times$rowID > sub.rowID1]
+#   }
+#   if(length(rows.todo) > 0){
+#     res = data.frame(rowID = rows.todo, trip_id = sub.rowID1)
+#   }else{
+#     res = NA
+#   }
+#
+#   if(i %% 1000 == 0){
+#     message(paste0("done ",i))
+#   }
+#
+#   return(res)
+#
+# }
+
+#
+#' internal function for cleaning calendar
+#'
+#' @details
+#' check for schdules that don overlay with the day they rund i.e. Mon - Sat schduel for a sunday only service
+#' return a logcal vector of if the calendar is valid
+#'
+#' @param i interger row number calendar
+#'
+checkrows = function(i){
+  tmp = calendar[i,]
+  if(tmp$duration < 7){
+    days.valid = weekdays(seq.POSIXt(from = as.POSIXct.Date(tmp$start_date), to = as.POSIXct.Date(tmp$end_date), by = "DSTday"))
+    days.valid = tolower(days.valid)
+    days.match = tmp[,c("monday","tuesday", "wednesday","thursday", "friday", "saturday", "sunday")]
+    days.match = sapply(days.match,function(x){x == 1})
+    days.match = days.match[days.match]
+    days.match = names(days.match)
+    if(any(days.valid %in% days.match)){
+      return(TRUE)
+    }else{
+      return(FALSE)
+    }
+  }else{
+    return(TRUE)
+  }
 }
