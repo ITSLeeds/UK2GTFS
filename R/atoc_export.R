@@ -6,7 +6,7 @@
 #' @param mca list of dataframs from the importMCA function
 #' @param path_out Path to save file to
 #'
-schedule2routes = function(mca,path_out){
+schedule2routes = function(mca,path_out,ncores = 1){
   #list(HD,TI,TA,TD,AA,BS,BX,LO,LI,LT,CR,ZZ)
 
   #break out the relevant parts of the mca file
@@ -44,7 +44,7 @@ schedule2routes = function(mca,path_out){
   # data must be sorted
   stop_times = stop_times[order(stop_times$rowID),]
   schedule = schedule[order(schedule$rowID),]
-  trip_ids = matchRoutes(schedule.rowID = schedule$rowID, stop_times.rowID = stop_times$rowID)
+  trip_ids = matchRoutes(schedule.rowID = schedule$rowID, stop_times.rowID = stop_times$rowID, ncores = ncores)
 
   stop_times = dplyr::left_join(stop_times,trip_ids, by = c("rowID" = "stop_times.rowID"))
   names(stop_times) = c("departure_time","stop_id","rowID","arrival_time","trip_id")
@@ -311,11 +311,23 @@ splitDates = function(cal){
 #' @param i interger row number from schdules
 #' @param length_todo max number of rows
 #'
-matchRoutes = function(schedule.rowID, stop_times.rowID){
+matchRoutes = function(schedule.rowID, stop_times.rowID, ncores = 1){
   schedule_tmp = matrix(c(schedule.rowID, schedule.rowID[2:length(schedule.rowID)],max(schedule.rowID)+99999), ncol = 2)
-  matches = lapply(1:nrow(schedule_tmp),function(x){stop_times.rowID[ dplyr::between(stop_times.rowID,
-                                                                                     schedule_tmp[x,1],
-                                                                                     schedule_tmp[x,2]) ]})
+
+  if(ncores == 1){
+    matches = lapply(1:nrow(schedule_tmp),function(x){stop_times.rowID[ dplyr::between(stop_times.rowID,
+                                                                                       schedule_tmp[x,1],
+                                                                                       schedule_tmp[x,2]) ]})
+  }else{
+    CL <- parallel::makeCluster(ncores) #make clusert and set number of core
+    parallel::clusterExport(cl = CL, varlist=c("stop_times.rowID", "schedule_tmp"), envir = environment())
+    parallel::clusterEvalQ(cl = CL, {library(dplyr)})
+    matches = parallel::parLapply(cl = CL,1:nrow(schedule_tmp),function(x){stop_times.rowID[ dplyr::between(stop_times.rowID,
+                                                                                       schedule_tmp[x,1],
+                                                                                       schedule_tmp[x,2]) ]})
+    parallel::stopCluster(CL)
+  }
+
   #names(matches) = schedule_tmp[1:10]
   result = data.frame(stop_times.rowID = unlist(matches),
                       schedule.rowID = rep(schedule.rowID, times = lengths(matches)))
