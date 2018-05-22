@@ -11,7 +11,7 @@ schedule2routes = function(mca,path_out,ncores = 1){
 
   #break out the relevant parts of the mca file
   schedule = mca[[6]]
-  #schedule.extra = mca[[7]]
+  schedule.extra = mca[[7]]
   station.origin = mca[[8]]
   station.intermediate = mca[[9]]
   station.terminal = mca[[10]]
@@ -53,111 +53,11 @@ schedule2routes = function(mca,path_out,ncores = 1){
   # make make the calendar.txt and calendar_dates.txt file from the schedule
 
   # build the calendar file
-  calendar = schedule[,c("Train UID","Date Runs From", "Date Runs To","Days Run","STP indicator","rowID")]
-  calendar$`STP indicator` = as.character(calendar$`STP indicator`)
-  #calendar = calendar[order(-calendar$`STP indicator`),]
-  names(calendar) = c("UID","start_date", "end_date","Days","STP",  "rowID"  )
-  calendar$duration = calendar$end_date - calendar$start_date + 1
+  res = makeCalendar(schedule = schedule, ncores = 7)
+  calendar = res[[1]]
+  calendar_dates = res[[2]]
+  rm(res)
 
-  # calendar$service_id = 1:nrow(calendar)
-  UIDs = unique(calendar$UID)
-  res.calendar = list()
-  res.calendar_dates = list()
-  length_todo = length(UIDs)
-  for(i in 1:length_todo){
-    UIDs.sub = UIDs[i]
-    calendar.sub = calendar[calendar$UID == UIDs.sub,]
-    #calendar.sub = schedule[schedule$`Train UID` == UIDs.sub,]
-    if(nrow(calendar.sub)==1){
-      #make into an single entry
-      res.calendar[[i]] = calendar.sub
-    }else{
-      # check duration and types
-      dur = as.numeric(calendar.sub$duration[calendar.sub$STP != "P"])
-      typ = calendar.sub$STP[calendar.sub$STP != "P"]
-      typ.all = calendar.sub$STP
-      if(all(dur == 1) & all(typ == "C") & length(typ) > 0 & length(typ.all) == 2){
-        # One Day cancelationss
-        # Modify in the calendar_dates.txt
-        res.calendar[[i]] = calendar.sub[calendar.sub$STP == "P", ]
-        res.calendar_dates[[i]] = calendar.sub[calendar.sub$STP != "P", ]
-      }else{
-        # check for identical day pattern
-        if(length(unique(calendar.sub$Days)) == 1 & sum(typ.all == "P") == 1){
-
-          calendar.new = splitDates(calendar.sub)
-          res.calendar[[i]] = calendar.new
-        }else{
-          # split by day pattern
-          splits = list()
-          daypatterns = unique(calendar.sub$Days)
-          for(k in seq(1,length(daypatterns))){
-            #slect for each patter but include cancellations with a different day pattern
-            calendar.sub.day = calendar.sub[calendar.sub$Days == daypatterns[k] | calendar.sub$STP == "C", ]
-            calendar.new.day = splitDates(calendar.sub.day)
-            # rejects nas
-            if(class(calendar.new.day) == "data.frame"){
-              calendar.new.day$UID = paste0(calendar.new.day$UID,k)
-              splits[[k]] = calendar.new.day
-            }
-
-          }
-          splits = dplyr::bind_rows(splits)
-
-          # message("Going From")
-          # print(calendar.sub)
-          # message("To")
-          # print(splits)
-          # readline(prompt="Press [enter] to continue")
-
-          res.calendar[[i]] = splits
-
-        }
-      }
-    }
-    if(i %% 10000 == 0){
-      message(paste0(Sys.time()," matched ",round(i/length_todo*100,1),"% of routes"))
-    }
-  }
-
-  res.calendar = dplyr::bind_rows(res.calendar)
-  res.calendar_dates = dplyr::bind_rows(res.calendar_dates)
-
-  days = lapply(res.calendar$Days,function(x){as.integer(substring(x, 1:7, 1:7 ))})
-  days = matrix(unlist(days), ncol = 7, byrow = T)
-  days = as.data.frame(days)
-  names(days) = c("monday","tuesday", "wednesday","thursday", "friday", "saturday", "sunday")
-
-  calendar = cbind(res.calendar,days)
-  calendar$Days = NULL
-
-
-  calendar$keep = sapply(seq(1,nrow(calendar)),checkrows)
-  calendar = calendar[calendar$keep,]
-
-
-
-
-
-
-  # Join the schedule and schedule.extra into on df
-  #schedule.extra$schedulerowID = schedule.extra$rowID - 1
-  #schedule.extra$rowID = NULL
-  #schedule = dplyr::left_join(schedule, schedule.extra, by = c("rowID" = "schedulerowID"))
-
-  #}
-
-  # lookup = matrix(c(schedule$rowID,
-  #                   schedule$rowID[2:length(schedule$rowID)],
-  #                   lookup[nrow(lookup),1]+1000),
-  #                 ncol = 2)
-  # lookup <- cbind(lookup,lookup[,2]-lookup[,1])
-  # lookup.df = data.frame(rowID = seq(from = lookup[1,1],
-  #                                    to = lookup[nrow(lookup),2]-1),
-  #                        trip_id = rep(schedule$`Train UID`,times = as.integer(lookup[,3]) ))
-
-  stop_times = dplyr::left_join(stop_times,lookup.df, by = c("rowID" = "rowID"))
-  stop_times = stop_times[,c("trip_id","arrival_time","departure_time","stop_id","rowID")]
 
   ### SECTION 3: ###############################################################################
   # make make the trips.txt  file by matching the calnedar to the stop_times
@@ -176,9 +76,24 @@ schedule2routes = function(mca,path_out,ncores = 1){
   # a route is all the trips with a common start and end i.e. scheduels original UID
 
   routes = schedule[!duplicated(schedule$`Train UID`),]
-  routes = routes[,c("rowID","Train UID","Train Status","Train Category")]
+  routes = routes[,c("rowID","Train UID","Train Status")]
+  #routes = dplyr::left_join(routes,stop_times,by = c("rowID" = "trip_id"))
 
-  routes = dplyr::left_join(routes,stop_times,by = c("rowID" = "trip_id"))
+  schedule.extra$rowIDm1 = schedule.extra$rowID -1
+  routes = dplyr::left_join(routes,schedule.extra,by = c("rowID" = "rowIDm1"))
+  routes = routes[,c("rowID","Train UID","Train Status","ATOC Code")]
+  names(routes) = c("rowID","route_id","Train Status","agency_id")
+
+  train_status = data.frame(train_status = c("B","F","P","S","T","1","2","3","4","5"),
+                            route_type   = c( 3 ,NA , 2 , 4 , NA, 2 , NA, NA, 4 , 3 ),
+                            stringsAsFactors = FALSE)
+
+  routes$`Train Status` = as.character(routes$`Train Status`)
+  routes = dplyr::left_join(routes,train_status,by = c("Train Status" = "train_status"))
+
+  routes = routes[,c("rowID","route_id","route_type","agency_id")]
+  routes$route_short_name = routes$route_id
+
   head(routes)
   #end of function
 }
@@ -394,4 +309,114 @@ checkrows = function(i){
   }else{
     return(TRUE)
   }
+}
+
+
+#' internal function for contructing longnames of routes
+#'
+#' @details
+#' check for schdules that don overlay with the day they rund i.e. Mon - Sat schduel for a sunday only service
+#' return a logcal vector of if the calendar is valid
+#'
+#' @param i interger row number calendar
+#'
+longnames = function(i){
+
+}
+
+#' make calendar
+#'
+#' @details
+#' split overlapping start and end dates
+#'
+#' @param schedule scheduel DF
+#' @param ncores number of cores
+#'
+makeCalendar = function(schedule, ncores = 1){
+  #prep the inputs
+  calendar = schedule[,c("Train UID","Date Runs From", "Date Runs To","Days Run","STP indicator","rowID")]
+  calendar$`STP indicator` = as.character(calendar$`STP indicator`)
+  #calendar = calendar[order(-calendar$`STP indicator`),]
+  names(calendar) = c("UID","start_date", "end_date","Days","STP",  "rowID"  )
+  calendar$duration = calendar$end_date - calendar$start_date + 1
+
+  UIDs = unique(calendar$UID)
+  length_todo = length(UIDs)
+
+
+  makeCalendar.inner = function(i){
+    UIDs.sub = UIDs[i]
+    calendar.sub = calendar[calendar$UID == UIDs.sub,]
+    #calendar.sub = schedule[schedule$`Train UID` == UIDs.sub,]
+    if(nrow(calendar.sub)==1){
+      #make into an single entry
+      return(list(calendar.sub,NA))
+    }else{
+      # check duration and types
+      dur = as.numeric(calendar.sub$duration[calendar.sub$STP != "P"])
+      typ = calendar.sub$STP[calendar.sub$STP != "P"]
+      typ.all = calendar.sub$STP
+      if(all(dur == 1) & all(typ == "C") & length(typ) > 0 & length(typ.all) == 2){
+        # One Day cancelationss
+        # Modify in the calendar_dates.txt
+        return(list(calendar.sub[calendar.sub$STP == "P", ],
+                    calendar.sub[calendar.sub$STP != "P", ]))
+      }else{
+        # check for identical day pattern
+        if(length(unique(calendar.sub$Days)) == 1 & sum(typ.all == "P") == 1){
+
+          calendar.new = splitDates(calendar.sub)
+          return(list(calendar.new,NA))
+        }else{
+          # split by day pattern
+          splits = list()
+          daypatterns = unique(calendar.sub$Days)
+          for(k in seq(1,length(daypatterns))){
+            #slect for each patter but include cancellations with a different day pattern
+            calendar.sub.day = calendar.sub[calendar.sub$Days == daypatterns[k] | calendar.sub$STP == "C", ]
+            calendar.new.day = splitDates(calendar.sub.day)
+            # rejects nas
+            if(class(calendar.new.day) == "data.frame"){
+              calendar.new.day$UID = paste0(calendar.new.day$UID,k)
+              splits[[k]] = calendar.new.day
+            }
+
+          }
+          splits = dplyr::bind_rows(splits)
+          return(list(splits,NA))
+        }
+      }
+    }
+  }
+
+  if(ncores == 1){
+    res = lapply(1:length_todo, makeCalendar.inner)
+  }else{
+    CL <- parallel::makeCluster(ncores) #make clusert and set number of core
+    parallel::clusterExport(cl = CL, varlist=c("calendar", "UIDs"), envir = environment())
+    parallel::clusterExport(cl = CL, c('splitDates'), envir = environment() )
+    parallel::clusterEvalQ(cl = CL, {library(dplyr)})
+    res = parallel::parLapply(cl = CL,1:length_todo,makeCalendar.inner)
+    parallel::stopCluster(CL)
+  }
+
+  res.calendar = lapply(res, `[[`, 1)
+  res.calendar = dplyr::bind_rows(res.calendar)
+  res.calendar_dates = lapply(res, `[[`, 2)
+  res.calendar_dates = res.calendar_dates[!is.na(res.calendar_dates)]
+  res.calendar_dates = dplyr::bind_rows(res.calendar_dates)
+
+  days = lapply(res.calendar$Days,function(x){as.integer(substring(x, 1:7, 1:7 ))})
+  days = matrix(unlist(days), ncol = 7, byrow = T)
+  days = as.data.frame(days)
+  names(days) = c("monday","tuesday", "wednesday","thursday", "friday", "saturday", "sunday")
+
+  res.calendar = cbind(res.calendar,days)
+  res.calendar$Days = NULL
+
+
+  keep = sapply(seq(1,nrow(res.calendar)),checkrows)
+  res.calendar = res.calendar[keep,]
+
+  return(list(res.calendar, res.calendar_dates))
 }
