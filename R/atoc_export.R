@@ -94,8 +94,16 @@ schedule2routes = function(mca,path_out,ncores = 1){
   routes = routes[,c("rowID","route_id","route_type","agency_id")]
   routes$route_short_name = routes$route_id
 
+  #make the long names from the desitnation and time
+  route_long_name = longnames(routes = routes, stop_times = stop_times, ncores = 5)
+  routes$route_long_name = route_long_name
   head(routes)
   #end of function
+
+
+
+
+
 }
 
 
@@ -119,6 +127,48 @@ station2stops = function(station,path_out){
   write.csv(stops,paste0(path_out,"/stops.txt"), row.names = F, header = F)
 }
 
+
+#' Export ATOC stations as GTFS stops.txt
+#'
+#' @details
+#' Export ATOC stations as GTFS stops.txt
+#'
+#' @param station station SF data frame from the importMSN function
+#' @param path_out Path to save file to
+#'
+station2transfers = function(station,flf,path_out){
+
+  ### SECTION 4: ###############################################################################
+  # make make the transfers.txt
+  # transfer betwwen stations are in the FLF file
+  transfers1 = flf[,c("from","to","time")]
+  transfers1$time = transfers1$time * 60
+  transfers1$transfer_type = 2
+
+  # transfer within sations are in the stations file
+  transfers2 = station[,c("TIPLOC Code","CRS Code","Minimum Change Time")]
+  transfers2 = as.data.frame(transfers2)
+  transfers2$geometry = NULL
+
+  transfers3 = transfers2[,c("TIPLOC Code","CRS Code")]
+  names(transfers3) = c("from_stop_id","CRS Code")
+  transfers1 = dplyr::left_join(transfers1, transfers3, by = c("from" = "CRS Code"))
+  names(transfers3) = c("to_stop_id","CRS Code")
+  transfers1 = dplyr::left_join(transfers1, transfers3, by = c("to" = "CRS Code"))
+  transfers1 = transfers1[,c("from_stop_id","to_stop_id","transfer_type","time")]
+  names(transfers1) = c("from_stop_id","to_stop_id","transfer_type","min_transfer_time")
+
+  transfers2$min_transfer_time = as.integer(transfers2$`Minimum Change Time`) * 60
+  transfers2$to_stop_id = transfers2$`TIPLOC Code`
+  transfers2$transfer_type = 2
+  names(transfers2) = c("from_stop_id","CRS Code","Minimum Change Time", "min_transfer_time","to_stop_id","transfer_type")
+  transfers2 = transfers2[,c("from_stop_id","to_stop_id","transfer_type","min_transfer_time")]
+
+  transfers = rbind(transfers1,transfers2)
+
+
+  write.csv(transfers,paste0(path_out,"/transfers.txt"), row.names = F, header = F)
+}
 
 #' split overlapping start and end dates
 #'
@@ -293,7 +343,8 @@ matchRoutes = function(schedule.rowID, stop_times.rowID, ncores = 1){
 #' @param i interger row number calendar
 #'
 checkrows = function(i){
-  tmp = calendar[i,]
+  tmp = res.calendar[i,]
+  #message(paste0("done ",i))
   if(tmp$duration < 7){
     days.valid = weekdays(seq.POSIXt(from = as.POSIXct.Date(tmp$start_date), to = as.POSIXct.Date(tmp$end_date), by = "DSTday"))
     days.valid = tolower(days.valid)
@@ -320,7 +371,31 @@ checkrows = function(i){
 #'
 #' @param i interger row number calendar
 #'
-longnames = function(i){
+longnames = function(routes,stop_times,ncores = 1){
+
+  # internal function
+  longnames.internal = function(i){
+    route_rowID = routes$rowID[i]
+    stops_tmp = stop_times[stop_times$trip_id == route_rowID,]
+    origin = stops_tmp$stop_id[is.na(stops_tmp$arrival_time)][1]
+    destination = stops_tmp$stop_id[is.na(stops_tmp$departure_time)][1]
+    time = stops_tmp$departure_time[is.na(stops_tmp$arrival_time)][1]
+    route_name = paste0(time," from ",origin," to ",destination)
+    return(route_name)
+  }
+
+  if(ncores == 1){
+    res = sapply(seq(1,nrow(routes)),longnames.internal)
+  }else{
+    CL <- parallel::makeCluster(ncores) #make clusert and set number of core
+    parallel::clusterExport(cl = CL, varlist=c("routes", "stop_times"), envir = environment())
+    parallel::clusterExport(cl = CL, c('longnames.internal'), envir = environment() )
+    res = parallel::parSapply(cl = CL, X = seq(1,nrow(routes)), FUN = longnames.internal)
+    parallel::stopCluster(CL)
+  }
+
+  return(res)
+
 
 }
 
@@ -342,7 +417,6 @@ makeCalendar = function(schedule, ncores = 1){
 
   UIDs = unique(calendar$UID)
   length_todo = length(UIDs)
-
 
   makeCalendar.inner = function(i){
     UIDs.sub = UIDs[i]
@@ -415,7 +489,17 @@ makeCalendar = function(schedule, ncores = 1){
   res.calendar$Days = NULL
 
 
-  keep = sapply(seq(1,nrow(res.calendar)),checkrows)
+  if(ncores == 1){
+    keep = sapply(seq(1,nrow(res.calendar)),checkrows)
+  }else{
+    CL <- parallel::makeCluster(ncores) #make clusert and set number of core
+    parallel::clusterExport(cl = CL, varlist=c("res.calendar"), envir = environment())
+    parallel::clusterExport(cl = CL, c('checkrows'), envir = environment() )
+    parallel::clusterEvalQ(cl = CL, {library(dplyr)})
+    keep = parallel::parSapply(cl = CL,X = seq(1,nrow(res.calendar)), FUN = checkrows)
+    parallel::stopCluster(CL)
+  }
+
   res.calendar = res.calendar[keep,]
 
   return(list(res.calendar, res.calendar_dates))
