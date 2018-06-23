@@ -1,112 +1,3 @@
-#' Export ATOC schedule as GTFS
-#'
-#' @details
-#' Export ATOC schedule as GTFS
-#'
-#' @param mca list of dataframs from the importMCA function
-#' @param path_out Path to save file to
-#'
-schedule2routes = function(mca,path_out,ncores = 1){
-  #list(HD,TI,TA,TD,AA,BS,BX,LO,LI,LT,CR,ZZ)
-
-  #break out the relevant parts of the mca file
-  schedule = mca[[6]]
-  schedule.extra = mca[[7]]
-  station.origin = mca[[8]]
-  station.intermediate = mca[[9]]
-  station.terminal = mca[[10]]
-
-  ### SECTION 1: ###############################################################################
-  # make stop_times.txt from the three station files
-
-  # Remove Passing Stops as GTFS is only intrested in actual stops
-  station.intermediate = station.intermediate[is.na(station.intermediate$`Scheduled Pass`),]
-  station.intermediate = station.intermediate[station.intermediate$`Public Departure` != "0000",]
-  station.intermediate = station.intermediate[station.intermediate$`Public Arrival` != "0000",]
-
-  # bind the station secions toghter into a single df
-  station.origin = station.origin[,c("Public Departure Time","Location","rowID")]
-  names(station.origin) = c("departure_time","stop_id","rowID")
-  station.intermediate = station.intermediate[,c("Public Arrival","Public Departure","Location","rowID")]
-  names(station.intermediate) = c("arrival_time","departure_time","stop_id","rowID")
-  station.terminal = station.terminal[,c("Public Arrival Time","Location","rowID")]
-  names(station.terminal) = c("arrival_time","stop_id","rowID")
-
-  # bind together and rorder
-  stop_times = dplyr::bind_rows(list(station.origin,station.intermediate,station.terminal))
-  rm(station.origin,station.intermediate,station.terminal)
-  #stop_times$trip_id = NA
-
-
-
-  # match routes
-  # for each station in the stop_times, match the rowID in the schdeduel
-  # data must be sorted
-  stop_times = stop_times[order(stop_times$rowID),]
-  schedule = schedule[order(schedule$rowID),]
-  trip_ids = matchRoutes(schedule.rowID = schedule$rowID, stop_times.rowID = stop_times$rowID, ncores = ncores)
-
-  stop_times = dplyr::left_join(stop_times,trip_ids, by = c("rowID" = "stop_times.rowID"))
-  names(stop_times) = c("departure_time","stop_id","rowID","arrival_time","trip_id")
-
-  ### SECTION 2: ###############################################################################
-  # make make the calendar.txt and calendar_dates.txt file from the schedule
-
-  # build the calendar file
-  res = makeCalendar(schedule = schedule, ncores = 7)
-  calendar = res[[1]]
-  calendar_dates = res[[2]]
-  rm(res)
-
-
-  ### SECTION 3: ###############################################################################
-  # make make the trips.txt  file by matching the calnedar to the stop_times
-
-  trips = calendar[c("UID","rowID")]
-  names(trips) = c("service_id","trip_id")
-  # trip_id = strsplit(trips$UID,  " ")
-  # trip_id = lapply(trip_id, `[[`, 1)
-  # trip_id = unlist(trip_id)
-  #
-  # trips$trip_id = trip_id
-
-
-  ### SECTION 4: ###############################################################################
-  # make make the routes.txt
-  # a route is all the trips with a common start and end i.e. scheduels original UID
-
-  routes = schedule[!duplicated(schedule$`Train UID`),]
-  routes = routes[,c("rowID","Train UID","Train Status")]
-  #routes = dplyr::left_join(routes,stop_times,by = c("rowID" = "trip_id"))
-
-  schedule.extra$rowIDm1 = schedule.extra$rowID -1
-  routes = dplyr::left_join(routes,schedule.extra,by = c("rowID" = "rowIDm1"))
-  routes = routes[,c("rowID","Train UID","Train Status","ATOC Code")]
-  names(routes) = c("rowID","route_id","Train Status","agency_id")
-
-  train_status = data.frame(train_status = c("B","F","P","S","T","1","2","3","4","5"),
-                            route_type   = c( 3 ,NA , 2 , 4 , NA, 2 , NA, NA, 4 , 3 ),
-                            stringsAsFactors = FALSE)
-
-  routes$`Train Status` = as.character(routes$`Train Status`)
-  routes = dplyr::left_join(routes,train_status,by = c("Train Status" = "train_status"))
-
-  routes = routes[,c("rowID","route_id","route_type","agency_id")]
-  routes$route_short_name = routes$route_id
-
-  #make the long names from the desitnation and time
-  route_long_name = longnames(routes = routes, stop_times = stop_times, ncores = 5)
-  routes$route_long_name = route_long_name
-  head(routes)
-  #end of function
-
-
-
-
-
-}
-
-
 #' Export ATOC stations as GTFS stops.txt
 #'
 #' @details
@@ -115,25 +6,27 @@ schedule2routes = function(mca,path_out,ncores = 1){
 #' @param station station SF data frame from the importMSN function
 #' @param path_out Path to save file to
 #'
-station2stops = function(station,path_out){
+station2stops = function(station){
   # recorder the match the GTFS stops.txt
   stops = station[,c("TIPLOC Code","CRS Code","Station Name")]
   names(stops) = c("stop_id","stop_code","stop_name","geometry")
-  coords = st_coordinates(stops)
+  coords = sf::st_coordinates(stops)
   stops$stop_lat = coords[,2]
   stops$stop_lon = coords[,1]
   stops = as.data.frame(stops)
   stops$geometry = NULL
-  write.csv(stops,paste0(path_out,"/stops.txt"), row.names = F, header = F)
+  return(stops)
+  #write.csv(stops,paste0(path_out,"/stops.txt"), row.names = F, header = F)
 }
 
 
-#' Export ATOC stations as GTFS stops.txt
+#' Export ATOC stations and FLF file as transfers.txt
 #'
 #' @details
-#' Export ATOC stations as GTFS stops.txt
+#' Export ATOC FLF file as transfers.txt
 #'
 #' @param station station SF data frame from the importMSN function
+#' @param flf imported flf file from importFLF
 #' @param path_out Path to save file to
 #'
 station2transfers = function(station,flf,path_out){
@@ -165,9 +58,8 @@ station2transfers = function(station,flf,path_out){
   transfers2 = transfers2[,c("from_stop_id","to_stop_id","transfer_type","min_transfer_time")]
 
   transfers = rbind(transfers1,transfers2)
-
-
-  write.csv(transfers,paste0(path_out,"/transfers.txt"), row.names = F, header = F)
+  return(transfers)
+  #write.csv(transfers,paste0(path_out,"/transfers.txt"), row.names = F, header = F)
 }
 
 #' split overlapping start and end dates
@@ -175,8 +67,7 @@ station2transfers = function(station,flf,path_out){
 #' @details
 #' split overlapping start and end dates
 #'
-#' @param start_date station SF data frame from the importMSN function
-#' @param start_date Path to save file to
+#' @param cal cal object
 #'
 splitDates = function(cal){
 
@@ -273,8 +164,9 @@ splitDates = function(cal){
 #' @details
 #' Takes in a row of the schdedule and then gets the next row (schedule must be sored by rowID)
 #'
-#' @param i interger row number from schdules
-#' @param length_todo max number of rows
+#' @param schedule.rowID rowID field from schedule object
+#' @param stop_times.rowID rowID field from stop_times object
+#' @param ncores number of processes for parallel processing (default = 1)
 #'
 matchRoutes = function(schedule.rowID, stop_times.rowID, ncores = 1){
   schedule_tmp = matrix(c(schedule.rowID, schedule.rowID[2:length(schedule.rowID)],max(schedule.rowID)+99999), ncol = 2)
@@ -369,7 +261,9 @@ checkrows = function(i){
 #' check for schdules that don overlay with the day they rund i.e. Mon - Sat schduel for a sunday only service
 #' return a logcal vector of if the calendar is valid
 #'
-#' @param i interger row number calendar
+#' @param routes routes data.frame
+#' @param routes stop_times data.frame
+#' @param ncores number of processes for parallel processing (default = 1)
 #'
 longnames = function(routes,stop_times,ncores = 1){
 
@@ -404,8 +298,8 @@ longnames = function(routes,stop_times,ncores = 1){
 #' @details
 #' split overlapping start and end dates
 #'
-#' @param schedule scheduel DF
-#' @param ncores number of cores
+#' @param schedule scheduel data.frame
+#' @param ncores number of processes for parallel processing (default = 1)
 #'
 makeCalendar = function(schedule, ncores = 1){
   #prep the inputs

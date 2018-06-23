@@ -165,8 +165,8 @@ importMSN <- function(file, silent = TRUE){
   timetable = strip_whitespace(timetable)
 
   # Comment Record
-  if(!silent){message(paste0(Sys.time()," importing B"))}
-  comment = raw[types == "B"]
+  if(!silent){message(paste0(Sys.time()," importing Comment"))}
+  comment = raw[types == "C"]
   comment = iotools::dstrfw(x = comment,
                             col_types = rep('character',2),
                             widths = c(1,79))
@@ -301,9 +301,9 @@ importMCA <- function(file,silent = TRUE){
   if(!silent){message(paste0(Sys.time()," importing Origin Station"))}
   LO = raw[types == "LO"]
   LO = iotools::dstrfw(x = LO,
-                       col_types = rep('character',11),
-                       widths = c(2,8,5,4,3,3,2,2,12,2,37))
-  names(LO) = c("Record Identity","Location","Scheduled Departure Time","Public Departure Time","Platform",
+                       col_types = rep('character',12),
+                       widths = c(2,7,1,5,4,3,3,2,2,12,2,37))
+  names(LO) = c("Record Identity","Location","Suffix","Scheduled Departure Time","Public Departure Time","Platform",
                 "Line","Engineering Allowance","Pathing Allowance","Pathing Allowance","Performance Allowance","Spare")
   LO$Spare = NULL
   LO$`Record Identity` = NULL
@@ -316,9 +316,9 @@ importMCA <- function(file,silent = TRUE){
   if(!silent){message(paste0(Sys.time()," importing Intermediate Station"))}
   LI = raw[types == "LI"]
   LI = iotools::dstrfw(x = LI,
-                       col_types = rep('character',15),
-                       widths = c(2,8,5,5,5,4,4,3,3,3,12,2,2,2,20))
-  names(LI) = c("Record Identity","Location","Scheduled Arrival Time","Scheduled Departure Time",
+                       col_types = rep('character',16),
+                       widths = c(2,7,1,5,5,5,4,4,3,3,3,12,2,2,2,20))
+  names(LI) = c("Record Identity","Location","Suffix","Scheduled Arrival Time","Scheduled Departure Time",
                 "Scheduled Pass", "Public Arrival", "Public Departure", "Platform", "Line",
                 "Path","Activity","Engineering Allowance","Pathing Allowance","Performance Allowance","Spare")
   LI$Spare = NULL
@@ -332,9 +332,9 @@ importMCA <- function(file,silent = TRUE){
   if(!silent){message(paste0(Sys.time()," importing Terminating Station"))}
   LT = raw[types == "LT"]
   LT = iotools::dstrfw(x = LT,
-                       col_types = rep('character',8),
-                       widths = c(2,8,5,4,3,3,12,43))
-  names(LT) = c("Record Identity","Location","Scheduled Arrival Time","Public Arrival Time",
+                       col_types = rep('character',9),
+                       widths = c(2,7,1,5,4,3,3,12,43))
+  names(LT) = c("Record Identity","Location","Suffix","Scheduled Arrival Time","Public Arrival Time",
                 "Platform","Path","Activity","Spare")
   LT$Spare = NULL
   LT$`Record Identity` = NULL
