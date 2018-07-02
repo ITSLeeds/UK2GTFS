@@ -6,17 +6,102 @@
 #' @param station station SF data frame from the importMSN function
 #' @param path_out Path to save file to
 #'
-station2stops = function(station){
+station2stops = function(station, TI){
+
+  #Discard Unneded Columns
+  TI = TI[,c("TIPLOC code","NALCO","TPS Description","CRS Code")]
+  station = station[,c("Station Name","CATE Interchange status","TIPLOC Code",
+                       #"CRS Reference Code",
+                       "CRS Code","geometry")]
+  #names(TI)
+  #names(station)
+
+  jnd = dplyr::left_join(TI,station, by = c("TIPLOC code" = "TIPLOC Code"))
+  station.extra = station[!station$`TIPLOC Code` %in% jnd$`TIPLOC code`,]
+  station.extra$`TIPLOC code` = station.extra$`TIPLOC Code`
+  station.extra$NALCO = NA
+  station.extra$`CRS Code.y` = station.extra$`CRS Code`
+  station.extra$`TPS Description` = NA
+  station.extra$`CRS Code.x` = NA
+  station.extra = station.extra[,names(jnd)]
+  jnd = suppressWarnings(dplyr::bind_rows(jnd,station.extra))
+
+  jnd$geometry = sf::st_sfc(jnd$geometry)
+  jnd = sf::st_sf(jnd)
+  sf::st_crs(jnd) = 4326
+
+  #check for multiple crs
+  # check = sapply(1:nrow(jnd),function(x){
+  #   vals = unique(c(jnd$`CRS Code.x`[x],
+  #                   #jnd$`CRS Reference Code`[x],
+  #                   jnd$`CRS Code.y`[x]))
+  #   vals = vals[!is.na(vals)]
+  #   return(length(vals))
+  #   })
+  #
+  # jnd$check = check
+
+  jnd$CRS = ifelse(is.na(jnd$`CRS Code.y`),jnd$`CRS Code.x`,jnd$`CRS Code.y`)
+  jnd$name = ifelse(is.na(jnd$`TPS Description`),jnd$`Station Name`,jnd$`TPS Description`)
+
+
+  stops = jnd[,c("CRS","TIPLOC code","name")]
+  stops = stops[!sf::st_is_empty(stops),]
+  # check for duplicates
+  stops$dup.loc = duplicated(stops$geometry)
+  stops$dup.crs = duplicated(stops$CRS)
+
+  stops.problem.loc = unique(stops$geometry[stops$dup.loc])
+  stops.problem.crs = unique(stops$CRS[stops$dup.crs])
+
+  # separate out simple and duplicate cases
+  stops.clean = stops[!(stops$CRS %in% stops.problem.crs) & !(stops$geometry %in% stops.problem.loc),]
+  stops.problem = stops[(stops$CRS %in% stops.problem.crs) | (stops$geometry %in% stops.problem.loc),]
+
+  stops.problem.summary = dplyr::group_by(stops.problem, CRS)
+  stops.problem.summary = dplyr::summarise(stops.problem.summary,
+                                           nCRS = n(),
+                                           nLoc = length(unique(geometry)))
+  #multiple CRS with same locations is just multiple TIPLOCs for same station
+  stops.problem.tidy = stops.problem[stops.problem$CRS %in% stops.problem.summary$CRS[stops.problem.summary$nLoc == 1],]
+  stops.problem.messy = stops.problem[stops.problem$CRS %in% stops.problem.summary$CRS[stops.problem.summary$nLoc != 1],]
+  stops.problem.tidy = stops.problem.tidy[!duplicated(stops.problem.tidy$CRS),]
+
+  # for no discarding multiple locations
+  stops.problem.messy2 = stops.problem.messy[!duplicated(stops.problem.messy$CRS),]
+
+  stops.final = suppressWarnings(dplyr::bind_rows(stops.clean,stops.problem.tidy))
+  stops.final = suppressWarnings(dplyr::bind_rows(stops.final,stops.problem.messy2))
+
+  stops.final = as.data.frame(stops.final)
+  stops.final$geometry = sf::st_sfc(stops.final$geometry)
+  stops.final = sf::st_sf(stops.final)
+  sf::st_crs(stops.final) = 4326
+  stops.final = stops.final[,c("CRS","TIPLOC code", "name","geometry")]
+
   # recorder the match the GTFS stops.txt
-  stops = station[,c("TIPLOC Code","CRS Code","Station Name")]
-  names(stops) = c("stop_id","stop_code","stop_name","geometry")
-  coords = sf::st_coordinates(stops)
-  stops$stop_lat = coords[,2]
-  stops$stop_lon = coords[,1]
-  stops = as.data.frame(stops)
-  stops$geometry = NULL
-  return(stops)
-  #write.csv(stops,paste0(path_out,"/stops.txt"), row.names = F, header = F)
+  names(stops.final) = c("stop_id","stop_code","stop_name","geometry")
+  coords = sf::st_coordinates(stops.final)
+  stops.final$stop_lat = coords[,2]
+  stops.final$stop_lon = coords[,1]
+  stops.final$stop_lat = round(stops.final$stop_lat, 5) # sub metre precison is sufficent
+  stops.final$stop_lon = round(stops.final$stop_lon, 5)
+  stops.final = as.data.frame(stops.final)
+  stops.final$geometry = NULL
+
+  # Built tiploc to CRS lookup
+  lookup = as.data.frame(jnd)
+  lookup = lookup[,c("TIPLOC code","CRS")]
+  lookup$match = ifelse(is.na(lookup$CRS),lookup$`TIPLOC code`,lookup$CRS)
+  lookup = lookup[,c("TIPLOC code","match")]
+  names(lookup) = c("TIPLOC","match")
+
+
+
+  results = list(stops.final, lookup)
+  names(results) = c("stops", "lookup")
+  return(results)
+
 }
 
 
@@ -267,10 +352,12 @@ checkrows = function(i){
 #'
 longnames = function(routes,stop_times,ncores = 1){
 
+  stop_times_sub = stop_times[is.na(stop_times$arrival_time) | is.na(stop_times$departure_time), ]
+
   # internal function
   longnames.internal = function(i){
     route_rowID = routes$rowID[i]
-    stops_tmp = stop_times[stop_times$trip_id == route_rowID,]
+    stops_tmp = stop_times_sub[stop_times_sub$trip_id == route_rowID,]
     origin = stops_tmp$stop_id[is.na(stops_tmp$arrival_time)][1]
     destination = stops_tmp$stop_id[is.na(stops_tmp$departure_time)][1]
     time = stops_tmp$departure_time[is.na(stops_tmp$arrival_time)][1]
@@ -282,7 +369,7 @@ longnames = function(routes,stop_times,ncores = 1){
     res = sapply(seq(1,nrow(routes)),longnames.internal)
   }else{
     CL <- parallel::makeCluster(ncores) #make clusert and set number of core
-    parallel::clusterExport(cl = CL, varlist=c("routes", "stop_times"), envir = environment())
+    parallel::clusterExport(cl = CL, varlist=c("routes", "stop_times_sub"), envir = environment())
     parallel::clusterExport(cl = CL, c('longnames.internal'), envir = environment() )
     res = parallel::parSapply(cl = CL, X = seq(1,nrow(routes)), FUN = longnames.internal)
     parallel::stopCluster(CL)
@@ -397,4 +484,151 @@ makeCalendar = function(schedule, ncores = 1){
   res.calendar = res.calendar[keep,]
 
   return(list(res.calendar, res.calendar_dates))
+}
+
+
+
+
+#' Duplicate stop_times
+#'
+#' @details
+#' Function that duplicates top times for trips that have been split into multiple trips
+#'
+#' @param calendar calendar data.frame
+#' @param stop_times stop_times data.frame
+#' @param ncores number of processes for parallel processing (default = 1)
+#'
+duplicate.stop_times = function(calendar,stop_times,ncores = 1){
+  calendar.nodup = calendar[!duplicated(calendar$rowID),]
+  calendar.dup = calendar[duplicated(calendar$rowID),]
+  rowID.unique = as.data.frame(table(calendar.dup$rowID))
+  rowID.unique$Var1 = as.integer(as.character(rowID.unique$Var1))
+
+  duplicate.stop_times.int = function(i){
+    stop_times.tmp = stop_times[stop_times$schedule.rowID == rowID.unique$Var1[i],]
+    reps = rowID.unique$Freq[i]
+    index =rep(seq(1,reps),nrow(stop_times.tmp))
+    index = index[order(index)]
+    stop_times.tmp = stop_times.tmp[rep(seq(1,nrow(stop_times.tmp)), reps),]
+    stop_times.tmp$index = index
+    return(stop_times.tmp)
+  }
+
+  if(ncores == 1){
+    stop_times.dup = lapply(1:length(rowID.unique$Var1),duplicate.stop_times.int)
+  }else{
+    CL <- parallel::makeCluster(ncores) #make clusert and set number of core
+    parallel::clusterExport(cl = CL, varlist=c("rowID.unique", "calendar.dup","stop_times"), envir = environment())
+    #parallel::clusterEvalQ(cl = CL, {library(dplyr)})
+    stop_times.dup = parallel::parLapply(cl = CL,1:length(rowID.unique$Var1),duplicate.stop_times.int)
+    parallel::stopCluster(CL)
+  }
+
+  stop_times.dup = dplyr::bind_rows(stop_times.dup)
+
+  #Join on the nonduplicated trip_ids
+  trip.ids.nodup = calendar.nodup[,c("rowID","trip_id")]
+  stop_times = dplyr::left_join(stop_times,trip.ids.nodup, by = c("schedule.rowID" = "rowID"))
+  stop_times = stop_times[!is.na(stop_times$trip_id),] #when routes are cancled their stop times are left without valid trip_ids
+
+  #join on the duplicated trip_ids
+  calendar2 =  dplyr::group_by(calendar, rowID)
+  calendar2 =  dplyr::mutate(calendar2,Index=1:n())
+
+  stop_times.dup$index2 = as.integer(stop_times.dup$index + 1)
+  trip.ids.dup = calendar2[,c("rowID","trip_id","Index")]
+  trip.ids.dup = as.data.frame(trip.ids.dup)
+  stop_times.dup = dplyr::left_join(stop_times.dup,trip.ids.dup, by = c("schedule.rowID" = "rowID", "index2" = "Index"))
+  stop_times.dup = stop_times.dup[,c("departure_time", "stop_id","rowID","arrival_time","schedule.rowID","trip_id")]
+
+  #stop_times.dup = stop_times.dup[order(stop_times.dup$rowID),]
+
+  stop_times.comb = rbind(stop_times, stop_times.dup)
+
+  return(stop_times.comb)
+}
+
+#' fix times fro jounrye that run past midnight
+#'
+#' @details
+#' When train rund over midnight GTFS requries the stop times to be in 24h+ e.g. 26:30:00
+#'
+#' @param stop_times stop_times data.frame
+#' @param safe logical (default = TRUE) should the check for trains running more than 24h be perfomed?
+#'
+#' @details
+#' Not running the 24 check is faster, in the check is run a warning is returned, but the error is not fixed
+#' As the longest train jounrey in the UK is 13 hours (Aberdeen to Penzance) this is unlikley to be a problem
+#'
+afterMidnight = function(stop_times, safe = TRUE){
+
+  stop_times2 = stop_times
+  #stop_times2$arv = as.integer(paste0(substr(stop_times2$arrival_time,1,2),substr(stop_times2$arrival_time,4,5)))
+  #stop_times2$dept = as.integer(paste0(substr(stop_times2$departure_time,1,2),substr(stop_times2$departure_time,4,5)))
+  stop_times2$arv = as.integer(stop_times2$arrival_time)
+  stop_times2$dept = as.integer(stop_times2$departure_time)
+
+  stop_times.summary = dplyr::group_by(stop_times2, trip_id)
+  stop_times.summary = dplyr::summarise(stop_times.summary,
+                                        dept_first = dept[stop_sequence == 1]
+                                        )
+
+  stop_times2 = left_join(stop_times2,stop_times.summary, by = "trip_id")
+  stop_times2$arvfinal = ifelse(stop_times2$arv < stop_times2$dept_first, stop_times2$arv + 2400, stop_times2$arv)
+  stop_times2$depfinal = ifelse(stop_times2$dept < stop_times2$dept_first, stop_times2$dept + 2400, stop_times2$dept)
+
+
+  if(safe){
+    #check if any train more than 24 hours
+    stop_times.summary2 = dplyr::group_by(stop_times2, trip_id)
+    stop_times.summary2 = dplyr::summarise(stop_times.summary2,
+                                           arv_last = arvfinal[stop_sequence == max(stop_sequence)],
+                                           arv_max = max(arvfinal, na.rm = T)
+    )
+
+    check = stop_times.summary2$arv_last < stop_times.summary2$arv_max
+    if(any(check)){
+      warning("24 hour clock correction will return false results for any trip where total travel time exceeds 24 hours")
+    }
+  }
+
+  numb2time = function(numb){
+    numb = as.character(numb)
+    cnt = nchar(numb)
+    if(cnt == 4){
+      numb = paste0(substr(numb,1,2),":",substr(numb,3,4),":00")
+    }else if(cnt == 3){
+      numb = paste0("0",substr(numb,1,1),":",substr(numb,2,3),":00")
+    }else if(cnt == 2){
+      numb = paste0("00:",numb,":00")
+    }else if(cnt == 1){
+      numb = paste0("00:0",numb,":00")
+    }else{
+      error("Unknown Time Format")
+      stop()
+    }
+    return(numb)
+  }
+
+
+  stop_times2$arrival_time = sapply(stop_times2$arvfinal,numb2time)
+  stop_times2$departure_time = sapply(stop_times2$depfinal,numb2time)
+
+
+  stop_times2 = stop_times2[,c("trip_id","arrival_time","departure_time", "stop_id","stop_sequence","pickup_type","drop_off_type")]
+  return(stop_times2)
+
+}
+
+#' Clean Stops
+#'
+#' @details
+#' Some TIPLOCS have the same physical location, and some are unused this function cleans that up
+#'
+#' @param stop_times stop_times data.frame
+#' @param stops stops data.frame
+#'
+#'
+cleanstops = function(stop_times, stops){
+
 }

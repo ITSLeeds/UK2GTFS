@@ -192,6 +192,7 @@ importMSN <- function(file, silent = TRUE){
   alias = strip_whitespace(alias)
 
   result = list(station,timetable,comment,alias)
+  names(result) = c("station","timetable","comment","alias")
   return(result)
 }
 
@@ -448,5 +449,6 @@ importMCA <- function(file,silent = TRUE){
   ZZ$rowID = seq(from = 1, to = length(types))[types == "ZZ"]
 
   results = list(HD,TI,TA,TD,AA,BS,BX,LO,LI,LT,CR,ZZ)
+  names(results) = c("HD","TI","TA","TD","AA","BS","BX","LO","LI","LT","CR","ZZ")
   return(results)
 }

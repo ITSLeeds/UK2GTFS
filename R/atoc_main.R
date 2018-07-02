@@ -21,14 +21,18 @@ schedule2routes = function(mca,ncores = 1){
 
   # Remove Passing Stops as GTFS is only intrested in actual stops
   station.intermediate = station.intermediate[is.na(station.intermediate$`Scheduled Pass`),]
-  station.intermediate = station.intermediate[station.intermediate$`Public Departure` != "0000",]
-  station.intermediate = station.intermediate[station.intermediate$`Public Arrival` != "0000",]
+  #station.intermediate = station.intermediate[station.intermediate$`Public Departure` != "0000",]
+  #station.intermediate = station.intermediate[station.intermediate$`Public Arrival` != "0000",]
+  station.intermediate$`Scheduled Arrival Time` = substr(station.intermediate$`Scheduled Arrival Time`,1,4)
+  station.intermediate$`Scheduled Departure Time` = substr(station.intermediate$`Scheduled Departure Time`,1,4)
+  station.intermediate = station.intermediate[,c("Scheduled Arrival Time","Scheduled Departure Time","Location","rowID")]
+  names(station.intermediate) = c("arrival_time","departure_time","stop_id","rowID")
+
 
   # bind the station secions toghter into a single df
   station.origin = station.origin[,c("Public Departure Time","Location","rowID")]
   names(station.origin) = c("departure_time","stop_id","rowID")
-  station.intermediate = station.intermediate[,c("Public Arrival","Public Departure","Location","rowID")]
-  names(station.intermediate) = c("arrival_time","departure_time","stop_id","rowID")
+
   station.terminal = station.terminal[,c("Public Arrival Time","Location","rowID")]
   names(station.terminal) = c("arrival_time","stop_id","rowID")
 
@@ -45,7 +49,12 @@ schedule2routes = function(mca,ncores = 1){
   trip_ids = matchRoutes(schedule.rowID = schedule$rowID, stop_times.rowID = stop_times$rowID, ncores = ncores)
 
   stop_times = dplyr::left_join(stop_times,trip_ids, by = c("rowID" = "stop_times.rowID"))
-  names(stop_times) = c("departure_time","stop_id","rowID","arrival_time","trip_id")
+
+  #find stop times after midnight as these need to be changed to 24h + system
+
+
+
+  #names(stop_times) = c("departure_time","stop_id","rowID","arrival_time","trip_id")
 
   ### SECTION 2: ###############################################################################
   # make make the calendar.txt and calendar_dates.txt file from the schedule
@@ -54,14 +63,21 @@ schedule2routes = function(mca,ncores = 1){
   res = makeCalendar(schedule = schedule, ncores = ncores)
   calendar = res[[1]]
   calendar_dates = res[[2]]
-  rm(res)
+  #rm(res)
+
+  # When splitting the calendar roWIDs are duplicated
+  # so creat ne system of trip_ids and duplicate the relevant stop_times
+
+  calendar$trip_id = 1:nrow(calendar)
+  stop_times = duplicate.stop_times(calendar = calendar, stop_times = stop_times, ncores = ncores)
 
 
   ### SECTION 4: ###############################################################################
   # make make the routes.txt
   # a route is all the trips with a common start and end i.e. scheduels original UID
 
-  routes = schedule[!duplicated(schedule$`Train UID`),]
+  routes = schedule[schedule$`STP indicator` != "C",]
+  routes = routes[!duplicated(routes$`Train UID`),]
   routes = routes[,c("rowID","Train UID","Train Status")]
   #routes = dplyr::left_join(routes,stop_times,by = c("rowID" = "trip_id"))
 
@@ -90,7 +106,7 @@ schedule2routes = function(mca,ncores = 1){
   ### SECTION 3: ###############################################################################
   # make make the trips.txt  file by matching the calnedar to the stop_times
 
-  trips = calendar[c("UID","rowID")]
+  trips = calendar[c("UID","trip_id")]
   names(trips) = c("service_id","trip_id")
 
   route_id = strsplit(trips$service_id,  " ")
@@ -123,14 +139,15 @@ schedule2routes = function(mca,ncores = 1){
   stop_times$drop_off_type = 0
   stop_times$arrival_time[is.na(stop_times$arrival_time)] = stop_times$departure_time[is.na(stop_times$arrival_time)]
   stop_times$departure_time[is.na(stop_times$departure_time)] = stop_times$arrival_time[is.na(stop_times$departure_time)]
-  stop_times$arrival_time = paste0(substr(stop_times$arrival_time,1,2),":",substr(stop_times$arrival_time,3,4))
-  stop_times$departure_time = paste0(substr(stop_times$departure_time,1,2),":",substr(stop_times$departure_time,3,4))
+  #stop_times$arrival_time = paste0(substr(stop_times$arrival_time,1,2),":",substr(stop_times$arrival_time,3,4),":00")
+  #stop_times$departure_time = paste0(substr(stop_times$departure_time,1,2),":",substr(stop_times$departure_time,3,4),":00")
 
+  stop_times = afterMidnight(stop_times)
 
   #end of function
-  results =     list(calendar,   calendar_dates,  routes,  stop_times,  trips)
-  names(results) = c("calendar","calendar_dates","routes","stop_times","trips")
-  return(results)
+  timetables =     list(calendar,   calendar_dates,  routes,  stop_times,  trips)
+  names(timetables) = c("calendar","calendar_dates","routes","stop_times","trips")
+  return(timetables)
 
 
 
