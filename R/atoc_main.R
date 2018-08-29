@@ -6,7 +6,8 @@
 #' @param mca list of dataframs from the importMCA function
 #' @param path_out Path to save file to
 #'
-schedule2routes = function(mca,ncores = 1){
+schedule2routes = function(mca, silent = TRUE, ncores = 1){
+  if(!silent){message(paste0(Sys.time(),"This will take some time, make sure you use 'ncores' to enable multi-core processing"))}
   #list(HD,TI,TA,TD,AA,BS,BX,LO,LI,LT,CR,ZZ)
 
   #break out the relevant parts of the mca file
@@ -18,6 +19,7 @@ schedule2routes = function(mca,ncores = 1){
 
   ### SECTION 1: ###############################################################################
   # make stop_times.txt from the three station files
+  if(!silent){message(paste0(Sys.time(),"Building stop_times"))}
 
   # Remove Passing Stops as GTFS is only intrested in actual stops
   station.intermediate = station.intermediate[is.na(station.intermediate$`Scheduled Pass`),]
@@ -58,6 +60,7 @@ schedule2routes = function(mca,ncores = 1){
 
   ### SECTION 2: ###############################################################################
   # make make the calendar.txt and calendar_dates.txt file from the schedule
+  if(!silent){message(paste0(Sys.time(),"Building calendar and calendar_dates"))}
 
   # build the calendar file
   res = makeCalendar(schedule = schedule, ncores = ncores)
@@ -97,7 +100,9 @@ schedule2routes = function(mca,ncores = 1){
   routes = routes[,c("rowID","route_id","route_type","agency_id")]
   routes$route_short_name = routes$route_id
 
-  #make the long names from the desitnation and time
+  # make the long names from the desitnation and time
+  if(!silent){message(paste0(Sys.time(),"Building long route names"))}
+
   route_long_name = longnames(routes = routes, stop_times = stop_times, ncores = ncores)
   routes$route_long_name = route_long_name
   routes =  routes[,c("route_id","agency_id","route_short_name","route_long_name","route_type")]

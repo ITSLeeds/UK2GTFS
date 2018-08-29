@@ -46,7 +46,7 @@ atoc2gtfs <- function(path_in,path_out, silent = TRUE, ncores = 1){
   stops.list = station2stops(station = station, TI = TI)
   stops = stops.list[["stops"]]
   stops.lookup = stops.list[["lookup"]]
-  timetables = schedule2routes(mca = mca, ncores = ncores)
+  timetables = schedule2routes(mca = mca, silent = silent, ncores = ncores)
 
   calendar = timetables[["calendar"]]
   calendar_dates = timetables[["calendar_dates"]]
