@@ -6,20 +6,10 @@
 #'
 #' @param path_in Path to ATOC File
 #' @param path_out Path to where GTFS files should be saved
-#' @inheritParams
-#' @seealso
+#' @param silent Logical, should progress be shown
+#' @param ncores Numeric, When parallel processing how many cores to use
 #' @export
-#' @examples
-#' \dontrun{
-#' from = c(-0.134649,51.529258) # Euston Station
-#' to = c(-0.088780,51.506383) # Bridge House
-#' r1 = journey(from, to)
-#' r2 = journey(from, to, apitype = "car")
 #' }
-path_out =  "D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs"
-path_in =  "D:/Users/earmmor/OneDrive - University of Leeds/Routing/ttis898.zip"
-ncores = 7
-silent = TRUE
 atoc2gtfs <- function(path_in,path_out, silent = TRUE, ncores = 1){
 
   # Is input a zip or a folder

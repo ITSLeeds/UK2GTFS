@@ -6,12 +6,6 @@
 #' @param trips trips data.frame
 #'
 #'
-trips = read.csv("D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs/trips.txt",, stringsAsFactors = F)
-routes = read.csv("D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs/routes.txt", stringsAsFactors = F)
-stop_times = read.csv("D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs/stop_times.txt", stringsAsFactors = F)
-#stops = read.csv("D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs/stops.txt")
-stops = sf::st_read("D:/Users/earmmor/OneDrive - University of Leeds/Routing/osm/stops_fixed.shp")
-
 trips2shapes = function(trips, routes, stops, stop_times, ncores = 1){
   # remove bus and boat routes
   routes = routes[routes$route_type == 2, ]

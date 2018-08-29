@@ -1,0 +1,38 @@
+---
+title: "Vignette Title"
+author: "Vignette Author"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## Making a GTFS file from the ATOC Data
+
+
+
+```{r setup, eval=FALSE}
+path_out =  "D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs"
+path_in =  "D:/Users/earmmor/OneDrive - University of Leeds/Routing/ttis898.zip"
+ncores = 6
+silent = FALSE
+source("../R/atoc.R")
+source("../R/atoc_export.R")
+source("../R/atoc_import.R")
+source("../R/atoc_main.R")
+
+```
+
+## Making Shapes 
+
+```{r, eval=FALSE}
+trips = read.csv("D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs/trips.txt",, stringsAsFactors = F)
+routes = read.csv("D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs/routes.txt", stringsAsFactors = F)
+stop_times = read.csv("D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs/stop_times.txt", stringsAsFactors = F)
+#stops = read.csv("D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs/stops.txt")
+stops = sf::st_read("D:/Users/earmmor/OneDrive - University of Leeds/Routing/osm/stops_fixed.shp")
+```
+
+

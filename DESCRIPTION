@@ -13,4 +13,6 @@ Imports:
   dplyr,
   sf,
   parallel
-  
+Suggests: knitr,
+    rmarkdown
+VignetteBuilder: knitr

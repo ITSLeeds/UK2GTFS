@@ -12,11 +12,16 @@ library(stplanr)
 tmap_mode("view")
 
 rail = st_read("D:/Users/earmmor/OneDrive - University of Leeds/Routing/osm/railways_clean_simplified35_split2.shp")
-names(rail)= c("id","geometry")
+#names(rail)= c("id","geometry")
 rail$railway = "rail"
+rail$id = 1:nrow(rail)
+rail = rail[,c("id","railway")]
 
 st_crs(rail) =  27700
 rail = st_transform(rail, 4326)
+
+st_write(rail,"data/railways_simplified.geojson", delete_dsn = TRUE)
+
 
 # buffer out as we only want stops near the rail lines
 # rail_buff = st_transform(rail, 27700)
@@ -24,7 +29,8 @@ rail = st_transform(rail, 4326)
 # rail_buff = st_transform(rail_buff, 4326)
 
 # Find the Stations
-stations = read.csv("D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs/stops.txt")
+#stations = read.csv("D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs/stops.txt")
+stations = st_read("D:/Users/earmmor/OneDrive - University of Leeds/Routing/osm/stops_fixed.shp")
 #stations = st_transform(stations, 27700)
 # stations_coods = st_coordinates(stations)
 # stations = cbind(stations,stations_coods)
@@ -146,25 +152,26 @@ paths2sf <- function(dp, graph){
 #investigate why there are so many diconnecte graphss
 table = as.data.frame(table(graph$component))
 
-graph2sf = function(graph){
+graph2sf = function(graph, crs){
 
   intfun = function(i){
-    ls <- st_linestring(rbind(c(graph$from_lon[i],graph$from_lat[i]),c(graph$to_lon[i],graph$to_lat[i])))
+    ls <- sf::st_linestring(rbind(c(graph$from_lon[i],graph$from_lat[i]),c(graph$to_lon[i],graph$to_lat[i])))
     return(ls)
   }
   geom = lapply(1:nrow(graph), intfun)
-  geom = st_sfc(geom)
+  geom = sf::st_sfc(geom)
 
 
   graph = graph[,c("geom_num","edge_id","from_id","to_id","d","d_weighted","way_id","component")]
   graph$geometry = geom
-  graph = st_sf(graph)
-  st_crs(graph) = 4326
+  graph = sf::st_sf(graph)
+  sf::st_crs(graph) = crs
   return(graph)
 }
 
-graph.sf = graph2sf(graph)
-st_write(graph.sf,"D:/Users/earmmor/OneDrive - University of Leeds/Routing/osm/railways_simplified_components.shp", delete_dsn = TRUE)
+graph.sf = graph2sf(graph, 27700)
+graph.sf = graph.sf[graph.sf$component != 1,]
+sf::st_write(graph.sf,"D:/Users/earmmor/OneDrive - University of Leeds/Routing/osm/railways_simplified_components.shp", delete_dsn = TRUE)
 #plot(graph.sf, col = graph$component)
 
 subgraph = dodgr_components(graph)

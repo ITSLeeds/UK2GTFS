@@ -1,5 +1,9 @@
 # To Do LIST
 
+## General
+# support requiest only stops e.g. Bugle and Roche
+
+
 ### agency.txt
 # not aviaible in data so bundle with package
 
