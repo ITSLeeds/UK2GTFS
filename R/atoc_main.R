@@ -7,19 +7,19 @@
 #' @param path_out Path to save file to
 #'
 schedule2routes = function(mca, silent = TRUE, ncores = 1){
-  if(!silent){message(paste0(Sys.time(),"This will take some time, make sure you use 'ncores' to enable multi-core processing"))}
+  if(!silent){message(paste0(Sys.time()," This will take some time, make sure you use 'ncores' to enable multi-core processing"))}
   #list(HD,TI,TA,TD,AA,BS,BX,LO,LI,LT,CR,ZZ)
 
   #break out the relevant parts of the mca file
-  schedule = mca[[6]]
-  schedule.extra = mca[[7]]
-  station.origin = mca[[8]]
-  station.intermediate = mca[[9]]
-  station.terminal = mca[[10]]
+  schedule = mca[["BS"]]
+  schedule.extra = mca[["BX"]]
+  station.origin = mca[["LO"]]
+  station.intermediate = mca[["LI"]]
+  station.terminal = mca[["LT"]]
 
   ### SECTION 1: ###############################################################################
   # make stop_times.txt from the three station files
-  if(!silent){message(paste0(Sys.time(),"Building stop_times"))}
+  if(!silent){message(paste0(Sys.time()," Building stop_times"))}
 
   # Remove Passing Stops as GTFS is only intrested in actual stops
   station.intermediate = station.intermediate[is.na(station.intermediate$`Scheduled Pass`),]

@@ -247,7 +247,7 @@ splitDates = function(cal){
 #' internal function for matching stop_times to the basic schdule
 #'
 #' @details
-#' Takes in a row of the schdedule and then gets the next row (schedule must be sored by rowID)
+#' Takes in a row of the schdedule and then gets the next row (schedule must be sorted by rowID)
 #'
 #' @param schedule.rowID rowID field from schedule object
 #' @param stop_times.rowID rowID field from stop_times object
@@ -277,38 +277,6 @@ matchRoutes = function(schedule.rowID, stop_times.rowID, ncores = 1){
   return(result)
 }
 
-# matchRoutes = function(i,length_todo){
-#   if(i != length_todo){
-#     schedule.sub = schedule[c(i,i+1), ]
-#     #if(schedule.sub$`STP indicator`[1] != "C"){ #Cancelations don have stop pattern
-#       sub.rowID1 = schedule.sub$rowID[1]
-#       sub.rowID2 = schedule.sub$rowID[2]
-#       #sub.UID = schedule.sub$`Train UID`[1]
-#       #rows.todo = stop_times$rowID[which(stop_times$rowID > sub.rowID1)]
-#       #rows.todo = rows.todo[which(rows.todo < sub.rowID2)]
-#       rows.todo = stop_times$rowID[dplyr::between(stop_times$rowID, sub.rowID1, sub.rowID2)]
-#     #}else{
-#     #  rows.todo = NA
-#     #}
-#   }else{
-#     schedule.sub = schedule[i, ]
-#     sub.rowID1 = schedule.sub$rowID[1]
-#     sub.UID = schedule.sub$`Train UID`[1]
-#     rows.todo = stop_times$rowID[stop_times$rowID > sub.rowID1]
-#   }
-#   if(length(rows.todo) > 0){
-#     res = data.frame(rowID = rows.todo, trip_id = sub.rowID1)
-#   }else{
-#     res = NA
-#   }
-#
-#   if(i %% 1000 == 0){
-#     message(paste0("done ",i))
-#   }
-#
-#   return(res)
-#
-# }
 
 #
 #' internal function for cleaning calendar
@@ -350,32 +318,22 @@ checkrows = function(i){
 #' @param routes stop_times data.frame
 #' @param ncores number of processes for parallel processing (default = 1)
 #'
-longnames = function(routes,stop_times,ncores = 1){
+longnames = function(routes,stop_times){
 
-  stop_times_sub = stop_times[is.na(stop_times$arrival_time) | is.na(stop_times$departure_time), ]
+  stop_times_sub = dplyr::group_by(stop_times, trip_id)
+  stop_times_sub = dplyr::summarise(stop_times_sub,
+                                    schedule = unique(schedule),
+                                    stop_a = stop_id[stop_sequence == 1],
+                                    stop_b = stop_id[stop_sequence == max(stop_sequence)]
+                                    )
 
-  # internal function
-  longnames.internal = function(i){
-    route_rowID = routes$rowID[i]
-    stops_tmp = stop_times_sub[stop_times_sub$trip_id == route_rowID,]
-    origin = stops_tmp$stop_id[is.na(stops_tmp$arrival_time)][1]
-    destination = stops_tmp$stop_id[is.na(stops_tmp$departure_time)][1]
-    time = stops_tmp$departure_time[is.na(stops_tmp$arrival_time)][1]
-    route_name = paste0(time," from ",origin," to ",destination)
-    return(route_name)
-  }
+  stop_times_sub$route_long_name = paste0("Train from ",stop_times_sub$stop_a," to ",stop_times_sub$stop_b)
+  stop_times_sub = stop_times_sub[!duplicated(stop_times_sub$schedule),]
+  stop_times_sub = stop_times_sub[,c("schedule","route_long_name")]
 
-  if(ncores == 1){
-    res = sapply(seq(1,nrow(routes)),longnames.internal)
-  }else{
-    CL <- parallel::makeCluster(ncores) #make clusert and set number of core
-    parallel::clusterExport(cl = CL, varlist=c("routes", "stop_times_sub"), envir = environment())
-    parallel::clusterExport(cl = CL, c('longnames.internal'), envir = environment() )
-    res = parallel::parSapply(cl = CL, X = seq(1,nrow(routes)), FUN = longnames.internal)
-    parallel::stopCluster(CL)
-  }
+  routes = dplyr::left_join(routes, stop_times_sub, by = c("rowID" ="schedule"))
 
-  return(res)
+  return(routes)
 
 
 }
@@ -548,6 +506,68 @@ duplicate.stop_times = function(calendar,stop_times,ncores = 1){
   return(stop_times.comb)
 }
 
+#' Duplicate stop_times
+#'
+#' @details
+#' Function that duplicates top times for trips that have been split into multiple trips
+#'
+#' @param calendar calendar data.frame
+#' @param stop_times stop_times data.frame
+#' @param ncores number of processes for parallel processing (default = 1)
+#'
+duplicate.stop_times_alt = function(calendar,stop_times,ncores = 1){
+  calendar.nodup = calendar[!duplicated(calendar$rowID),]
+  calendar.dup = calendar[duplicated(calendar$rowID),]
+  rowID.unique = as.data.frame(table(calendar.dup$rowID))
+  rowID.unique$Var1 = as.integer(as.character(rowID.unique$Var1))
+
+  duplicate.stop_times.int = function(i){
+    stop_times.tmp = stop_times[stop_times$schedule == rowID.unique$Var1[i],]
+    reps = rowID.unique$Freq[i]
+    index =rep(seq(1,reps),nrow(stop_times.tmp))
+    index = index[order(index)]
+    stop_times.tmp = stop_times.tmp[rep(seq(1,nrow(stop_times.tmp)), reps),]
+    stop_times.tmp$index = index
+    return(stop_times.tmp)
+  }
+
+  if(ncores == 1){
+    stop_times.dup = lapply(1:length(rowID.unique$Var1),duplicate.stop_times.int)
+  }else{
+    CL <- parallel::makeCluster(ncores) #make clusert and set number of core
+    parallel::clusterExport(cl = CL, varlist=c("rowID.unique", "calendar.dup","stop_times"), envir = environment())
+    #parallel::clusterEvalQ(cl = CL, {library(dplyr)})
+    stop_times.dup = parallel::parLapply(cl = CL,1:length(rowID.unique$Var1),duplicate.stop_times.int)
+    parallel::stopCluster(CL)
+  }
+
+  stop_times.dup = dplyr::bind_rows(stop_times.dup)
+
+  #Join on the nonduplicated trip_ids
+  trip.ids.nodup = calendar.nodup[,c("rowID","trip_id")]
+  stop_times = dplyr::left_join(stop_times,trip.ids.nodup, by = c("schedule" = "rowID"))
+  stop_times = stop_times[!is.na(stop_times$trip_id),] #when routes are cancled their stop times are left without valid trip_ids
+
+  #join on the duplicated trip_ids
+  calendar2 =  dplyr::group_by(calendar, rowID)
+  calendar2 =  dplyr::mutate(calendar2,Index=1:n())
+
+  stop_times.dup$index2 = as.integer(stop_times.dup$index + 1)
+  trip.ids.dup = calendar2[,c("rowID","trip_id","Index")]
+  trip.ids.dup = as.data.frame(trip.ids.dup)
+  stop_times.dup = dplyr::left_join(stop_times.dup,trip.ids.dup, by = c("schedule" = "rowID", "index2" = "Index"))
+  stop_times.dup = stop_times.dup[,c("arrival_time","departure_time","stop_id","stop_sequence",
+                                     "pickup_type", "drop_off_type","rowID","schedule","trip_id")]
+
+  #stop_times.dup = stop_times.dup[order(stop_times.dup$rowID),]
+
+  stop_times.comb = rbind(stop_times, stop_times.dup)
+
+  return(stop_times.comb)
+}
+
+
+
 #' fix times fro jounrye that run past midnight
 #'
 #' @details
@@ -573,7 +593,7 @@ afterMidnight = function(stop_times, safe = TRUE){
                                         dept_first = dept[stop_sequence == 1]
                                         )
 
-  stop_times2 = left_join(stop_times2,stop_times.summary, by = "trip_id")
+  stop_times2 = dplyr::left_join(stop_times2,stop_times.summary, by = "trip_id")
   stop_times2$arvfinal = ifelse(stop_times2$arv < stop_times2$dept_first, stop_times2$arv + 2400, stop_times2$arv)
   stop_times2$depfinal = ifelse(stop_times2$dept < stop_times2$dept_first, stop_times2$dept + 2400, stop_times2$dept)
 
@@ -631,4 +651,47 @@ afterMidnight = function(stop_times, safe = TRUE){
 #'
 cleanstops = function(stop_times, stops){
 
+}
+
+
+#' Clean Activities
+#'
+#' @details
+#' Change Activities code to pickup and drop_off
+#'
+#'
+clean_activities = function(x){
+  if("T" %in% x){
+    return(c(0,0))
+  }else if("U" %in% x){
+    return(c(0,1))
+  }else if("TF" %in% x){
+    return(c(1,0))
+  }else if("D" %in% x){
+    return(c(1,0))
+  }else if("TFN" %in% x){
+    return(c(1,0))
+  }else if("TFT" %in% x){
+    return(c(1,0))
+  }else if("TFRM" %in% x){
+    return(c(1,0))
+  }else if("TFD" %in% x){
+    return(c(1,0))
+  }else if("TF-D" %in% x){
+    return(c(1,0))
+  }else if("TFTW" %in% x){
+    return(c(1,0))
+  }else if("TFX" %in% x){
+    return(c(1,0))
+  }else if("TF-U" %in% x){
+    return(c(1,0))
+  }else if("TFS" %in% x){
+    return(c(1,1))
+  }else if("TFR" %in% x){
+    return(c(1,0))
+  }else if("TFU" %in% x){
+    return(c(0,0))
+  }else{
+    message(paste0("Unknown ",paste(x, " ")))
+  }
 }
