@@ -77,8 +77,9 @@ importMCA_alt <- function(file, silent = TRUE, ncores = 1){
   LO$Spare = NULL
   LO$`Record Identity` = NULL
   LO = strip_whitespace(LO)
+  LO$`Scheduled Departure Time` = gsub("H","",LO$`Scheduled Departure Time`)
 
-  LO = LO[,c("Location","Public Departure Time")]
+  LO = LO[,c("Location","Scheduled Departure Time")]
 
   # Add the rowid
   LO$rowID = seq(from = 1, to = length(types))[types == "LO"]
@@ -106,7 +107,11 @@ importMCA_alt <- function(file, silent = TRUE, ncores = 1){
            )
 
   LI = LI[sapply(strsplit(LI$Activity, " "),function(x){any(acts %in% x)}),]
-  LI = LI[,c("Location","Public Arrival Time","Public Departure Time","Activity","rowID")]
+  # Check for errors in the times
+  LI$`Scheduled Arrival Time` = gsub("H","",LI$`Scheduled Arrival Time`)
+  LI$`Scheduled Departure Time` = gsub("H","",LI$`Scheduled Departure Time`)
+
+  LI = LI[,c("Location","Scheduled Arrival Time","Scheduled Departure Time","Activity","rowID")]
 
 
 
@@ -121,8 +126,9 @@ importMCA_alt <- function(file, silent = TRUE, ncores = 1){
   LT$Spare = NULL
   LT$`Record Identity` = NULL
   LT = strip_whitespace(LT)
+  LT$`Scheduled Arrival Time` = gsub("H","",LT$`Scheduled Arrival Time`)
 
-  LT = LT[,c("Location","Public Arrival Time","Activity")]
+  LT = LT[,c("Location","Scheduled Arrival Time","Activity")]
 
   # Add the rowid
   LT$rowID = seq(from = 1, to = length(types))[types == "LT"]

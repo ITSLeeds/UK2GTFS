@@ -47,37 +47,39 @@ station2stops = function(station, TI){
 
   stops = jnd[,c("CRS","TIPLOC code","name")]
   stops = stops[!sf::st_is_empty(stops),]
-  # check for duplicates
-  stops$dup.loc = duplicated(stops$geometry)
-  stops$dup.crs = duplicated(stops$CRS)
+  # # check for duplicates
+  # stops$dup.loc = duplicated(stops$geometry)
+  # stops$dup.crs = duplicated(stops$CRS)
+  #
+  # stops.problem.loc = unique(stops$geometry[stops$dup.loc])
+  # stops.problem.crs = unique(stops$CRS[stops$dup.crs])
+  #
+  # # separate out simple and duplicate cases
+  # stops.clean = stops[!(stops$CRS %in% stops.problem.crs) & !(stops$geometry %in% stops.problem.loc),]
+  # stops.problem = stops[(stops$CRS %in% stops.problem.crs) | (stops$geometry %in% stops.problem.loc),]
+  #
+  # stops.problem.summary = dplyr::group_by(stops.problem, CRS)
+  # stops.problem.summary = dplyr::summarise(stops.problem.summary,
+  #                                          nCRS = n(),
+  #                                          nLoc = length(unique(geometry)))
+  # #multiple CRS with same locations is just multiple TIPLOCs for same station
+  # stops.problem.tidy = stops.problem[stops.problem$CRS %in% stops.problem.summary$CRS[stops.problem.summary$nLoc == 1],]
+  # stops.problem.messy = stops.problem[stops.problem$CRS %in% stops.problem.summary$CRS[stops.problem.summary$nLoc != 1],]
+  # stops.problem.tidy = stops.problem.tidy[!duplicated(stops.problem.tidy$CRS),]
+  #
+  # # for no discarding multiple locations
+  # stops.problem.messy2 = stops.problem.messy[!duplicated(stops.problem.messy$CRS),]
+  #
+  # stops.final = suppressWarnings(dplyr::bind_rows(stops.clean,stops.problem.tidy))
+  # stops.final = suppressWarnings(dplyr::bind_rows(stops.final,stops.problem.messy2))
 
-  stops.problem.loc = unique(stops$geometry[stops$dup.loc])
-  stops.problem.crs = unique(stops$CRS[stops$dup.crs])
-
-  # separate out simple and duplicate cases
-  stops.clean = stops[!(stops$CRS %in% stops.problem.crs) & !(stops$geometry %in% stops.problem.loc),]
-  stops.problem = stops[(stops$CRS %in% stops.problem.crs) | (stops$geometry %in% stops.problem.loc),]
-
-  stops.problem.summary = dplyr::group_by(stops.problem, CRS)
-  stops.problem.summary = dplyr::summarise(stops.problem.summary,
-                                           nCRS = n(),
-                                           nLoc = length(unique(geometry)))
-  #multiple CRS with same locations is just multiple TIPLOCs for same station
-  stops.problem.tidy = stops.problem[stops.problem$CRS %in% stops.problem.summary$CRS[stops.problem.summary$nLoc == 1],]
-  stops.problem.messy = stops.problem[stops.problem$CRS %in% stops.problem.summary$CRS[stops.problem.summary$nLoc != 1],]
-  stops.problem.tidy = stops.problem.tidy[!duplicated(stops.problem.tidy$CRS),]
-
-  # for no discarding multiple locations
-  stops.problem.messy2 = stops.problem.messy[!duplicated(stops.problem.messy$CRS),]
-
-  stops.final = suppressWarnings(dplyr::bind_rows(stops.clean,stops.problem.tidy))
-  stops.final = suppressWarnings(dplyr::bind_rows(stops.final,stops.problem.messy2))
+  stops.final = stops
 
   stops.final = as.data.frame(stops.final)
   stops.final$geometry = sf::st_sfc(stops.final$geometry)
   stops.final = sf::st_sf(stops.final)
   sf::st_crs(stops.final) = 4326
-  stops.final = stops.final[,c("CRS","TIPLOC code", "name","geometry")]
+  stops.final = stops.final[,c("TIPLOC code","CRS", "name","geometry")]
 
   # recorder the match the GTFS stops.txt
   names(stops.final) = c("stop_id","stop_code","stop_name","geometry")
