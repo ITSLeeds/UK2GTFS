@@ -180,10 +180,18 @@ splitDates = function(cal){
       new.UID = cal$UID[cal$STP == match & cal$start_date <= st_tmp &  cal$end_date >= ed_tmp ]
       new.Days = cal$Days[cal$STP == match & cal$start_date <= st_tmp &  cal$end_date >= ed_tmp ]
       new.roWID = cal$rowID[cal$STP == match & cal$start_date <= st_tmp &  cal$end_date >= ed_tmp ]
+      new.ATOC = cal$`ATOC Code`[cal$STP == match & cal$start_date <= st_tmp &  cal$end_date >= ed_tmp ]
+      new.Retail = cal$`Retail Train ID`[cal$STP == match & cal$start_date <= st_tmp &  cal$end_date >= ed_tmp ]
+      new.head = cal$Headcode[cal$STP == match & cal$start_date <= st_tmp &  cal$end_date >= ed_tmp ]
+      new.Status = cal$`Train Status`[cal$STP == match & cal$start_date <= st_tmp &  cal$end_date >= ed_tmp ]
       if(length(new.UID) == 1){
         cal.new$UID[j]   =  new.UID
         cal.new$Days[j]  =  new.Days
         cal.new$rowID[j] =  new.roWID
+        cal.new$`ATOC Code`[j] =  new.ATOC
+        cal.new$`Retail Train ID`[j] =  new.Retail
+        cal.new$`Train Status`[j] =  new.Status
+        cal.new$Headcode[j] =  new.head
         cal.new$STP[j] = match
       }else if(length(new.UID) > 1){
         message("Going From")
@@ -324,6 +332,7 @@ longnames = function(routes,stop_times){
   stop_times_sub = dplyr::summarise(stop_times_sub,
                                     schedule = unique(schedule),
                                     stop_a = stop_id[stop_sequence == 1],
+                                    #seq = min(stop_sequence),
                                     stop_b = stop_id[stop_sequence == max(stop_sequence)]
                                     )
 
@@ -348,10 +357,10 @@ longnames = function(routes,stop_times){
 #'
 makeCalendar = function(schedule, ncores = 1){
   #prep the inputs
-  calendar = schedule[,c("Train UID","Date Runs From", "Date Runs To","Days Run","STP indicator","rowID")]
+  calendar = schedule[,c("Train UID","Date Runs From", "Date Runs To","Days Run","STP indicator","rowID","Headcode","ATOC Code","Retail Train ID","Train Status")]
   calendar$`STP indicator` = as.character(calendar$`STP indicator`)
   #calendar = calendar[order(-calendar$`STP indicator`),]
-  names(calendar) = c("UID","start_date", "end_date","Days","STP",  "rowID"  )
+  names(calendar) = c("UID","start_date", "end_date","Days","STP","rowID","Headcode","ATOC Code","Retail Train ID","Train Status")
   calendar$duration = calendar$end_date - calendar$start_date + 1
 
   UIDs = unique(calendar$UID)
@@ -522,6 +531,7 @@ duplicate.stop_times_alt = function(calendar,stop_times,ncores = 1){
   rowID.unique$Var1 = as.integer(as.character(rowID.unique$Var1))
 
   duplicate.stop_times.int = function(i){
+    message(i)
     stop_times.tmp = stop_times[stop_times$schedule == rowID.unique$Var1[i],]
     reps = rowID.unique$Freq[i]
     index =rep(seq(1,reps),nrow(stop_times.tmp))

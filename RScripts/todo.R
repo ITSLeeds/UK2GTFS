@@ -3,6 +3,9 @@
 ## General
 # support requiest only stops e.g. Bugle and Roche
 
+# propper handeling of light rail e.g. tyne an wear metro
+
+
 
 ### agency.txt
 # not aviaible in data so bundle with package

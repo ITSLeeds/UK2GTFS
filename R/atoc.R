@@ -12,7 +12,7 @@
 #' }
 atoc2gtfs <- function(path_in,path_out, silent = TRUE, ncores = 1){
 
-  if(ncores = 1){message(paste0(Sys.time()," This will take some time, make sure you use 'ncores' to enable multi-core processing"))}
+  if(ncores == 1){message(paste0(Sys.time()," This will take some time, make sure you use 'ncores' to enable multi-core processing"))}
   # Is input a zip or a folder
   if(grepl(".zip",path_in)){
     # Unzip
@@ -65,7 +65,7 @@ atoc2gtfs <- function(path_in,path_out, silent = TRUE, ncores = 1){
 
   # remove any stop_times at unknown stops
   # these are junctions that have scheduels arrive and departute times
-  stop_times = stop_times[stop_times$stop_id %in% stops$stop_id,]
+  #stop_times = stop_times[stop_times$stop_id %in% stops$stop_id,]
 
 
   timetables = schedule2routes_alt(stop_times = stop_times, schedule = schedule, silent = silent, ncores = ncores)
