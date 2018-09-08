@@ -54,6 +54,7 @@ atoc2gtfs <- function(path_in,path_out, silent = TRUE, ncores = 1){
   stop_times = stop_times[,c("Scheduled Arrival Time","Scheduled Departure Time","Location","stop_sequence","Activity","rowID","schedule")]
   names(stop_times) = c("arrival_time","departure_time","stop_id","stop_sequence","Activity","rowID","schedule")
 
+
   # change stop_times from TIPLOCS to CRS
   #stop_times = dplyr::left_join(stop_times, stops.lookup, by = c("stop_id" = "TIPLOC"))
   #stop_times = stop_times[,c("arrival_time","departure_time","match","stop_sequence","Activity","rowID","schedule")]
