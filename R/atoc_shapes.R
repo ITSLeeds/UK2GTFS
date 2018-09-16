@@ -11,39 +11,43 @@ trips2shapes = function(trips, routes, stops, stop_times, ncores = 1){
   routes = routes[routes$route_type == 2, ]
   trips = trips[trips$route_id %in% routes$route_id,]
   stop_times = stop_times[stop_times$trip_id %in% trips$trip_id,]
+  stops_rail = stops[stops$stop_id %in% stop_times$stop_id,]
 
   # read in map
-  rail = sf::st_read("D:/Users/earmmor/OneDrive - University of Leeds/Routing/osm/railways_clean_simplified36.shp")
-  rail = sf::st_transform(rail, 27700)
-  rail$railway = "rail"
-  rail$id = 1:nrow(rail)
+  rail = sf::st_read("./data/railway_dence.geojson")
+  rail = st_transform(rail, 27700)
+
+
+  #rail = sf::st_transform(rail, 27700)
+  #rail$railway = "rail"
+  #rail$id = 1:nrow(rail)
   # make graph
   # make a graph
-  wts = c(1)
-  names(wts) = as.character(unique(rail$railway))
-  graph = dodgr::weight_streetnet(rail, type_col = "railway", wt_profile = wts, id_col = "id")
+  wts = c(1,1)
+  names(wts) = as.character(unique(rail$type))
+  graph = dodgr::weight_streetnet(rail, type_col = "type", wt_profile = wts, id_col = "id")
 
   # match stops to graph
   verts = dodgr::dodgr_vertices(graph)
-  # stops.bng = sf::st_as_sf(stops, coords = c("stop_lon","stop_lat"), crs = 4326)
-  # stops.bng = st_transform(stops.bng, 27700)
-  # stops.bng.coords = st_coordinates(stops.bng)
-  # stops.bng$X = stops.bng.coords[,1]
-  # stops.bng$Y = stops.bng.coords[,2]
-  # stops.bng = as.data.frame(stops.bng)
-  stops.bng = sf::st_coordinates(stops)
-
-  near = RANN::nn2(data = verts[,c("x","y")], query = stops.bng[,c("X","Y")], k = 1)
+  stops.bng = sf::st_as_sf(stops_rail, coords = c("stop_lon","stop_lat"), crs = 4326)
+  stops.bng = st_transform(stops.bng, 27700)
+  stops.bng.coords = st_coordinates(stops.bng)
+  stops.bng$X = stops.bng.coords[,1]
+  stops.bng$Y = stops.bng.coords[,2]
+  stops.bng = as.data.frame(stops.bng)
+  #stops.bng = sf::st_coordinates(stops)
 
   #near = RANN::nn2(data = verts[,c("x","y")], query = stops[,c("stop_lon","stop_lat")], k = 1)
+
+  near = RANN::nn2(data = verts[,c("x","y")], query = stops.bng[,c("X","Y")], k = 1)
   near.dist = near[["nn.dists"]][,1]
   near.index = near[["nn.idx"]][,1]
 
-  stops$vert = near.index
-  stops$dist = near.dist
+  stops_rail$vert = near.index
+  stops_rail$dist = round(near.dist,2)
 
   #stops$vert[stops$dist > 100] = NA
-  foo = stops[stops$dist > 50 & stops$dist < 500,]
+  foo = stops_rail[stops_rail$dist > 50,]
   #foo = sf::st_as_sf(foo, coords = c("stop_lon","stop_lat"), crs = 4326)
   foo$geometry = st_sfc(foo$geometry)
   qtm(foo[,]) +
