@@ -171,6 +171,7 @@ graph2sf = function(graph, crs){
 
 graph.sf = graph2sf(graph, 27700)
 graph.sf = graph.sf[graph.sf$component != 1,]
+qtm(graph.sf)
 sf::st_write(graph.sf,"D:/Users/earmmor/OneDrive - University of Leeds/Routing/osm/railways_simplified_components.shp", delete_dsn = TRUE)
 #plot(graph.sf, col = graph$component)
 

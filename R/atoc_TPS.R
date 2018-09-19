@@ -7,16 +7,18 @@
 #'
 #' @export
 #'
+file = "D:/Users/earmmor/OneDrive - University of Leeds/NetworkRail/Reference Data/TPS_Data/XML_p.xml"
+#'
 import_TPS = function(file){
   tps <- xml2::read_xml(file)
   tps <- xml2::as_list(tps)
   bar = tps$doc
 
-  xmlfile <- xmlTreeParse(file)
-  topxml <- xmlRoot(xmlfile)
-  topxml <- xmlSApply(topxml, function(x) xmlSApply(x, xmlValue))
+  xmlfile <- XML::xmlTreeParse(file)
+  topxml <- XML::xmlRoot(xmlfile)
+  topxml <- XML::xmlSApply(topxml, function(x) XML::xmlSApply(x, XML::xmlValue))
 
-  data_df <- xmlToDataFrame(url)
+  #data_df <- XML::xmlToDataFrame(file)
 
 }
 
