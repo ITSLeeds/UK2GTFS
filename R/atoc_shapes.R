@@ -8,10 +8,10 @@
 #'
 trips2shapes = function(trips, routes, stops, stop_times, ncores = 1){
   # remove bus and boat routes
-  routes = routes[routes$route_type == 2, ]
-  trips = trips[trips$route_id %in% routes$route_id,]
-  stop_times = stop_times[stop_times$trip_id %in% trips$trip_id,]
-  stops_rail = stops[stops$stop_id %in% stop_times$stop_id,]
+  routes_rail = routes[routes$route_type == 2, ]
+  trips_rail = trips[trips$route_id %in% routes_rail$route_id,]
+  stop_times_rail = stop_times[stop_times$trip_id %in% trips_rail$trip_id,]
+  stops_rail = stops[stops$stop_id %in% stop_times_rail$stop_id,]
 
   # read in map
   rail = sf::st_read("./data/railway.geojson")
