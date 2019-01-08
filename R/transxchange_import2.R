@@ -1,12 +1,12 @@
 file = "C:/Users/Malcolm/Downloads/Traveline/EA/ea_20-2-A-y08-1.xml"
 
 
-transxchange_import <- function(file, run_debug = FALSE){
-  xml_data = XML::xmlToList(file)
-  #xml_data = xml2::as_list(xml2::read_xml(file))
-  #xml_data = xml_data[[1]]
+transxchange_import2 <- function(file, run_debug = FALSE){
+  #xml_data = XML::xmlToList(file)
+  xml_data2 = xml2::as_list(xml2::read_xml(file))
+  xml_data2 = xml_data2[[1]]
 
-  StopPoints = xml_data["StopPoints"]
+  StopPoints = xml_data2["StopPoints"]
   StopPoints = StopPoints[[1]]
 
   # Sometimes the Indicator variaible is missing
@@ -24,89 +24,153 @@ transxchange_import <- function(file, run_debug = FALSE){
   StopPoints <- data.frame(matrix(unlist(StopPoints), nrow=length(StopPoints), byrow=T),stringsAsFactors=T)
   names(StopPoints) <- c("StopPointRef","CommonName","Indicator","LocalityName","LocalityQualifier")
 
-  RouteSections = xml_data["RouteSections"][[1]]
+  RouteSections = xml_data2["RouteSections"][[1]]
 
   rs_clean <- function(rs){
-    rs_attr = rs[[".attrs"]]
+    rs_attr = attributes(rs)$id
     rs = rs[names(rs) == "RouteLink"]
     rs <- lapply(rs, function(x){tmp <- x$Distance
+                                ids <- attributes(x)$id
                                 if(is.null(tmp)){tmp <- NA}
+                                x$LinkID <- ids
                                 x$Distance <- tmp
-                                x <- x[c("From","To","Distance","Direction",".attrs")]
+                                x <- x[c("From","To","Distance","Direction","LinkID")]
                                 return(x)})
     rs =  data.frame(matrix(unlist(rs), nrow=length(rs), byrow=T),stringsAsFactors=FALSE)
-    names(rs) = c("From","To","Distance","Direction",".attrs")
-    rs$attrs.id = rs_attr
+    names(rs) = c("From","To","Distance","Direction","LinkID")
+    rs$SectionID = rs_attr
     return(rs)
   }
   RouteSections = lapply(RouteSections, rs_clean)
   RouteSections = dplyr::bind_rows(RouteSections)
   RouteSections[] <- lapply( RouteSections, factor)
 
-  Routes <- xml_data["Routes"][[1]]
+  Routes <- xml_data2["Routes"][[1]]
   Routes <- data.frame(matrix(unlist(Routes), nrow=length(Routes), byrow=T),stringsAsFactors=FALSE)
-  names(Routes) <- c("PrivateCode","Description","RouteSectionRef","attrs")
+  names(Routes) <- c("PrivateCode","Description","RouteSectionRef")
   Routes[] <- lapply(Routes, factor)
 
   jps_clean = function(jps){
-    nms = c("From.Activity","From.StopPointRef","From.TimingStatus","From..attrs.SequenceNumber",
-            "To.Activity","To.StopPointRef","To.TimingStatus","To..attrs.SequenceNumber",
-            "RouteLinkRef","RunTime",".attrs.id")
-    jps = lapply(jps,unlist)
-    jps = lapply(jps,function(x){x[nms]})
-    jps = jps[names(jps) == "JourneyPatternTimingLink"]
+    jptl_clean = function(jptl){
+      jptl_id = attributes(jptl)$id
+      jptl_from_seq = attributes(jptl$From)$SequenceNumber
+      jptl_to_seq = attributes(jptl$To)$SequenceNumber
+      jptl = unlist(jptl)
+      nms = names(jptl)
+      if(!"To.WaitTime" %in% nms){
+        jptl = c(jptl,NA)
+        names(jptl) = c(nms,"To.WaitTime")
+        nms = c("From.Activity","From.StopPointRef", "From.TimingStatus","To.WaitTime",
+                "To.Activity","To.StopPointRef","To.TimingStatus","RouteLinkRef","RunTime")
+        jptl = jptl[nms]
+      }
+      jptl = c(jptl_id,jptl,jptl_from_seq,jptl_to_seq)
+      names(jptl) = c("JPTL_ID",nms,"From.SequenceNumber","To.SequenceNumber")
+
+      return(jptl)
+    }
+
+    jps_id = attributes(jps)$id
+    jps = lapply(jps,jptl_clean)
+    # timelink_ids = lapply(jps, attributes)
+    # timelink_ids = sapply(timelink_ids, `[[`,2)
+    # jps = lapply(jps,unlist)
+    # jps = lapply(jps,function(x){x[nms]})
+    #jps = jps[names(jps) == "JourneyPatternTimingLink"]
     jps = data.frame(jps ,stringsAsFactors=FALSE)
     jps = t(jps)
-    jps = jps[1:(nrow(jps)-1),]
+    #jps = jps[1:(nrow(jps)-1),]
     jps = as.data.frame(jps, stringsAsFactors=FALSE)
     row.names(jps) = seq(1,nrow(jps))
     return(jps)
   }
 
-  JourneyPatternSections = xml_data["JourneyPatternSections"][[1]]
+  JourneyPatternSections = xml_data2["JourneyPatternSections"][[1]]
   JourneyPatternSections = lapply(JourneyPatternSections,jps_clean)
   JourneyPatternSections = dplyr::bind_rows(JourneyPatternSections)
   JourneyPatternSections[] <- lapply(JourneyPatternSections, factor)
 
-  Operators = xml_data["Operators"][[1]]
+  Operators = xml_data2["Operators"][[1]]
   Operators <- data.frame(matrix(unlist(Operators), nrow=length(Operators), byrow=T),stringsAsFactors=FALSE)
-  names(Operators) <- c("NationalOperatorCode","OperatorCode","OperatorShortName","OperatorNameOnLicence","TradingName","attrs")
+  names(Operators) <- c("NationalOperatorCode","OperatorCode","OperatorShortName","OperatorNameOnLicence","TradingName")
 
   sv_clean <- function(sv,run_debug){
-    sv_simple = data.frame(sv[c("ServiceCode","PrivateCode","Mode","Description","RegisteredOperatorRef")],stringsAsFactors = F)
-    sv_simple$StartDate <- sv$OperatingPeriod$StartDate
-    sv_simple$EndDate <- sv$OperatingPeriod$EndDate
+    sv_simple = data.frame(sv$ServiceCode[[1]],stringsAsFactors = F)
+    sv_simple$PrivateCode <- sv$PrivateCode[[1]]
+    sv_simple$Mode <- sv$Mode[[1]]
+    sv_simple$Description <- sv$Description[[1]]
+    sv_simple$RegisteredOperatorRef <- sv$RegisteredOperatorRef[[1]]
+    sv_simple$StartDate <- sv$OperatingPeriod$StartDate[[1]]
+    sv_simple$EndDate <- sv$OperatingPeriod$EndDate[[1]]
     sv_simple$DaysOfWeek <- paste(names(sv$OperatingProfile$RegularDayType$DaysOfWeek), collapse = " ")
     sv_simple$StopRequirements <- names(sv$StopRequirements)
-    sv_simple$Origin <- sv$StandardService$Origin
-    sv_simple$Destination <- sv$StandardService$Destination
-    sv_simple$LineName <- sv$Lines$Line$LineName
+    sv_simple$Origin <- sv$StandardService$Origin[[1]]
+    sv_simple$Destination <- sv$StandardService$Destination[[1]]
+    sv_simple$LineName <- sv$Lines$Line$LineName[[1]]
     sv_simple$BankHolidayNonOperation <- paste(names(sv$OperatingProfile$BankHolidayOperation$DaysOfNonOperation), collapse = " ")
     sv_simple$BankHolidayOperation <- paste(names(sv$OperatingProfile$BankHolidayOperation$DaysOfOperation), collapse = " ")
 
     sv_service <- sv$StandardService
     sv_service$Origin = NULL
     sv_service$Destination = NULL
-    if(!all(lengths(sv_service) == 4)){
-      message("Operational Strucutre Detected in Services")
-      tst <- sv_service[lengths(sv_service) != 4][[1]]
-      if(!tst$Operational$VehicleType$Description %in% c("Wheelchair Accessible","No Wheelchair Access",
-                                                         "Demand Responsive Services","Low Floor","Underground Train")){
-        message(paste0("Unknown Vehicle Type ",tst$Operational$VehicleType$Description))
-        stop()
+
+    jp_clean = function(jp){
+      jp_id = attributes(jp)$id[[1]]
+      jp_data = c(jp$Direction[[1]],
+                  jp$Operational$VehicleType$Description[[1]],
+                  jp$RouteRef[[1]],
+                  jp$JourneyPatternSectionRefs[[1]],
+                  jp_id)
+
+      names(jp_data) = c("Direction","VehicleType","RouteRef","JourneyPatternSectionRefs","JourneyPatternID")
+      return(jp_data)
+    }
+
+
+
+    if(run_debug){
+      jp_chk <- function(jp){
+        jp2 = jp
+        jp$Direction = NULL
+        jp$Operational$VehicleType$VehicleTypeCode = NULL
+        jp$Operational$VehicleType$Description = NULL
+        jp$RouteRef = NULL
+        jp$JourneyPatternSectionRefs = NULL
+        jp = unlist(jp)
+        if(!is.factor(jp)){
+          message("Unexpected strucutre in Jounrey Patterns")
+          print(jp)
+          stop()
+        }
+        return(NULL)
+
       }
-      sv_service <- lapply(sv_service, function(x){tmp <- x$Operational$VehicleType$Description
-                                                    if(is.null(tmp)){tmp <- ""}
-                                                    x$VehicleType <- tmp
-                                                    x$Operational <- NULL
-                                                    return(x)})
+      chk = lapply(sv_service,jp_chk)
+      rm(chk)
     }
-    sv_service = as.data.frame(matrix(unlist(sv_service), nrow = length(sv_service), byrow = T), stringsAsFactors = F)
-    if(ncol(sv_service) == 5){
-      names(sv_service) = c("Direction","RouteRef","JourneyPatternSectionRefs",".attrs","WheelChair")
-    }else{
-      names(sv_service) = c("Direction","RouteRef","JourneyPatternSectionRefs",".attrs")
-    }
+
+    sv_service = lapply(sv_service,jp_clean)
+
+    # if(!all(lengths(sv_service) == 4)){
+    #   message("Operational Strucutre Detected in Services")
+    #   tst <- sv_service[lengths(sv_service) != 4][[1]]
+    #   if(!tst$Operational$VehicleType$Description %in% c("Wheelchair Accessible","No Wheelchair Access",
+    #                                                      "Demand Responsive Services","Low Floor","Underground Train")){
+    #     message(paste0("Unknown Vehicle Type ",tst$Operational$VehicleType$Description))
+    #     stop()
+    #   }
+    #   sv_service <- lapply(sv_service, function(x){tmp <- x$Operational$VehicleType$Description
+    #                                                 if(is.null(tmp)){tmp <- ""}
+    #                                                 x$VehicleType <- tmp
+    #                                                 x$Operational <- NULL
+    #                                                 return(x)})
+    # }
+    # sv_service = as.data.frame(matrix(unlist(sv_service), nrow = length(sv_service), byrow = T), stringsAsFactors = F)
+    # if(ncol(sv_service) == 5){
+    #   names(sv_service) = c("Direction","RouteRef","JourneyPatternSectionRefs",".attrs","WheelChair")
+    # }else{
+    #   names(sv_service) = c("Direction","RouteRef","JourneyPatternSectionRefs",".attrs")
+    # }
 
 
     sv_nonoperation <- sv$OperatingProfile$SpecialDaysOperation$DaysOfNonOperation
@@ -149,7 +213,7 @@ transxchange_import <- function(file, run_debug = FALSE){
   }
 
 
-  Services = xml_data["Services"][[1]]
+  Services = xml_data2["Services"][[1]]
 
   if(run_debug){
     if(length(Services) > 1){
@@ -167,7 +231,7 @@ transxchange_import <- function(file, run_debug = FALSE){
   Services_NonOperation = Services[[3]]
   rm(Services)
 
-  VehicleJourneys = xml_data["VehicleJourneys"][[1]]
+  VehicleJourneys = xml_data2["VehicleJourneys"][[1]]
 
   vj_clean <- function(vj,run_debug){
     # break simple and complex parts
