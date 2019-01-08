@@ -87,6 +87,8 @@ transxchange2gtfs <- function(obj, run_debug = T){
                                   stringsAsFactors = F)
       stop_times_sub = dplyr::bind_rows(list(stop_times_top,stop_times_sub))
       stop_times_sub$cum_time = cumsum(stop_times_sub$total_time)
+      stop_times_sub$cum_time2 <- chron::chron(times. = vj_sub$DepartureTime[1], format = c("s"))
+      start_time = chron::chron(times. = vj_sub$DepartureTime[1], format = c("h:m:s"))
 
     }
 
