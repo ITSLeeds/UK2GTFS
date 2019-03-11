@@ -1,7 +1,7 @@
 source("R/transxchange_import.R")
 source("R/transxchange_import2.R")
 source("R/transxchange_import3.R")
-dir = "C:/Users/Malcolm/Downloads/Traveline/L/"
+dir = "E:/OneDrive - University of Leeds/Routing/TransitExchangeData/data_20180515"
 files = list.files(dir, full.names = T, recursive = T, pattern = ".xml")
 run_debug = T
 cl = parallel::makeCluster(4)
