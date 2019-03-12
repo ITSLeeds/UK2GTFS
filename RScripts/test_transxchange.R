@@ -1,9 +1,15 @@
 source("R/transxchange_import.R")
 source("R/transxchange_import2.R")
 source("R/transxchange_import3.R")
+source("R/transxchange_import5.R")
 dir = "E:/OneDrive - University of Leeds/Routing/TransitExchangeData/data_20180515"
 files = list.files(dir, full.names = T, recursive = T, pattern = ".xml")
 run_debug = T
+res_single = transxchange_import5(files[1], run_debug = run_debug)
+saveRDS(res_single, "example_import.Rds")
+
+
+
 cl = parallel::makeCluster(4)
 res = pbapply::pblapply(files[1:100], transxchange_import3, run_debug = run_debug, cl = cl)
 parallel::stopCluster(cl)

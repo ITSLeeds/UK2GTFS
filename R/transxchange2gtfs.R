@@ -1,4 +1,4 @@
-obj = readRDS("C:/Users/Malcolm/Downloads/TravelineR/ea_20-1-A-y08-1.Rds")
+obj = readRDS("example_import.Rds")
 
 transxchange2gtfs <- function(obj, run_debug = T){
   JourneyPatternSections  <-  obj[["JourneyPatternSections"]]
@@ -53,6 +53,7 @@ transxchange2gtfs <- function(obj, run_debug = T){
       message("Unknown time formats")
       stop()
     }
+    rm(chk)
   }
 
   JourneyPatternSections$RunTime <- clean_times(JourneyPatternSections$RunTime)
@@ -64,6 +65,32 @@ transxchange2gtfs <- function(obj, run_debug = T){
   names(stops) <- c("stop_id","stop_name")
 
   ## stop_times #################################
+  clean_activity <- function(x, type){
+    if(type == "pickup"){
+      if(x == "pickUp"){
+        x <- 0L
+      }else if(x =="pickUpAndSetDown"){
+        x <- 0L
+      }else if(x =="setDown"){
+        x <- 1L
+      }else{
+        stop(paste0(x," Invalid pickup type"))
+      }
+    }
+    if(type == "drop_off"){
+      if(x == "pickUp"){
+        x <- 1L
+      }else if(x =="pickUpAndSetDown"){
+        x <- 0L
+      }else if(x =="setDown"){
+        x <- 0L
+      }else{
+        stop(paste0(x," Invalid drop off type"))
+      }
+    }
+    x
+  }
+
   make_stop_times <- function(jps, vj, ss){
     jps[] <- lapply(jps, as.character)
     vj[] <- lapply(vj, as.character)
@@ -75,6 +102,7 @@ transxchange2gtfs <- function(obj, run_debug = T){
     jps <- split(jps, jps$JourneyPatternID)
     vj <- split(vj, vj$JourneyPatternRef)
     if(!identical(names(jps),names(vj))){message("Different Journey Patterns in jps and vj");stop()}
+    stop_times_all <- list()
     for(i in seq(1,length(jps))){
       jps_sub = jps[[i]]
       vj_sub = vj[[i]]
@@ -87,14 +115,24 @@ transxchange2gtfs <- function(obj, run_debug = T){
                                   stringsAsFactors = F)
       stop_times_sub = dplyr::bind_rows(list(stop_times_top,stop_times_sub))
       stop_times_sub$cum_time = cumsum(stop_times_sub$total_time)
-      stop_times_sub$cum_time2 <- chron::chron(times. = vj_sub$DepartureTime[1], format = c("s"))
-      start_time = chron::chron(times. = vj_sub$DepartureTime[1], format = c("h:m:s"))
-
+      stop_times_sub$cum_time <- lubridate::seconds_to_period(stop_times_sub$cum_time)
+      stop_times_sub$arrival_time <- stop_times_sub$cum_time + lubridate::hms(vj_sub$DepartureTime[1])
+      stop_times_sub$arrival_time <- sprintf('%02d:%02d:%02d', stop_times_sub$arrival_time@hour, stop_times_sub$arrival_time@minute, stop_times_sub$arrival_time@.Data)
+      stop_times_sub$departure_time <- stop_times_sub$arrival_time
+      stop_times_sub$pickup_type <- sapply(stop_times_sub$To.Activity, clean_activity, type = "pickup")
+      stop_times_sub$drop_off_type <- sapply(stop_times_sub$To.Activity, clean_activity, type = "drop_off")
+      stop_times_sub <- stop_times_sub[,c("JourneyPatternID","arrival_time","departure_time","To.StopPointRef","To.SequenceNumber","pickup_type","drop_off_type")]
+      names(stop_times_sub) <- c("trip_id","arrival_time","departure_time","stop_id","stop_sequence","pickup_type","drop_off_type")
+      stop_times_all[[i]] <- stop_times_sub
     }
+    stop_times_all <- dplyr::bind_rows(stop_times_all)
 
-
-
+    return(stop_times_all)
   }
+
+
+
+  stop_times <-  make_stop_times(jps = JourneyPatternSections, vj = VehicleJourneys, ss = StandardService)
 
 
   ## routes #####################################

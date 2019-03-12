@@ -11,7 +11,7 @@
 #' This function imports the raw transXchange XML files and converts them to a R readable format.
 #'
 
-transxchange_import4 <- function(file, export = NULL, run_debug = FALSE){
+transxchange_import5 <- function(file, export = NULL, run_debug = FALSE){
   if(run_debug){
     message(paste0(Sys.time()," doing file ",file))
   }
