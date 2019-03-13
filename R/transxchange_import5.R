@@ -136,6 +136,7 @@ transxchange_import5 <- function(file, export = NULL, run_debug = FALSE){
   Services <- xml2::as_list(Services)
 
   Services_main <- Services[c("ServiceCode","PrivateCode","Mode","Description","RegisteredOperatorRef")]
+  Services_main <- lapply(Services_main, unlist, recursive = TRUE)
   Services_main <- as.data.frame(t(Services_main))
   Services_main$StartDate <- Services$OperatingPeriod$StartDate[[1]]
   Services_main$EndDate <- Services$OperatingPeriod$EndDate[[1]]
