@@ -1,14 +1,39 @@
-source("R/transxchange_import.R")
-source("R/transxchange_import2.R")
-source("R/transxchange_import3.R")
+# source("R/transxchange_import.R")
+# source("R/transxchange_import2.R")
+# source("R/transxchange_import3.R")
 source("R/transxchange_import5.R")
+source("R/transxchange2gtfs.R")
+source("R/get_cal.R")
+source("R/write_gtfs.R")
+source("R/get_naptan.R")
+
 dir = "E:/OneDrive - University of Leeds/Routing/TransitExchangeData/data_20180515"
 files = list.files(dir, full.names = T, recursive = T, pattern = ".xml")
+file = files[1]
 run_debug = T
-res_single = transxchange_import5(files[1], run_debug = run_debug)
+naptan = get_naptan()
+cal = get_bank_holidays()
+
+
+x = 8
+res_single = transxchange_import5(files[x], run_debug = run_debug)
+gtfs_single = transxchange2gtfs(obj = res_single, run_debug = T, cal = cal, naptan = naptan)
+write_gtfs(gtfs = gtfs_single, folder = "export", name = gsub(".xml","",strsplit(files[x], "/")[[1]][7]))
+
+y = 1:10
+res_batch = lapply(files[y], transxchange_import5, run_debug = run_debug)
+gtfs_single = pbapply::pblapply(res_batch, transxchange2gtfs, run_debug = T, cal = cal, naptan = naptan)
+
+
+
+
+
 saveRDS(res_single, "example_import.Rds")
 
+Services_main <- res_single$Services_main
+routes <- gtfs_single$routes
 
+read.csv(stringsAsFactors = )
 
 cl = parallel::makeCluster(4)
 res = pbapply::pblapply(files[1:100], transxchange_import3, run_debug = run_debug, cl = cl)

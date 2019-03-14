@@ -10,6 +10,7 @@ get_naptan <- function(url = "http://naptan.app.dft.gov.uk/DataRequest/Naptan.as
 
   #clean file
   naptan <- naptan[,c("ATCOCode","NaptanCode","CommonName","Longitude","Latitude")]
+  names(naptan) <- c("stop_id","stop_code","stop_name","stop_lon","stop_lat")
 
   return(naptan)
 }

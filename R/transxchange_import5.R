@@ -122,7 +122,9 @@ transxchange_import5 <- function(file, export = NULL, run_debug = FALSE){
   }
   Operators <- xml2::xml_child(Operators,1)
   Operators <- xml2::as_list(Operators)
+  Operators <- unlist(Operators)
   Operators <- as.data.frame(t(Operators))
+
 
   ## Services ##########################################
   Services = xml2::xml_child(xml,"d1:Services")
@@ -137,7 +139,8 @@ transxchange_import5 <- function(file, export = NULL, run_debug = FALSE){
 
   Services_main <- Services[c("ServiceCode","PrivateCode","Mode","Description","RegisteredOperatorRef")]
   Services_main <- lapply(Services_main, unlist, recursive = TRUE)
-  Services_main <- as.data.frame(t(Services_main))
+  Services_main <- as.data.frame(Services_main, stringsAsFactors = FALSE)
+  #Services_main[] <- lapply(Services_main, unlist, recursive = TRUE)
   Services_main$StartDate <- Services$OperatingPeriod$StartDate[[1]]
   Services_main$EndDate <- Services$OperatingPeriod$EndDate[[1]]
   Services_main$DaysOfWeek <- paste(names(Services$OperatingProfile$RegularDayType$DaysOfWeek), collapse = " ")
