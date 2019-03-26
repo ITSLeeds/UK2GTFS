@@ -2,10 +2,11 @@
 # source("R/transxchange_import2.R")
 # source("R/transxchange_import3.R")
 source("R/transxchange_import5.R")
-source("R/transxchange2gtfs.R")
+source("R/transxchange2gtfs2.R")
 source("R/get_cal.R")
 source("R/write_gtfs.R")
 source("R/get_naptan.R")
+source("R/transxchange_functions.R")
 
 dir = "E:/OneDrive - University of Leeds/Routing/TransitExchangeData/data_20180515"
 files = list.files(dir, full.names = T, recursive = T, pattern = ".xml")
@@ -15,14 +16,14 @@ naptan = get_naptan()
 cal = get_bank_holidays()
 
 
-x = 8
+x = 58
 res_single = transxchange_import5(files[x], run_debug = run_debug)
 gtfs_single = transxchange2gtfs(obj = res_single, run_debug = T, cal = cal, naptan = naptan)
 write_gtfs(gtfs = gtfs_single, folder = "export", name = gsub(".xml","",strsplit(files[x], "/")[[1]][7]))
 
-y = 1:10
+y = 1:1000
 res_batch = lapply(files[y], transxchange_import5, run_debug = run_debug)
-gtfs_single = pbapply::pblapply(res_batch, transxchange2gtfs, run_debug = T, cal = cal, naptan = naptan)
+gtfs_batch = pbapply::pblapply(res_batch[55:60], transxchange2gtfs, run_debug = T, cal = cal, naptan = naptan)
 
 
 

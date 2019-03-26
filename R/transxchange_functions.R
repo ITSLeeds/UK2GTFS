@@ -1,0 +1,301 @@
+clean_times <- function(x){
+  x <- as.character(x)
+  x <- gsub("PT","",x)
+  x <- strsplit(x,"M")
+  #mins <- grepl("M",x)
+  #secs <- grepl("S",x)
+
+
+  help_times2 <- function(x_sub){
+    if(length(x_sub) == 2){
+      if(!grepl("S",x_sub[2])){stop("Unknwown Time Structure")}
+      time <- (as.integer(x_sub[1]) * 60) +  as.integer(gsub("S","",x_sub[2]))
+    }else if(length(x_sub) == 1){
+      if(grepl("S",x_sub)){
+        time <- as.integer(gsub("S","",x_sub))
+      }else if(is.na(x_sub)){
+        time <- 0
+      }else{
+        time <- (as.integer(x_sub) * 60)
+      }
+    }else{
+      stop("Terrible error")
+    }
+  }
+
+  # help_times <- function(x_sub, min_sub, secs_sub){
+  #   if(min_sub & secs_sub){
+  #     # Mins and Seconds
+  #     message("Mins and Secs")
+  #     stop()
+  #   }else if(min_sub & !secs_sub){
+  #     # Mins only
+  #     time <- as.numeric(gsub("M","",x_sub)) * 60
+  #   }else if(!min_sub & secs_sub){
+  #     # Secs only
+  #     time <- as.numeric(gsub("S","",x_sub))
+  #   }else if(!min_sub & !secs_sub){
+  #     # Neither, due to NAs
+  #     time <- 0
+  #   }else{
+  #     message("Terrible error")
+  #     stop()
+  #   }
+  #   #time <- unname(time)
+  #   return(time)
+  # }
+  #times <- unname(mapply(help_times, x_sub = x, min_sub = mins, secs_sub = secs, SIMPLIFY = T))
+  times <- sapply(x,help_times2)
+  return(times)
+}
+
+
+clean_route_type <- function(rt){
+  if(rt == "bus"){
+    return(3)
+  }else if(rt == "ferry"){
+    return(4)
+  }else{
+    stop(paste0("Unknown route_type ",rt))
+  }
+}
+
+clean_days <- function(days){
+  if(days == "MondayToFriday"){
+    days <- c(1,1,1,1,1,0,0)
+  }else if(days == "Monday"){
+    days <- c(1,0,0,0,0,0,0)
+  }else if(days == "Tuesday"){
+    days <- c(0,1,0,0,0,0,0)
+  }else if(days == "Wednesday"){
+    days <- c(0,0,1,0,0,0,0)
+  }else if(days == "Thursday"){
+    days <- c(0,0,0,1,0,0,0)
+  }else if(days == "Friday"){
+    days <- c(0,0,0,0,1,0,0)
+  }else if(days == "Saturday"){
+    days <- c(0,0,0,0,0,1,0)
+  }else if(days %in% c("Sunday","SundayHolidaysOnly")){
+    days <- c(0,0,0,0,0,0,1)
+  }else if(days == "HolidaysOnly"){
+    days <- c(0,0,0,0,0,0,0)
+  }else if(days == "SaturdaySundayHolidaysOnly"){
+    days <- c(0,0,0,0,0,1,1)
+  }else if(days %in% c("","MondayToSunday","MondayToFridaySaturdaySundayHolidaysOnly")){
+    days <- c(1,1,1,1,1,1,1)
+  }else if(days %in% c("SaturdayMondayToFriday","MondayToFridaySaturday","MondayToSaturday")){
+    days <- c(1,1,1,1,1,1,0)
+  }else if(days == "Monday Tuesday Wednesday Friday"){
+    days <- c(1,1,1,0,1,0,0)
+  }else if(days == "Monday Tuesday Thursday Friday"){
+    days <- c(1,1,0,1,1,0,0)
+  }else if(days == "Monday Friday"){
+    days <- c(1,0,0,0,1,0,0)
+  }else if(days == "Tuesday Friday"){
+    days <- c(0,1,0,0,1,0,0)
+  }else{
+    stop(paste0("Unknown day pattern: ",days))
+  }
+  names(days) <- NULL
+  days
+}
+
+
+break_up_holidays <- function(cal_dat, cl){
+  cal_dat <- cal_dat[cal_dat[[cl]] != "",]
+  if(nrow(cal_dat) == 0){
+    return(NULL)
+  }else{
+    cal_dat_holidays <- lapply(strsplit(cal_dat[[cl]], " "),function(x){x[x != ""]})
+    cal_dat <- cal_dat[rep(1:nrow(cal_dat), times = lengths(cal_dat_holidays)),]
+    cal_dat$hols <- unlist(cal_dat_holidays)
+    if(cl == "BankHolidaysOperate"){
+      cal_dat$exception_type <- 1L
+    }else{
+      cal_dat$exception_type <- 2L
+    }
+    cal_dat <- cal_dat[,c("JourneyPatternRef","hols","exception_type")]
+    return(cal_dat)
+  }
+
+}
+
+
+break_up_holidays2 <- function(cal_dat, cl){
+  cal_dat <- cal_dat[cal_dat[[cl]] != "",]
+  if(nrow(cal_dat) == 0){
+    return(NULL)
+  }else{
+    cal_dat_holidays <- lapply(strsplit(cal_dat[[cl]], " "),function(x){x[x != ""]})
+    cal_dat <- cal_dat[rep(1:nrow(cal_dat), times = lengths(cal_dat_holidays)),]
+    cal_dat$hols <- unlist(cal_dat_holidays)
+    if(cl == "BankHolidaysOperate"){
+      cal_dat$exception_type <- 1L
+    }else{
+      cal_dat$exception_type <- 2L
+    }
+    cal_dat <- cal_dat[,c("service_id_temp","hols","exception_type")]
+    return(cal_dat)
+  }
+
+}
+
+check_duplicate_holidays <- function(i){
+  cal_dat <- calendar_dates[i,]
+  if(cal_dat$exception_type == 2){
+    jpr <- calendar_dates$JourneyPatternRef[1]
+    hols <- calendar_dates$hols[1]
+    cal_sub <- calendar_dates[calendar_dates$JourneyPatternRef == jpr,]
+    cal_sub <- cal_sub[cal_sub$hols == hols,]
+    if(nrow(cal_sub) == 2){
+      return(FALSE)
+    }else if(nrow(cal_sub) == 1){
+      return(TRUE)
+    }else{
+      stop(paste0("Invalid number of rows ",i))
+    }
+  }else{
+    return(TRUE)
+  }
+
+}
+
+
+# to do, need to repete stops times for each departure time
+clean_activity <- function(x, type){
+  if(type == "pickup"){
+    if(x == "pickUp"){
+      x <- 0L
+    }else if(x =="pickUpAndSetDown"){
+      x <- 0L
+    }else if(x =="setDown"){
+      x <- 1L
+    }else{
+      stop(paste0(x," Invalid pickup type"))
+    }
+  }
+  if(type == "drop_off"){
+    if(x == "pickUp"){
+      x <- 1L
+    }else if(x =="pickUpAndSetDown"){
+      x <- 0L
+    }else if(x =="setDown"){
+      x <- 0L
+    }else{
+      stop(paste0(x," Invalid drop off type"))
+    }
+  }
+  x
+}
+
+
+expand_stop_times <- function(i, jps){
+  jps_sub <- jps[[i]]
+  trips_sub <- trips[trips$service_id == jps_sub$JourneyPatternID[1],]
+
+  st_sub = jps_sub[,c("To.StopPointRef","To.Activity","To.SequenceNumber","JourneyPatternID","To.WaitTime","To.TimingStatus","RunTime")]
+  names(st_sub) <- c("stop_id","To.Activity","stop_sequence","service_id","To.WaitTime","timepoint","RunTime")
+  st_top = data.frame(stop_id       = jps_sub$From.StopPointRef[1],
+                      To.Activity   = jps_sub$From.Activity[1],
+                      stop_sequence = "1",
+                      service_id    = jps_sub$JourneyPatternID[1],
+                      To.WaitTime   = 0,
+                      timepoint     = jps_sub$From.TimingStatus[1],
+                      RunTime       = 0,
+                      stringsAsFactors = F)
+  st_sub <- rbind(st_top, st_sub)
+  st_sub$RunTime <- as.integer(st_sub$RunTime)
+  st_sub$To.WaitTime <- as.integer(st_sub$To.WaitTime)
+  st_sub$departure_time <- cumsum(st_sub$RunTime + st_sub$To.WaitTime)
+  st_sub$arrival_time <- st_sub$departure_time - st_sub$To.WaitTime
+  st_sub$pickup_type <- sapply(st_sub$To.Activity, clean_activity, type = "pickup")
+  st_sub$drop_off_type <- sapply(st_sub$To.Activity, clean_activity, type = "drop_off")
+
+  n_stops <- nrow(st_sub)
+  n_trips <- nrow(trips_sub)
+  st_sub <- st_sub[rep(1:n_stops, times = n_trips),]
+  st_sub$trip_id <- rep(trips_sub$trip_id, each = n_stops)
+  st_sub$DepartureTime <- lubridate::hms(rep(trips_sub$DepartureTime, each = n_stops))
+
+  st_sub$arrival_time <- lubridate::seconds_to_period(lubridate::as.duration(st_sub$arrival_time) + lubridate::as.duration(st_sub$DepartureTime))
+  st_sub$arrival_time <- sprintf('%02d:%02d:%02d', st_sub$arrival_time@day * 24 + st_sub$arrival_time@hour, minute(st_sub$arrival_time), second(st_sub$arrival_time))
+
+  st_sub$departure_time <- lubridate::seconds_to_period(lubridate::as.duration(st_sub$departure_time) + lubridate::as.duration(st_sub$DepartureTime))
+  st_sub$departure_time <- sprintf('%02d:%02d:%02d', st_sub$departure_time@day * 24 + st_sub$departure_time@hour, minute(st_sub$departure_time), second(st_sub$departure_time))
+
+  st_sub$timepoint <- sapply(st_sub$timepoint,clean_timepoints)
+
+  st_sub <- st_sub[,c("trip_id","arrival_time","departure_time","stop_id","stop_sequence","timepoint")]
+
+  return(st_sub)
+}
+
+
+expand_stop_times2 <- function(i, jps, trips){
+  jps_sub <- jps[[i]]
+  trips_sub <- trips[trips$JourneyPatternRef_orig == jps_sub$JourneyPatternID[1],]
+
+  st_sub = jps_sub[,c("To.StopPointRef","To.Activity","To.SequenceNumber","JourneyPatternID","To.WaitTime","To.TimingStatus","RunTime")]
+  names(st_sub) <- c("stop_id","To.Activity","stop_sequence","JourneyPatternRef_orig","To.WaitTime","timepoint","RunTime")
+  st_top = data.frame(stop_id       = jps_sub$From.StopPointRef[1],
+                      To.Activity   = jps_sub$From.Activity[1],
+                      stop_sequence = "1",
+                      JourneyPatternRef_orig    = jps_sub$JourneyPatternID[1],
+                      To.WaitTime   = 0,
+                      timepoint     = jps_sub$From.TimingStatus[1],
+                      RunTime       = 0,
+                      stringsAsFactors = F)
+  st_sub <- rbind(st_top, st_sub)
+  st_sub$RunTime <- as.integer(st_sub$RunTime)
+  st_sub$To.WaitTime <- as.integer(st_sub$To.WaitTime)
+  st_sub$departure_time <- cumsum(st_sub$RunTime + st_sub$To.WaitTime)
+  st_sub$arrival_time <- st_sub$departure_time - st_sub$To.WaitTime
+  st_sub$pickup_type <- sapply(st_sub$To.Activity, clean_activity, type = "pickup")
+  st_sub$drop_off_type <- sapply(st_sub$To.Activity, clean_activity, type = "drop_off")
+
+  n_stops <- nrow(st_sub)
+  n_trips <- nrow(trips_sub)
+  st_sub <- st_sub[rep(1:n_stops, times = n_trips),]
+  st_sub$trip_id <- rep(trips_sub$trip_id, each = n_stops)
+  st_sub$DepartureTime <- lubridate::hms(rep(trips_sub$DepartureTime, each = n_stops))
+
+  st_sub$arrival_time <- lubridate::seconds_to_period(lubridate::as.duration(st_sub$arrival_time) + lubridate::as.duration(st_sub$DepartureTime))
+  st_sub$arrival_time <- sprintf('%02d:%02d:%02d', st_sub$arrival_time@day * 24 + st_sub$arrival_time@hour, minute(st_sub$arrival_time), second(st_sub$arrival_time))
+
+  st_sub$departure_time <- lubridate::seconds_to_period(lubridate::as.duration(st_sub$departure_time) + lubridate::as.duration(st_sub$DepartureTime))
+  st_sub$departure_time <- sprintf('%02d:%02d:%02d', st_sub$departure_time@day * 24 + st_sub$departure_time@hour, minute(st_sub$departure_time), second(st_sub$departure_time))
+
+  st_sub$timepoint <- sapply(st_sub$timepoint,clean_timepoints)
+
+  st_sub <- st_sub[,c("trip_id","arrival_time","departure_time","stop_id","stop_sequence","timepoint")]
+
+  return(st_sub)
+}
+
+
+
+clean_timepoints <- function(tp){
+  if(tp == "OTH"){
+    return(1L)
+  }else if(tp %in% c("PTP","TIP","PPT")){
+    return(0L)
+  }else{
+    stop(paste0("Unknown timepoint type: ",tp))
+  }
+}
+
+make_stop_times <- function(jps, trips, ss){
+  jps <- jps[,c("JPS_id","From.Activity","From.StopPointRef","From.TimingStatus","To.WaitTime","To.Activity","To.StopPointRef","To.TimingStatus","RunTime","From.SequenceNumber", "To.SequenceNumber")]
+  jps[] <- lapply(jps,as.character)
+  #vj[] <- lapply(vj, as.character)
+  #rts <- unique(vj$JourneyPatternRef)
+  ss_join <- ss[,c("JourneyPatternSectionRefs","JourneyPatternID")]
+  ss_join[] <- lapply(ss_join, as.character)
+  jps$JPS_id <- as.character(jps$JPS_id)
+  jps <- dplyr::left_join(jps,ss_join, by = c("JPS_id" = "JourneyPatternSectionRefs"))
+  jps <- split(jps, jps$JourneyPatternID)
+
+  stop_times <- lapply(1:length(jps), expand_stop_times2, jps = jps, trips = trips)
+  stop_times <- dplyr::bind_rows(stop_times)
+  return(stop_times)
+}
