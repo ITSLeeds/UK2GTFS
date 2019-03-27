@@ -3,6 +3,7 @@
 #' @param file character, path to an XML file e.g. "C:/data/file.xml"
 #' @param export character, path to folder to save results, or NULL to return results
 #' @param run_debug logical, if TRUE extra checks are performed, default FALSE
+#' @param full_import logical, if false data no needed for GTFS is excluded
 #'
 #' @export
 #' If export is NULL returns a list of data.frames else saves results to the `export` folder as a RDS file
@@ -11,7 +12,7 @@
 #' This function imports the raw transXchange XML files and converts them to a R readable format.
 #'
 
-transxchange_import5 <- function(file, export = NULL, run_debug = FALSE){
+transxchange_import5 <- function(file, export = NULL, run_debug = FALSE, full_import = FALSE){
   if(run_debug){
     message(paste0(Sys.time()," doing file ",file))
   }
@@ -25,6 +26,23 @@ transxchange_import5 <- function(file, export = NULL, run_debug = FALSE){
   }
   ## StopPoints ##########################################
   StopPoints = xml2::xml_child(xml,"d1:StopPoints")
+
+  import_stoppoints <- function(StopPoints){
+    StopPointRef       <- xml_text(xml_find_all(StopPoints, ".//StopPointRef"))
+    CommonName         <- xml_text(xml_find_all(StopPoints, ".//CommonName"))
+    Indicator          <- xml_text(xml_find_all(StopPoints, ".//Indicator"))
+    LocalityName       <- xml_text(xml_find_all(StopPoints, ".//LocalityName"))
+    LocalityQualifier  <- xml_text(xml_find_all(StopPoints, ".//LocalityQualifier"))
+
+    StopPoints <- data.frame(StopPointRef = StopPointRef,
+                             CommonName = CommonName,
+                             Indicator = Indicator,
+                             LocalityName = LocalityName,
+                             LocalityQualifier = LocalityQualifier)
+    return(StopPoints)
+  }
+
+
   StopPoints = xml2::as_list(StopPoints)
   # Sometimes the Indicator variaible is missing
   if(!all(lengths(StopPoints) == 5)){
@@ -42,27 +60,32 @@ transxchange_import5 <- function(file, export = NULL, run_debug = FALSE){
   names(StopPoints) <- c("StopPointRef","CommonName","Indicator","LocalityName","LocalityQualifier")
 
   ## RouteSections ##########################################
-  RouteSections = xml2::xml_child(xml,"d1:RouteSections")
-  RouteSections = xml2::as_list(RouteSections)
+  if(full_import){
+    RouteSections = xml2::xml_child(xml,"d1:RouteSections")
+    RouteSections = xml2::as_list(RouteSections)
 
-  rs_clean <- function(rs){
-    rs_attr = attributes(rs)$id
-    rs = rs[names(rs) == "RouteLink"]
-    rs <- lapply(rs, function(x){tmp <- x$Distance
-    ids <- attributes(x)$id
-    if(is.null(tmp)){tmp <- NA}
-    x$LinkID <- ids
-    x$Distance <- tmp
-    x <- x[c("From","To","Distance","Direction","LinkID")]
-    return(x)})
-    rs =  data.frame(matrix(unlist(rs), nrow=length(rs), byrow=T),stringsAsFactors=FALSE)
-    names(rs) = c("From","To","Distance","Direction","LinkID")
-    rs$SectionID = rs_attr
-    return(rs)
+    rs_clean <- function(rs){
+      rs_attr = attributes(rs)$id
+      rs = rs[names(rs) == "RouteLink"]
+      rs <- lapply(rs, function(x){tmp <- x$Distance
+      ids <- attributes(x)$id
+      if(is.null(tmp)){tmp <- NA}
+      x$LinkID <- ids
+      x$Distance <- tmp
+      x <- x[c("From","To","Distance","Direction","LinkID")]
+      return(x)})
+      rs =  data.frame(matrix(unlist(rs), nrow=length(rs), byrow=T),stringsAsFactors=FALSE)
+      names(rs) = c("From","To","Distance","Direction","LinkID")
+      rs$SectionID = rs_attr
+      return(rs)
+    }
+    RouteSections = lapply(RouteSections, rs_clean)
+    RouteSections = dplyr::bind_rows(RouteSections)
+    RouteSections[] <- lapply( RouteSections, factor)
+  }else{
+    RouteSections = NA
   }
-  RouteSections = lapply(RouteSections, rs_clean)
-  RouteSections = dplyr::bind_rows(RouteSections)
-  RouteSections[] <- lapply( RouteSections, factor)
+
 
   ## Routes ##########################################
   Routes = xml2::xml_child(xml,"d1:Routes")
@@ -341,15 +364,22 @@ transxchange_import5 <- function(file, export = NULL, run_debug = FALSE){
   VehicleJourneys_exclude <- dplyr::bind_rows(VehicleJourneys_exclude)
   VehicleJourneys_include <- lapply(VehicleJourneys,`[[`,3)
   VehicleJourneys_include <- dplyr::bind_rows(VehicleJourneys_include)
-  VehicleJourneysTimingLinks <- lapply(VehicleJourneys,`[[`,4)
-  VehicleJourneysTimingLinks <- dplyr::bind_rows(VehicleJourneysTimingLinks)
+
+  if(full_import){
+    VehicleJourneysTimingLinks <- lapply(VehicleJourneys,`[[`,4)
+    VehicleJourneysTimingLinks <- dplyr::bind_rows(VehicleJourneysTimingLinks)
+    VehicleJourneysTimingLinks[] <- lapply(VehicleJourneysTimingLinks, factor)
+  }else{
+    VehicleJourneysTimingLinks <- NA
+  }
+
   VehicleJourneys <- lapply(VehicleJourneys,`[[`,1)
   VehicleJourneys <- dplyr::bind_rows(VehicleJourneys)
 
   VehicleJourneys[] <- lapply(VehicleJourneys, factor)
   VehicleJourneys_exclude[] <- lapply(VehicleJourneys_exclude, factor)
   VehicleJourneys_include[] <- lapply(VehicleJourneys_include, factor)
-  VehicleJourneysTimingLinks[] <- lapply(VehicleJourneysTimingLinks, factor)
+
 
   ## Final Steps ##########################################
 

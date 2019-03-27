@@ -1,3 +1,74 @@
+exclude_trips <- function(trip_sub, trip_exc){
+  trip_exc_sub <- trip_exc[[trip_sub$trip_id[1]]]
+  if(!is.null(trip_exc_sub)){
+    # Exclusions
+    # Classify Exclusions
+    trip_exc_sub$type <- mapply(classify_exclusions,
+                                ExStartTime = trip_exc_sub$ExStartTime,
+                                ExEndTime = trip_exc_sub$ExEndTime,
+                                StartDate = trip_sub$StartDate,
+                                EndDate = trip_sub$EndDate)
+    if("total" %in% trip_exc_sub$type){
+      # Remove all
+      trip_sub$exclude_days <- NA
+      trip_sub <- trip_sub[NULL,]
+    }else{
+      if("start" %in% trip_exc_sub$type){
+        trip_sub$StartDate <- max(trip_exc_sub$ExEndTime[trip_exc_sub$type == "start"])
+      }
+      if("end" %in% trip_exc_sub$type){
+        trip_sub$EndDate <- min(trip_exc_sub$ExStartTime[trip_exc_sub$type == "end"])
+      }
+      if("middle" %in% trip_exc_sub$type){
+        exclude_days <- trip_exc_sub[trip_exc_sub$type == "middle",]
+        trip_sub$exclude_days <- list(list_exclude_days(exclude_days))
+      }else{
+        trip_sub$exclude_days <- NA
+      }
+
+    }
+
+  }else{
+    # No Exclusions
+    trip_sub$exclude_days <- NA
+  }
+  return(trip_sub)
+}
+
+list_exclude_days <- function(exclude_days){
+  res <- mapply(function(ExStartTime, ExEndTime){seq(ExStartTime, ExEndTime, by = "days")},
+         exclude_days$ExStartTime,
+         exclude_days$ExEndTime)
+  res <- as.Date(unlist(res),origin = "1970-01-01")
+  res <- unique(res)
+  return(res)
+}
+
+
+
+# Takes start and end dates of exclusion to work out if they cover the start or end etc
+classify_exclusions <- function(ExStartTime, ExEndTime, StartDate, EndDate){
+  if(ExStartTime <= StartDate){
+    if(ExEndTime >= EndDate){
+      # Total Exclusion
+      return("total")
+    }else{
+      # Trim Start
+      return("start")
+    }
+  }else if(ExStartTime > StartDate){
+    if(ExEndTime >= EndDate){
+      # Total Exclusion
+      return("end")
+    }else{
+      # Trim Start
+      return("middle")
+    }
+  }else{
+    return("no overlap")
+  }
+}
+
 clean_times <- function(x){
   x <- as.character(x)
   x <- gsub("PT","",x)
@@ -89,6 +160,8 @@ clean_days <- function(days){
     days <- c(1,1,1,0,1,0,0)
   }else if(days == "Monday Tuesday Thursday Friday"){
     days <- c(1,1,0,1,1,0,0)
+  }else if(days == "Tuesday Wednesday Thursday Friday"){
+    days <- c(0,1,1,1,1,0,0)
   }else if(days == "Monday Friday"){
     days <- c(1,0,0,0,1,0,0)
   }else if(days == "Tuesday Friday"){
@@ -121,7 +194,7 @@ break_up_holidays <- function(cal_dat, cl){
 }
 
 
-break_up_holidays2 <- function(cal_dat, cl){
+break_up_holidays2 <- function(cal_dat, cl, cal){
   cal_dat <- cal_dat[cal_dat[[cl]] != "",]
   if(nrow(cal_dat) == 0){
     return(NULL)
@@ -134,7 +207,7 @@ break_up_holidays2 <- function(cal_dat, cl){
     }else{
       cal_dat$exception_type <- 2L
     }
-    cal_dat <- cal_dat[,c("service_id_temp","hols","exception_type")]
+    cal_dat <- cal_dat[,c("trip_id","hols","exception_type")]
     return(cal_dat)
   }
 
@@ -233,14 +306,14 @@ expand_stop_times <- function(i, jps){
 
 expand_stop_times2 <- function(i, jps, trips){
   jps_sub <- jps[[i]]
-  trips_sub <- trips[trips$JourneyPatternRef_orig == jps_sub$JourneyPatternID[1],]
+  trips_sub <- trips[trips$JourneyPatternRef == jps_sub$JourneyPatternID[1],]
 
   st_sub = jps_sub[,c("To.StopPointRef","To.Activity","To.SequenceNumber","JourneyPatternID","To.WaitTime","To.TimingStatus","RunTime")]
-  names(st_sub) <- c("stop_id","To.Activity","stop_sequence","JourneyPatternRef_orig","To.WaitTime","timepoint","RunTime")
+  names(st_sub) <- c("stop_id","To.Activity","stop_sequence","JourneyPatternRef","To.WaitTime","timepoint","RunTime")
   st_top = data.frame(stop_id       = jps_sub$From.StopPointRef[1],
                       To.Activity   = jps_sub$From.Activity[1],
                       stop_sequence = "1",
-                      JourneyPatternRef_orig    = jps_sub$JourneyPatternID[1],
+                      JourneyPatternRef    = jps_sub$JourneyPatternID[1],
                       To.WaitTime   = 0,
                       timepoint     = jps_sub$From.TimingStatus[1],
                       RunTime       = 0,
@@ -260,10 +333,10 @@ expand_stop_times2 <- function(i, jps, trips){
   st_sub$DepartureTime <- lubridate::hms(rep(trips_sub$DepartureTime, each = n_stops))
 
   st_sub$arrival_time <- lubridate::seconds_to_period(lubridate::as.duration(st_sub$arrival_time) + lubridate::as.duration(st_sub$DepartureTime))
-  st_sub$arrival_time <- sprintf('%02d:%02d:%02d', st_sub$arrival_time@day * 24 + st_sub$arrival_time@hour, minute(st_sub$arrival_time), second(st_sub$arrival_time))
+  st_sub$arrival_time <- sprintf('%02d:%02d:%02d', st_sub$arrival_time@day * 24 + st_sub$arrival_time@hour, lubridate::minute(st_sub$arrival_time), lubridate::second(st_sub$arrival_time))
 
   st_sub$departure_time <- lubridate::seconds_to_period(lubridate::as.duration(st_sub$departure_time) + lubridate::as.duration(st_sub$DepartureTime))
-  st_sub$departure_time <- sprintf('%02d:%02d:%02d', st_sub$departure_time@day * 24 + st_sub$departure_time@hour, minute(st_sub$departure_time), second(st_sub$departure_time))
+  st_sub$departure_time <- sprintf('%02d:%02d:%02d', st_sub$departure_time@day * 24 + st_sub$departure_time@hour, lubridate::minute(st_sub$departure_time), lubridate::second(st_sub$departure_time))
 
   st_sub$timepoint <- sapply(st_sub$timepoint,clean_timepoints)
 
