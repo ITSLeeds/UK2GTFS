@@ -14,7 +14,13 @@ trips2shapes = function(trips, routes, stops, stop_times, ncores = 1){
   stops_rail = stops[stops$stop_id %in% stop_times_rail$stop_id,]
 
   # read in map
-  rail = sf::st_read("./data/railway.geojson")
+  rail = sf::st_read("./data/railway.gpkg")
+  rail$geometry = rail$geom
+  sf::st_crs(rail) = 27700
+  # rail = sf::st_read("./data/railway_fixed.shp")
+  # rail = rail[,c("id","type","geometry")]
+  # st_crs(rail) = 27700
+  # write_sf(rail,"./data/railway.gpkg", delete_dsn = T)
   rail = sf::st_transform(rail, 27700)
   rail = rail[rail$type == "rail",]
 

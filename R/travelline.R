@@ -1,31 +1,12 @@
-# travelline 
-data = XML::xmlParse("xmlToList")
-xml_data = XML::xmlToList(data)
+# travelline
+source("R/travelline_functions.R")
+xml1 = "D:/Users/earmmor/OneDrive - University of Leeds/Routing/Travelline/EA/ea_20-1A-A-y08-1.xml"
+xml2 = "D:/Users/earmmor/OneDrive - University of Leeds/Routing/Travelline/EA/ea_20-1-A-y08-1.xml"
+xml3 = "D:/Users/earmmor/OneDrive - University of Leeds/Routing/Travelline/EA/ea_21-505-_-y08-1.xml"
 
-StopPoints = xml_data["StopPoints"]
-StopPoints = StopPoints[[1]]
-StopPoints <- data.frame(matrix(unlist(StopPoints), nrow=length(StopPoints), byrow=T),stringsAsFactors=FALSE)
-
-RouteSections = xml_data["RouteSections"]
-Routes = xml_data["Routes"]
-Routes = Routes[[1]]
-Routes <- data.frame(matrix(unlist(Routes), nrow=length(Routes), byrow=T),stringsAsFactors=FALSE)
-
-
-JourneyPatternSections = xml_data["JourneyPatternSections"]
-JourneyPatternSections = JourneyPatternSections[[1]]
-foo = JourneyPatternSections[[1]]
-
-Operators = xml_data["Operators"]
-Operators = Operators[[1]]
-Operators <- data.frame(matrix(unlist(Operators), nrow=length(Operators), byrow=T),stringsAsFactors=FALSE)
-
-
-Services = xml_data["Services"]
-Services = Services[[1]][[1]]
-#Services <- data.frame(matrix(unlist(Services), nrow=length(Services), byrow=T),stringsAsFactors=FALSE)
+test1 = import_transXchange(xml1)
+test2 = import_transXchange(xml2)
+test3 = import_transXchange(xml3)
 
 
 
-VehicleJourneys = xml_data["VehicleJourneys"]
-#attrs = xml_data[".attrs"]
