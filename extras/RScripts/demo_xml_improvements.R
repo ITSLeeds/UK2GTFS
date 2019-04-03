@@ -48,6 +48,7 @@ import_vehiclejourneys <- function(vehiclejourneys){
   DaysOfWeek <- xml2::xml_name(xml2::xml_children(DaysOfWeek))
   HolidaysOnly <- xml2::xml_name(HolidaysOnly)
 
+  # TO DO HERE
   ave(RegularDayType_id, RegularDayType_id, FUN = seq_along)
 
   DaysOfWeek_id <- PrivateCode
