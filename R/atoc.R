@@ -1,8 +1,7 @@
-#' Convert ATOC Files to GTFS
-#'
+#' ATOC to GTFS
 #'
 #' @details
-#' Requires the internet and a transportapi.com API key.
+#' Convert ATOC Files to GTFS
 #'
 #' @param path_in Path to ATOC File
 #' @param path_out Path to where GTFS files should be saved
@@ -17,7 +16,7 @@
 #' Therefore, the UK2GTFS package contains an internal dataset of the TIPLOC locations with better location accuracy.
 #'
 #' @export
-#' }
+
 atoc2gtfs <- function(path_in,path_out, silent = TRUE, ncores = 1, locations = "package"){
 
   if(ncores == 1){message(paste0(Sys.time()," This will take some time, make sure you use 'ncores' to enable multi-core processing"))}

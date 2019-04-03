@@ -12,7 +12,7 @@
 #' This function imports the raw transXchange XML files and converts them to a R readable format.
 #'
 
-transxchange_import6 <- function(file, export = NULL, run_debug = FALSE, full_import = FALSE){
+transxchange_import <- function(file, export = NULL, run_debug = FALSE, full_import = FALSE){
   if(run_debug){
     message(paste0(Sys.time()," doing file ",file))
   }
@@ -79,114 +79,16 @@ transxchange_import6 <- function(file, export = NULL, run_debug = FALSE, full_im
 
 
   ## Services ##########################################
-  Services = xml2::xml_child(xml,"d1:Services")
+  Services <- xml2::xml_child(xml,"d1:Services")
   if(run_debug){
     if(xml2::xml_length(Services) > 1){
-      message("More than one service")
-      stop()
+      stop("More than one service")
     }
   }
-  Services <- xml2::xml_child(Services,1)
-  Services <- xml2::as_list(Services)
-
-  Services_main <- Services[c("ServiceCode","PrivateCode","Mode","Description","RegisteredOperatorRef")]
-  Services_main <- lapply(Services_main, unlist, recursive = TRUE)
-  Services_main <- as.data.frame(Services_main, stringsAsFactors = FALSE)
-  #Services_main[] <- lapply(Services_main, unlist, recursive = TRUE)
-  Services_main$StartDate <- Services$OperatingPeriod$StartDate[[1]]
-  Services_main$EndDate <- Services$OperatingPeriod$EndDate[[1]]
-  Services_main$DaysOfWeek <- paste(names(Services$OperatingProfile$RegularDayType$DaysOfWeek), collapse = " ")
-  Services_main$StopRequirements <- names(Services$StopRequirements)
-  Services_main$Origin <- Services$StandardService$Origin[[1]]
-  Services_main$Destination <- Services$StandardService$Destination[[1]]
-  Services_main$LineName <- Services$Lines$Line$LineName[[1]]
-  Services_main$BankHolidayNonOperation <- paste(names(Services$OperatingProfile$BankHolidayOperation$DaysOfNonOperation), collapse = " ")
-  Services_main$BankHolidayOperation <- paste(names(Services$OperatingProfile$BankHolidayOperation$DaysOfOperation), collapse = " ")
-
+  Services <- import_services(Services)
   StandardService <- Services$StandardService
-  StandardService$Origin <- NULL
-  StandardService$Destination <- NULL
-
-  jp_clean <- function(jp){
-    jp_id = attributes(jp)$id[[1]]
-    VehicleType = jp$Operational$VehicleType$Description[[1]]
-    if(is.null(VehicleType)){VehicleType <- NA}
-    jp_data = c(jp$Direction[[1]],
-                VehicleType,
-                jp$RouteRef[[1]],
-                jp$JourneyPatternSectionRefs[[1]],
-                jp_id)
-
-    names(jp_data) = c("Direction","VehicleType","RouteRef","JourneyPatternSectionRefs","JourneyPatternID")
-    return(jp_data)
-  }
-
-  if(run_debug){
-    jp_chk <- function(jp){
-      #jp2 = jp
-      jp$Direction = NULL
-      jp$Operational$VehicleType$VehicleTypeCode = NULL
-      jp$Operational$VehicleType$Description = NULL
-      jp$RouteRef = NULL
-      jp$JourneyPatternSectionRefs = NULL
-      if(length(jp$Operational$VehicleType) == 0){
-        jp$Operational$VehicleType <- NULL
-      }
-      if(length(jp$Operational) == 0){
-        jp$Operational<- NULL
-      }
-      #jp = unlist(jp)
-      #if(!is.factor(jp)){
-      if(length(jp) != 0){
-        message("Unexpected strucutre in Jounrey Patterns")
-        print(jp)
-        stop()
-      }
-      return(NULL)
-
-    }
-    chk = lapply(StandardService,jp_chk)
-    rm(chk)
-  }
-
-  StandardService <- lapply(StandardService, jp_clean)
-  StandardService <- as.data.frame(t(data.frame(StandardService)))
-  row.names(StandardService) <- seq(1,nrow(StandardService))
-  #StandardService <- lapply(StandardService, factor)
-
-  Services_NonOperation <- Services$OperatingProfile$SpecialDaysOperation$DaysOfNonOperation
-  if(!is.null(Services_NonOperation)){
-    Services_NonOperation <- as.data.frame(matrix(unlist(Services_NonOperation), nrow = length(Services_NonOperation), byrow = T), stringsAsFactors = F)
-    names(Services_NonOperation) <- c("Start","End")
-  }
-
-  if(run_debug){
-    if(length(Services$Lines) > 1){
-      message("more than one line")
-      stop()
-    }
-
-    chk = Services[!names(Services) %in% c("ServiceCode","PrivateCode","Mode","Description","RegisteredOperatorRef","StandardService")]
-    chk$OperatingPeriod$StartDate = NULL
-    chk$OperatingPeriod$EndDate = NULL
-    chk$OperatingProfile$RegularDayType$DaysOfWeek = NULL
-    chk$StopRequirements = NULL
-    chk$StandardService$Origin = NULL
-    chk$StandardService$Destination = NULL
-    chk$Lines$Line$LineName = NULL
-    chk$OperatingProfile$BankHolidayOperation$DaysOfOperation = NULL
-    chk$OperatingProfile$BankHolidayOperation$DaysOfNonOperation = NULL
-    if(length(chk$OperatingProfile$BankHolidayOperation) == 0){
-      chk$OperatingProfile$BankHolidayOperation = NULL
-    }
-    chk$OperatingProfile$SpecialDaysOperation = NULL
-    chk <- unlist(sapply(chk, names))
-    if(!identical(unname(chk),c("Line","RegularDayType"))){
-      message("Unexpected strucutre in Services")
-      print(str(Services))
-    }
-
-  }
+  Services_main <- Services$Services_main
+  SpecialDaysOperation <- Services$SpecialDaysOperation
   rm(Services)
 
   ## VehicleJourneys ##########################################

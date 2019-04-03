@@ -2,97 +2,57 @@ dir = "E:/OneDrive - University of Leeds/Routing/TransitExchangeData/data_201805
 files = list.files(dir, full.names = T, recursive = T, pattern = ".xml")
 file = files[1]
 xml = xml2::read_xml(file)
+run_debug = TRUE
 
-Services_raw = xml2::xml_child(xml,"d1:Services")
+VehicleJourneys_raw = xml2::xml_child(xml,"d1:VehicleJourneys")
 
-import_services <- function(service){
 
-  ServiceCode             <- xml2::xml_text(xml2::xml_find_all(service, ".//d1:ServiceCode"))
-  PrivateCode             <- xml2::xml_text(xml2::xml_find_all(service, ".//d1:PrivateCode"))
-  Mode                    <- xml2::xml_text(xml2::xml_find_all(service, ".//d1:Mode"))
-  Description             <- xml2::xml_text(xml2::xml_find_all(service, ".//d1:Description"))
-  RegisteredOperatorRef   <- xml2::xml_text(xml2::xml_find_all(service, ".//d1:RegisteredOperatorRef"))
-  StartDate               <- xml2::xml_text(xml2::xml_find_first(service, ".//d1:StartDate"))
-  EndDate                 <- xml2::xml_text(xml2::xml_find_first(service, ".//d1:EndDate"))
-  DaysOfWeek              <- xml2::xml_text(xml2::xml_find_all(service, ".//d1:DaysOfWeek"))
-  StopRequirements        <- xml2::xml_text(xml2::xml_find_all(service, ".//d1:StopRequirements"))
-  Origin                  <- xml2::xml_text(xml2::xml_find_all(service, ".//d1:Origin"))
-  Destination             <- xml2::xml_text(xml2::xml_find_all(service, ".//d1:Destination"))
-  LineName                <- xml2::xml_text(xml2::xml_find_all(service, ".//d1:LineName"))
-  BankHolidayNonOperation <- xml2::xml_text(xml2::xml_find_all(service, ".//d1:BankHolidayNonOperation"))
-  if(length(BankHolidayNonOperation) == 0){
-    BankHolidayNonOperation <- rep(NA, length(ServiceCode))
+import_vehiclejourneys <- function(vehiclejourneys){
+
+  PrivateCode <- xml2::xml_text(xml2::xml_find_all(vehiclejourneys, ".//d1:PrivateCode"))
+  VehicleJourneyCode <- xml2::xml_text(xml2::xml_find_all(vehiclejourneys, ".//d1:VehicleJourneyCode"))
+  ServiceRef <- xml2::xml_text(xml2::xml_find_all(vehiclejourneys, ".//d1:ServiceRef"))
+  LineRef <- xml2::xml_text(xml2::xml_find_all(vehiclejourneys, ".//d1:LineRef"))
+  JourneyPatternRef <- xml2::xml_text(xml2::xml_find_all(vehiclejourneys, ".//d1:JourneyPatternRef"))
+  DepartureTime <- xml2::xml_text(xml2::xml_find_all(vehiclejourneys, ".//d1:DepartureTime"))
+  days <- xml2::xml_text(xml2::xml_find_all(vehiclejourneys, ".//d1:days"))
+  if(length(days) == 0){
+    days <- rep(NA, length(VehicleJourneyCode))
   }
-  BankHolidayOperation    <- xml2::xml_text(xml2::xml_find_all(service, ".//d1:BankHolidayOperation"))
-  if(length(BankHolidayOperation) == 0){
-    BankHolidayOperation <- rep(NA, length(ServiceCode))
+  BankHolidaysOperate <- xml2::xml_text(xml2::xml_find_all(vehiclejourneys, ".//d1:BankHolidaysOperate"))
+  if(length(BankHolidaysOperate) == 0){
+    BankHolidaysOperate <- rep(NA, length(VehicleJourneyCode))
+  }
+  BankHolidaysNoOperate <- xml2::xml_text(xml2::xml_find_all(vehiclejourneys, ".//d1:BankHolidaysNoOperate"))
+  if(length(BankHolidaysNoOperate) == 0){
+    BankHolidaysNoOperate <- rep(NA, length(VehicleJourneyCode))
   }
 
 
-  ss <- xml2::xml_find_all(ss, ".//d1:JourneyPattern")
-  Direction                 <- xml2::xml_text(xml2::xml_find_all(ss, ".//d1:Direction"))
-  VehicleType               <- xml2::xml_text(xml2::xml_find_all(ss, ".//d1:VehicleType"))
-  if(length(VehicleType) == 0){
-    VehicleType <- rep(NA, length(Direction))
-  }
-  RouteRef                  <- xml2::xml_text(xml2::xml_find_all(ss, ".//d1:RouteRef"))
-  JourneyPatternSectionRefs <- xml2::xml_text(xml2::xml_find_all(ss, ".//d1:JourneyPatternSectionRefs"))
-  JourneyPatternID          <- xml2::xml_text(xml2::xml_find_all(ss, "@id"))
+  vj_simple <- data.frame(PrivateCode = PrivateCode,
+                          VehicleJourneyCode = VehicleJourneyCode,
+                          ServiceRef = ServiceRef,
+                          LineRef = LineRef,
+                          JourneyPatternRef = JourneyPatternRef,
+                          DepartureTime = DepartureTime,
+                          days = days,
+                          BankHolidaysOperate = BankHolidaysOperate,
+                          BankHolidaysNoOperate = BankHolidaysNoOperate
+                          )
 
+  #OperatingProfile <- xml2::xml_find_all(vehiclejourneys, ".//d1:OperatingProfile")
+  RegularDayType <- xml2::xml_find_all(vehiclejourneys, ".//d1:RegularDayType")
+  DaysOfWeek <- xml2::xml_find_all(RegularDayType, ".//d1:DaysOfWeek")
+  HolidaysOnly <- xml2::xml_find_all(RegularDayType, ".//d1:HolidaysOnly")
+  RegularDayType_id <- xml2::xml_name(xml2::xml_children(RegularDayType))
+  DaysOfWeek <- xml2::xml_name(xml2::xml_children(DaysOfWeek))
+  HolidaysOnly <- xml2::xml_name(HolidaysOnly)
 
-  SpecialDaysOperation      <- xml2::xml_find_all(service, ".//d1:SpecialDaysOperation")
-  DaysOperation             <- xml2::xml_find_all(SpecialDaysOperation, ".//d1:DaysOfOperation")
-  DaysOperation_StartDate   <- xml2::xml_text(xml2::xml_find_all(DaysOperation, ".//d1:StartDate"))
-  DaysOperation_EndDate     <- xml2::xml_text(xml2::xml_find_all(DaysOperation, ".//d1:EndDate"))
-  DaysOperation_Note        <- xml2::xml_text(xml2::xml_find_all(DaysOperation, ".//d1:Note"))
+  ave(RegularDayType_id, RegularDayType_id, FUN = seq_along)
 
-  DaysNonOperation             <- xml2::xml_find_all(SpecialDaysOperation, ".//d1:DaysOfNonOperation")
-  DaysNonOperation_StartDate   <- xml2::xml_text(xml2::xml_find_all(DaysNonOperation, ".//d1:StartDate"))
-  DaysNonOperation_EndDate     <- xml2::xml_text(xml2::xml_find_all(DaysNonOperation, ".//d1:EndDate"))
-  DaysNonOperation_Note        <- xml2::xml_text(xml2::xml_find_all(DaysNonOperation, ".//d1:Note"))
+  DaysOfWeek_id <- PrivateCode
+  DaysOfWeek_id <- rep(DaysOfWeek_id, times = xml2::xml_length(RegularDayType, only_elements = FALSE))
 
-  DaysOperation <- data.frame(type =      "DaysOperation",
-                              StartDate = DaysOperation_StartDate,
-                              EndDate =   DaysOperation_EndDate,
-                              Note =      DaysOperation_Note)
-
-  DaysNonOperation <- data.frame(type =      "DaysNonOperation",
-                              StartDate = DaysNonOperation_StartDate,
-                              EndDate =   DaysNonOperation_EndDate,
-                              Note =      DaysNonOperation_Note)
-
-  SpecialDaysOperation <- rbind(DaysOperation, DaysNonOperation)
-
-
-  StandardService <- data.frame(Direction = Direction,
-                                VehicleType = VehicleType,
-                                RouteRef = RouteRef,
-                                JourneyPatternSectionRefs = JourneyPatternSectionRefs,
-                                JourneyPatternID = JourneyPatternID
-                                )
-
-  Services_main <- data.frame(ServiceCode = ServiceCode,
-                              PrivateCode = PrivateCode,
-                              Mode = Mode,
-                              Description = Description,
-                              RegisteredOperatorRef = RegisteredOperatorRef,
-                              StartDate = StartDate,
-                              EndDate = EndDate,
-                              DaysOfWeek = DaysOfWeek,
-                              StopRequirements = StopRequirements,
-                              Origin = Origin,
-                              Destination = Destination,
-                              LineName = LineName,
-                              BankHolidayNonOperation = BankHolidayNonOperation,
-                              BankHolidayOperation = BankHolidayOperation
-                              )
-
-  Services_NonOperation <- data.frame()
-
-  results <- list(StandardService, Services_main, Services_NonOperation, SpecialDaysOperation)
-  names(results) <- c("StandardService", "Services_main", "Services_NonOperation", "SpecialDaysOperation")
-
-  return(results)
 }
 
 
@@ -101,121 +61,139 @@ t1 <- Sys.time()
 
 
 
-Services <- xml2::xml_child(Services_raw,1)
-Services <- xml2::as_list(Services)
 
-Services_main <- Services[c("ServiceCode","PrivateCode","Mode","Description","RegisteredOperatorRef")]
-Services_main <- lapply(Services_main, unlist, recursive = TRUE)
-Services_main <- as.data.frame(Services_main, stringsAsFactors = FALSE)
-#Services_main[] <- lapply(Services_main, unlist, recursive = TRUE)
-Services_main$StartDate <- Services$OperatingPeriod$StartDate[[1]]
-Services_main$EndDate <- Services$OperatingPeriod$EndDate[[1]]
-Services_main$DaysOfWeek <- paste(names(Services$OperatingProfile$RegularDayType$DaysOfWeek), collapse = " ")
-Services_main$StopRequirements <- names(Services$StopRequirements)
-Services_main$Origin <- Services$StandardService$Origin[[1]]
-Services_main$Destination <- Services$StandardService$Destination[[1]]
-Services_main$LineName <- Services$Lines$Line$LineName[[1]]
-Services_main$BankHolidayNonOperation <- paste(names(Services$OperatingProfile$BankHolidayOperation$DaysOfNonOperation), collapse = " ")
-Services_main$BankHolidayOperation <- paste(names(Services$OperatingProfile$BankHolidayOperation$DaysOfOperation), collapse = " ")
+VehicleJourneys = xml2::as_list(VehicleJourneys_raw)
 
-StandardService <- Services$StandardService
-StandardService$Origin <- NULL
-StandardService$Destination <- NULL
-
-jp_clean <- function(jp){
-  jp_id = attributes(jp)$id[[1]]
-  VehicleType = jp$Operational$VehicleType$Description[[1]]
-  if(is.null(VehicleType)){VehicleType <- NA}
-  jp_data = c(jp$Direction[[1]],
-              VehicleType,
-              jp$RouteRef[[1]],
-              jp$JourneyPatternSectionRefs[[1]],
-              jp_id)
-
-  names(jp_data) = c("Direction","VehicleType","RouteRef","JourneyPatternSectionRefs","JourneyPatternID")
-  return(jp_data)
-}
-
-if(run_debug){
-  jp_chk <- function(jp){
-    #jp2 = jp
-    jp$Direction = NULL
-    jp$Operational$VehicleType$VehicleTypeCode = NULL
-    jp$Operational$VehicleType$Description = NULL
-    jp$RouteRef = NULL
-    jp$JourneyPatternSectionRefs = NULL
-    if(length(jp$Operational$VehicleType) == 0){
-      jp$Operational$VehicleType <- NULL
+vj_clean <- function(vj,run_debug){
+  # break simple and complex parts
+  vj_simple = vj[c("PrivateCode","VehicleJourneyCode","ServiceRef","LineRef",
+                   "JourneyPatternRef","DepartureTime")]
+  vj_simple = data.frame(t(unlist(vj_simple)), stringsAsFactors = F)
+  vj_op = vj[["OperatingProfile"]]
+  vjtls = vj[names(vj) == "VehicleJourneyTimingLink"]
+  if(length(vjtls) < 1){
+    #message("VehicleJourneyTimingLinks are missing")
+    vjtls = NULL
+  }else{
+    vjtl_clean <- function(vjtl){
+      vjtl_attr <- attributes(vjtl)$id
+      vjtl_ref <- vjtl$JourneyPatternTimingLinkRef[[1]]
+      vjtl_from <- vjtl$From
+      if(length(vjtl_from) == 0){vjtl_from <- NA}else{message("data in VJTL from");stop()}
+      vjtl_to <- vjtl$To
+      if(length(vjtl_to) == 0){vjtl_to <- NA}else{message("data in VJTL to");stop()}
+      if(!all(names(vjtl) %in% c("JourneyPatternTimingLinkRef", "From","To"))){message("extra data in VJTL");stop()}
+      vjtl = c(vjtl_attr, vjtl_ref, vjtl_from, vjtl_to)
+      names(vjtl) = c("id","JourneyPatternTimingLinkRef","From","To")
+      return(vjtl)
     }
-    if(length(jp$Operational) == 0){
-      jp$Operational<- NULL
-    }
-    #jp = unlist(jp)
-    #if(!is.factor(jp)){
-    if(length(jp) != 0){
-      message("Unexpected strucutre in Jounrey Patterns")
-      print(jp)
+    vjtls <- lapply(vjtls,vjtl_clean)
+    vjtls <- data.frame(t(as.data.frame(vjtls)))
+    row.names(vjtls) <- seq(1,nrow(vjtls))
+  }
+
+  op_rdw = names(vj_op$RegularDayType$DaysOfWeek) # Regular Day of the Week
+  op_rdho = names(vj_op$RegularDayType) # Holidays Only
+  op_rdho = op_rdho[op_rdho != "DaysOfWeek"]
+  op_dno = vj_op$SpecialDaysOperation$DaysOfNonOperation # Days of non operation
+  op_do = vj_op$SpecialDaysOperation$DaysOfOperation # Day of operation
+  if(!is.null(op_dno)){
+    op_dno = data.frame(matrix(unlist(op_dno), nrow=length(op_dno), byrow=T),stringsAsFactors=FALSE)
+    op_dno$VehicleJourneyCode = vj_simple$VehicleJourneyCode
+    names(op_dno) = c("StartTime","EndTime","VehicleJourneyCode")
+  }
+  if(!is.null(op_do)){
+    op_do = data.frame(matrix(unlist(op_do), nrow=length(op_do), byrow=T),stringsAsFactors=FALSE)
+    op_do$VehicleJourneyCode = vj_simple$VehicleJourneyCode
+    names(op_do) = c("StartTime","EndTime","VehicleJourneyCode")
+  }
+  op_bh_dno = names(vj_op$BankHolidayOperation$DaysOfNonOperation) # Bank Holidays non operation
+  op_bh_do = names(vj_op$BankHolidayOperation$DaysOfOperation) # Bank Holidays operation
+
+  vj_simple$days = paste0(c(op_rdw,op_rdho), collapse = " ")
+  vj_simple$BankHolidaysOperate = paste0(op_bh_do, collapse = " ")
+  vj_simple$BankHolidaysNoOperate = paste0(op_bh_dno, collapse = " ")
+
+
+  #### Check disable in working code
+  if(run_debug){
+    chk = vj_op
+
+    chk$RegularDayType$DaysOfWeek = NULL
+    chk$RegularDayType$HolidaysOnly = NULL
+    chk$SpecialDaysOperation$DaysOfNonOperation = NULL
+    chk$SpecialDaysOperation$DaysOfOperation = NULL
+    chk$BankHolidayOperation$DaysOfNonOperation = NULL
+    chk$BankHolidayOperation$DaysOfOperation = NULL
+    chk <- unlist(sapply(chk, names))
+    if(length(chk) != 0){
+      message("Unexpected Structure in Operating Profile")
+      print(str(vj_op))
       stop()
     }
-    return(NULL)
+
+    if(!all(c(op_rdw,op_rdho) %in% c("Monday","Tuesday","Wednesday","Thursday","Friday",
+                                     "Saturday","Sunday","MondayToFriday","HolidaysOnly",
+                                     "MondayToSunday","Weekend"))){
+      message("Unexpected Week Structure")
+      print(str(op_rdw))
+      stop()
+    }
+    if(!is.null(op_dno)){
+      if(ncol(op_dno) > 3){
+        message("Unexpected Days of Non Operation Structure")
+        print(str(op_dno))
+        stop()
+      }
+    }
+    if(!is.null(op_do)){
+      if(ncol(op_do) > 3){
+        message("Unexpected Days of Operation Structure")
+        print(str(op_do))
+        stop()
+      }
+    }
 
   }
-  chk = lapply(StandardService,jp_chk)
-  rm(chk)
+  result <- list(vj_simple,op_dno,op_do, vjtls)
+  return(result)
 }
 
-StandardService <- lapply(StandardService, jp_clean)
-StandardService <- as.data.frame(t(data.frame(StandardService)))
-row.names(StandardService) <- seq(1,nrow(StandardService))
-#StandardService <- lapply(StandardService, factor)
+VehicleJourneys <- lapply(VehicleJourneys, vj_clean, run_debug = run_debug)
+VehicleJourneys_exclude <- lapply(VehicleJourneys,`[[`,2)
+VehicleJourneys_exclude <- dplyr::bind_rows(VehicleJourneys_exclude)
+VehicleJourneys_include <- lapply(VehicleJourneys,`[[`,3)
+VehicleJourneys_include <- dplyr::bind_rows(VehicleJourneys_include)
 
-Services_NonOperation <- Services$OperatingProfile$SpecialDaysOperation$DaysOfNonOperation
-if(!is.null(Services_NonOperation)){
-  Services_NonOperation <- as.data.frame(matrix(unlist(Services_NonOperation), nrow = length(Services_NonOperation), byrow = T), stringsAsFactors = F)
-  names(Services_NonOperation) <- c("Start","End")
+if(full_import){
+  VehicleJourneysTimingLinks <- lapply(VehicleJourneys,`[[`,4)
+  VehicleJourneysTimingLinks <- dplyr::bind_rows(VehicleJourneysTimingLinks)
+  VehicleJourneysTimingLinks[] <- lapply(VehicleJourneysTimingLinks, factor)
+}else{
+  VehicleJourneysTimingLinks <- NA
 }
 
-if(run_debug){
-  if(length(Services$Lines) > 1){
-    message("more than one line")
-    stop()
-  }
+VehicleJourneys <- lapply(VehicleJourneys,`[[`,1)
+VehicleJourneys <- dplyr::bind_rows(VehicleJourneys)
 
-  chk = Services[!names(Services) %in% c("ServiceCode","PrivateCode","Mode","Description","RegisteredOperatorRef","StandardService")]
-  chk$OperatingPeriod$StartDate = NULL
-  chk$OperatingPeriod$EndDate = NULL
-  chk$OperatingProfile$RegularDayType$DaysOfWeek = NULL
-  chk$StopRequirements = NULL
-  chk$StandardService$Origin = NULL
-  chk$StandardService$Destination = NULL
-  chk$Lines$Line$LineName = NULL
-  chk$OperatingProfile$BankHolidayOperation$DaysOfOperation = NULL
-  chk$OperatingProfile$BankHolidayOperation$DaysOfNonOperation = NULL
-  if(length(chk$OperatingProfile$BankHolidayOperation) == 0){
-    chk$OperatingProfile$BankHolidayOperation = NULL
-  }
-  chk$OperatingProfile$SpecialDaysOperation = NULL
-  chk <- unlist(sapply(chk, names))
-  if(!identical(unname(chk),c("Line","RegularDayType"))){
-    message("Unexpected strucutre in Services")
-    print(str(Services))
-  }
-
-}
-rm(Services)
+VehicleJourneys[] <- lapply(VehicleJourneys, factor)
+VehicleJourneys_exclude[] <- lapply(VehicleJourneys_exclude, factor)
+VehicleJourneys_include[] <- lapply(VehicleJourneys_include, factor)
 
 
 t2 <- Sys.time()
 
-Operators2 <- import_operators(Operators_raw)
+Services2 <- import_services(Services_raw)
 
 t3 <- Sys.time()
 
 d1 <- as.numeric(difftime(t2,t1))
 d2 <- as.numeric(difftime(t3,t2))
-Operators[] <- lapply(Operators, as.character)
-Operators2[] <- lapply(Operators2, as.character)
-message(paste0("New method is ",round(d1/d2,3)," times faster and identical check is ",identical(Operators, Operators2)))
+#Operators[] <- lapply(Operators, as.character)
+#Operators2[] <- lapply(Operators2, as.character)
+message(paste0("New method is ",round(d1/d2,3)," times faster and identical check is ",identical(Services, Services2)))
 
-
-
+identical(Services$StandardService, Services2$StandardService)
+f1 <- Services$StandardService
+f2 <- Services2$StandardService
+identical(f1$Direction,f2$Direction)

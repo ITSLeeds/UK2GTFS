@@ -1,6 +1,10 @@
-#obj = readRDS("example_import.Rds")
-
 #' transxchange2gtfs
+#'
+#' @param obj transxchange object
+#' @param run_debug logical, should debugs be done?
+#' @param cal calendar
+#' @param naptan naptan
+#'
 #' @export
 #'
 transxchange2gtfs <- function(obj, run_debug = T, cal = get_bank_holidays(), naptan = get_naptan()){
