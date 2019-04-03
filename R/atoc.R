@@ -103,6 +103,3 @@ atoc2gtfs <- function(path_in,path_out, silent = TRUE, ncores = 1, locations = "
   write.csv(stops,paste0(path_out,"/stops.txt"), row.names = FALSE )
   write.csv(agency,paste0(path_out,"/agency.txt"), row.names = FALSE )
 }
-
-
-

@@ -1,5 +1,8 @@
 #obj = readRDS("example_import.Rds")
 
+#' transxchange2gtfs
+#' @export
+#'
 transxchange2gtfs <- function(obj, run_debug = T, cal = get_bank_holidays(), naptan = get_naptan()){
   JourneyPatternSections  <-  obj[["JourneyPatternSections"]]
   Operators               <-  obj[["Operators"]]

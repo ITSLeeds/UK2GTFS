@@ -1,4 +1,5 @@
-#merge a list of gtfs files
+#' merge a list of gtfs files
+#' @export
 gtfs_merge <- function(gtfs_list){
 
   # Split out lists

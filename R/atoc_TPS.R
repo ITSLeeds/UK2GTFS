@@ -1,3 +1,4 @@
+#file = "D:/Users/earmmor/OneDrive - University of Leeds/NetworkRail/Reference Data/TPS_Data/XML_p.xml"
 #' Import TPS File
 #'
 #' @details
@@ -7,7 +8,6 @@
 #'
 #' @export
 #'
-file = "D:/Users/earmmor/OneDrive - University of Leeds/NetworkRail/Reference Data/TPS_Data/XML_p.xml"
 #'
 import_TPS = function(file){
   tps <- xml2::read_xml(file)

@@ -1,5 +1,6 @@
-# get bank holidays
-
+#' get bank holidays
+#' @param url url to ics file
+#' @export
 get_bank_holidays <- function(url = "https://www.gov.uk/bank-holidays/england-and-wales.ics"){
   download.file(url = url, destfile = "bankholidays.ics")
   cal <- as.data.frame(calendar::ic_read("bankholidays.ics"))

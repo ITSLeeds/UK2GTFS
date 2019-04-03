@@ -1,4 +1,6 @@
-# get naptan
+#' get naptan
+#' @param url url to naptan in csv format
+#' @export
 get_naptan <- function(url = "http://naptan.app.dft.gov.uk/DataRequest/Naptan.ashx?format=csv"){
 
   download.file(url = url, destfile = "naptan.zip", mode = "wb")
