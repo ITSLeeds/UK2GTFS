@@ -26,29 +26,18 @@ transxchange_import5 <- function(file, export = NULL, run_debug = FALSE, full_im
   }
   ## StopPoints ##########################################
   StopPoints = xml2::xml_child(xml,"d1:StopPoints")
-
-  import_stoppoints <- function(StopPoints){
-    StopPointRef       <- xml_text(xml_find_all(StopPoints, ".//StopPointRef"))
-    CommonName         <- xml_text(xml_find_all(StopPoints, ".//CommonName"))
-    Indicator          <- xml_text(xml_find_all(StopPoints, ".//Indicator"))
-    LocalityName       <- xml_text(xml_find_all(StopPoints, ".//LocalityName"))
-    LocalityQualifier  <- xml_text(xml_find_all(StopPoints, ".//LocalityQualifier"))
-
-    StopPoints <- data.frame(StopPointRef = StopPointRef,
-                             CommonName = CommonName,
-                             Indicator = Indicator,
-                             LocalityName = LocalityName,
-                             LocalityQualifier = LocalityQualifier)
-    return(StopPoints)
-  }
-
-
   StopPoints = xml2::as_list(StopPoints)
   # Sometimes the Indicator variaible is missing
   if(!all(lengths(StopPoints) == 5)){
     sp_clean = function(sp){
       if(is.null(sp$Indicator)){
         sp$Indicator <- NA
+      }
+      if(is.null(sp$LocalityName)){
+        sp$LocalityName <- NA
+      }
+      if(is.null(sp$LocalityQualifier)){
+        sp$LocalityQualifier <- NA
       }
       sp <- sp[c("StopPointRef","CommonName","Indicator","LocalityName","LocalityQualifier")]
       return(sp)

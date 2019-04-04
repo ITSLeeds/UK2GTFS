@@ -15,7 +15,7 @@ transxchange2gtfs <- function(obj, run_debug = T, cal = get_bank_holidays(), nap
   VehicleJourneysTimingLinks <- obj[["VehicleJourneysTimingLinks"]]
 
   if(nrow(VehicleJourneys_include) != 0 |
-     nrow(VehicleJourneysTimingLinks) != 0 # | nrow(VehicleJourneys_exclude) != 0
+     nrow(VehicleJourneysTimingLinks) != 0  | nrow(VehicleJourneys_exclude) != 0
      ){
     stop("Must consider VehicleJourneys")
   }

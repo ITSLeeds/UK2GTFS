@@ -132,45 +132,44 @@ clean_route_type <- function(rt){
 }
 
 clean_days <- function(days){
-  if(days == "MondayToFriday"){
-    days <- c(1,1,1,1,1,0,0)
-  }else if(days == "Monday"){
-    days <- c(1,0,0,0,0,0,0)
-  }else if(days == "Tuesday"){
-    days <- c(0,1,0,0,0,0,0)
-  }else if(days == "Wednesday"){
-    days <- c(0,0,1,0,0,0,0)
-  }else if(days == "Thursday"){
-    days <- c(0,0,0,1,0,0,0)
-  }else if(days == "Friday"){
-    days <- c(0,0,0,0,1,0,0)
-  }else if(days == "Saturday"){
-    days <- c(0,0,0,0,0,1,0)
-  }else if(days %in% c("Sunday","SundayHolidaysOnly")){
-    days <- c(0,0,0,0,0,0,1)
+  days_ul <- unlist(strsplit(days," "))
+  if(all(days_ul %in% c("Monday","Tuesday", "Wednesday", "Thursday", "Friday","Saturday","Sunday"))){
+    res <- c(0,0,0,0,0,0,0)
+    if("Monday" %in% days_ul){
+      res[1] <- 1
+    }
+    if("Tuesday" %in% days_ul){
+      res[2] <- 1
+    }
+    if("Wednesday" %in% days_ul){
+      res[3] <- 1
+    }
+    if("Thursday" %in% days_ul){
+      res[4] <- 1
+    }
+    if("Friday" %in% days_ul){
+      res[5] <- 1
+    }
+    if("Saturday" %in% days_ul){
+      res[6] <- 1
+    }
+    if("Sunday" %in% days_ul){
+      res[7] <- 1
+    }
+
+  }else if(days == "MondayToFriday"){
+    res <- c(1,1,1,1,1,0,0)
   }else if(days == "HolidaysOnly"){
-    days <- c(0,0,0,0,0,0,0)
+    res <- c(0,0,0,0,0,0,0)
   }else if(days == "SaturdaySundayHolidaysOnly"){
-    days <- c(0,0,0,0,0,1,1)
+    res <- c(0,0,0,0,0,1,1)
   }else if(days %in% c("","MondayToSunday","MondayToFridaySaturdaySundayHolidaysOnly")){
-    days <- c(1,1,1,1,1,1,1)
-  }else if(days %in% c("SaturdayMondayToFriday","MondayToFridaySaturday","MondayToSaturday")){
-    days <- c(1,1,1,1,1,1,0)
-  }else if(days == "Monday Tuesday Wednesday Friday"){
-    days <- c(1,1,1,0,1,0,0)
-  }else if(days == "Monday Tuesday Thursday Friday"){
-    days <- c(1,1,0,1,1,0,0)
-  }else if(days == "Tuesday Wednesday Thursday Friday"){
-    days <- c(0,1,1,1,1,0,0)
-  }else if(days == "Monday Friday"){
-    days <- c(1,0,0,0,1,0,0)
-  }else if(days == "Tuesday Friday"){
-    days <- c(0,1,0,0,1,0,0)
+    res <- c(1,1,1,1,1,1,1)
   }else{
     stop(paste0("Unknown day pattern: ",days))
   }
-  names(days) <- NULL
-  days
+  names(res) <- NULL
+  res
 }
 
 

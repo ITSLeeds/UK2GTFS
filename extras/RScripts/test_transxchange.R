@@ -1,6 +1,6 @@
 # source("R/transxchange_import.R")
 # source("R/transxchange_import2.R")
-# source("R/transxchange_import3.R")
+source("extras/RScripts/oldcode/transxchange_import5.R")
 source("R/transxchange_import6.R")
 source("R/transxchange2gtfs2.R")
 source("R/get_cal.R")
@@ -9,7 +9,7 @@ source("R/get_naptan.R")
 source("R/transxchange_functions.R")
 source("R/gtfs_merge.R")
 source("R/transxchange_import_functions.R")
-dir = "E:/OneDrive - University of Leeds/Routing/TransitExchangeData/data_20180515/Y"
+dir = "E:/OneDrive - University of Leeds/Routing/TransitExchangeData/data_20180515/EA"
 files = list.files(dir, full.names = T, recursive = T, pattern = ".xml")
 file = "E:/OneDrive - University of Leeds/Routing/TransitExchangeData/data_20180515/SW/swe_43-n1-_-y10-1.xml"
 file = files[1]
@@ -25,8 +25,8 @@ write_gtfs(gtfs = gtfs_single, folder = "export", name = gsub(".xml","",strsplit
 
 profvis::profvis(transxchange_import5(files[8], run_debug = F, full_import = F))
 
-y = 1:length(files)
-res_batch = lapply(files[y], transxchange_import6, run_debug = run_debug)
+y = 1:600
+res_batch = lapply(files[y], transxchange_import5, run_debug = run_debug)
 gtfs_batch = pbapply::pblapply(res_batch, transxchange2gtfs, run_debug = T, cal = cal, naptan = naptan)
 gtfs_merged <- gtfs_merge(gtfs_batch)
 write_gtfs(gtfs = gtfs_merged, folder = "export", name = "foo")

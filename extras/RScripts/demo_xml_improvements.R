@@ -1,6 +1,6 @@
 dir = "E:/OneDrive - University of Leeds/Routing/TransitExchangeData/data_20180515"
 files = list.files(dir, full.names = T, recursive = T, pattern = ".xml")
-file = files[1]
+file = "E:/OneDrive - University of Leeds/Routing/TransitExchangeData/data_20180515/EA/ea_20-12-A-y08-1.xml"
 xml = xml2::read_xml(file)
 run_debug = TRUE
 
@@ -15,10 +15,6 @@ import_vehiclejourneys <- function(vehiclejourneys){
   LineRef <- xml2::xml_text(xml2::xml_find_all(vehiclejourneys, ".//d1:LineRef"))
   JourneyPatternRef <- xml2::xml_text(xml2::xml_find_all(vehiclejourneys, ".//d1:JourneyPatternRef"))
   DepartureTime <- xml2::xml_text(xml2::xml_find_all(vehiclejourneys, ".//d1:DepartureTime"))
-  days <- xml2::xml_text(xml2::xml_find_all(vehiclejourneys, ".//d1:days"))
-  if(length(days) == 0){
-    days <- rep(NA, length(VehicleJourneyCode))
-  }
   BankHolidaysOperate <- xml2::xml_text(xml2::xml_find_all(vehiclejourneys, ".//d1:BankHolidaysOperate"))
   if(length(BankHolidaysOperate) == 0){
     BankHolidaysOperate <- rep(NA, length(VehicleJourneyCode))
@@ -35,24 +31,54 @@ import_vehiclejourneys <- function(vehiclejourneys){
                           LineRef = LineRef,
                           JourneyPatternRef = JourneyPatternRef,
                           DepartureTime = DepartureTime,
-                          days = days,
+                          #days = days,
                           BankHolidaysOperate = BankHolidaysOperate,
                           BankHolidaysNoOperate = BankHolidaysNoOperate
                           )
 
-  #OperatingProfile <- xml2::xml_find_all(vehiclejourneys, ".//d1:OperatingProfile")
-  RegularDayType <- xml2::xml_find_all(vehiclejourneys, ".//d1:RegularDayType")
+  OperatingProfile <- xml2::xml_find_all(vehiclejourneys, ".//d1:OperatingProfile")
+  RegularDayType <- xml2::xml_find_all(OperatingProfile, ".//d1:RegularDayType")
   DaysOfWeek <- xml2::xml_find_all(RegularDayType, ".//d1:DaysOfWeek")
   HolidaysOnly <- xml2::xml_find_all(RegularDayType, ".//d1:HolidaysOnly")
   RegularDayType_id <- xml2::xml_name(xml2::xml_children(RegularDayType))
   DaysOfWeek <- xml2::xml_name(xml2::xml_children(DaysOfWeek))
   HolidaysOnly <- xml2::xml_name(HolidaysOnly)
 
-  # TO DO HERE
-  ave(RegularDayType_id, RegularDayType_id, FUN = seq_along)
+  RegularDayType_id <- data.frame(RegularDayType = RegularDayType_id, id = as.integer(ave(RegularDayType_id, RegularDayType_id, FUN = seq_along)))
+  RegularDayType_id$DaysOfWeek <- ifelse(RegularDayType_id$RegularDayType == "DaysOfWeek", DaysOfWeek[RegularDayType_id$id], NA)
+  RegularDayType_id$HolidaysOnly <- ifelse(RegularDayType_id$RegularDayType == "HolidaysOnly", HolidaysOnly[RegularDayType_id$id], NA)
 
-  DaysOfWeek_id <- PrivateCode
-  DaysOfWeek_id <- rep(DaysOfWeek_id, times = xml2::xml_length(RegularDayType, only_elements = FALSE))
+
+
+
+  vj_simple$DaysOfWeek <- RegularDayType_id$DaysOfWeek
+  vj_simple$HolidaysOnly <- RegularDayType_id$HolidaysOnly
+
+  #Special Days
+  SpecialDaysOperation <- xml2::xml_find_all(vehiclejourneys, ".//d1:SpecialDaysOperation")
+  DaysOfNonOperation <- xml2::xml_find_all(SpecialDaysOperation, ".//d1:DaysOfNonOperation")
+  if(xml2::xml_length(DaysOfNonOperation) > 0){
+    DaysOfNonOperation_StartDate <- xml2::xml_text(xml2::xml_find_all(DaysOfNonOperation, ".//d1:StartDate"))
+    DaysOfNonOperation_EndDate <- xml2::xml_text(xml2::xml_find_all(DaysOfNonOperation, ".//d1:EndDate"))
+    DaysOfNonOperation_id <-  xml2::xml_length(xml2::xml_children(vehiclejourneys), only_elements = FALSE)
+    DaysOfNonOperation_id <- DaysOfNonOperation_id > 0
+    DaysOfNonOperation_id <- as.character(vj_simple$VehicleJourneyCode)[DaysOfNonOperation_id]
+    DaysOfNonOperation <- data.frame(id = DaysOfNonOperation_id,
+                                     StartDate = DaysOfNonOperation_StartDate,
+                                     EndDate = DaysOfNonOperation_EndDate)
+  }else{
+
+  }
+
+  DaysOfOperation <- xml2::xml_find_all(vehiclejourneys, ".//d1:DaysOfOperation")
+
+
+
+
+  JPS                   <- xml_children(journeypatternsections)
+  JPS_id                <- xml2::xml_text(xml2::xml_find_all(JPS, "@id"))
+  JPS_id                <- rep(JPS_id, times = xml2::xml_length(JPS, only_elements = FALSE))
+
 
 }
 
