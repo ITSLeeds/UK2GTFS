@@ -37,6 +37,11 @@ import_vehiclejourneys <- function(vehiclejourneys){
                           )
 
   OperatingProfile <- xml2::xml_find_all(vehiclejourneys, ".//d1:OperatingProfile")
+  if(length(xml_length(OperatingProfile)) != nrow(vj_simple)){
+    stop("Missing operating profiles in Vehicle Journeys")
+  }
+
+  # Regular pattern
   RegularDayType <- xml2::xml_find_all(OperatingProfile, ".//d1:RegularDayType")
   DaysOfWeek <- xml2::xml_find_all(RegularDayType, ".//d1:DaysOfWeek")
   HolidaysOnly <- xml2::xml_find_all(RegularDayType, ".//d1:HolidaysOnly")
@@ -48,15 +53,16 @@ import_vehiclejourneys <- function(vehiclejourneys){
   RegularDayType_id$DaysOfWeek <- ifelse(RegularDayType_id$RegularDayType == "DaysOfWeek", DaysOfWeek[RegularDayType_id$id], NA)
   RegularDayType_id$HolidaysOnly <- ifelse(RegularDayType_id$RegularDayType == "HolidaysOnly", HolidaysOnly[RegularDayType_id$id], NA)
 
-
-
-
   vj_simple$DaysOfWeek <- RegularDayType_id$DaysOfWeek
   vj_simple$HolidaysOnly <- RegularDayType_id$HolidaysOnly
 
   #Special Days
   SpecialDaysOperation <- xml2::xml_find_all(vehiclejourneys, ".//d1:SpecialDaysOperation")
   DaysOfNonOperation <- xml2::xml_find_all(SpecialDaysOperation, ".//d1:DaysOfNonOperation")
+
+
+
+
   if(xml2::xml_length(DaysOfNonOperation) > 0){
     DaysOfNonOperation_StartDate <- xml2::xml_text(xml2::xml_find_all(DaysOfNonOperation, ".//d1:StartDate"))
     DaysOfNonOperation_EndDate <- xml2::xml_text(xml2::xml_find_all(DaysOfNonOperation, ".//d1:EndDate"))
@@ -224,3 +230,46 @@ identical(Services$StandardService, Services2$StandardService)
 f1 <- Services$StandardService
 f2 <- Services2$StandardService
 identical(f1$Direction,f2$Direction)
+
+
+
+
+
+
+
+
+
+
+StopPoints_raw = xml2::xml_child(xml,"d1:StopPoints")
+
+t1 <- Sys.time()
+
+StopPoints = xml2::as_list(StopPoints_raw)
+# Sometimes the Indicator variaible is missing
+if(!all(lengths(StopPoints) == 5)){
+  sp_clean = function(sp){
+    if(is.null(sp$Indicator)){
+      sp$Indicator <- NA
+    }
+    sp <- sp[c("StopPointRef","CommonName","Indicator","LocalityName","LocalityQualifier")]
+    return(sp)
+  }
+  StopPoints = lapply(StopPoints,sp_clean)
+}
+
+StopPoints <- data.frame(matrix(unlist(StopPoints), nrow=length(StopPoints), byrow=T),stringsAsFactors=T)
+names(StopPoints) <- c("StopPointRef","CommonName","Indicator","LocalityName","LocalityQualifier")
+
+t2 <- Sys.time()
+
+#profvis::profvis(StopPoints2 <- import_stoppoints(StopPoints_raw))
+StopPoints2 <- import_stoppoints(StopPoints_raw, FALSE)
+
+t3 <- Sys.time()
+
+
+d1 <- as.numeric(difftime(t2,t1))
+d2 <- as.numeric(difftime(t3,t2))
+#Operators[] <- lapply(Operators, as.character)
+#Operators2[] <- lapply(Operators2, as.character)
+message(paste0("New method is ",round(d1/d2,3)," times faster and identical check is ",identical(StopPoints, StopPoints2)))

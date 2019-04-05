@@ -14,11 +14,12 @@ transxchange2gtfs <- function(obj, run_debug = T, cal = get_bank_holidays(), nap
   #RouteSections           <-  obj[["RouteSections"]]
   Services_main           <-  obj[["Services_main"]]
   StandardService         <-  obj[["StandardService"]]
-  Services_NonOperation   <-  obj[["Services_NonOperation"]]
+  #Services_NonOperation   <-  obj[["Services_NonOperation"]]
   StopPoints              <-  obj[["StopPoints"]]
   VehicleJourneys         <-  obj[["VehicleJourneys"]]
   VehicleJourneys_exclude <-  obj[["VehicleJourneys_exclude"]]
   VehicleJourneys_include <-  obj[["VehicleJourneys_include"]]
+  SpecialDaysOperation <-  obj[["SpecialDaysOperation"]]
   #VehicleJourneysTimingLinks <- obj[["VehicleJourneysTimingLinks"]]
 
   # Early Subsets - move to import code
@@ -30,6 +31,10 @@ transxchange2gtfs <- function(obj, run_debug = T, cal = get_bank_holidays(), nap
   if(nrow(VehicleJourneys_include) != 0  # | nrow(VehicleJourneys_exclude) != 0
      ){
     stop("Must consider VehicleJourneys")
+  }
+
+  if(!is.null(SpecialDaysOperation)){
+    stop("Must consider SpecialDaysOperation")
   }
 
   # Check on missing
@@ -68,6 +73,7 @@ transxchange2gtfs <- function(obj, run_debug = T, cal = get_bank_holidays(), nap
 
   stops <- StopPoints[,"StopPointRef", drop = FALSE]
   names(stops) <- c("stop_id")
+  stops$stop_id <- as.character(stops$stop_id)
   stops <- dplyr::left_join(stops, naptan, by = "stop_id")
 
 

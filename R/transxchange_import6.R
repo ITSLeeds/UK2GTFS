@@ -1,7 +1,6 @@
 #' Import a TransXchange XML file
 #'
 #' @param file character, path to an XML file e.g. "C:/data/file.xml"
-#' @param export character, path to folder to save results, or NULL to return results
 #' @param run_debug logical, if TRUE extra checks are performed, default FALSE
 #' @param full_import logical, if false data no needed for GTFS is excluded
 #'
@@ -12,21 +11,13 @@
 #' This function imports the raw transXchange XML files and converts them to a R readable format.
 #'
 
-transxchange_import <- function(file, export = NULL, run_debug = FALSE, full_import = FALSE){
-  if(run_debug){
-    message(paste0(Sys.time()," doing file ",file))
-  }
+transxchange_import <- function(file, run_debug = FALSE, full_import = FALSE){
 
   xml = xml2::read_xml(file)
-  if(!is.null(export)){
-    if(!dir.exists(export)){
-      message("Export directory does not exist")
-      stop()
-    }
-  }
+
   ## StopPoints ##########################################
   StopPoints = xml2::xml_child(xml,"d1:StopPoints")
-  StopPoints = import_stoppoints(StopPoints)
+  StopPoints = import_stoppoints(StopPoints, full_import = full_import)
 
   ## RouteSections ##########################################
   if(full_import){
@@ -216,22 +207,12 @@ transxchange_import <- function(file, export = NULL, run_debug = FALSE, full_imp
 
   finalres <- list(JourneyPatternSections, Operators, Routes,
                    RouteSections, Services_main, StandardService,
-                   Services_NonOperation, StopPoints, VehicleJourneys,
+                   SpecialDaysOperation, StopPoints, VehicleJourneys,
                    VehicleJourneys_exclude,VehicleJourneys_include, VehicleJourneysTimingLinks)
   names(finalres) = c("JourneyPatternSections", "Operators", "Routes",
                       "RouteSections", "Services_main","StandardService",
-                      "Services_NonOperation", "StopPoints", "VehicleJourneys",
+                      "SpecialDaysOperation", "StopPoints", "VehicleJourneys",
                       "VehicleJourneys_exclude","VehicleJourneys_include", "VehicleJourneysTimingLinks")
 
-  if(!is.null(export)){
-    filename <- unlist(strsplit(file,"/"))
-    filename <- filename[length(filename)]
-    filename <- gsub(".xml","",filename)
-    saveRDS(finalres,paste0(export,"/",filename,".Rds"))
-    return(NULL)
-  }else{
     return(finalres)
-  }
-
-
 }
