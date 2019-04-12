@@ -6,9 +6,9 @@
 #' @param naptan naptan
 #' @param quiet logical should messages be displayed
 #'
-#' @export
+#' @noRd
 #'
-transxchange2gtfs <- function(obj, run_debug = TRUE, cal = get_bank_holidays(), naptan = get_naptan(), quiet = TRUE){
+transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays(), naptan = get_naptan(), quiet = TRUE){
   JourneyPatternSections  <-  obj[["JourneyPatternSections"]]
   Operators               <-  obj[["Operators"]]
   Routes                  <-  obj[["Routes"]]
