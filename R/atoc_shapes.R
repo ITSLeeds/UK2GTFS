@@ -4,6 +4,11 @@
 #' Export trips as GTFS shapes.txt
 #'
 #' @param trips trips data.frame
+#' @param routes routes data.frame
+#' @param stops stops data.frame
+#' @param stop_times stop_times data.frame
+#' @param ncores number of cores
+#' @noRd
 #'
 #'
 trips2shapes = function(trips, routes, stops, stop_times, ncores = 1){

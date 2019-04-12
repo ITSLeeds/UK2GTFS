@@ -1,3 +1,9 @@
+#' exclude trips
+#' remove trips
+#' @param trip_sub
+#' @param trip_exc
+#' @noRd
+#'
 exclude_trips <- function(trip_sub, trip_exc){
   trip_exc_sub <- trip_exc[[trip_sub$trip_id[1]]]
   if(!is.null(trip_exc_sub)){
@@ -35,6 +41,10 @@ exclude_trips <- function(trip_sub, trip_exc){
   return(trip_sub)
 }
 
+#' list exclude days
+#' ????
+#' @param exclude_days
+#' @noRd
 list_exclude_days <- function(exclude_days){
   res <- mapply(function(ExStartTime, ExEndTime){seq(ExStartTime, ExEndTime, by = "days")},
          exclude_days$ExStartTime,
@@ -45,8 +55,13 @@ list_exclude_days <- function(exclude_days){
 }
 
 
-
-# Takes start and end dates of exclusion to work out if they cover the start or end etc
+#' Classify Excusions
+#' Takes start and end dates of exclusion to work out if they cover the start or end etc
+#' @param ExStartTime
+#' @param ExEndTime
+#' @param StartDate
+#' @param EndDate
+#' @noRd
 classify_exclusions <- function(ExStartTime, ExEndTime, StartDate, EndDate){
   if(ExStartTime <= StartDate){
     if(ExEndTime >= EndDate){
@@ -69,6 +84,11 @@ classify_exclusions <- function(ExStartTime, ExEndTime, StartDate, EndDate){
   }
 }
 
+#' clean time
+#' ????
+#' @param x timepoints
+#' @noRd
+#'
 clean_times <- function(x){
   x <- as.character(x)
   x <- gsub("PT","",x)
@@ -120,7 +140,10 @@ clean_times <- function(x){
   return(times)
 }
 
-
+#' clean route type
+#' Change rout types from charater to gtfs code
+#' @param rt character route type
+#' @noRd
 clean_route_type <- function(rt){
   if(rt == "bus"){
     return(3)
@@ -131,6 +154,10 @@ clean_route_type <- function(rt){
   }
 }
 
+#' Clean days
+#' Change named days into GTFS fromat
+#' @param days character of days
+#' @noRd
 clean_days <- function(days){
   days_ul <- unlist(strsplit(days," "))
   if(all(days_ul %in% c("Monday","Tuesday", "Wednesday", "Thursday", "Friday","Saturday","Sunday"))){
@@ -172,7 +199,11 @@ clean_days <- function(days){
   res
 }
 
-
+#' break up holidays
+#' ????
+#' @param cal_data
+#' @param cl
+#' @noRd
 break_up_holidays <- function(cal_dat, cl){
   cal_dat <- cal_dat[cal_dat[[cl]] != "",]
   if(nrow(cal_dat) == 0){
@@ -192,7 +223,12 @@ break_up_holidays <- function(cal_dat, cl){
 
 }
 
-
+#' break up holidays2
+#' ????
+#' @param cal_data
+#' @param cl
+#' @param cal
+#' @noRd
 break_up_holidays2 <- function(cal_dat, cl, cal){
   cal_dat <- cal_dat[cal_dat[[cl]] != "",]
   if(nrow(cal_dat) == 0){
@@ -212,6 +248,11 @@ break_up_holidays2 <- function(cal_dat, cl, cal){
 
 }
 
+#' check duplicated holidays
+#' ????
+#' @param i
+#' @noRd
+#'
 check_duplicate_holidays <- function(i){
   cal_dat <- calendar_dates[i,]
   if(cal_dat$exception_type == 2){
@@ -234,6 +275,11 @@ check_duplicate_holidays <- function(i){
 
 
 # to do, need to repete stops times for each departure time
+#' clean activities
+#' ????
+#' @param x
+#' @param type
+#' @noRd
 clean_activity <- function(x, type){
   if(type == "pickup"){
     if(x == "pickUp"){
@@ -260,7 +306,12 @@ clean_activity <- function(x, type){
   x
 }
 
-
+#' Expan stop_times
+#' ????
+#' @param i
+#' @param jps
+#' @noRd
+#'
 expand_stop_times <- function(i, jps){
   jps_sub <- jps[[i]]
   trips_sub <- trips[trips$service_id == jps_sub$JourneyPatternID[1],]
@@ -302,7 +353,13 @@ expand_stop_times <- function(i, jps){
   return(st_sub)
 }
 
-
+#' Expan stop_times2
+#' ????
+#' @param i
+#' @param jps
+#' @param trips
+#' @noRd
+#'
 expand_stop_times2 <- function(i, jps, trips){
   jps_sub <- jps[[i]]
   trips_sub <- trips[trips$JourneyPatternRef == jps_sub$JourneyPatternID[1],]
@@ -317,8 +374,11 @@ expand_stop_times2 <- function(i, jps, trips){
                       timepoint     = jps_sub$From.TimingStatus[1],
                       RunTime       = 0,
                       stringsAsFactors = F)
+  if(st_top$To.Activity == "pass"){
+    st_top$To.Activity <- "pickUp"
+  }
   st_sub <- rbind(st_top, st_sub)
-  st_sub$RunTime <- as.integer(st_sub$RunTime)
+  #st_sub$RunTime <- as.integer(st_sub$RunTime)
   st_sub$To.WaitTime <- as.integer(st_sub$To.WaitTime)
   st_sub$departure_time <- cumsum(st_sub$RunTime + st_sub$To.WaitTime)
   st_sub$arrival_time <- st_sub$departure_time - st_sub$To.WaitTime
@@ -345,7 +405,11 @@ expand_stop_times2 <- function(i, jps, trips){
 }
 
 
-
+#' clean_timepoints
+#' ????
+#' @param tp
+#' @noRd
+#'
 clean_timepoints <- function(tp){
   if(tp == "OTH"){
     return(1L)
@@ -356,9 +420,17 @@ clean_timepoints <- function(tp){
   }
 }
 
+#' make stop times
+#' ????
+#' @param jps
+#' @param trips
+#' @param ss
+#' @noRd
+#'
 make_stop_times <- function(jps, trips, ss){
   jps <- jps[,c("JPS_id","From.Activity","From.StopPointRef","From.TimingStatus","To.WaitTime","To.Activity","To.StopPointRef","To.TimingStatus","RunTime","From.SequenceNumber", "To.SequenceNumber")]
   jps[] <- lapply(jps,as.character)
+  jps <- clean_pass(jps)
   #vj[] <- lapply(vj, as.character)
   #rts <- unique(vj$JourneyPatternRef)
   ss_join <- ss[,c("JourneyPatternSectionRefs","JourneyPatternID")]
@@ -370,4 +442,24 @@ make_stop_times <- function(jps, trips, ss){
   stop_times <- lapply(1:length(jps), expand_stop_times2, jps = jps, trips = trips)
   stop_times <- dplyr::bind_rows(stop_times)
   return(stop_times)
+}
+
+#' Remove passes from journey patterns
+#' JPS can have a "pass" type, remove and update runtimes
+#' @param jps journeypatternsections
+#' @noRd
+clean_pass <- function(jps){
+  if("pass" %in% jps$To.Activity){
+    is_pass <- jps$To.Activity == "pass"
+    pass_post <- c(FALSE, is_pass[seq(1, length(is_pass) - 1)])
+    runtime1 <- as.integer(jps$RunTime)
+    runtime2 <- c(0, runtime1[seq(1, length(runtime1) - 1)])
+    runtime3 <- ifelse(pass_post, runtime1 + runtime2, runtime1)
+    jps$RunTime <- runtime3
+    jps <- jps[jps$To.Activity != "pass",]
+
+  }else{
+    jps$RunTime <- as.integer(jps$RunTime)
+  }
+  return(jps)
 }

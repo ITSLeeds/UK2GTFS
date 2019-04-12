@@ -4,12 +4,10 @@
 #' @param run_debug logical, if TRUE extra checks are performed, default FALSE
 #' @param full_import logical, if false data no needed for GTFS is excluded
 #'
-#' @export
-#' If export is NULL returns a list of data.frames else saves results to the `export` folder as a RDS file
-#'
 #' @details
 #' This function imports the raw transXchange XML files and converts them to a R readable format.
-#'
+#'  If export is NULL returns a list of data.frames else saves results to the `export` folder as a RDS file
+#' @export
 
 transxchange_import <- function(file, run_debug = FALSE, full_import = FALSE){
 
@@ -67,6 +65,7 @@ transxchange_import <- function(file, run_debug = FALSE, full_import = FALSE){
   Operators <- xml2::as_list(Operators)
   Operators <- unlist(Operators)
   Operators <- as.data.frame(t(Operators))
+  Operators[] <- lapply(Operators, as.character)
 
 
   ## Services ##########################################
@@ -83,7 +82,7 @@ transxchange_import <- function(file, run_debug = FALSE, full_import = FALSE){
   rm(Services)
 
   ## VehicleJourneys ##########################################
-  VehicleJourneys = xml2::xml_child(xml,7)
+  VehicleJourneys = xml2::xml_child(xml,"d1:VehicleJourneys")
   VehicleJourneys = xml2::as_list(VehicleJourneys)
 
   vj_clean <- function(vj,run_debug){
@@ -91,6 +90,15 @@ transxchange_import <- function(file, run_debug = FALSE, full_import = FALSE){
     vj_simple = vj[c("PrivateCode","VehicleJourneyCode","ServiceRef","LineRef",
                      "JourneyPatternRef","DepartureTime")]
     vj_simple = data.frame(t(unlist(vj_simple)), stringsAsFactors = F)
+    vj_notes <- vj[names(vj) == "Note"]
+    if(length(vj_notes) > 0 ){
+      vj_notes <- unlist(vj_notes, recursive = T)
+      vj_notes <- data.frame(NoteCode = vj_notes[names(vj_notes) == "Note.NoteCode"],
+                             NoteText = vj_notes[names(vj_notes) == "Note.NoteText"])
+      vj_notes$VehicleJourneyCode <- vj_simple$VehicleJourneyCode
+    }else{
+      vj_notes = NA
+    }
     vj_op = vj[["OperatingProfile"]]
     vjtls = vj[names(vj) == "VehicleJourneyTimingLink"]
     if(length(vjtls) < 1){
@@ -177,7 +185,7 @@ transxchange_import <- function(file, run_debug = FALSE, full_import = FALSE){
       }
 
     }
-    result <- list(vj_simple,op_dno,op_do, vjtls)
+    result <- list(vj_simple,op_dno,op_do, vjtls, vj_notes)
     return(result)
   }
 
@@ -186,6 +194,9 @@ transxchange_import <- function(file, run_debug = FALSE, full_import = FALSE){
   VehicleJourneys_exclude <- dplyr::bind_rows(VehicleJourneys_exclude)
   VehicleJourneys_include <- lapply(VehicleJourneys,`[[`,3)
   VehicleJourneys_include <- dplyr::bind_rows(VehicleJourneys_include)
+  VehicleJourneys_notes <- lapply(VehicleJourneys,`[[`,5)
+  VehicleJourneys_notes <- VehicleJourneys_notes[!is.na(VehicleJourneys_notes)]
+  VehicleJourneys_notes <- dplyr::bind_rows(VehicleJourneys_notes)
 
   if(full_import){
     VehicleJourneysTimingLinks <- lapply(VehicleJourneys,`[[`,4)
@@ -194,6 +205,7 @@ transxchange_import <- function(file, run_debug = FALSE, full_import = FALSE){
   }else{
     VehicleJourneysTimingLinks <- NA
   }
+
 
   VehicleJourneys <- lapply(VehicleJourneys,`[[`,1)
   VehicleJourneys <- dplyr::bind_rows(VehicleJourneys)
@@ -208,11 +220,13 @@ transxchange_import <- function(file, run_debug = FALSE, full_import = FALSE){
   finalres <- list(JourneyPatternSections, Operators, Routes,
                    RouteSections, Services_main, StandardService,
                    SpecialDaysOperation, StopPoints, VehicleJourneys,
-                   VehicleJourneys_exclude,VehicleJourneys_include, VehicleJourneysTimingLinks)
+                   VehicleJourneys_exclude,VehicleJourneys_include,
+                   VehicleJourneysTimingLinks, VehicleJourneys_notes)
   names(finalres) = c("JourneyPatternSections", "Operators", "Routes",
                       "RouteSections", "Services_main","StandardService",
                       "SpecialDaysOperation", "StopPoints", "VehicleJourneys",
-                      "VehicleJourneys_exclude","VehicleJourneys_include", "VehicleJourneysTimingLinks")
+                      "VehicleJourneys_exclude","VehicleJourneys_include",
+                      "VehicleJourneysTimingLinks", "VehicleJourneys_notes")
 
     return(finalres)
 }

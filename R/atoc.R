@@ -5,6 +5,7 @@
 #'
 #' @param path_in Path to ATOC File
 #' @param path_out Path to where GTFS files should be saved
+#' @param name name that should be given to the gtfs file, without the .zip extension
 #' @param silent Logical, should progress be shown
 #' @param ncores Numeric, When parallel processing how many cores to use
 #' @param locations character "file" or "package" or path to stops.txt GTFS file, where to get the location data from, default "package"
@@ -17,7 +18,7 @@
 #'
 #' @export
 
-atoc2gtfs <- function(path_in,path_out, silent = TRUE, ncores = 1, locations = "package"){
+atoc2gtfs <- function(path_in,path_out, name , silent = TRUE, ncores = 1, locations = "package"){
 
   if(ncores == 1){message(paste0(Sys.time()," This will take some time, make sure you use 'ncores' to enable multi-core processing"))}
   # Is input a zip or a folder
@@ -44,15 +45,13 @@ atoc2gtfs <- function(path_in,path_out, silent = TRUE, ncores = 1, locations = "
   # Read In each File
   alf = importALF(files[grepl(".alf",files)])
   flf = importFLF(files[grepl(".flf",files)])
-  mca = importMCA_alt(file = files[grepl(".mca",files)], silent = silent, ncores = 1)
+  mca = importMCA(file = files[grepl(".mca",files)], silent = silent, ncores = 1)
   msn = importMSN(files[grepl(".msn",files)], silent = silent)
   #ztr = importMCA(files[grepl(".ztr",files)], silent = silent)
 
 
 
   #Construct the GTFS
-
-
   stop_times = mca[["stop_times"]]
   schedule = mca[["schedule"]]
 
@@ -62,9 +61,8 @@ atoc2gtfs <- function(path_in,path_out, silent = TRUE, ncores = 1, locations = "
 
   # Get the Station Locations
   if(locations == "package"){
-    stops = sf::read_sf("./data/tiplocs.geojson", stringsAsFactors = F)
-    #stops = readRDS("data/tiplocs.Rds")
-    stops = cbind(stops, sf::st_coordinates(stops))
+    load("data/tiplocs.RData")
+    stops = cbind(tiplocs, sf::st_coordinates(tiplocs))
     stops = as.data.frame(stops)
     stops = stops[,c("stop_id","stop_code", "stop_name","Y","X","valid")]
     names(stops) = c("stop_id","stop_code", "stop_name","stop_lat","stop_lon","valid")
@@ -76,7 +74,6 @@ atoc2gtfs <- function(path_in,path_out, silent = TRUE, ncores = 1, locations = "
     TI = mca[["TI"]]
     stops.list = station2stops(station = station, TI = TI)
     stops = stops.list[["stops"]]
-    #stops.lookup = stops.list[["lookup"]]
   }else{
     stops = read.csv(locations,stringsAsFactors = F)
   }
@@ -85,20 +82,12 @@ atoc2gtfs <- function(path_in,path_out, silent = TRUE, ncores = 1, locations = "
   stops = stops[stops$stop_id %in% stop_times$stop_id,]
 
 
-  timetables = schedule2routes_alt(stop_times = stop_times, schedule = schedule, silent = silent, ncores = ncores)
+  timetables = schedule2routes(stop_times = stop_times, schedule = schedule, silent = silent, ncores = ncores)
 
-  calendar = timetables[["calendar"]]
-  calendar_dates = timetables[["calendar_dates"]]
-  routes = timetables[["routes"]]
-  stop_times = timetables[["stop_times"]]
-  trips = timetables[["trips"]]
-  agency = read.csv("data/agency.txt", stringsAsFactors = F)
+  load("data/atoc_agency.RData")
 
-  write.csv(calendar,paste0(path_out,"/calendar.txt"), row.names = FALSE )
-  write.csv(calendar_dates,paste0(path_out,"/calendar_dates.txt"), row.names = FALSE )
-  write.csv(routes,paste0(path_out,"/routes.txt"), row.names = FALSE )
-  write.csv(stop_times,paste0(path_out,"/stop_times.txt"), row.names = FALSE )
-  write.csv(trips,paste0(path_out,"/trips.txt"), row.names = FALSE )
-  write.csv(stops,paste0(path_out,"/stops.txt"), row.names = FALSE )
-  write.csv(agency,paste0(path_out,"/agency.txt"), row.names = FALSE )
+  timetables$agency <- atoc_agency
+
+  write_gtfs(timetables, folder = path_out, name = name)
+
 }

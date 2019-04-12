@@ -1,6 +1,11 @@
 #' merge a list of gtfs files
+#'
+#' @param gtfs_list a list of gtfs objects to be merged
 #' @export
 gtfs_merge <- function(gtfs_list){
+
+  # remove any NULLS
+  gtfs_list <- gtfs_list[lengths(gtfs_list) != 0]
 
   # Split out lists
   agency  <- sapply(gtfs_list, '[', 'agency')
@@ -36,7 +41,18 @@ gtfs_merge <- function(gtfs_list){
   # agency
   agency$file_id <- NULL
   agency <- unique(agency)
-  if(any(duplicated(agency$agency_id))){stop("Duplicated Agency IDS")}
+  if(any(duplicated(agency$agency_id))){
+    # Check for upppercase problems
+    # Sometime same agency with a captial letter in the name
+    agency.check <- agency
+    agency.check$agency_name <- tolower(agency.check$agency_name)
+    agency.check <- unique(agency.check)
+    if(any(duplicated(agency.check$agency_id))){
+      stop("Duplicated Agency IDS")
+    }else{
+      agency <- agency[!duplicated(agency$agency_id),]
+    }
+  }
 
   #stops
   stops$file_id <- NULL

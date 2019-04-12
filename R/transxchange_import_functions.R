@@ -1,6 +1,7 @@
 # TransXchange import fucntions
 
 #' Import Simple
+#' ????
 #' @param xml1 XML object
 #' @param nm name to find
 #' @noRd
@@ -50,8 +51,10 @@ import_withmissing2 <- function(xml1, nm, layers, idvar){
 
 
 
-
 #' Import stoppoints
+#' ????
+#' @param StopPoints stoppoints
+#' @param full_import logical
 #' @noRd
 import_stoppoints <- function(StopPoints, full_import = TRUE){
   StopPointRef       <- import_simple(StopPoints, ".//d1:StopPointRef")
@@ -76,6 +79,8 @@ import_stoppoints <- function(StopPoints, full_import = TRUE){
 }
 
 #' Import routes
+#' ????
+#' @param routes routes
 #' @noRd
 import_routes <- function(routes){
   Description       <- import_simple(routes, ".//d1:Description")
@@ -92,6 +97,8 @@ import_routes <- function(routes){
 }
 
 #' Import journeypatternsections
+#' ????
+#' @param journeypatternsections journeypattern sections
 #' @noRd
 import_journeypatternsections <- function(journeypatternsections){
   JourneyPatternTimingLink <- xml2::xml_find_all(journeypatternsections, ".//d1:JourneyPatternTimingLink")
@@ -148,6 +155,7 @@ import_journeypatternsections <- function(journeypatternsections){
 
 #' import operators
 #' slower so not used
+#' @param operators
 #' @noRd
 import_operators <- function(operators){
 
@@ -168,6 +176,9 @@ import_operators <- function(operators){
 }
 
 #' import services
+#' ????
+#' @param service
+#' @param full_import
 #' @noRd
 
 import_services <- function(service, full_import = TRUE){
@@ -178,7 +189,7 @@ import_services <- function(service, full_import = TRUE){
   RegisteredOperatorRef   <- import_simple(service, ".//d1:RegisteredOperatorRef")
   StartDate               <- xml2::xml_text(xml2::xml_find_first(service, ".//d1:StartDate"))
   EndDate                 <- xml2::xml_text(xml2::xml_find_first(service, ".//d1:EndDate"))
-  DaysOfWeek              <- xml2::xml_name(xml2::xml_children(xml2::xml_find_first(service, ".//d1:DaysOfWeek")))
+  DaysOfWeek              <- paste(xml2::xml_name(xml2::xml_children(xml2::xml_find_first(service, ".//d1:DaysOfWeek"))), collapse = " ")
   StopRequirements        <- import_simple(service, ".//d1:StopRequirements")
   Origin                  <- import_simple(service, ".//d1:Origin")
   Destination             <- import_simple(service, ".//d1:Destination")
@@ -274,4 +285,107 @@ import_services <- function(service, full_import = TRUE){
   names(results) <- c("StandardService", "Services_main", "SpecialDaysOperation")
 
   return(results)
+}
+
+
+
+#' Import Vehicle Journeys
+#' ????
+#' @param vehiclejourneys
+#' @noRd
+import_vehiclejourneys <- function(vehiclejourneys){
+
+  PrivateCode <- import_simple(vehiclejourneys, ".//d1:PrivateCode")
+  VehicleJourneyCode <- import_simple(vehiclejourneys, ".//d1:VehicleJourneyCode")
+  ServiceRef <- import_simple(vehiclejourneys, ".//d1:ServiceRef")
+  LineRef <- import_simple(vehiclejourneys, ".//d1:LineRef")
+  JourneyPatternRef <- import_simple(vehiclejourneys, ".//d1:JourneyPatternRef")
+  DepartureTime <- import_simple(vehiclejourneys, ".//d1:DepartureTime")
+  BankHolidaysOperate <- import_simple(vehiclejourneys, ".//d1:BankHolidaysOperate")
+  #Notes <- xml2::xml_find_all(vehiclejourneys, ".//d1:Note")
+
+  if(length(BankHolidaysOperate) == 0){
+    BankHolidaysOperate <- rep(NA, length(VehicleJourneyCode))
+  }
+  BankHolidaysNoOperate <- xml2::xml_text(xml2::xml_find_all(vehiclejourneys, ".//d1:BankHolidaysNoOperate"))
+  if(length(BankHolidaysNoOperate) == 0){
+    BankHolidaysNoOperate <- rep(NA, length(VehicleJourneyCode))
+  }
+
+
+  vj_simple <- data.frame(PrivateCode = PrivateCode,
+                          VehicleJourneyCode = VehicleJourneyCode,
+                          ServiceRef = ServiceRef,
+                          LineRef = LineRef,
+                          JourneyPatternRef = JourneyPatternRef,
+                          DepartureTime = DepartureTime,
+                          #days = days,
+                          BankHolidaysOperate = BankHolidaysOperate,
+                          BankHolidaysNoOperate = BankHolidaysNoOperate
+  )
+
+  OperatingProfile <- xml2::xml_find_all(vehiclejourneys, ".//d1:OperatingProfile")
+  if(length(xml_length(OperatingProfile)) != nrow(vj_simple)){
+    stop("Missing operating profiles in Vehicle Journeys")
+  }
+
+  # Regular pattern
+  RegularDayType <- xml2::xml_find_all(OperatingProfile, ".//d1:RegularDayType")
+  DaysOfWeek <- xml2::xml_find_all(RegularDayType, ".//d1:DaysOfWeek")
+  HolidaysOnly <- xml2::xml_find_all(RegularDayType, ".//d1:HolidaysOnly")
+  RegularDayType_id <- xml2::xml_name(xml2::xml_children(RegularDayType))
+  DaysOfWeek <- xml2::xml_name(xml2::xml_children(DaysOfWeek))
+  HolidaysOnly <- xml2::xml_name(HolidaysOnly)
+
+  RegularDayType_id <- data.frame(RegularDayType = RegularDayType_id, id = as.integer(ave(RegularDayType_id, RegularDayType_id, FUN = seq_along)))
+  RegularDayType_id$DaysOfWeek <- ifelse(RegularDayType_id$RegularDayType == "DaysOfWeek", DaysOfWeek[RegularDayType_id$id], NA)
+  RegularDayType_id$HolidaysOnly <- ifelse(RegularDayType_id$RegularDayType == "HolidaysOnly", HolidaysOnly[RegularDayType_id$id], NA)
+
+  vj_simple$DaysOfWeek <- RegularDayType_id$DaysOfWeek
+  vj_simple$HolidaysOnly <- RegularDayType_id$HolidaysOnly
+
+  #Special Days
+  SpecialDaysOperation <- xml2::xml_find_all(vehiclejourneys, ".//d1:SpecialDaysOperation")
+  DaysOfNonOperation <- xml2::xml_find_all(SpecialDaysOperation, ".//d1:DaysOfNonOperation")
+
+
+
+
+  if(xml2::xml_length(DaysOfNonOperation) > 0){
+    DaysOfNonOperation_StartDate <- xml2::xml_text(xml2::xml_find_all(DaysOfNonOperation, ".//d1:StartDate"))
+    DaysOfNonOperation_EndDate <- xml2::xml_text(xml2::xml_find_all(DaysOfNonOperation, ".//d1:EndDate"))
+    DaysOfNonOperation_id <-  xml2::xml_length(xml2::xml_children(vehiclejourneys), only_elements = FALSE)
+    DaysOfNonOperation_id <- DaysOfNonOperation_id > 0
+    DaysOfNonOperation_id <- as.character(vj_simple$VehicleJourneyCode)[DaysOfNonOperation_id]
+    DaysOfNonOperation <- data.frame(id = DaysOfNonOperation_id,
+                                     StartDate = DaysOfNonOperation_StartDate,
+                                     EndDate = DaysOfNonOperation_EndDate)
+  }else{
+
+  }
+
+  DaysOfOperation <- xml2::xml_find_all(vehiclejourneys, ".//d1:DaysOfOperation")
+
+
+
+
+  JPS                   <- xml_children(journeypatternsections)
+  JPS_id                <- xml2::xml_text(xml2::xml_find_all(JPS, "@id"))
+  JPS_id                <- rep(JPS_id, times = xml2::xml_length(JPS, only_elements = FALSE))
+
+
+}
+
+
+#' Imports when Multiple Values
+#' Returns a dataframe with appopiate lookup id
+#' @param Notes
+#' @noRd
+import_notes <- function(Notes){
+  xml2::xml_parent(Notes)
+  Notes_ids <- xml2::xml_text(xml2::xml_find_all(xml2_parent, idvar))
+  VehicleJourneyCode <- import_simple(vehiclejourneys, ".//d1:VehicleJourneyCode")
+  NoteCode <- xml2::xml_find_all(Notes, ".//d1:NoteCode")
+  xml2::xml_parents(xml2::xml_parents(NoteCode))
+  xml2::xml_text(xml2::xml_find_all(xml2::xml_parent(Notes), ".//d1:VehicleJourneyCode"))
 }

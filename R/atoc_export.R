@@ -4,17 +4,15 @@
 #' Export ATOC stations as GTFS stops.txt
 #'
 #' @param station station SF data frame from the importMSN function
-#' @param path_out Path to save file to
+#' @param TI TI object
+#' @noRd
 #'
 station2stops = function(station, TI){
 
   #Discard Unneded Columns
   TI = TI[,c("TIPLOC code","NALCO","TPS Description","CRS Code")]
   station = station[,c("Station Name","CATE Interchange status","TIPLOC Code",
-                       #"CRS Reference Code",
                        "CRS Code","geometry")]
-  #names(TI)
-  #names(station)
 
   jnd = dplyr::left_join(TI,station, by = c("TIPLOC code" = "TIPLOC Code"))
   station.extra = station[!station$`TIPLOC Code` %in% jnd$`TIPLOC code`,]
@@ -30,48 +28,11 @@ station2stops = function(station, TI){
   jnd = sf::st_sf(jnd)
   sf::st_crs(jnd) = 4326
 
-  #check for multiple crs
-  # check = sapply(1:nrow(jnd),function(x){
-  #   vals = unique(c(jnd$`CRS Code.x`[x],
-  #                   #jnd$`CRS Reference Code`[x],
-  #                   jnd$`CRS Code.y`[x]))
-  #   vals = vals[!is.na(vals)]
-  #   return(length(vals))
-  #   })
-  #
-  # jnd$check = check
-
   jnd$CRS = ifelse(is.na(jnd$`CRS Code.y`),jnd$`CRS Code.x`,jnd$`CRS Code.y`)
   jnd$name = ifelse(is.na(jnd$`TPS Description`),jnd$`Station Name`,jnd$`TPS Description`)
 
-
   stops = jnd[,c("CRS","TIPLOC code","name")]
   stops = stops[!sf::st_is_empty(stops),]
-  # # check for duplicates
-  # stops$dup.loc = duplicated(stops$geometry)
-  # stops$dup.crs = duplicated(stops$CRS)
-  #
-  # stops.problem.loc = unique(stops$geometry[stops$dup.loc])
-  # stops.problem.crs = unique(stops$CRS[stops$dup.crs])
-  #
-  # # separate out simple and duplicate cases
-  # stops.clean = stops[!(stops$CRS %in% stops.problem.crs) & !(stops$geometry %in% stops.problem.loc),]
-  # stops.problem = stops[(stops$CRS %in% stops.problem.crs) | (stops$geometry %in% stops.problem.loc),]
-  #
-  # stops.problem.summary = dplyr::group_by(stops.problem, CRS)
-  # stops.problem.summary = dplyr::summarise(stops.problem.summary,
-  #                                          nCRS = n(),
-  #                                          nLoc = length(unique(geometry)))
-  # #multiple CRS with same locations is just multiple TIPLOCs for same station
-  # stops.problem.tidy = stops.problem[stops.problem$CRS %in% stops.problem.summary$CRS[stops.problem.summary$nLoc == 1],]
-  # stops.problem.messy = stops.problem[stops.problem$CRS %in% stops.problem.summary$CRS[stops.problem.summary$nLoc != 1],]
-  # stops.problem.tidy = stops.problem.tidy[!duplicated(stops.problem.tidy$CRS),]
-  #
-  # # for no discarding multiple locations
-  # stops.problem.messy2 = stops.problem.messy[!duplicated(stops.problem.messy$CRS),]
-  #
-  # stops.final = suppressWarnings(dplyr::bind_rows(stops.clean,stops.problem.tidy))
-  # stops.final = suppressWarnings(dplyr::bind_rows(stops.final,stops.problem.messy2))
 
   stops.final = stops
 
@@ -115,6 +76,7 @@ station2stops = function(station, TI){
 #' @param station station SF data frame from the importMSN function
 #' @param flf imported flf file from importFLF
 #' @param path_out Path to save file to
+#' @noRd
 #'
 station2transfers = function(station,flf,path_out){
 
@@ -146,7 +108,6 @@ station2transfers = function(station,flf,path_out){
 
   transfers = rbind(transfers1,transfers2)
   return(transfers)
-  #write.csv(transfers,paste0(path_out,"/transfers.txt"), row.names = F, header = F)
 }
 
 #' split overlapping start and end dates
@@ -155,6 +116,7 @@ station2transfers = function(station,flf,path_out){
 #' split overlapping start and end dates
 #'
 #' @param cal cal object
+#' @noRd
 #'
 splitDates = function(cal){
 
@@ -262,6 +224,7 @@ splitDates = function(cal){
 #' @param schedule.rowID rowID field from schedule object
 #' @param stop_times.rowID rowID field from stop_times object
 #' @param ncores number of processes for parallel processing (default = 1)
+#' @noRd
 #'
 matchRoutes = function(schedule.rowID, stop_times.rowID, ncores = 1){
   schedule_tmp = matrix(c(schedule.rowID, schedule.rowID[2:length(schedule.rowID)],max(schedule.rowID)+99999), ncol = 2)
@@ -296,6 +259,7 @@ matchRoutes = function(schedule.rowID, stop_times.rowID, ncores = 1){
 #' return a logcal vector of if the calendar is valid
 #'
 #' @param i interger row number calendar
+#' @noRd
 #'
 checkrows = function(i){
   tmp = res.calendar[i,]
@@ -325,8 +289,8 @@ checkrows = function(i){
 #' return a logcal vector of if the calendar is valid
 #'
 #' @param routes routes data.frame
-#' @param routes stop_times data.frame
-#' @param ncores number of processes for parallel processing (default = 1)
+#' @param stop_times stop_times data.frame
+#' @noRd
 #'
 longnames = function(routes,stop_times){
 
@@ -356,6 +320,7 @@ longnames = function(routes,stop_times){
 #'
 #' @param schedule scheduel data.frame
 #' @param ncores number of processes for parallel processing (default = 1)
+#' @noRd
 #'
 makeCalendar = function(schedule, ncores = 1){
   #prep the inputs
@@ -466,6 +431,7 @@ makeCalendar = function(schedule, ncores = 1){
 #' @param calendar calendar data.frame
 #' @param stop_times stop_times data.frame
 #' @param ncores number of processes for parallel processing (default = 1)
+#' @noRd
 #'
 duplicate.stop_times = function(calendar,stop_times,ncores = 1){
   calendar.nodup = calendar[!duplicated(calendar$rowID),]
@@ -525,6 +491,7 @@ duplicate.stop_times = function(calendar,stop_times,ncores = 1){
 #' @param calendar calendar data.frame
 #' @param stop_times stop_times data.frame
 #' @param ncores number of processes for parallel processing (default = 1)
+#' @noRd
 #'
 duplicate.stop_times_alt = function(calendar,stop_times,ncores = 1){
   calendar.nodup = calendar[!duplicated(calendar$rowID),]
@@ -591,6 +558,7 @@ duplicate.stop_times_alt = function(calendar,stop_times,ncores = 1){
 #' @details
 #' Not running the 24 check is faster, in the check is run a warning is returned, but the error is not fixed
 #' As the longest train jounrey in the UK is 13 hours (Aberdeen to Penzance) this is unlikley to be a problem
+#' @noRd
 #'
 afterMidnight = function(stop_times, safe = TRUE){
 
@@ -659,7 +627,7 @@ afterMidnight = function(stop_times, safe = TRUE){
 #'
 #' @param stop_times stop_times data.frame
 #' @param stops stops data.frame
-#'
+#' @noRd
 #'
 cleanstops = function(stop_times, stops){
 
@@ -667,10 +635,10 @@ cleanstops = function(stop_times, stops){
 
 
 #' Clean Activities
-#'
+#' @param x character activities
 #' @details
 #' Change Activities code to pickup and drop_off
-#'
+#' @noRd
 #'
 clean_activities = function(x){
   if("T" %in% x){

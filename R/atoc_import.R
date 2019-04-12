@@ -4,6 +4,7 @@
 #' Imports the .alf file and returns data.frame
 #'
 #' @param file Path to .alf file
+#' @noRd
 #'
 importALF <- function(file){
   nc<-max(count.fields(file, sep=","))
@@ -62,6 +63,7 @@ importALF <- function(file){
 #' Imports the .flf file and returns data.frame
 #'
 #' @param file Path to .flf file
+#' @noRd
 #'
 importFLF <- function(file){
   table = read.table(file = file,
@@ -88,6 +90,7 @@ importFLF <- function(file){
 #' Imports the .tsi file and returns data.frame
 #'
 #' @param file Path to .tsi file
+#' @noRd
 #'
 importTSI <- function(file){
   table = read.table(file = file,
@@ -105,6 +108,8 @@ importTSI <- function(file){
 #' Imports the .msn file and returns data.frame
 #'
 #' @param file Path to .flf file
+#' @param silent logical, should messages be displayed
+#' @noRd
 #'
 importMSN <- function(file, silent = TRUE){
   raw = readLines(con = file,
@@ -203,6 +208,7 @@ importMSN <- function(file, silent = TRUE){
 #' Strips whitespace from a dataframe of charters vectors and returns the data frame
 #'
 #' @param df data frame
+#' @noRd
 #'
 strip_whitespace = function(df){
   for(i in seq(from = 1, to = ncol(df))){
@@ -213,14 +219,19 @@ strip_whitespace = function(df){
   return(df)
 }
 
+
+
 #' Import the .mca file
 #'
 #' @details
 #' Imports the .mca file and returns data.frame
 #'
 #' @param file Path to .mca file
+#' @param silent logical, should messages be displayed
+#' @param ncores number of cores to use when paralell processing
+#' @noRd
 #'
-importMCA <- function(file,silent = TRUE){
+importMCA <- function(file, silent = TRUE, ncores = 1){
 
   # see https://wiki.openraildata.com/index.php/CIF_File_Format
   if(!silent){message(paste0(Sys.time()," reading .mca file"))}
@@ -230,26 +241,7 @@ importMCA <- function(file,silent = TRUE){
 
   #break out each part of the file
   # Header Record
-  if(!silent){message(paste0(Sys.time()," importing Header Record"))}
-  HD = raw[types == "HD"]
-  HD = iotools::dstrfw(x = HD,
-                       col_types = rep('character',11),
-                       widths = c(2,20,6,4,7,7,1,1,6,6,20))
-  names(HD) = c("Record Identity","File Identity","Date of Extract","Time of Extract","Current File Reference",
-                "Last-filereference","Update Indicator","Version","Extract start date","Extract end date","Spare")
-  HD$Spare = NULL
-  HD$`Record Identity` = NULL
-  HD = strip_whitespace(HD)
-
-  # Clean data
-  HD$`Date of Extract` = as.POSIXct(paste0(HD$`Date of Extract`,HD$`Time of Extract`), format = "%d%m%y%H%M")
-  HD$`Time of Extract` = NULL
-  HD$`Extract start date` = as.Date(HD$`Extract start date`, format = "%d%m%y")
-  HD$`Extract end date` = as.Date(HD$`Extract end date`, format = "%d%m%y")
-
-  # Add the rowid
-  HD$rowID = seq(from = 1, to = length(types))[types == "HD"]
-
+  # Not Needed
 
   # Basic Schedule
   if(!silent){message(paste0(Sys.time()," importing Basic Schedule"))}
@@ -309,6 +301,9 @@ importMCA <- function(file,silent = TRUE){
   LO$Spare = NULL
   LO$`Record Identity` = NULL
   LO = strip_whitespace(LO)
+  LO$`Scheduled Departure Time` = gsub("H","",LO$`Scheduled Departure Time`)
+
+  LO = LO[,c("Location","Scheduled Departure Time")]
 
   # Add the rowid
   LO$rowID = seq(from = 1, to = length(types))[types == "LO"]
@@ -320,7 +315,7 @@ importMCA <- function(file,silent = TRUE){
                        col_types = rep('character',16),
                        widths = c(2,7,1,5,5,5,4,4,3,3,3,12,2,2,2,20))
   names(LI) = c("Record Identity","Location","Suffix","Scheduled Arrival Time","Scheduled Departure Time",
-                "Scheduled Pass", "Public Arrival", "Public Departure", "Platform", "Line",
+                "Scheduled Pass", "Public Arrival Time", "Public Departure Time", "Platform", "Line",
                 "Path","Activity","Engineering Allowance","Pathing Allowance","Performance Allowance","Spare")
   LI$Spare = NULL
   LI$`Record Identity` = NULL
@@ -328,6 +323,21 @@ importMCA <- function(file,silent = TRUE){
 
   # Add the rowid
   LI$rowID = seq(from = 1, to = length(types))[types == "LI"]
+
+  # Filter to stops for passengers
+  acts = c("T", # Stops to take up and set down passengers
+           "D", # Stops to set down passengers
+           "U" # Stops to take up passengers
+  )
+
+  LI = LI[sapply(strsplit(LI$Activity, " "),function(x){any(acts %in% x)}),]
+  # Check for errors in the times
+  LI$`Scheduled Arrival Time` = gsub("H","",LI$`Scheduled Arrival Time`)
+  LI$`Scheduled Departure Time` = gsub("H","",LI$`Scheduled Departure Time`)
+
+  LI = LI[,c("Location","Scheduled Arrival Time","Scheduled Departure Time","Activity","rowID")]
+
+
 
   # Terminating Station
   if(!silent){message(paste0(Sys.time()," importing Terminating Station"))}
@@ -340,10 +350,12 @@ importMCA <- function(file,silent = TRUE){
   LT$Spare = NULL
   LT$`Record Identity` = NULL
   LT = strip_whitespace(LT)
+  LT$`Scheduled Arrival Time` = gsub("H","",LT$`Scheduled Arrival Time`)
+
+  LT = LT[,c("Location","Scheduled Arrival Time","Activity")]
 
   # Add the rowid
   LT$rowID = seq(from = 1, to = length(types))[types == "LT"]
-
 
   # Changes En Route
   if(!silent){message(paste0(Sys.time()," importing Changes En Route"))}
@@ -436,7 +448,8 @@ importMCA <- function(file,silent = TRUE){
   AA$rowID = seq(from = 1, to = length(types))[types == "AA"]
 
   # Trailer Record
-  if(!silent){message(paste0(Sys.time()," Trailer Record"))}
+  # Trailer Record
+  if(!silent){message(paste0(Sys.time()," importing Trailer Record"))}
   ZZ = raw[types == "ZZ"]
   ZZ = iotools::dstrfw(x = ZZ,
                        col_types = rep('character',2),
@@ -448,7 +461,20 @@ importMCA <- function(file,silent = TRUE){
   # Add the rowid
   ZZ$rowID = seq(from = 1, to = length(types))[types == "ZZ"]
 
-  results = list(HD,TI,TA,TD,AA,BS,BX,LO,LI,LT,CR,ZZ)
-  names(results) = c("HD","TI","TA","TD","AA","BS","BX","LO","LI","LT","CR","ZZ")
+  # Prep the main files
+  if(!silent){message(paste0(Sys.time()," Preparing Imported Data"))}
+  stop_times = dplyr::bind_rows(list(LO,LI,LT))
+  stop_times = stop_times[order(stop_times$rowID),]
+  stop_times$schedule = as.integer(as.character(cut(stop_times$rowID,c(BS$rowID,ZZ$rowID[1]), labels = BS$rowID)))
+  stop_times$stop_sequence = sequence(rle(stop_times$schedule)$lengths)
+
+
+  BX$rowIDm1 = BX$rowID -1
+  BX$rowID = NULL
+  schedule = dplyr::left_join(BS,BX,by = c("rowID" = "rowIDm1"))
+
+  results = list(stop_times,schedule,TI,TA,TD,AA,CR)
+  names(results) = c("stop_times","schedule","TI","TA","TD","AA","CR")
   return(results)
 }
+
