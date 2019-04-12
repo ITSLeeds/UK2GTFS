@@ -22,7 +22,8 @@ Imports:
   lubridate,
   tmap,
   xml2,
-  zip
+  zip,
+  pbapply
 Suggests: knitr,
     rmarkdown
 VignetteBuilder: knitr

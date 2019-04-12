@@ -87,7 +87,7 @@ import_routes <- function(routes){
   RouteSectionRef   <- import_simple(routes, ".//d1:RouteSectionRef")
   PrivateCode       <- import_simple(routes, ".//d1:PrivateCode")
   if(length(PrivateCode) == 0){
-    PrivateCode <- rep(NA, length(StopPointRef))
+    PrivateCode <- rep(NA, length(RouteSectionRef))
   }
 
   routes <- data.frame(PrivateCode = PrivateCode,
@@ -155,7 +155,7 @@ import_journeypatternsections <- function(journeypatternsections){
 
 #' import operators
 #' slower so not used
-#' @param operators
+#' @param operators operators object
 #' @noRd
 import_operators <- function(operators){
 
