@@ -1,3 +1,4 @@
+inst/doc
 # History files
 .Rhistory
 .Rapp.history
@@ -29,4 +30,3 @@ rsconnect/
 vignettes/tmp
 extras/tmp
 extras/export
-

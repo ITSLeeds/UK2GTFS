@@ -1,0 +1,54 @@
+---
+title: "UK2GTFS: Getting Started"
+author: "Malcolm Morgan"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Introduction
+
+The UK has two main sources of public transport timetable data **traveline** publishes data on buses and light rail and **ATOC** pubishes data on heavy rail. Each uses a data fromat that is unique to that organisation and both formats are old and difficult to use.  Many countires have adopeted the [GTFS](https://developers.google.com/transit/gtfs/) format which was developed by Google as a simple standard for publishing timetable data. Due to the wide-spread adoption of GTFS many useful tools have been develope that accept GTFS files as inputs. This package is intended to make the conversion of UK data to the GTFS format simple and easy.
+
+## Capabilities - why we need another package
+
+There are a number of pre-existing options for converting data to GTFS. This package aims to go beyond basic conversion by providing a range or additonal fucntionality:
+
+1. Data conversion
+    + Conversion of TransXchange to GTFS
+    + Conversion of ATOC CIF files to GTFS 
+1. Data cleaning, the raw data often contains clear error, the package does not blindly convert but also corrects some known errors
+    + Improved locations of tiplocs
+    + Correction of mispelt organisations
+    + Removal of on-demand bus services (GTFS does not support services that are on-demand)
+1. Data polishing
+    + Support of journeys past midnight
+    + Routing of train journeys along tracks rather than straight lines between stops
+
+
+## Getting Data
+
+### ATOC Data - for trains
+
+Data for trains can be downloaded from http://data.atoc.org/how-to you will need to register for a free account and login.
+
+### TransXchange Data - for bus, tram, and metro
+
+Data for other modes can be downloaded from https://www.travelinedata.org.uk/traveline-open-data/data-reporting/ you will need to apply for access to the FTP sever to download the data.
+
+## Using the package
+
+
+
+
+
