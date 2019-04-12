@@ -211,6 +211,9 @@ import_services <- function(service, full_import = TRUE){
   Direction                 <- import_simple(ss, ".//d1:Direction")
   VehicleType               <- import_withmissing2(ss, ".//d1:Description", 3, "@id")
   RouteRef                  <- import_simple(ss, ".//d1:RouteRef")
+  if(length(RouteRef) == 0){
+    RouteRef <- rep(NA, length(Direction))
+  }
   JourneyPatternSectionRefs <- import_simple(ss, ".//d1:JourneyPatternSectionRefs")
   JourneyPatternID          <- import_simple(ss, "@id")
 
