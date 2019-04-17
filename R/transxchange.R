@@ -41,7 +41,7 @@ transxchange2gtfs <- function(path_in,
 
   if(ncores == 1){
     message(paste0(Sys.time()," Importing TransXchange files"))
-    res_all  <- pbapply::pblapply(files, transxchange_import, run_debug = TRUE, full_import = FALSE)
+    res_all  <- pbapply::pblapply(files[12], transxchange_import, run_debug = TRUE, full_import = FALSE)
     message(paste0(Sys.time()," Converting to GTFS"))
     gtfs_all <- pbapply::pblapply(res_all, transxchange2gtfs, run_debug = TRUE, cal = cal, naptan = naptan)
   }else{

@@ -75,11 +75,20 @@ transxchange_import <- function(file, run_debug = FALSE, full_import = FALSE){
       stop("More than one service")
     }
   }
-  Services <- import_services(Services)
+  Services <- import_services(Services, full_import = full_import)
   StandardService <- Services$StandardService
   Services_main <- Services$Services_main
   SpecialDaysOperation <- Services$SpecialDaysOperation
   rm(Services)
+
+  ## ServicedOrganisations ############################
+  ServicedOrganisations <- xml2::xml_child(xml,"d1:ServicedOrganisations")
+  if(xml2::xml_length(ServicedOrganisations) > 0){
+    ServicedOrganisations <- import_ServicedOrganisations(ServicedOrganisations)
+  }else{
+    ServicedOrganisations <- NA
+  }
+
 
   ## VehicleJourneys ##########################################
   VehicleJourneys = xml2::xml_child(xml,"d1:VehicleJourneys")
@@ -155,6 +164,7 @@ transxchange_import <- function(file, run_debug = FALSE, full_import = FALSE){
       chk$SpecialDaysOperation$DaysOfOperation = NULL
       chk$BankHolidayOperation$DaysOfNonOperation = NULL
       chk$BankHolidayOperation$DaysOfOperation = NULL
+      #chk$
       chk <- unlist(sapply(chk, names))
       if(length(chk) != 0){
         message("Unexpected Structure in Operating Profile")
@@ -221,12 +231,14 @@ transxchange_import <- function(file, run_debug = FALSE, full_import = FALSE){
                    RouteSections, Services_main, StandardService,
                    SpecialDaysOperation, StopPoints, VehicleJourneys,
                    VehicleJourneys_exclude,VehicleJourneys_include,
-                   VehicleJourneysTimingLinks, VehicleJourneys_notes)
+                   VehicleJourneysTimingLinks, VehicleJourneys_notes,
+                   ServicedOrganisations)
   names(finalres) = c("JourneyPatternSections", "Operators", "Routes",
                       "RouteSections", "Services_main","StandardService",
                       "SpecialDaysOperation", "StopPoints", "VehicleJourneys",
                       "VehicleJourneys_exclude","VehicleJourneys_include",
-                      "VehicleJourneysTimingLinks", "VehicleJourneys_notes")
+                      "VehicleJourneysTimingLinks", "VehicleJourneys_notes",
+                      "ServicedOrganisations")
 
     return(finalres)
 }

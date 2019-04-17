@@ -205,6 +205,9 @@ import_services <- function(service, full_import = TRUE){
 
   if(full_import){
     PrivateCode <- import_simple(service, ".//d1:PrivateCode")
+    if(length(PrivateCode) == 0){
+      PrivateCode <- rep(NA, length(ServiceCode))
+    }
   }
 
   ss <- xml2::xml_find_all(service, ".//d1:JourneyPattern")
@@ -351,8 +354,15 @@ import_vehiclejourneys <- function(vehiclejourneys){
   SpecialDaysOperation <- xml2::xml_find_all(vehiclejourneys, ".//d1:SpecialDaysOperation")
   DaysOfNonOperation <- xml2::xml_find_all(SpecialDaysOperation, ".//d1:DaysOfNonOperation")
 
+  # ServicedOrganisations
+  ServicedOrganisations <- xml2::xml_find_all(vehiclejourneys, ".//d1:ServicedOrganisations")
+  ServicedDaysOfNonOperation <- xml2::xml_find_all(ServicedOrganisations, ".//d1:DaysOfNonOperation")
+  ServicedDaysOfNonOperation <- import_simple(ServicedDaysOfNonOperation, ".//d1:ServicedOrganisationRef")
+  ServicedDaysOfOperation <- xml2::xml_find_all(ServicedOrganisations, ".//d1:DaysOperation")
+  ServicedDaysOfOperation <- import_simple(ServicedDaysOfOperation, ".//d1:ServicedOrganisationRef")
 
-
+  vj_simple$ServicedDaysOfOperation <- ServicedDaysOfOperation
+  vj_simple$ServicedDaysOfNonOperation <- ServicedDaysOfNonOperation
 
   if(xml2::xml_length(DaysOfNonOperation) > 0){
     DaysOfNonOperation_StartDate <- xml2::xml_text(xml2::xml_find_all(DaysOfNonOperation, ".//d1:StartDate"))
@@ -391,4 +401,34 @@ import_notes <- function(Notes){
   NoteCode <- xml2::xml_find_all(Notes, ".//d1:NoteCode")
   xml2::xml_parents(xml2::xml_parents(NoteCode))
   xml2::xml_text(xml2::xml_find_all(xml2::xml_parent(Notes), ".//d1:VehicleJourneyCode"))
+}
+
+
+
+#' Import ServicedOrganisations
+#' Imports ServicedOrganisations
+#' @param ServicedOrganisations ServicedOrganisations object
+#' @noRd
+#'
+import_ServicedOrganisations <- function(ServicedOrganisations){
+  nmchk <- unique(xml2::xml_name(xml2::xml_children(xml2::xml_children(ServicedOrganisations))))
+  if(!all(nmchk %in% c("OrganisationCode", "Name", "WorkingDays"))){
+    stop("Unknown Structure in ServicedOrganisations")
+  }
+  OrganisationCode <- import_simple(ServicedOrganisations, ".//d1:OrganisationCode")
+  Name <- import_simple(ServicedOrganisations, ".//d1:Name")
+  WorkingDays <- xml2::xml_find_all(ServicedOrganisations, ".//d1:WorkingDays")
+  WorkingDays.StartDate <- import_simple(WorkingDays, ".//d1:StartDate")
+  WorkingDays.EndDate <- import_simple(WorkingDays, ".//d1:EndDate")
+  rep_lengths <- xml2::xml_length(WorkingDays)
+  OrganisationCode <- rep(OrganisationCode, times = rep_lengths)
+  Name <- rep(Name, times = rep_lengths)
+
+  result <- data.frame(OrganisationCode = OrganisationCode,
+             Name = Name,
+             WorkingDays.StartDate = WorkingDays.StartDate,
+             WorkingDays.EndDate = WorkingDays.EndDate
+             )
+
+  return(result)
 }
