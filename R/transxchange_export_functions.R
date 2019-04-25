@@ -10,8 +10,8 @@ exclude_trips <- function(trip_sub, trip_exc){
     # Exclusions
     # Classify Exclusions
     trip_exc_sub$type <- mapply(classify_exclusions,
-                                ExStartTime = trip_exc_sub$ExStartTime,
-                                ExEndTime = trip_exc_sub$ExEndTime,
+                                ExStartTime = trip_exc_sub$StartDate,
+                                ExEndTime = trip_exc_sub$EndDate,
                                 StartDate = trip_sub$StartDate,
                                 EndDate = trip_sub$EndDate)
     if("total" %in% trip_exc_sub$type){
@@ -47,8 +47,21 @@ exclude_trips <- function(trip_sub, trip_exc){
 #' @noRd
 list_exclude_days <- function(exclude_days){
   res <- mapply(function(ExStartTime, ExEndTime){seq(ExStartTime, ExEndTime, by = "days")},
-         exclude_days$ExStartTime,
-         exclude_days$ExEndTime)
+         exclude_days$StartDate,
+         exclude_days$EndDate)
+  res <- as.Date(unlist(res),origin = "1970-01-01")
+  res <- unique(res)
+  return(res)
+}
+
+#' list exclude days
+#' break up star and end include days into list of days
+#' @param include_days
+#' @noRd
+list_include_days <- function(include_days){
+  res <- mapply(function(ExStartTime, ExEndTime){seq(ExStartTime, ExEndTime, by = "days")},
+                include_days$StartDate,
+                include_days$EndDate)
   res <- as.Date(unlist(res),origin = "1970-01-01")
   res <- unique(res)
   return(res)
@@ -363,6 +376,11 @@ expand_stop_times <- function(i, jps){
 expand_stop_times2 <- function(i, jps, trips){
   jps_sub <- jps[[i]]
   trips_sub <- trips[trips$JourneyPatternRef == jps_sub$JourneyPatternID[1],]
+  jps_sub$To.Activity[is.na(jps_sub$To.Activity)] <- "pickUpAndSetDown"
+  if(all(is.na(jps_sub$To.SequenceNumber))){
+    jps_sub$To.SequenceNumber <- seq(2,nrow(jps_sub) + 1)
+  }
+
 
   st_sub = jps_sub[,c("To.StopPointRef","To.Activity","To.SequenceNumber","JourneyPatternID","To.WaitTime","To.TimingStatus","RunTime")]
   names(st_sub) <- c("stop_id","To.Activity","stop_sequence","JourneyPatternRef","To.WaitTime","timepoint","RunTime")
@@ -374,9 +392,12 @@ expand_stop_times2 <- function(i, jps, trips){
                       timepoint     = jps_sub$From.TimingStatus[1],
                       RunTime       = 0,
                       stringsAsFactors = F)
-  if(st_top$To.Activity == "pass"){
+  if(is.na(st_top$To.Activity)){
+    st_top$To.Activity <- "pickUp"
+  }else if(st_top$To.Activity == "pass"){
     st_top$To.Activity <- "pickUp"
   }
+
   st_sub <- rbind(st_top, st_sub)
   #st_sub$RunTime <- as.integer(st_sub$RunTime)
   st_sub$To.WaitTime <- as.integer(st_sub$To.WaitTime)

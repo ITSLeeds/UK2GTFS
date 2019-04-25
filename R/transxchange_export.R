@@ -18,31 +18,21 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
   #Services_NonOperation   <-  obj[["Services_NonOperation"]]
   StopPoints              <-  obj[["StopPoints"]]
   VehicleJourneys         <-  obj[["VehicleJourneys"]]
-  VehicleJourneys_exclude <-  obj[["VehicleJourneys_exclude"]]
-  VehicleJourneys_include <-  obj[["VehicleJourneys_include"]]
+  VehicleJourneys_exclude <-  obj[["DaysOfOperation"]]
+  VehicleJourneys_include <-  obj[["DaysOfNonOperation"]]
   SpecialDaysOperation <-  obj[["SpecialDaysOperation"]]
   VehicleJourneys_notes <- obj[["VehicleJourneys_notes"]]
   #VehicleJourneysTimingLinks <- obj[["VehicleJourneysTimingLinks"]]
+  ServicedOrganisations <- obj[["ServicedOrganisations"]]
 
-  # Check Notes
-  # notecodes_flex <- "DRT1"
-  # notecodes_school <- c("SchO","LRC","LRO")
-  # if(nrow(VehicleJourneys_notes) > 0){
-  #   if(any(notecodes_flex %in% VehicleJourneys_notes$NoteCode)){
-  #     stop("Booked Services cannont be converted to GTFS")
-  #   }else if(any(notecodes_school %in% VehicleJourneys_notes$NoteCode)){
-  #     if(!quiet){
-  #       message("Special school running patterns are not supported")
-  #     }
-  #   }else if(!all(VehicleJourneys_notes$NoteCode %in% c(notecodes_flex, notecodes_school))){
-  #     notecodes_unknown <- unique(VehicleJourneys_notes$NoteCode)
-  #     notecodes_unknown <- notecodes_unknown[!notecodes_unknown %in% c(notecodes_flex, notecodes_school)]
-  #     stop("unknown Note Type", notecodes_unknown)
-  #   }
-  # }
+  # Early Subsets - move to import code
+  VehicleJourneys <- VehicleJourneys[,c("VehicleJourneyCode","ServiceRef","JourneyPatternRef","DepartureTime","DaysOfWeek",
+                                        "BankHolidaysOperate","BankHolidaysNoOperate","ServicedDaysOfOperation","ServicedDaysOfNonOperation")]
+  Services_main$StartDate <- as.Date(Services_main$StartDate)
+  Services_main$EndDate <- as.Date(Services_main$EndDate)
 
   # Remove Bookeable Services
-  if(nrow(VehicleJourneys_notes) > 0){
+  if(class(VehicleJourneys_notes) == "data.frame"){
     VehicleJourneys_notes <- VehicleJourneys_notes[grepl("book", VehicleJourneys_notes$NoteText),]
     vjc_remove <- unique(VehicleJourneys_notes$VehicleJourneyCode)
     VehicleJourneys <- VehicleJourneys[!VehicleJourneys$VehicleJourneyCode %in% vjc_remove,]
@@ -51,17 +41,25 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
     }
   }
 
+  # Import ServicedOrganisations
+  if(class(ServicedOrganisations) == "data.frame"){
+    vj_sub <- VehicleJourneys[,c("VehicleJourneyCode","ServicedDaysOfOperation","ServicedDaysOfNonOperation")]
+    vj_sub <- vj_sub[(!is.na(vj_sub$ServicedDaysOfOperation)) | (!is.na(vj_sub$ServicedDaysOfNonOperation)),]
+    if(!all(is.na(vj_sub$ServicedDaysOfOperation))){
+      stop("Complex serviced operations")
+    }
+    ServicedOrganisations <- dplyr::left_join(ServicedOrganisations, vj_sub, by = c("OrganisationCode" = "ServicedDaysOfNonOperation"))
+    ServicedOrganisations <- ServicedOrganisations[,c("VehicleJourneyCode","WorkingDays.StartDate","WorkingDays.EndDate")]
+    names(ServicedOrganisations) <- c("VehicleJourneyCode","StartDate","EndDate")
+    VehicleJourneys_include <- rbind(VehicleJourneys_include, ServicedOrganisations)
+  }
 
-  # Early Subsets - move to import code
-  VehicleJourneys <- VehicleJourneys[,c("VehicleJourneyCode","ServiceRef","JourneyPatternRef","DepartureTime","days","BankHolidaysOperate","BankHolidaysNoOperate")]
-  Services_main$StartDate <- as.Date(Services_main$StartDate)
-  Services_main$EndDate <- as.Date(Services_main$EndDate)
+
 
   # Check on exclusions
-  if(nrow(VehicleJourneys_include) != 0  # | nrow(VehicleJourneys_exclude) != 0
-     ){
-    stop("Must consider VehicleJourneys")
-  }
+  # if(class(VehicleJourneys_include) == "data.frame"){
+  #   stop("Must consider VehicleJourneys_include")
+  # }
 
   if(!is.null(SpecialDaysOperation)){
     stop("Must consider SpecialDaysOperation")
@@ -76,12 +74,12 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
   #   stop("Must consider TimingLinks")
   # }
 
-  if(nrow(VehicleJourneys_exclude) != 0){
-    names(VehicleJourneys_exclude) <- c("ExStartTime","ExEndTime","VehicleJourneyCode")
-    VehicleJourneys_exclude[] <- lapply(VehicleJourneys_exclude, as.character)
-    VehicleJourneys_exclude$ExStartTime <- as.Date(VehicleJourneys_exclude$ExStartTime)
-    VehicleJourneys_exclude$ExEndTime <- as.Date(VehicleJourneys_exclude$ExEndTime)
-  }
+  # if(nrow(VehicleJourneys_exclude) != 0){
+  #   names(VehicleJourneys_exclude) <- c("ExStartTime","ExEndTime","VehicleJourneyCode")
+  #   VehicleJourneys_exclude[] <- lapply(VehicleJourneys_exclude, as.character)
+  #   VehicleJourneys_exclude$ExStartTime <- as.Date(VehicleJourneys_exclude$ExStartTime)
+  #   VehicleJourneys_exclude$ExEndTime <- as.Date(VehicleJourneys_exclude$ExEndTime)
+  # }
 
 
   # Journey Pattern Sections ------------------------------------------------
@@ -137,17 +135,24 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
     stop("Unable to match OperatorCode between Services_main and Operators")
   }
 
+  if(is.null(Operators$TradingName)){
+    agency_name <- Operators$OperatorShortName
+  }else{
+    agency_name <- Operators$TradingName
+  }
+
+
   agency <- data.frame(agency_id = agency_id,
-                       agency_name = Operators$TradingName,
-                       agency_url = "http://www.unknown.com",
+                       agency_name = agency_name,
+                       agency_url = "http://www.URL-IS-MISSING.com",
                        agency_timezone = "Europe/London",
                        agency_lang = "en")
 
 
   # trips calendar calendar_dates -------------------------------------------------
   ###### Redo: Again
-  trips <- VehicleJourneys[,c("ServiceRef","VehicleJourneyCode","DepartureTime","JourneyPatternRef","days")]
-  names(trips) <-           c("route_id"  ,"trip_id",           "DepartureTime","JourneyPatternRef","days")
+  trips <- VehicleJourneys[,c("ServiceRef","VehicleJourneyCode","DepartureTime","JourneyPatternRef","DaysOfWeek")]
+  names(trips) <-           c("route_id"  ,"trip_id",           "DepartureTime","JourneyPatternRef","DaysOfWeek")
   trips[] <- lapply(trips, as.character)
 
 
@@ -158,7 +163,7 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
 
 
   # Step 1: Do we Have any exclusions
-  if(nrow(VehicleJourneys_exclude) != 0){
+  if(class(VehicleJourneys_exclude) == "data.frame"){
     # Yes - Build Exclusions
     # Split Exclusions by Vehicle Jounrey
     trip_exc <- split(VehicleJourneys_exclude, VehicleJourneys_exclude$VehicleJourneyCode)
@@ -178,14 +183,30 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
 
   }
 
+  # Step 1b: Do we have any Inclusions
+  if(class(VehicleJourneys_include) == "data.frame"){
+    trips_include <- split(VehicleJourneys_include, VehicleJourneys_include$VehicleJourneyCode)
+    trips_include <- lapply(trips_include, list_include_days)
+    trips_include <- data.frame(trip_id = rep(names(trips_include), times = lengths(trips_include)),
+                                date = as.Date(unlist(trips_include), origin = "1970-01-01"),
+                                stringsAsFactors = FALSE)
+    trips_include$exception_type <- 1
+
+  }
+
   # Step 2: Prep the Bank Holidays
   cal <- cal[cal$date >= Services_main$StartDate & cal$date <= Services_main$EndDate, ]
   bank_holidays <- VehicleJourneys[,c("VehicleJourneyCode","BankHolidaysOperate","BankHolidaysNoOperate")]
+  # bank_holidays <- bank_holidays[(!is.na(bank_holidays$BankHolidaysOperate)) | (!is.na(bank_holidays$BankHolidaysNoOperate)),]
+  # if(nrow(bank_holidays) > 0){
+  #
+  # }
   bank_holidays[] <- lapply(bank_holidays, as.character)
   bank_holidays <- unique(bank_holidays)
-  names(bank_holidays) <-           c("trip_id",           "BankHolidaysOperate","BankHolidaysNoOperate")
+  names(bank_holidays) <- c("trip_id","BankHolidaysOperate","BankHolidaysNoOperate")
   bank_holidays$BankHolidaysOperate[bank_holidays$BankHolidaysOperate == "AllBankHolidays"] <- paste(cal$name, collapse =  " ")
   bank_holidays$BankHolidaysNoOperate[bank_holidays$BankHolidaysNoOperate == "AllBankHolidays"] <- paste(cal$name, collapse =  " ")
+
 
   bank_holidays_inc <- break_up_holidays2(bank_holidays, "BankHolidaysOperate")
   bank_holidays_exc <- break_up_holidays2(bank_holidays, "BankHolidaysNoOperate")
@@ -208,9 +229,13 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
     calendar_dates <- bank_holidays
   }
 
+  if(exists("trips_include")){
+    calendar_dates <- rbind(calendar_dates, trips_include)
+  }
+
   # Step 4: Make the calendar
-  calendar <- trips[,c("trip_id","StartDate", "EndDate","days")]
-  names(calendar) <- c("trip_id","start_date","end_date","days")
+  calendar <- trips[,c("trip_id","StartDate", "EndDate","DaysOfWeek")]
+  names(calendar) <- c("trip_id","start_date","end_date","DaysOfWeek")
   calendar$start_date <- gsub("-","",calendar$start_date)
   calendar$end_date <- gsub("-","",calendar$end_date)
 
@@ -219,13 +244,13 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
     calendar_dates <- data.frame(trip_id = character(),
                                   date = character(),
                                   exception_type = character())
-    calendar_summary <- dplyr::group_by(calendar, start_date, end_date, days)
+    calendar_summary <- dplyr::group_by(calendar, start_date, end_date, DaysOfWeek)
   }else{
     calendar_dates_summary <- dplyr::group_by(calendar_dates, trip_id)
     calendar_dates_summary <- dplyr::summarise(calendar_dates_summary,
                                                pattern = paste(c(date, exception_type), collapse = ""))
     calendar_summary <- dplyr::left_join(calendar, calendar_dates_summary, by = "trip_id")
-    calendar_summary <- dplyr::group_by(calendar_summary, start_date, end_date, days, pattern)
+    calendar_summary <- dplyr::group_by(calendar_summary, start_date, end_date, DaysOfWeek, pattern)
   }
 
   calendar_summary$service_id <- dplyr::group_indices(calendar_summary)
@@ -234,7 +259,7 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
   calendar_dates <- dplyr::left_join(calendar_dates, calendar_summary, by = "trip_id")
   trips <- dplyr::left_join(trips, calendar_summary, by = "trip_id")
 
-  calendar <- calendar[,c("service_id","start_date","end_date","days")]
+  calendar <- calendar[,c("service_id","start_date","end_date","DaysOfWeek")]
   calendar <- unique(calendar)
 
   calendar_dates <- calendar_dates[,c("service_id","date","exception_type")]
@@ -247,8 +272,8 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
 
   trips <- trips[,c("route_id","service_id","trip_id","DepartureTime","JourneyPatternRef")]
 
-  # Step 6: Make calendar days of the week
-  calendar_days <- as.data.frame(t(sapply(as.character(calendar$days), clean_days, USE.NAMES = F)))
+  # Step 6: Make calendar DaysOfWeek of the week
+  calendar_days <- as.data.frame(t(sapply(as.character(calendar$DaysOfWeek), clean_days, USE.NAMES = F)))
   names(calendar_days) <- c("monday","tuesday","wednesday","thursday","friday","saturday","sunday")
 
   calendar <- cbind(calendar, calendar_days)
