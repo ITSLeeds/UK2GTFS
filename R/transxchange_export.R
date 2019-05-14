@@ -18,12 +18,15 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
   #Services_NonOperation   <-  obj[["Services_NonOperation"]]
   StopPoints              <-  obj[["StopPoints"]]
   VehicleJourneys         <-  obj[["VehicleJourneys"]]
-  VehicleJourneys_exclude <-  obj[["DaysOfOperation"]]
-  VehicleJourneys_include <-  obj[["DaysOfNonOperation"]]
+  VehicleJourneys_exclude <-  obj[["DaysOfNonOperation"]]
+  VehicleJourneys_include <-  obj[["DaysOfOperation"]]
   SpecialDaysOperation <-  obj[["SpecialDaysOperation"]]
   VehicleJourneys_notes <- obj[["VehicleJourneys_notes"]]
   #VehicleJourneysTimingLinks <- obj[["VehicleJourneysTimingLinks"]]
   ServicedOrganisations <- obj[["ServicedOrganisations"]]
+
+
+
 
   # Early Subsets - move to import code
   VehicleJourneys <- VehicleJourneys[,c("VehicleJourneyCode","ServiceRef","JourneyPatternRef","DepartureTime","DaysOfWeek",
@@ -48,10 +51,12 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
     if(!all(is.na(vj_sub$ServicedDaysOfOperation))){
       stop("Complex serviced operations")
     }
-    ServicedOrganisations <- dplyr::left_join(ServicedOrganisations, vj_sub, by = c("OrganisationCode" = "ServicedDaysOfNonOperation"))
-    ServicedOrganisations <- ServicedOrganisations[,c("VehicleJourneyCode","WorkingDays.StartDate","WorkingDays.EndDate")]
-    names(ServicedOrganisations) <- c("VehicleJourneyCode","StartDate","EndDate")
-    VehicleJourneys_include <- rbind(VehicleJourneys_include, ServicedOrganisations)
+    ServicedOrganisations_exe <- dplyr::left_join(ServicedOrganisations, vj_sub, by = c("OrganisationCode" = "ServicedDaysOfNonOperation"))
+    ServicedOrganisations_exe <- ServicedOrganisations_exe[,c("VehicleJourneyCode","WorkingDays.StartDate","WorkingDays.EndDate")]
+    names(ServicedOrganisations_exe) <- c("VehicleJourneyCode","StartDate","EndDate")
+    VehicleJourneys_exclude <- rbind(VehicleJourneys_exclude, ServicedOrganisations_exe)
+
+
   }
 
 

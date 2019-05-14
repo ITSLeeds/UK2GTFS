@@ -165,6 +165,12 @@ import_operators <- function(operators){
   OperatorNameOnLicence      <- import_simple(operators, ".//d1:OperatorNameOnLicence")
   TradingName                <- import_simple(operators, ".//d1:TradingName")
 
+  if(length(OperatorNameOnLicence) == 0){
+    OperatorNameOnLicence <- rep(NA, length(NationalOperatorCode))
+  }
+  if(length(TradingName) == 0){
+    TradingName <- rep(NA, length(NationalOperatorCode))
+  }
 
   operators <- data.frame(NationalOperatorCode = NationalOperatorCode,
                           OperatorCode = OperatorCode,
@@ -311,7 +317,7 @@ import_vehiclejourneys <- function(vehiclejourneys){
   Notes <- xml2::xml_find_all(vehiclejourneys, ".//d1:Note")
 
   if(any(xml2::xml_length(Notes) > 0)){
-    Notes <- import_notes(Notes)
+    Notes <- import_notes2(vehiclejourneys)
   }else{
     Notes <- NA
   }
@@ -403,15 +409,7 @@ import_vehiclejourneys <- function(vehiclejourneys){
   }
 
   if(any(xml2::xml_length(DaysOfOperation) > 0)){
-    DaysOfOperation_StartDate <- xml2::xml_text(xml2::xml_find_all(DaysOfOperation, ".//d1:StartDate"))
-    DaysOfOperation_EndDate <- xml2::xml_text(xml2::xml_find_all(DaysOfOperation, ".//d1:EndDate"))
-    DaysOfOperation_id <- xml2::xml_parent(xml2::xml_parent(xml2::xml_parent(DaysOfOperation)))
-    DaysOfOperation_id <- import_simple(DaysOfOperation_id, ".//d1:VehicleJourneyCode")
-    DaysOfOperation_id <- rep(DaysOfOperation_id, times = xml2::xml_length(DaysOfOperation))
-    DaysOfOperation <- data.frame(VehicleJourneyCode = DaysOfOperation_id,
-                                     StartDate = as.Date(DaysOfOperation_StartDate),
-                                     EndDate = as.Date(DaysOfOperation_EndDate),
-                                     stringsAsFactors = FALSE)
+    DaysOfOperation <- import_DaysOfOperation(DaysOfOperation)
   }else{
     DaysOfOperation <- NA
   }
@@ -426,6 +424,41 @@ import_vehiclejourneys <- function(vehiclejourneys){
 
 }
 
+#' Imports day of operation
+#' to deal with date range and serviceorganisation working days
+#' @param Notes
+#' @noRd
+import_DaysOfOperation <- function(DaysOfOperation){
+  result <- list()
+  for(i in seq(1,length(xml2::xml_length(DaysOfOperation)))){
+    chld <- DaysOfOperation[i]
+    DaysOfOperation_StartDate <- xml2::xml_text(xml2::xml_find_all(chld, ".//d1:StartDate"))
+    DaysOfOperation_EndDate <- xml2::xml_text(xml2::xml_find_all(chld, ".//d1:EndDate"))
+    DaysOfOperation_id <- xml2::xml_parent(xml2::xml_parent(xml2::xml_parent(chld)))
+    DaysOfOperation_id <- import_simple(DaysOfOperation_id, ".//d1:VehicleJourneyCode")
+    DaysOfOperation_ServicedOrganisationRef <- xml2::xml_text(xml2::xml_find_all(chld, ".//d1:ServicedOrganisationRef"))
+    if(length(DaysOfOperation_StartDate) == 0){
+      DaysOfOperation_StartDate <- NA
+    }
+    if(length(DaysOfOperation_EndDate) == 0){
+      DaysOfOperation_EndDate <- NA
+    }
+    if(length(DaysOfOperation_ServicedOrganisationRef) == 0){
+      DaysOfOperation_ServicedOrganisationRef <- NA
+    }
+    res <- data.frame(VehicleJourneyCode = DaysOfOperation_id,
+                      StartDate = as.Date(DaysOfOperation_StartDate),
+                      EndDate = as.Date(DaysOfOperation_EndDate),
+                      ServicedOrganisationRef = DaysOfOperation_ServicedOrganisationRef,
+                      stringsAsFactors = FALSE)
+    result[[i]] <- res
+  }
+  result <- dplyr::bind_rows(result)
+
+  return(result)
+}
+
+
 
 #' Imports when Multiple Values
 #' Returns a dataframe with appopiate lookup id
@@ -433,6 +466,7 @@ import_vehiclejourneys <- function(vehiclejourneys){
 #' @noRd
 import_notes <- function(Notes){
   parent <- xml2::xml_parent(Notes)
+
   VehicleJourneyCode <- import_simple(parent, ".//d1:VehicleJourneyCode")
   NoteCode <- import_simple(Notes, ".//d1:NoteCode")
   NoteText <- import_simple(Notes, ".//d1:NoteText")
@@ -442,7 +476,36 @@ import_notes <- function(Notes){
   return(result)
 }
 
+#' Imports when Multiple Values
+#' Returns a dataframe with appopiate lookup id
+#' @param vehiclejourneys
+#' @noRd
+import_notes2 <- function(vehiclejourneys){
 
+  VehicleJourneyCode <- import_simple(vehiclejourneys, ".//d1:VehicleJourneyCode")
+  result <- list()
+  for(i in seq(1,xml2::xml_length(vehiclejourneys))){
+    #message(i)
+    chld <- xml2::xml_child(vehiclejourneys, i)
+    NoteCode <- import_simple(chld, ".//d1:NoteCode")
+    NoteText <- import_simple(chld, ".//d1:NoteText")
+    if(length(NoteCode) == 0){
+      NoteCode <- NA
+    }
+    if(length(NoteText) == 0){
+      NoteText <- NA
+    }
+    res <- data.frame(VehicleJourneyCode = VehicleJourneyCode[i],
+                         NoteCode = NoteCode,
+                         NoteText = NoteText,
+                      stringsAsFactors = FALSE)
+    result[[i]] <- res
+  }
+  result <- dplyr::bind_rows(result)
+  result <- result[!is.na(result$NoteCode),]
+
+  return(result)
+}
 
 #' Import ServicedOrganisations
 #' Imports ServicedOrganisations
@@ -485,7 +548,7 @@ import_ServicedOrganisations <- function(ServicedOrganisations, full_import = FA
 #'
 import_ServicedOrganisationsDayType <- function(ServicedOrganisationDayType){
 
-  ServicedOrganisationDayType <- xml2::xml_find_all(vehiclejourneys, ".//d1:ServicedOrganisationDayType")
+  #ServicedOrganisationDayType <- xml2::xml_find_all(vehiclejourneys, ".//d1:ServicedOrganisationDayType")
   ServicedDaysOfNonOperation <- xml2::xml_find_all(ServicedOrganisationDayType, ".//d1:DaysOfNonOperation")
   DaysOfNonOperation_id <- xml2::xml_parent(xml2::xml_parent(xml2::xml_parent(ServicedDaysOfNonOperation)))
   DaysOfNonOperation_id <- import_simple(DaysOfNonOperation_id, ".//d1:VehicleJourneyCode")

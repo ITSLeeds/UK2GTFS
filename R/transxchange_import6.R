@@ -53,21 +53,6 @@ transxchange_import <- function(file, run_debug = FALSE, full_import = FALSE){
   JourneyPatternSections <- xml2::xml_child(xml,"d1:JourneyPatternSections")
   JourneyPatternSections <- import_journeypatternsections(JourneyPatternSections)
 
-  ## Operators ##########################################
-  Operators <- xml2::xml_child(xml,"d1:Operators")
-  if(run_debug){
-    if(xml2::xml_length(Operators) > 1){
-      message("More than one Operators")
-      stop()
-    }
-  }
-  Operators <- xml2::xml_child(Operators,1)
-  Operators <- xml2::as_list(Operators)
-  Operators <- unlist(Operators)
-  Operators <- as.data.frame(t(Operators))
-  Operators[] <- lapply(Operators, as.character)
-
-
   ## Services ##########################################
   Services <- xml2::xml_child(xml,"d1:Services")
   if(run_debug){
@@ -80,6 +65,17 @@ transxchange_import <- function(file, run_debug = FALSE, full_import = FALSE){
   Services_main <- Services$Services_main
   SpecialDaysOperation <- Services$SpecialDaysOperation
   rm(Services)
+
+
+  ## Operators ##########################################
+  Operators <- xml2::xml_child(xml,"d1:Operators")
+  Operators <- import_operators(Operators)
+  if(nrow(Operators) != 1){
+    Operators <- Operators[Operators$OperatorCode %in% Services_main$RegisteredOperatorRef, ]
+    if(nrow(Operators) != 1){
+      stop("Can't match operators to services")
+    }
+  }
 
   ## ServicedOrganisations ############################
   ServicedOrganisations <- xml2::xml_child(xml,"d1:ServicedOrganisations")

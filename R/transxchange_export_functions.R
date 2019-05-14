@@ -20,10 +20,10 @@ exclude_trips <- function(trip_sub, trip_exc){
       trip_sub <- trip_sub[NULL,]
     }else{
       if("start" %in% trip_exc_sub$type){
-        trip_sub$StartDate <- max(trip_exc_sub$ExEndTime[trip_exc_sub$type == "start"])
+        trip_sub$StartDate <- max(trip_exc_sub$EndDate[trip_exc_sub$type == "start"]) + 1
       }
       if("end" %in% trip_exc_sub$type){
-        trip_sub$EndDate <- min(trip_exc_sub$ExStartTime[trip_exc_sub$type == "end"])
+        trip_sub$EndDate <- min(trip_exc_sub$StartDate[trip_exc_sub$type == "end"]) - 1
       }
       if("middle" %in% trip_exc_sub$type){
         exclude_days <- trip_exc_sub[trip_exc_sub$type == "middle",]
@@ -197,6 +197,8 @@ clean_days <- function(days){
       res[7] <- 1
     }
 
+  }else if(is.na(days)){
+    res <- c(1,1,1,1,1,1,1)
   }else if(days == "MondayToFriday"){
     res <- c(1,1,1,1,1,0,0)
   }else if(days == "HolidaysOnly"){
