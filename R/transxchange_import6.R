@@ -41,7 +41,7 @@ transxchange_import <- function(file, run_debug = FALSE, full_import = FALSE){
     RouteSections = dplyr::bind_rows(RouteSections)
     RouteSections[] <- lapply( RouteSections, factor)
   }else{
-    RouteSections = NA
+    RouteSections = NULL
   }
 
 
@@ -82,19 +82,19 @@ transxchange_import <- function(file, run_debug = FALSE, full_import = FALSE){
   if(xml2::xml_length(ServicedOrganisations) > 0){
     ServicedOrganisations <- import_ServicedOrganisations(ServicedOrganisations)
   }else{
-    ServicedOrganisations <- NA
+    ServicedOrganisations <- NULL
   }
 
 
   ## VehicleJourneys ##########################################
   VehicleJourneys = xml2::xml_child(xml,"d1:VehicleJourneys")
-  VehicleJourneys <- import_vehiclejourneys(VehicleJourneys)
+  VehicleJourneys <- import_vehiclejourneys(VehicleJourneys, Services_main, cal)
 
   DaysOfOperation <- VehicleJourneys$DaysOfOperation
   DaysOfNonOperation <- VehicleJourneys$DaysOfNonOperation
   VehicleJourneys_notes <- VehicleJourneys$VJ_Notes
   VehicleJourneys <- VehicleJourneys$VehicleJourneys
-  VehicleJourneysTimingLinks <- NA
+  VehicleJourneysTimingLinks <- NULL
   #
   # VehicleJourneys = xml2::as_list(VehicleJourneys)
   #

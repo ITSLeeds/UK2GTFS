@@ -25,7 +25,18 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
   #VehicleJourneysTimingLinks <- obj[["VehicleJourneysTimingLinks"]]
   ServicedOrganisations <- obj[["ServicedOrganisations"]]
 
+  # Swtich NA to NULL
+  if(length(VehicleJourneys_exclude) == 1){
+    if(is.na(VehicleJourneys_exclude)){
+      VehicleJourneys_exclude <- NULL
+    }
+  }
 
+  if(length(VehicleJourneys_include) == 1){
+    if(is.na(VehicleJourneys_include)){
+      VehicleJourneys_include <- NULL
+    }
+  }
 
 
   # Early Subsets - move to import code
@@ -44,7 +55,53 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
     }
   }
 
-  # Import ServicedOrganisations
+  # Clean ServicedOrganisations
+  if(class(ServicedOrganisations) == "data.frame"){
+    ServicedOrganisations$StartDate <- as.Date(ifelse(is.na(ServicedOrganisations$WorkingDays.StartDate),
+                                              as.character(ServicedOrganisations$Holidays.StartDate),
+                                              as.character(ServicedOrganisations$WorkingDays.StartDate)))
+
+    ServicedOrganisations$EndDate <- as.Date(ifelse(is.na(ServicedOrganisations$WorkingDays.EndDate),
+                                            as.character(ServicedOrganisations$Holidays.EndDate),
+                                            as.character(ServicedOrganisations$WorkingDays.EndDate)))
+
+    ServicedOrganisations <- ServicedOrganisations[,c("OrganisationCode","StartDate","EndDate")]
+
+  }
+
+
+
+
+  # Append ServicedOrganisations Dates to inclusions and exclusions
+  # If VehicleJourneys_exclude or _include have ServicedOrganisationRef rather than Start and End Dates
+  if(!is.null(VehicleJourneys_exclude)){
+    if(class(ServicedOrganisations) == "data.frame"){
+      if(all(is.na(VehicleJourneys_exclude$StartDate))){
+        VehicleJourneys_exclude$StartDate <- NULL
+      }
+      if(all(is.na(VehicleJourneys_exclude$EndDate))){
+        VehicleJourneys_exclude$EndDate <- NULL
+      }
+      VehicleJourneys_exclude <- dplyr::left_join(VehicleJourneys_exclude, ServicedOrganisations, by = c("ServicedOrganisationRef" = "OrganisationCode"))
+      VehicleJourneys_exclude <- VehicleJourneys_exclude[,c("VehicleJourneyCode", "StartDate", "EndDate")]
+    }
+  }
+
+  if(!is.null(VehicleJourneys_include)){
+    if(class(ServicedOrganisations) == "data.frame"){
+      if(all(is.na(VehicleJourneys_include$StartDate))){
+        VehicleJourneys_include$StartDate <- NULL
+      }
+      if(all(is.na(VehicleJourneys_include$EndDate))){
+        VehicleJourneys_include$EndDate <- NULL
+      }
+      VehicleJourneys_include <- dplyr::left_join(VehicleJourneys_include, ServicedOrganisations, by = c("ServicedOrganisationRef" = "OrganisationCode"))
+      VehicleJourneys_include <- VehicleJourneys_include[,c("VehicleJourneyCode", "StartDate", "EndDate")]
+    }
+  }
+
+
+  # Import ServicedOrganisations inot VehicleJourneys
   if(class(ServicedOrganisations) == "data.frame"){
     vj_sub <- VehicleJourneys[,c("VehicleJourneyCode","ServicedDaysOfOperation","ServicedDaysOfNonOperation")]
     vj_sub <- vj_sub[(!is.na(vj_sub$ServicedDaysOfOperation)) | (!is.na(vj_sub$ServicedDaysOfNonOperation)),]
@@ -52,12 +109,16 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
       stop("Complex serviced operations")
     }
     ServicedOrganisations_exe <- dplyr::left_join(ServicedOrganisations, vj_sub, by = c("OrganisationCode" = "ServicedDaysOfNonOperation"))
-    ServicedOrganisations_exe <- ServicedOrganisations_exe[,c("VehicleJourneyCode","WorkingDays.StartDate","WorkingDays.EndDate")]
+
     names(ServicedOrganisations_exe) <- c("VehicleJourneyCode","StartDate","EndDate")
     VehicleJourneys_exclude <- rbind(VehicleJourneys_exclude, ServicedOrganisations_exe)
 
 
   }
+
+
+
+
 
 
 
@@ -229,7 +290,9 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
 
   # Step 3: Merge Exclusions and bank_holidays, then summarise the exclusions
   if(exists("trips_exclude")){
-    calendar_dates <- rbind(trips_exclude, bank_holidays)
+    if(nrow(bank_holidays) > 0){
+      calendar_dates <- rbind(trips_exclude, bank_holidays)
+    }
   }else{
     calendar_dates <- bank_holidays
   }
