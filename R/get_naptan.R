@@ -18,5 +18,11 @@ get_naptan <- function(url = "http://naptan.app.dft.gov.uk/DataRequest/Naptan.as
 
   naptan$stop_lon <- format(round(naptan$stop_lon, 6), scientific = FALSE)
   naptan$stop_lat <- format(round(naptan$stop_lat, 6), scientific = FALSE)
+
+  # Append alterative tags
+  extra <- naptan[naptan$stop_id %in% c("9400ZZSDBCK","9400ZZSDSTV","9400ZZSDTOT"),]
+  extra$stop_id <- paste0(extra$stop_id,"0")
+  naptan <- rbind(naptan, extra)
+
   return(naptan)
 }

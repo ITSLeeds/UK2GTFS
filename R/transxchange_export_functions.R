@@ -105,27 +105,60 @@ classify_exclusions <- function(ExStartTime, ExEndTime, StartDate, EndDate){
 clean_times <- function(x){
   x <- as.character(x)
   x <- gsub("PT","",x)
-  x <- strsplit(x,"M")
+  #x <- strsplit(x,"M")
   #mins <- grepl("M",x)
   #secs <- grepl("S",x)
 
+  help_times3 <- function(x_sub){
 
-  help_times2 <- function(x_sub){
-    if(length(x_sub) == 2){
-      if(!grepl("S",x_sub[2])){stop("Unknwown Time Structure")}
-      time <- (as.integer(x_sub[1]) * 60) +  as.integer(gsub("S","",x_sub[2]))
-    }else if(length(x_sub) == 1){
-      if(grepl("S",x_sub)){
-        time <- as.integer(gsub("S","",x_sub))
-      }else if(is.na(x_sub)){
-        time <- 0
-      }else{
-        time <- (as.integer(x_sub) * 60)
-      }
-    }else{
-      stop("Terrible error")
+    if(is.na(x_sub)){
+      return(0)
     }
+
+    if(grepl("H",x_sub)){
+      hours <- gsub("H(.*)","",x_sub)
+      hours <- as.integer(hours)
+    }else{
+      hours <- 0
+    }
+
+    time <- gsub("(.*)H","",x_sub)
+
+    if(grepl("M",time)){
+      mins <- gsub("M(.*)","",time)
+      mins <- as.integer(mins)
+    }else{
+      mins <- 0
+    }
+
+    time <- gsub("(.*)M","",time)
+
+    if(grepl("S",time)){
+      secs <- gsub("S","",time)
+      secs <- as.integer(secs)
+    }else{
+      secs <- 0
+    }
+
+    return(secs + (mins * 60) + (hours * 3600))
   }
+
+  # help_times2 <- function(x_sub){
+  #   if(length(x_sub) == 2){
+  #     if(!grepl("S",x_sub[2])){stop("Unknwown Time Structure")}
+  #     time <- (as.integer(x_sub[1]) * 60) +  as.integer(gsub("S","",x_sub[2]))
+  #   }else if(length(x_sub) == 1){
+  #     if(grepl("S",x_sub)){
+  #       time <- as.integer(gsub("S","",x_sub))
+  #     }else if(is.na(x_sub)){
+  #       time <- 0
+  #     }else{
+  #       time <- (as.integer(x_sub) * 60)
+  #     }
+  #   }else{
+  #     stop("Terrible error")
+  #   }
+  # }
 
   # help_times <- function(x_sub, min_sub, secs_sub){
   #   if(min_sub & secs_sub){
@@ -149,7 +182,7 @@ clean_times <- function(x){
   #   return(time)
   # }
   #times <- unname(mapply(help_times, x_sub = x, min_sub = mins, secs_sub = secs, SIMPLIFY = T))
-  times <- sapply(x,help_times2)
+  times <- sapply(x,help_times3)
   return(times)
 }
 
@@ -162,6 +195,12 @@ clean_route_type <- function(rt){
     return(3)
   }else if(rt == "ferry"){
     return(4)
+  }else if(rt == "rail"){
+    return(2)
+  }else if(rt == "coach"){
+    return(2)
+  }else if(rt == "underground"){
+    return(1)
   }else{
     stop(paste0("Unknown route_type ",rt))
   }
@@ -462,7 +501,8 @@ make_stop_times <- function(jps, trips, ss){
   jps <- dplyr::left_join(jps,ss_join, by = c("JPS_id" = "JourneyPatternSectionRefs"))
   jps <- split(jps, jps$JourneyPatternID)
 
-  stop_times <- lapply(1:length(jps), expand_stop_times2, jps = jps, trips = trips)
+  stop_times <- lapply(seq(1,length(jps)), expand_stop_times2, jps = jps, trips = trips)
+  stop_times <- stop_times[sapply(stop_times, nrow) > 0] #edge case where jps has times but no trips are recorded
   stop_times <- dplyr::bind_rows(stop_times)
   return(stop_times)
 }
@@ -486,3 +526,21 @@ clean_pass <- function(jps){
   }
   return(jps)
 }
+
+#' Check stop time sequence
+#' Check that stoptimes are in order
+#' @param stop_times list of data frames
+#' @noRd
+check_stop_times <- function(stop_times){
+  stop_times <- split(stop_times, stop_times$trip_id)
+
+  st_int <- function(st){
+    st$stop_sequence <- st$stop_sequence[order(st$stop_sequence)]
+    return(st)
+  }
+
+  stop_times <- lapply(stop_times, st_int)
+  stop_times <- dplyr::bind_rows(stop_times)
+  return(stop_times)
+}
+

@@ -102,9 +102,7 @@ gtfs_validate_internal <- function(gtfs){
   speed <- speed[!is.na(speed$speed),]
   speed <- speed[speed$speed > 30,]
   if(nrow(speed) > 0){
-    message(nrow(speed)," too fast trips" )
-    speed <- speed[speed$speed > 100,]
-    message(nrow(speed)," crazy fast trips" )
+    warning(paste0(length(speed$speed[speed$speed <= 100])," too fast trips (> 30m/s) and ",length(speed$speed[speed$speed > 100])," crazy fast trips (> 100 m/s)"))
   }
 
 }

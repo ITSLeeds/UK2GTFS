@@ -30,7 +30,7 @@ import_withmissing <- function(xml1, nm, lgth){
 #' Goes down mulitple layers and returns a value with NA for missing
 #' @param xml1 XML object
 #' @param nm character name to find
-#' @param lgth numeric length check
+#' @param layers how many layers down
 #' @param idvar the id variaible in the higher tree
 #' @noRd
 import_withmissing2 <- function(xml1, nm, layers, idvar){
@@ -48,6 +48,74 @@ import_withmissing2 <- function(xml1, nm, layers, idvar){
   res[match(xml2_parent_id, xml1_id)] <- xml2::xml_text(xml_2)
   return(res)
 }
+
+
+#' Import FromTo
+#' To work with missing cases in childnre names
+#' @param xml1 XML object
+#' @param nm name to find
+#' @noRd
+import_FromTo <- function(xml1, nm){
+  res <- xml2::xml_text(xml2::xml_find_all(xml1, nm))
+  lth <- length(xml2::xml_length(xml1))
+  if(length(res) == lth){
+    return(res)
+  }else{
+    # There are missing values
+    res <- list()
+    for(i in seq(1:lth)){
+      sub <- xml2::xml_text(xml2::xml_find_all(xml1[i], nm))
+      if(length(sub) == 0){
+        sub <- NA
+      }
+      res[[i]] <- sub
+    }
+    res <- unlist(res)
+    return(res)
+  }
+}
+
+#' Clean NA from sequence
+#' @param x sequency of numbers
+#'
+
+clean_sequence <- function(x){
+  if(anyNA(x)){
+    x <- as.integer(x)
+    lth <- length(x)
+    for(i in seq(1, lth)){
+      val <- x[i]
+      if(is.na(val)){
+        if(i == 1){
+          # First in sequence
+          if(x[2] > 1){
+            x[i] <- 1
+          }else{
+            stop("Can't clean NA from sequence")
+          }
+        }else if(i == lth){
+          # Last value just add one
+          x[i] <- x[i -1] + 1
+        }else{
+          # Middle Value
+          if(is.na(x[i+1])){
+            # Next value also NA
+            x[i] <- x[i-1] + 1
+          }else{
+            if(x[i+1] - x[i-1] >= 2){
+              x[i] <- x[i-1] + 1
+            }else{
+              stop("Can't clean NA from sequence")
+            }
+          }
+        }
+      }
+    }
+    x <- as.character(x)
+  }
+  return(x)
+}
+
 
 
 
@@ -114,7 +182,9 @@ import_journeypatternsections <- function(journeypatternsections){
     From.Activity <- rep(NA, length(From.StopPointRef))
   }
   From.TimingStatus     <- import_simple(From, "d1:TimingStatus")
-  From.SequenceNumber   <- import_simple(From, "@SequenceNumber")
+  From.SequenceNumber   <- import_FromTo(From, "@SequenceNumber")
+  From.SequenceNumber   <- clean_sequence(From.SequenceNumber)
+
   if(length(From.SequenceNumber) == 0){
     From.SequenceNumber <- rep(NA, length(From.StopPointRef))
   }
@@ -126,7 +196,8 @@ import_journeypatternsections <- function(journeypatternsections){
     To.Activity <- rep(NA, length(To.StopPointRef))
   }
   To.TimingStatus       <- import_simple(To, "d1:TimingStatus")
-  To.SequenceNumber     <- import_simple(To, "@SequenceNumber")
+  To.SequenceNumber     <- import_FromTo(To, "@SequenceNumber")
+  To.SequenceNumber     <- clean_sequence(To.SequenceNumber)
   if(length(To.SequenceNumber) == 0){
     To.SequenceNumber <- rep(NA, length(From.StopPointRef))
   }
@@ -246,11 +317,11 @@ import_services <- function(service, full_import = TRUE){
   if(xml2::xml_length(DaysNonOperation) > 0){
     DaysNonOperation_StartDate   <- import_simple(DaysNonOperation, ".//d1:StartDate")
     DaysNonOperation_EndDate     <- import_simple(DaysNonOperation, ".//d1:EndDate")
-    DaysNonOperation_Note        <- import_simple(DaysNonOperation, ".//d1:Note")
+    #DaysNonOperation_Note        <- import_simple(DaysNonOperation, ".//d1:Note")
     DaysNonOperation <- data.frame(type =      "DaysNonOperation",
                                    StartDate = DaysNonOperation_StartDate,
-                                   EndDate =   DaysNonOperation_EndDate,
-                                   Note =      DaysNonOperation_Note)
+                                   EndDate =   DaysNonOperation_EndDate)#,
+                                   #Note =      DaysNonOperation_Note)
   }else{
     DaysNonOperation <- NULL
   }
@@ -345,8 +416,8 @@ import_vehiclejourneys <- function(vehiclejourneys, Services_main, cal){
   )
 
   OperatingProfile <- xml2::xml_find_all(vehiclejourneys, ".//d1:OperatingProfile")
-  if(length(xml2::xml_length(OperatingProfile)) != nrow(vj_simple)){
-    message("Missing operating profiles in Vehicle Journeys")
+  if(length(xml2::xml_length(OperatingProfile)) != nrow(vj_simple) | sum(xml2::xml_length(OperatingProfile)) == 0){
+    warning("Missing operating profiles in Vehicle Journeys")
     vj_simple$DaysOfWeek <- Services_main$DaysOfWeek
     vj_simple$HolidaysOnly <- NA
   }else{
@@ -436,19 +507,32 @@ import_DaysOfOperation <- function(DaysOfOperation, cal, Services_main){
   result <- list()
   for(i in seq(1,length(xml2::xml_length(DaysOfOperation)))){
     chld <- DaysOfOperation[i]
-    if(xml2::xml_length(xml_child(chld)) == 0){
+    if(xml2::xml_length(xml2::xml_child(chld)) == 0){
       # Text based rather than date based
-      if(xml_name(xml_child(chld)) == "AllBankHolidays"){
+      if(xml2::xml_name(xml2::xml_child(chld)) == "AllBankHolidays"){
         DaysOfOperation_id <- xml2::xml_parent(xml2::xml_parent(xml2::xml_parent(chld)))
         DaysOfOperation_id <- import_simple(DaysOfOperation_id, ".//d1:VehicleJourneyCode")
         cal2 <- cal[cal$date >= Services_main$StartDate,]
         cal2 <- cal2[cal2$date >= Services_main$EndDate,]
 
         res <- data.frame(VehicleJourneyCode = DaysOfOperation_id,
-                          StartDate = cal2$date[],
+                          StartDate = cal2$date,
                           EndDate = cal2$date,
                           ServicedOrganisationRef = NA,
                           stringsAsFactors = FALSE)
+      }else if(all(xml2::xml_name(xml2::xml_children(chld)) %in% c(unique(cal$name)))){
+        # Named Holidays We can match to
+        DaysOfOperation_id <- xml2::xml_parent(xml2::xml_parent(xml2::xml_parent(chld)))
+        DaysOfOperation_id <- import_simple(DaysOfOperation_id, ".//d1:VehicleJourneyCode")
+        cal2 <- cal[cal$date >= Services_main$StartDate,]
+        cal2 <- cal2[cal2$date >= Services_main$EndDate,]
+        cal2 <- cal2[cal2$name %in% unique(xml2::xml_name(xml2::xml_children(chld))),]
+        res <- data.frame(VehicleJourneyCode = DaysOfOperation_id,
+                          StartDate = cal2$date,
+                          EndDate = cal2$date,
+                          ServicedOrganisationRef = NA,
+                          stringsAsFactors = FALSE)
+
       }else{
         stop("Unknown Days of Operation")
       }
