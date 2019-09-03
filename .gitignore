@@ -30,3 +30,11 @@ rsconnect/
 vignettes/tmp
 extras/tmp
 extras/export
+*.alf
+*.flf
+*.mca
+*.msn
+*.set
+*.tsi
+*.ztr
+*.dat

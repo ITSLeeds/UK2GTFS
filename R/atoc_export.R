@@ -363,7 +363,7 @@ makeCalendar = function(schedule, ncores = 1){
           for(k in seq(1,length(daypatterns))){
             #slect for each patter but include cancellations with a different day pattern
             calendar.sub.day = calendar.sub[calendar.sub$Days == daypatterns[k] | calendar.sub$STP == "C", ]
-            calendar.new.day = splitDates(calendar.sub.day)
+            calendar.new.day = UK2GTFS:::splitDates(calendar.sub.day)
             # rejects nas
             if(class(calendar.new.day) == "data.frame"){
               calendar.new.day$UID = paste0(calendar.new.day$UID,k)
