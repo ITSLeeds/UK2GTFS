@@ -46,6 +46,13 @@ atoc2gtfs <- function(path_in,path_out, name = "gtfs", silent = TRUE, ncores = 1
     stop()
   }
 
+  # Read In each File
+  alf = importALF(files[grepl(".alf",files)])
+  flf = importFLF(files[grepl(".flf",files)])
+  mca = importMCA(file = files[grepl(".mca",files)], silent = silent, ncores = 1)
+  msn = importMSN(files[grepl(".msn",files)], silent = silent)
+  #ztr = importMCA(files[grepl(".ztr",files)], silent = silent)
+
   # Get the Station Locations
   if("sf" %in% class(locations)){
     #load("data/tiplocs.RData")
@@ -64,14 +71,6 @@ atoc2gtfs <- function(path_in,path_out, name = "gtfs", silent = TRUE, ncores = 1
   }else{
     stops = read.csv(locations,stringsAsFactors = F)
   }
-
-  # Read In each File
-  alf = importALF(files[grepl(".alf",files)])
-  flf = importFLF(files[grepl(".flf",files)])
-  mca = importMCA(file = files[grepl(".mca",files)], silent = silent, ncores = 1)
-  msn = importMSN(files[grepl(".msn",files)], silent = silent)
-  #ztr = importMCA(files[grepl(".ztr",files)], silent = silent)
-
 
   #Construct the GTFS
   stop_times = mca[["stop_times"]]

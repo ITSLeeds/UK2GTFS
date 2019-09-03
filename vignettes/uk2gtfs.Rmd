@@ -74,7 +74,7 @@ path_out = "E:/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/201
 atoc2gtfs(path_in = path_in, 
           path_out = path_out, 
           silent = FALSE, 
-          ncores = 5)
+          ncores = 4)
 
 ```
 

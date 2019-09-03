@@ -18,11 +18,12 @@ schedule2routes = function(stop_times, schedule , silent = TRUE, ncores = 1){
 
   # Convert Activity to pickup_type and drop_off_type
   stop_times$Activity[is.na(stop_times$Activity) & stop_times$stop_sequence == 1] = "U" #No activity specified at start
-  activities = strsplit(stop_times$Activity," ")
+  #activities = strsplit(stop_times$Activity," ")
 
-  upoffs = t(sapply(activities,clean_activities))
-  upoffs = as.data.frame(upoffs)
-  names(upoffs) = c("pickup_type","drop_off_type")
+  #upoffs = t(sapply(activities,clean_activities))
+  #upoffs = as.data.frame(upoffs)
+  #names(upoffs) = c("pickup_type","drop_off_type")
+  upoffs <- clean_activities2(stop_times$Activity)
   stop_times = cbind(stop_times, upoffs)
 
   stop_times$arrival_time[is.na(stop_times$arrival_time)] = stop_times$departure_time[is.na(stop_times$arrival_time)]

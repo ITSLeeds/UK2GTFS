@@ -354,7 +354,7 @@ makeCalendar = function(schedule, ncores = 1){
         # check for identical day pattern
         if(length(unique(calendar.sub$Days)) == 1 & sum(typ.all == "P") == 1){
 
-          calendar.new = splitDates(calendar.sub)
+          calendar.new = UK2GTFS:::splitDates(calendar.sub)
           return(list(calendar.new,NA))
         }else{
           # split by day pattern
@@ -378,16 +378,37 @@ makeCalendar = function(schedule, ncores = 1){
     }
   }
 
-  if(ncores == 1){
-    res = lapply(1:length_todo, makeCalendar.inner)
-  }else{
-    CL <- parallel::makeCluster(ncores) #make clusert and set number of core
-    parallel::clusterExport(cl = CL, varlist=c("calendar", "UIDs"), envir = environment())
-    parallel::clusterExport(cl = CL, c('splitDates'), envir = environment() )
-    parallel::clusterEvalQ(cl = CL, {library(dplyr)})
-    res = parallel::parLapply(cl = CL,1:length_todo,makeCalendar.inner)
-    parallel::stopCluster(CL)
+  if (ncores > 1) {
+    cl <- parallel::makeCluster(ncores)
+    parallel::clusterExport(
+      cl = cl,
+      varlist = c("calendar", "UIDs"),
+      envir = environment()
+    )
+    parallel::clusterEvalQ(cl, {
+      loadNamespace("UK2GTFS")
+    })
+    pbapply::pboptions(use_lb = TRUE)
+    res = pbapply::pblapply(1:length_todo,
+                            makeCalendar.inner,
+                            cl = cl)
+    parallel::stopCluster(cl)
+    rm(cl)
+  } else {
+    res = pbapply::pblapply(1:length_todo, makeCalendar.inner,checkrows)
   }
+
+
+  # if(ncores == 1){
+  #   res = lapply(1:length_todo, makeCalendar.inner)
+  # }else{
+  #   CL <- parallel::makeCluster(ncores) #make clusert and set number of core
+  #   parallel::clusterExport(cl = CL, varlist=c("calendar", "UIDs"), envir = environment())
+  #   parallel::clusterExport(cl = CL, c('splitDates'), envir = environment() )
+  #   parallel::clusterEvalQ(cl = CL, {library(dplyr)})
+  #   res = parallel::parLapply(cl = CL,1:length_todo,makeCalendar.inner)
+  #   parallel::stopCluster(CL)
+  # }
 
   res.calendar = lapply(res, `[[`, 1)
   res.calendar = dplyr::bind_rows(res.calendar)
@@ -404,16 +425,38 @@ makeCalendar = function(schedule, ncores = 1){
   res.calendar$Days = NULL
 
 
-  if(ncores == 1){
-    keep = sapply(seq(1,nrow(res.calendar)),checkrows)
-  }else{
-    CL <- parallel::makeCluster(ncores) #make clusert and set number of core
-    parallel::clusterExport(cl = CL, varlist=c("res.calendar"), envir = environment())
-    parallel::clusterExport(cl = CL, c('checkrows'), envir = environment() )
-    parallel::clusterEvalQ(cl = CL, {library(dplyr)})
-    keep = parallel::parSapply(cl = CL,X = seq(1,nrow(res.calendar)), FUN = checkrows)
-    parallel::stopCluster(CL)
+  if (ncores > 1) {
+    cl <- parallel::makeCluster(ncores)
+    parallel::clusterExport(
+      cl = cl,
+      varlist = c("res.calendar"),
+      envir = environment()
+    )
+    parallel::clusterEvalQ(cl, {
+      loadNamespace("UK2GTFS")
+    })
+    pbapply::pboptions(use_lb = TRUE)
+    keep = pbapply::pbsapply(seq(1,nrow(res.calendar)),
+                             checkrows,
+                             cl = cl)
+    parallel::stopCluster(cl)
+    rm(cl)
+  } else {
+    keep = pbapply::pbsapply(seq(1,nrow(res.calendar)),checkrows)
   }
+
+
+
+  # if(ncores == 1){
+  #   keep = sapply(seq(1,nrow(res.calendar)),checkrows)
+  # }else{
+  #   CL <- parallel::makeCluster(ncores) #make clusert and set number of core
+  #   parallel::clusterExport(cl = CL, varlist=c("res.calendar"), envir = environment())
+  #   parallel::clusterExport(cl = CL, c('checkrows'), envir = environment() )
+  #   parallel::clusterEvalQ(cl = CL, {library(dplyr)})
+  #   keep = parallel::parSapply(cl = CL,X = seq(1,nrow(res.calendar)), FUN = checkrows)
+  #   parallel::stopCluster(CL)
+  # }
 
   res.calendar = res.calendar[keep,]
 
@@ -638,6 +681,8 @@ cleanstops = function(stop_times, stops){
 #' @param x character activities
 #' @details
 #' Change Activities code to pickup and drop_off
+#' https://wiki.openraildata.com//index.php?title=Activity_codes
+#'
 #' @noRd
 #'
 clean_activities = function(x){
@@ -674,4 +719,30 @@ clean_activities = function(x){
   }else{
     message(paste0("Unknown ",paste(x, " ")))
   }
+}
+
+#' Clean Activities
+#' @param x character activities
+#' @details
+#' Change Activities code to pickup and drop_off
+#' https://wiki.openraildata.com//index.php?title=Activity_codes
+#'
+#' @noRd
+#'
+clean_activities2 = function(x){
+
+  # Load Data
+  data("activity_codes")
+
+  x = data.frame(activity = x, stringsAsFactors = FALSE)
+  x = dplyr::left_join(x, activity_codes, by = c("activity"))
+  if(anyNA(x$pickup_type)){
+    message("Unknown Activity codes ",paste(unique(x$activity), collapse = " ")," please report these codes as a GitHub Issue")
+    x$pickup_type[is.na(x$pickup_type)] <- 0
+    x$drop_off_type[is.na(x$drop_off_type)] <- 0
+  }
+
+  x = x[,c("pickup_type","drop_off_type")]
+  return(x)
+
 }
