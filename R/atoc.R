@@ -72,9 +72,6 @@ atoc2gtfs <- function(path_in,path_out, name = "gtfs", silent = TRUE, ncores = 1
   msn = importMSN(files[grepl(".msn",files)], silent = silent)
   #ztr = importMCA(files[grepl(".ztr",files)], silent = silent)
 
-  # remove any unused stops
-  stops = stops[stops$stop_id %in% stop_times$stop_id,]
-
 
   #Construct the GTFS
   stop_times = mca[["stop_times"]]
@@ -83,7 +80,10 @@ atoc2gtfs <- function(path_in,path_out, name = "gtfs", silent = TRUE, ncores = 1
   stop_times = stop_times[,c("Scheduled Arrival Time","Scheduled Departure Time","Location","stop_sequence","Activity","rowID","schedule")]
   names(stop_times) = c("arrival_time","departure_time","stop_id","stop_sequence","Activity","rowID","schedule")
 
+  # remove any unused stops
+  stops = stops[stops$stop_id %in% stop_times$stop_id,]
 
+  # Main Timetable Build
   timetables = schedule2routes(stop_times = stop_times, schedule = schedule, silent = silent, ncores = ncores)
 
   #load("data/atoc_agency.RData")
