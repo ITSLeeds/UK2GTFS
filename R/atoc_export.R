@@ -333,50 +333,7 @@ makeCalendar = function(schedule, ncores = 1){
   UIDs = unique(calendar$UID)
   length_todo = length(UIDs)
 
-  makeCalendar.inner = function(i){
-    UIDs.sub = UIDs[i]
-    calendar.sub = calendar[calendar$UID == UIDs.sub,]
-    #calendar.sub = schedule[schedule$`Train UID` == UIDs.sub,]
-    if(nrow(calendar.sub)==1){
-      #make into an single entry
-      return(list(calendar.sub,NA))
-    }else{
-      # check duration and types
-      dur = as.numeric(calendar.sub$duration[calendar.sub$STP != "P"])
-      typ = calendar.sub$STP[calendar.sub$STP != "P"]
-      typ.all = calendar.sub$STP
-      if(all(dur == 1) & all(typ == "C") & length(typ) > 0 & length(typ.all) == 2){
-        # One Day cancelationss
-        # Modify in the calendar_dates.txt
-        return(list(calendar.sub[calendar.sub$STP == "P", ],
-                    calendar.sub[calendar.sub$STP != "P", ]))
-      }else{
-        # check for identical day pattern
-        if(length(unique(calendar.sub$Days)) == 1 & sum(typ.all == "P") == 1){
 
-          calendar.new = UK2GTFS:::splitDates(calendar.sub)
-          return(list(calendar.new,NA))
-        }else{
-          # split by day pattern
-          splits = list()
-          daypatterns = unique(calendar.sub$Days)
-          for(k in seq(1,length(daypatterns))){
-            #slect for each patter but include cancellations with a different day pattern
-            calendar.sub.day = calendar.sub[calendar.sub$Days == daypatterns[k] | calendar.sub$STP == "C", ]
-            calendar.new.day = UK2GTFS:::splitDates(calendar.sub.day)
-            # rejects nas
-            if(class(calendar.new.day) == "data.frame"){
-              calendar.new.day$UID = paste0(calendar.new.day$UID,k)
-              splits[[k]] = calendar.new.day
-            }
-
-          }
-          splits = dplyr::bind_rows(splits)
-          return(list(splits,NA))
-        }
-      }
-    }
-  }
 
   if (ncores > 1) {
     cl <- parallel::makeCluster(ncores)
@@ -463,7 +420,54 @@ makeCalendar = function(schedule, ncores = 1){
   return(list(res.calendar, res.calendar_dates))
 }
 
+#' make calendar hleper function
+#' @param i row number to do
+#' @noRd
+#'
+makeCalendar.inner = function(i){
+  UIDs.sub = UIDs[i]
+  calendar.sub = calendar[calendar$UID == UIDs.sub,]
+  #calendar.sub = schedule[schedule$`Train UID` == UIDs.sub,]
+  if(nrow(calendar.sub)==1){
+    #make into an single entry
+    return(list(calendar.sub,NA))
+  }else{
+    # check duration and types
+    dur = as.numeric(calendar.sub$duration[calendar.sub$STP != "P"])
+    typ = calendar.sub$STP[calendar.sub$STP != "P"]
+    typ.all = calendar.sub$STP
+    if(all(dur == 1) & all(typ == "C") & length(typ) > 0 & length(typ.all) == 2){
+      # One Day cancelationss
+      # Modify in the calendar_dates.txt
+      return(list(calendar.sub[calendar.sub$STP == "P", ],
+                  calendar.sub[calendar.sub$STP != "P", ]))
+    }else{
+      # check for identical day pattern
+      if(length(unique(calendar.sub$Days)) == 1 & sum(typ.all == "P") == 1){
 
+        calendar.new = UK2GTFS:::splitDates(calendar.sub)
+        return(list(calendar.new,NA))
+      }else{
+        # split by day pattern
+        splits = list()
+        daypatterns = unique(calendar.sub$Days)
+        for(k in seq(1,length(daypatterns))){
+          #slect for each patter but include cancellations with a different day pattern
+          calendar.sub.day = calendar.sub[calendar.sub$Days == daypatterns[k] | calendar.sub$STP == "C", ]
+          calendar.new.day = UK2GTFS:::splitDates(calendar.sub.day)
+          # rejects nas
+          if(class(calendar.new.day) == "data.frame"){
+            calendar.new.day$UID = paste0(calendar.new.day$UID,k)
+            splits[[k]] = calendar.new.day
+          }
+
+        }
+        splits = dplyr::bind_rows(splits)
+        return(list(splits,NA))
+      }
+    }
+  }
+}
 
 
 #' Duplicate stop_times
