@@ -1,7 +1,7 @@
 #' exclude trips
 #' remove trips
-#' @param trip_sub
-#' @param trip_exc
+#' @param trip_sub desc
+#' @param trip_exc desc
 #' @noRd
 #'
 exclude_trips <- function(trip_sub, trip_exc){
@@ -43,7 +43,7 @@ exclude_trips <- function(trip_sub, trip_exc){
 
 #' list exclude days
 #' ????
-#' @param exclude_days
+#' @param exclude_days desc
 #' @noRd
 list_exclude_days <- function(exclude_days){
   res <- mapply(function(ExStartTime, ExEndTime){seq(ExStartTime, ExEndTime, by = "days")},
@@ -56,7 +56,7 @@ list_exclude_days <- function(exclude_days){
 
 #' list exclude days
 #' break up star and end include days into list of days
-#' @param include_days
+#' @param include_days desc
 #' @noRd
 list_include_days <- function(include_days){
   res <- mapply(function(ExStartTime, ExEndTime){seq(ExStartTime, ExEndTime, by = "days")},
@@ -70,10 +70,10 @@ list_include_days <- function(include_days){
 
 #' Classify Excusions
 #' Takes start and end dates of exclusion to work out if they cover the start or end etc
-#' @param ExStartTime
-#' @param ExEndTime
-#' @param StartDate
-#' @param EndDate
+#' @param ExStartTime desc
+#' @param ExEndTime desc
+#' @param StartDate desc
+#' @param EndDate desc
 #' @noRd
 classify_exclusions <- function(ExStartTime, ExEndTime, StartDate, EndDate){
   if(ExStartTime <= StartDate){
@@ -255,8 +255,8 @@ clean_days <- function(days){
 
 #' break up holidays
 #' ????
-#' @param cal_data
-#' @param cl
+#' @param cal_data desc
+#' @param cl desc
 #' @noRd
 break_up_holidays <- function(cal_dat, cl){
   cal_dat <- cal_dat[cal_dat[[cl]] != "",]
@@ -279,9 +279,9 @@ break_up_holidays <- function(cal_dat, cl){
 
 #' break up holidays2
 #' ????
-#' @param cal_data
-#' @param cl
-#' @param cal
+#' @param cal_data desc
+#' @param cl desc
+#' @param cal desc
 #' @noRd
 break_up_holidays2 <- function(cal_dat, cl, cal){
   cal_dat <- cal_dat[cal_dat[[cl]] != "",]
@@ -304,7 +304,7 @@ break_up_holidays2 <- function(cal_dat, cl, cal){
 
 #' check duplicated holidays
 #' ????
-#' @param i
+#' @param i desc
 #' @noRd
 #'
 check_duplicate_holidays <- function(i){
@@ -331,8 +331,8 @@ check_duplicate_holidays <- function(i){
 # to do, need to repete stops times for each departure time
 #' clean activities
 #' ????
-#' @param x
-#' @param type
+#' @param x desc
+#' @param type desc
 #' @noRd
 clean_activity <- function(x, type){
   if(type == "pickup"){
@@ -362,8 +362,8 @@ clean_activity <- function(x, type){
 
 #' Expan stop_times
 #' ????
-#' @param i
-#' @param jps
+#' @param i desc
+#' @param jps desc
 #' @noRd
 #'
 expand_stop_times <- function(i, jps){
@@ -409,9 +409,9 @@ expand_stop_times <- function(i, jps){
 
 #' Expan stop_times2
 #' ????
-#' @param i
-#' @param jps
-#' @param trips
+#' @param i desc
+#' @param jps desc
+#' @param trips desc
 #' @noRd
 #'
 expand_stop_times2 <- function(i, jps, trips){
@@ -469,7 +469,7 @@ expand_stop_times2 <- function(i, jps, trips){
 
 #' clean_timepoints
 #' ????
-#' @param tp
+#' @param tp desc
 #' @noRd
 #'
 clean_timepoints <- function(tp){
@@ -484,9 +484,9 @@ clean_timepoints <- function(tp){
 
 #' make stop times
 #' ????
-#' @param jps
-#' @param trips
-#' @param ss
+#' @param jps desc
+#' @param trips desc
+#' @param ss desc
 #' @noRd
 #'
 make_stop_times <- function(jps, trips, ss){

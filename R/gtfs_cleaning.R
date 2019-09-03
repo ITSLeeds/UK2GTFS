@@ -66,9 +66,9 @@ gtfs_fast_trips <- function(gtfs, maxspeed = 30){
   times <- dplyr::summarise(times,
                                  nstops = n(),
                                  time_start = arrival_time[stop_sequence == min(stop_sequence)],
-                                 time_end = if(nstops == 2){arrival_time[stop_sequence == max(stop_sequence) ]}else{arrival_time[stop_sequence == stop_sequence[floor(median(1:nstops))] ]},
+                                 time_end = if(nstops == 2){arrival_time[stop_sequence == max(stop_sequence) ]}else{arrival_time[stop_sequence == stop_sequence[floor(stats::median(1:nstops))] ]},
                                  stop_start = stop_id[stop_sequence == min(stop_sequence)],
-                                 stop_end = if(nstops == 2){stop_id[stop_sequence == max(stop_sequence) ]}else{stop_id[stop_sequence == stop_sequence[floor(median(1:nstops))] ]}
+                                 stop_end = if(nstops == 2){stop_id[stop_sequence == max(stop_sequence) ]}else{stop_id[stop_sequence == stop_sequence[floor(stats::median(1:nstops))] ]}
                                  )
 
   stops <- gtfs$stops

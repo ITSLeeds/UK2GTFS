@@ -254,8 +254,8 @@ import_operators <- function(operators){
 
 #' import services
 #' ????
-#' @param service
-#' @param full_import
+#' @param service desc
+#' @param full_import desc
 #' @noRd
 
 import_services <- function(service, full_import = TRUE){
@@ -375,7 +375,7 @@ import_services <- function(service, full_import = TRUE){
 
 #' Import Vehicle Journeys
 #' ????
-#' @param vehiclejourneys
+#' @param vehiclejourneys desc
 #' @noRd
 import_vehiclejourneys <- function(vehiclejourneys, Services_main, cal){
 
@@ -429,7 +429,7 @@ import_vehiclejourneys <- function(vehiclejourneys, Services_main, cal){
     DaysOfWeek <- xml2::xml_name(xml2::xml_children(DaysOfWeek))
     HolidaysOnly <- xml2::xml_name(HolidaysOnly)
 
-    RegularDayType_id <- data.frame(RegularDayType = RegularDayType_id, id = as.integer(ave(RegularDayType_id, RegularDayType_id, FUN = seq_along)))
+    RegularDayType_id <- data.frame(RegularDayType = RegularDayType_id, id = as.integer(stats::ave(RegularDayType_id, RegularDayType_id, FUN = seq_along)))
     RegularDayType_id$DaysOfWeek <- ifelse(RegularDayType_id$RegularDayType == "DaysOfWeek", DaysOfWeek[RegularDayType_id$id], NA)
     RegularDayType_id$HolidaysOnly <- ifelse(RegularDayType_id$RegularDayType == "HolidaysOnly", HolidaysOnly[RegularDayType_id$id], NA)
 
@@ -501,7 +501,7 @@ import_vehiclejourneys <- function(vehiclejourneys, Services_main, cal){
 
 #' Imports day of operation
 #' to deal with date range and serviceorganisation working days
-#' @param Notes
+#' @param Notes desc
 #' @noRd
 import_DaysOfOperation <- function(DaysOfOperation, cal, Services_main){
   result <- list()
@@ -570,7 +570,7 @@ import_DaysOfOperation <- function(DaysOfOperation, cal, Services_main){
 
 #' Imports when Multiple Values
 #' Returns a dataframe with appopiate lookup id
-#' @param Notes
+#' @param Notes desc
 #' @noRd
 import_notes <- function(Notes){
   parent <- xml2::xml_parent(Notes)
@@ -586,7 +586,7 @@ import_notes <- function(Notes){
 
 #' Imports when Multiple Values
 #' Returns a dataframe with appopiate lookup id
-#' @param vehiclejourneys
+#' @param vehiclejourneys desc
 #' @noRd
 import_notes2 <- function(vehiclejourneys){
 

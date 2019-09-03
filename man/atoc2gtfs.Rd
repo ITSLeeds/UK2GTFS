@@ -5,7 +5,7 @@
 \title{ATOC to GTFS}
 \usage{
 atoc2gtfs(path_in, path_out, name = "gtfs", silent = TRUE,
-  ncores = 1, locations = "package")
+  ncores = 1, locations = tiplocs, agency = atoc_agency)
 }
 \arguments{
 \item{path_in}{Path to ATOC File}
@@ -18,7 +18,9 @@ atoc2gtfs(path_in, path_out, name = "gtfs", silent = TRUE,
 
 \item{ncores}{Numeric, When parallel processing how many cores to use}
 
-\item{locations}{character "file" or "package" or path to stops.txt GTFS file, where to get the location data from, default "package"}
+\item{locations}{deafult tiplocs object inncluded with package, or "file" or path to stops.txt GTFS file}
+
+\item{agency}{the GTFS agency file, default is taken from the package}
 }
 \description{
 ATOC to GTFS
@@ -30,4 +32,7 @@ Locations
 The .msn file contains the physical locations of stations and other TIPLOC codes (e.g. junctions).
 However, the quality of the locations is often poor only accurate to about 1km and occasionally very wrong.
 Therefore, the UK2GTFS package contains an internal dataset of the TIPLOC locations with better location accuracy.
+
+Agency
+The ATOC files do not contain the necessary information to build the agency.txt file. Therfore this data is provided with the package.
 }

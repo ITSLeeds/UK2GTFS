@@ -110,15 +110,13 @@ station2transfers = function(station,flf,path_out){
   return(transfers)
 }
 
-#' split overlapping start and end dates
-#'
-#' @details
-#' split overlapping start and end dates
+#' split overlapping start and end dates#
 #'
 #' @param cal cal object
+#' @details split overlapping start and end dates
 #' @noRd
-#'
-splitDates = function(cal){
+
+splitDates <- function(cal){
 
   #get all the dates that
   dates = c(cal$start_date,cal$end_date)
@@ -736,7 +734,7 @@ clean_activities = function(x){
 clean_activities2 = function(x){
 
   # Load Data
-  data("activity_codes")
+  #data("activity_codes")
 
   x = data.frame(activity = x, stringsAsFactors = FALSE)
   x = dplyr::left_join(x, activity_codes, by = c("activity"))

@@ -12,3 +12,11 @@
 #'
 #' @format A SF data frame for points
 "tiplocs"
+
+#' Activity Codes
+#'
+#' ATOC activity codes matche to GTFS pickup and drop off values
+#'
+#'
+#' @format A data frame code 3 columns
+"activity_codes"

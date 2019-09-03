@@ -28,7 +28,7 @@ atoc2gtfs <- function(path_in,path_out, name = "gtfs", silent = TRUE, ncores = 1
   # Is input a zip or a folder
   if(grepl(".zip",path_in)){
     # Unzip
-    files <- unzip(path_in, exdir = "tmp")
+    files <- utils::unzip(path_in, exdir = "tmp")
     cleanup <- TRUE
   }else{
     # folder
@@ -69,7 +69,7 @@ atoc2gtfs <- function(path_in,path_out, name = "gtfs", silent = TRUE, ncores = 1
     stops.list = station2stops(station = station, TI = TI)
     stops = stops.list[["stops"]]
   }else{
-    stops = read.csv(locations,stringsAsFactors = F)
+    stops = utils::read.csv(locations,stringsAsFactors = F)
   }
 
   #Construct the GTFS

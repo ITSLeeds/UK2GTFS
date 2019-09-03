@@ -7,8 +7,8 @@
 #' @noRd
 #'
 importALF <- function(file){
-  nc<-max(count.fields(file, sep=","))
-  table <- read.table(file = file,
+  nc<-max(utils::count.fields(file, sep=","))
+  table <- utils::read.table(file = file,
                       header = FALSE,
                       sep = ",",
                       fill = TRUE,
@@ -66,7 +66,7 @@ importALF <- function(file){
 #' @noRd
 #'
 importFLF <- function(file){
-  table = read.table(file = file,
+  table = utils::read.table(file = file,
                      sep = "",
                      stringsAsFactors = FALSE,
                      header = FALSE,
@@ -93,7 +93,7 @@ importFLF <- function(file){
 #' @noRd
 #'
 importTSI <- function(file){
-  table = read.table(file = file,
+  table = utils::read.table(file = file,
                      sep = ",",
                      stringsAsFactors = FALSE,
                      header = FALSE,
