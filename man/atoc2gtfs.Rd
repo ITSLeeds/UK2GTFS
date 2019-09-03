@@ -4,8 +4,8 @@
 \alias{atoc2gtfs}
 \title{ATOC to GTFS}
 \usage{
-atoc2gtfs(path_in, path_out, name, silent = TRUE, ncores = 1,
-  locations = "package")
+atoc2gtfs(path_in, path_out, name = "gtfs", silent = TRUE,
+  ncores = 1, locations = "package")
 }
 \arguments{
 \item{path_in}{Path to ATOC File}

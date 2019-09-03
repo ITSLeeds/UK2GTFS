@@ -18,7 +18,7 @@
 #'
 #' @export
 
-atoc2gtfs <- function(path_in,path_out, name , silent = TRUE, ncores = 1, locations = "package"){
+atoc2gtfs <- function(path_in,path_out, name = "gtfs", silent = TRUE, ncores = 1, locations = "package"){
 
   if(ncores == 1){message(paste0(Sys.time()," This will take some time, make sure you use 'ncores' to enable multi-core processing"))}
   # Is input a zip or a folder
