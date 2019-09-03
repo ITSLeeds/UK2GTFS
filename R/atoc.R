@@ -8,7 +8,8 @@
 #' @param name name that should be given to the gtfs file, without the .zip extension
 #' @param silent Logical, should progress be shown
 #' @param ncores Numeric, When parallel processing how many cores to use
-#' @param locations character "file" or "package" or path to stops.txt GTFS file, where to get the location data from, default "package"
+#' @param locations deafult tiplocs object inncluded with package, or "file" or path to stops.txt GTFS file
+#' @param agency the GTFS agency file, default is taken from the package
 #'
 #' @details
 #' Locations
@@ -16,9 +17,12 @@
 #' However, the quality of the locations is often poor only accurate to about 1km and occasionally very wrong.
 #' Therefore, the UK2GTFS package contains an internal dataset of the TIPLOC locations with better location accuracy.
 #'
+#' Agency
+#' The ATOC files do not contain the necessary information to build the agency.txt file. Therfore this data is provided with the package.
+#'
 #' @export
 
-atoc2gtfs <- function(path_in,path_out, name = "gtfs", silent = TRUE, ncores = 1, locations = "package"){
+atoc2gtfs <- function(path_in,path_out, name = "gtfs", silent = TRUE, ncores = 1, locations = tiplocs, agency = atoc_agency){
 
   if(ncores == 1){message(paste0(Sys.time()," This will take some time, make sure you use 'ncores' to enable multi-core processing"))}
   # Is input a zip or a folder
@@ -60,9 +64,9 @@ atoc2gtfs <- function(path_in,path_out, name = "gtfs", silent = TRUE, ncores = 1
 
 
   # Get the Station Locations
-  if(locations == "package"){
-    load("data/tiplocs.RData")
-    stops = cbind(tiplocs, sf::st_coordinates(tiplocs))
+  if("sf" %in% class(locations)){
+    #load("data/tiplocs.RData")
+    stops = cbind(locations, sf::st_coordinates(locations))
     stops = as.data.frame(stops)
     stops = stops[,c("stop_id","stop_code", "stop_name","Y","X","valid")]
     names(stops) = c("stop_id","stop_code", "stop_name","stop_lat","stop_lon","valid")
@@ -84,9 +88,9 @@ atoc2gtfs <- function(path_in,path_out, name = "gtfs", silent = TRUE, ncores = 1
 
   timetables = schedule2routes(stop_times = stop_times, schedule = schedule, silent = silent, ncores = ncores)
 
-  load("data/atoc_agency.RData")
+  #load("data/atoc_agency.RData")
 
-  timetables$agency <- atoc_agency
+  timetables$agency <- agency
 
   write_gtfs(timetables, folder = path_out, name = name)
 

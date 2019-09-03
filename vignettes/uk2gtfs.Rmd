@@ -65,7 +65,7 @@ Load the package, and use the `atoc2gtfs` function. The fucntnon requires the fo
 * `name` is the file name of the result by default `gtfs.zip`
 * `silent` if FALSE extra information is displayed duing processing
 * `ncores` If > 1 then mulicore processing is used to speed up the processing
-* `locations` station locations can be taken from the ATOC file (known to have errors) or the UK2GTFS package (default)
+* `locations` station locations can be `tiplocs` object provided with the package (default) or taken from the ATOC `"file"` (known to have errors) or file path to CSV file.
 
 ```{r atoc, eval=FALSE}
 library(UK2GTFS)
