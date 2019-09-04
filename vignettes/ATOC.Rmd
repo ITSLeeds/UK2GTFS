@@ -21,9 +21,7 @@ silent = FALSE
 source("../R/atoc.R")
 source("../R/atoc_export.R")
 source("../R/atoc_import.R")
-#source("../R/atoc_import_alt.R")
 source("../R/atoc_main.R")
-#source("../R/atoc_main_alt.R")
 atoc2gtfs(path_in, path_out, silent, ncores)
 ```
 

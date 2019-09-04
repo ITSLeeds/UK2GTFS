@@ -336,11 +336,11 @@ makeCalendar = function(schedule, ncores = 1){
 
   if (ncores > 1) {
     cl <- parallel::makeCluster(ncores)
-    parallel::clusterExport(
-      cl = cl,
-      varlist = c("calendar", "UIDs"),
-      envir = environment()
-    )
+    # parallel::clusterExport(
+    #   cl = cl,
+    #   varlist = c("calendar", "UIDs"),
+    #   envir = environment()
+    # )
     parallel::clusterEvalQ(cl, {
       loadNamespace("UK2GTFS")
     })
@@ -495,53 +495,53 @@ makeCalendar.inner = function(calendar.sub){# i, UIDs, calendar){
 #' @noRd
 #'
 duplicate.stop_times = function(calendar,stop_times,ncores = 1){
-  calendar.nodup = calendar[!duplicated(calendar$rowID),]
-  calendar.dup = calendar[duplicated(calendar$rowID),]
-  rowID.unique = as.data.frame(table(calendar.dup$rowID))
-  rowID.unique$Var1 = as.integer(as.character(rowID.unique$Var1))
-
-  duplicate.stop_times.int = function(i){
-    stop_times.tmp = stop_times[stop_times$schedule.rowID == rowID.unique$Var1[i],]
-    reps = rowID.unique$Freq[i]
-    index =rep(seq(1,reps),nrow(stop_times.tmp))
-    index = index[order(index)]
-    stop_times.tmp = stop_times.tmp[rep(seq(1,nrow(stop_times.tmp)), reps),]
-    stop_times.tmp$index = index
-    return(stop_times.tmp)
-  }
-
-  if(ncores == 1){
-    stop_times.dup = lapply(1:length(rowID.unique$Var1),duplicate.stop_times.int)
-  }else{
-    CL <- parallel::makeCluster(ncores) #make clusert and set number of core
-    parallel::clusterExport(cl = CL, varlist=c("rowID.unique", "calendar.dup","stop_times"), envir = environment())
-    #parallel::clusterEvalQ(cl = CL, {library(dplyr)})
-    stop_times.dup = parallel::parLapply(cl = CL,1:length(rowID.unique$Var1),duplicate.stop_times.int)
-    parallel::stopCluster(CL)
-  }
-
-  stop_times.dup = dplyr::bind_rows(stop_times.dup)
-
-  #Join on the nonduplicated trip_ids
-  trip.ids.nodup = calendar.nodup[,c("rowID","trip_id")]
-  stop_times = dplyr::left_join(stop_times,trip.ids.nodup, by = c("schedule.rowID" = "rowID"))
-  stop_times = stop_times[!is.na(stop_times$trip_id),] #when routes are cancled their stop times are left without valid trip_ids
-
-  #join on the duplicated trip_ids
-  calendar2 =  dplyr::group_by(calendar, rowID)
-  calendar2 =  dplyr::mutate(calendar2,Index=1:n())
-
-  stop_times.dup$index2 = as.integer(stop_times.dup$index + 1)
-  trip.ids.dup = calendar2[,c("rowID","trip_id","Index")]
-  trip.ids.dup = as.data.frame(trip.ids.dup)
-  stop_times.dup = dplyr::left_join(stop_times.dup,trip.ids.dup, by = c("schedule.rowID" = "rowID", "index2" = "Index"))
-  stop_times.dup = stop_times.dup[,c("departure_time", "stop_id","rowID","arrival_time","schedule.rowID","trip_id")]
-
-  #stop_times.dup = stop_times.dup[order(stop_times.dup$rowID),]
-
-  stop_times.comb = rbind(stop_times, stop_times.dup)
-
-  return(stop_times.comb)
+  # calendar.nodup = calendar[!duplicated(calendar$rowID),]
+  # calendar.dup = calendar[duplicated(calendar$rowID),]
+  # rowID.unique = as.data.frame(table(calendar.dup$rowID))
+  # rowID.unique$Var1 = as.integer(as.character(rowID.unique$Var1))
+  #
+  # duplicate.stop_times.int = function(i){
+  #   stop_times.tmp = stop_times[stop_times$schedule.rowID == rowID.unique$Var1[i],]
+  #   reps = rowID.unique$Freq[i]
+  #   index =rep(seq(1,reps),nrow(stop_times.tmp))
+  #   index = index[order(index)]
+  #   stop_times.tmp = stop_times.tmp[rep(seq(1,nrow(stop_times.tmp)), reps),]
+  #   stop_times.tmp$index = index
+  #   return(stop_times.tmp)
+  # }
+  #
+  # if(ncores == 1){
+  #   stop_times.dup = lapply(1:length(rowID.unique$Var1),duplicate.stop_times.int)
+  # }else{
+  #   CL <- parallel::makeCluster(ncores) #make clusert and set number of core
+  #   parallel::clusterExport(cl = CL, varlist=c("rowID.unique", "calendar.dup","stop_times"), envir = environment())
+  #   #parallel::clusterEvalQ(cl = CL, {library(dplyr)})
+  #   stop_times.dup = parallel::parLapply(cl = CL,1:length(rowID.unique$Var1),duplicate.stop_times.int)
+  #   parallel::stopCluster(CL)
+  # }
+  #
+  # stop_times.dup = dplyr::bind_rows(stop_times.dup)
+  #
+  # #Join on the nonduplicated trip_ids
+  # trip.ids.nodup = calendar.nodup[,c("rowID","trip_id")]
+  # stop_times = dplyr::left_join(stop_times,trip.ids.nodup, by = c("schedule.rowID" = "rowID"))
+  # stop_times = stop_times[!is.na(stop_times$trip_id),] #when routes are cancled their stop times are left without valid trip_ids
+  #
+  # #join on the duplicated trip_ids
+  # calendar2 =  dplyr::group_by(calendar, rowID)
+  # calendar2 =  dplyr::mutate(calendar2,Index=1:n())
+  #
+  # stop_times.dup$index2 = as.integer(stop_times.dup$index + 1)
+  # trip.ids.dup = calendar2[,c("rowID","trip_id","Index")]
+  # trip.ids.dup = as.data.frame(trip.ids.dup)
+  # stop_times.dup = dplyr::left_join(stop_times.dup,trip.ids.dup, by = c("schedule.rowID" = "rowID", "index2" = "Index"))
+  # stop_times.dup = stop_times.dup[,c("departure_time", "stop_id","rowID","arrival_time","schedule.rowID","trip_id")]
+  #
+  # #stop_times.dup = stop_times.dup[order(stop_times.dup$rowID),]
+  #
+  # stop_times.comb = rbind(stop_times, stop_times.dup)
+  #
+  # return(stop_times.comb)
 }
 
 #' Duplicate stop_times
@@ -559,26 +559,36 @@ duplicate.stop_times_alt = function(calendar,stop_times,ncores = 1){
   calendar.dup = calendar[duplicated(calendar$rowID),]
   rowID.unique = as.data.frame(table(calendar.dup$rowID))
   rowID.unique$Var1 = as.integer(as.character(rowID.unique$Var1))
+  stop_times = dplyr::left_join(stop_times, rowID.unique, by = c("schedule" = "Var1"))
+  stop_times_split = split(stop_times, stop_times$schedule)
 
-  duplicate.stop_times.int = function(i){
-    message(i)
-    stop_times.tmp = stop_times[stop_times$schedule == rowID.unique$Var1[i],]
-    reps = rowID.unique$Freq[i]
-    index =rep(seq(1,reps),nrow(stop_times.tmp))
-    index = index[order(index)]
-    stop_times.tmp = stop_times.tmp[rep(seq(1,nrow(stop_times.tmp)), reps),]
-    stop_times.tmp$index = index
-    return(stop_times.tmp)
+  # TODO: The could handle cases of non duplicated stoptimes within duplicate.stop_times.int
+  # rather than splitting and rejoining, would bring code tidyness and speed improvements
+  duplicate.stop_times.int = function(stop_times.tmp){
+    #message(i)
+    #stop_times.tmp = stop_times[stop_times$schedule == rowID.unique$Var1[i],]
+    #reps = rowID.unique$Freq[i]
+    reps = stop_times.tmp$Freq[1]
+    if(is.na(reps)){
+      return(NULL)
+    }else{
+      index = rep(seq(1,reps),nrow(stop_times.tmp))
+      index = index[order(index)]
+      stop_times.tmp = stop_times.tmp[rep(seq(1,nrow(stop_times.tmp)), reps),]
+      stop_times.tmp$index = index
+      return(stop_times.tmp)
+    }
   }
 
   if(ncores == 1){
-    stop_times.dup = lapply(1:length(rowID.unique$Var1),duplicate.stop_times.int)
+    stop_times.dup = pbapply::pblapply(stop_times_split,duplicate.stop_times.int)
   }else{
-    CL <- parallel::makeCluster(ncores) #make clusert and set number of core
-    parallel::clusterExport(cl = CL, varlist=c("rowID.unique", "calendar.dup","stop_times"), envir = environment())
-    #parallel::clusterEvalQ(cl = CL, {library(dplyr)})
-    stop_times.dup = parallel::parLapply(cl = CL,1:length(rowID.unique$Var1),duplicate.stop_times.int)
-    parallel::stopCluster(CL)
+    cl <- parallel::makeCluster(ncores)
+    stop_times.dup = pbapply::pblapply(stop_times_split,
+                            duplicate.stop_times.int,
+                            cl = cl)
+    parallel::stopCluster(cl)
+    rm(cl)
   }
 
   stop_times.dup = dplyr::bind_rows(stop_times.dup)
@@ -590,7 +600,7 @@ duplicate.stop_times_alt = function(calendar,stop_times,ncores = 1){
 
   #join on the duplicated trip_ids
   calendar2 =  dplyr::group_by(calendar, rowID)
-  calendar2 =  dplyr::mutate(calendar2,Index=1:n())
+  calendar2 =  dplyr::mutate(calendar2, Index= seq(1, dplyr::n()))
 
   stop_times.dup$index2 = as.integer(stop_times.dup$index + 1)
   trip.ids.dup = calendar2[,c("rowID","trip_id","Index")]
