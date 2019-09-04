@@ -248,7 +248,7 @@ matchRoutes = function(schedule.rowID, stop_times.rowID, ncores = 1){
   return(result)
 }
 
-
+# TODO: Does not work within functions, rejig to work in package.
 #
 #' internal function for cleaning calendar
 #'
@@ -399,7 +399,7 @@ makeCalendar = function(schedule, ncores = 1){
     parallel::clusterEvalQ(cl, {
       loadNamespace("UK2GTFS")
     })
-    pbapply::pboptions(use_lb = TRUE)
+    #pbapply::pboptions(use_lb = TRUE)
     keep = pbapply::pbsapply(seq(1,nrow(res.calendar)),
                              checkrows,
                              cl = cl)
