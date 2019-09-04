@@ -328,9 +328,10 @@ makeCalendar = function(schedule, ncores = 1){
   names(calendar) = c("UID","start_date", "end_date","Days","STP","rowID","Headcode","ATOC Code","Retail Train ID","Train Status")
   calendar$duration = calendar$end_date - calendar$start_date + 1
 
-  UIDs = unique(calendar$UID)
-  length_todo = length(UIDs)
+  #UIDs = unique(calendar$UID)
+  #length_todo = length(UIDs)
 
+  calendar_split = split(calendar, calendar$UID)
 
 
   if (ncores > 1) {
@@ -344,13 +345,21 @@ makeCalendar = function(schedule, ncores = 1){
       loadNamespace("UK2GTFS")
     })
     pbapply::pboptions(use_lb = TRUE)
-    res = pbapply::pblapply(1:length_todo,
+    res = pbapply::pblapply(calendar_split,
+                            #1:length_todo,
                             makeCalendar.inner,
+                            #UIDs = UIDs,
+                            #calendar = calendar,
                             cl = cl)
     parallel::stopCluster(cl)
     rm(cl)
   } else {
-    res = pbapply::pblapply(1:length_todo, makeCalendar.inner,checkrows)
+    res = pbapply::pblapply(calendar_split,
+                            #1:length_todo,
+                            makeCalendar.inner#,
+                            #UIDs = UIDs,
+                            #calendar = calendar
+                            )
   }
 
 
@@ -422,9 +431,9 @@ makeCalendar = function(schedule, ncores = 1){
 #' @param i row number to do
 #' @noRd
 #'
-makeCalendar.inner = function(i){
-  UIDs.sub = UIDs[i]
-  calendar.sub = calendar[calendar$UID == UIDs.sub,]
+makeCalendar.inner = function(calendar.sub){# i, UIDs, calendar){
+  #UIDs.sub = UIDs[i]
+  #calendar.sub = calendar[calendar$UID == UIDs.sub,]
   #calendar.sub = schedule[schedule$`Train UID` == UIDs.sub,]
   if(nrow(calendar.sub)==1){
     #make into an single entry
@@ -452,12 +461,19 @@ makeCalendar.inner = function(i){
         for(k in seq(1,length(daypatterns))){
           #slect for each patter but include cancellations with a different day pattern
           calendar.sub.day = calendar.sub[calendar.sub$Days == daypatterns[k] | calendar.sub$STP == "C", ]
-          calendar.new.day = UK2GTFS:::splitDates(calendar.sub.day)
-          # rejects nas
-          if(class(calendar.new.day) == "data.frame"){
-            calendar.new.day$UID = paste0(calendar.new.day$UID,k)
-            splits[[k]] = calendar.new.day
+
+          if(all(calendar.sub.day$STP == "C")){
+            # ignore cases of only cancleds
+            splits[[k]] = NULL
+          }else{
+            calendar.new.day = UK2GTFS:::splitDates(calendar.sub.day)
+            # rejects nas
+            if(class(calendar.new.day) == "data.frame"){
+              calendar.new.day$UID = paste0(calendar.new.day$UID,k)
+              splits[[k]] = calendar.new.day
+            }
           }
+
 
         }
         splits = dplyr::bind_rows(splits)
