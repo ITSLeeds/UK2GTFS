@@ -118,7 +118,7 @@ schedule2routes = function(stop_times, schedule , silent = TRUE, ncores = 1){
   names(routes) = c("route_id","route_type","agency_id","route_long_name")
   routes$route_short_name = routes$route_id
 
-  routes$route_type[routes$agency_id == "LT"] = 1 #Lunder Underground is Metro
+  routes$route_type[routes$agency_id == "LT"] = 1 #London Underground is Metro
 
 
   # make the long names from the desitnation and time
