@@ -256,11 +256,11 @@ matchRoutes = function(schedule.rowID, stop_times.rowID, ncores = 1){
 #' check for schdules that don overlay with the day they rund i.e. Mon - Sat schduel for a sunday only service
 #' return a logcal vector of if the calendar is valid
 #'
-#' @param i interger row number calendar
+#' @param tmp 1 row dataframe
 #' @noRd
 #'
-checkrows = function(i){
-  tmp = res.calendar[i,]
+checkrows = function(tmp){
+  #tmp = res.calendar[i,]
   #message(paste0("done ",i))
   if(tmp$duration < 7){
     days.valid = weekdays(seq.POSIXt(from = as.POSIXct.Date(tmp$start_date), to = as.POSIXct.Date(tmp$end_date), by = "DSTday"))
@@ -330,7 +330,7 @@ makeCalendar = function(schedule, ncores = 1){
 
   #UIDs = unique(calendar$UID)
   #length_todo = length(UIDs)
-
+  message(paste0(Sys.time()," Constructing calendar and calendar_dates"))
   calendar_split = split(calendar, calendar$UID)
 
 
@@ -388,25 +388,22 @@ makeCalendar = function(schedule, ncores = 1){
   res.calendar = cbind(res.calendar,days)
   res.calendar$Days = NULL
 
+  message(paste0(Sys.time()," Removing trips that only occur on days of the week that are non-operational"))
+  res.calendar.split <- split(res.calendar, seq(1, nrow(res.calendar)))
+
 
   if (ncores > 1) {
     cl <- parallel::makeCluster(ncores)
-    parallel::clusterExport(
-      cl = cl,
-      varlist = c("res.calendar"),
-      envir = environment()
-    )
     parallel::clusterEvalQ(cl, {
       loadNamespace("UK2GTFS")
     })
-    #pbapply::pboptions(use_lb = TRUE)
-    keep = pbapply::pbsapply(seq(1,nrow(res.calendar)),
+    keep = pbapply::pbsapply(res.calendar.split,
                              checkrows,
                              cl = cl)
     parallel::stopCluster(cl)
     rm(cl)
   } else {
-    keep = pbapply::pbsapply(seq(1,nrow(res.calendar)),checkrows)
+    keep = pbapply::pbsapply(res.calendar.split,checkrows)
   }
 
 
@@ -592,6 +589,7 @@ duplicate.stop_times_alt = function(calendar,stop_times,ncores = 1){
   }
 
   stop_times.dup = dplyr::bind_rows(stop_times.dup)
+  #stop_times.dup$index <- NULL
 
   #Join on the nonduplicated trip_ids
   trip.ids.nodup = calendar.nodup[,c("rowID","trip_id")]
@@ -608,6 +606,8 @@ duplicate.stop_times_alt = function(calendar,stop_times,ncores = 1){
   stop_times.dup = dplyr::left_join(stop_times.dup,trip.ids.dup, by = c("schedule" = "rowID", "index2" = "Index"))
   stop_times.dup = stop_times.dup[,c("arrival_time","departure_time","stop_id","stop_sequence",
                                      "pickup_type", "drop_off_type","rowID","schedule","trip_id")]
+  stop_times = stop_times[,c("arrival_time","departure_time","stop_id","stop_sequence",
+                             "pickup_type", "drop_off_type","rowID","schedule","trip_id")]
 
   #stop_times.dup = stop_times.dup[order(stop_times.dup$rowID),]
 
@@ -682,8 +682,8 @@ afterMidnight = function(stop_times, safe = TRUE){
   }
 
 
-  stop_times2$arrival_time = sapply(stop_times2$arvfinal,numb2time)
-  stop_times2$departure_time = sapply(stop_times2$depfinal,numb2time)
+  stop_times2$arrival_time = pbapply::pbsapply(stop_times2$arvfinal,numb2time)
+  stop_times2$departure_time = pbapply::pbsapply(stop_times2$depfinal,numb2time)
 
 
   stop_times2 = stop_times2[,c("trip_id","arrival_time","departure_time", "stop_id","stop_sequence","pickup_type","drop_off_type")]
@@ -774,3 +774,36 @@ clean_activities2 = function(x){
   return(x)
 
 }
+
+#' Check for valid day of the week
+#' @param from date
+#' @param to date
+#' Returns the days of the week that are between two dates
+#'
+#' Check for valid day of the week
+#' @param from date
+#' @param to date
+#' Returns the days of the week that are between two dates
+#'
+# valid_days <- function(from, to, duration, monday,tuesday, wednesday,
+#                        thursday, friday, saturday, sunday){
+#   if(duration >= 7){
+#     message("skipped")
+#     return(TRUE)
+#   }else{
+#     days.valid <- tolower(weekdays(seq.POSIXt(from = from,
+#                                               to = to,
+#                                               by = "DSTday")))
+#     message(paste0("did "), length(days.valid), "of ", class(days.valid))
+#     days.valid <- unique(days)
+#
+#     days.opp <- c("monday","tuesday", "wednesday","thursday", "friday", "saturday", "sunday")
+#     days.opp <- days.opp[c(monday,tuesday, wednesday,thursday, friday, saturday, sunday)]
+#
+#     if(any(days.valid %in% days.opp)){
+#       return(TRUE)
+#     }else{
+#       return(FALSE)
+#     }
+#   }
+# }
