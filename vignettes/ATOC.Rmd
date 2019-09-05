@@ -16,7 +16,7 @@ vignette: >
 ```{r setup, eval=FALSE}
 path_in = "E:/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/ttis381.zip"
 path_out = "E:/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/"
-ncores = 4
+ncores = 2
 silent = FALSE
 source("../R/atoc.R")
 source("../R/atoc_export.R")
