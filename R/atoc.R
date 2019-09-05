@@ -88,6 +88,7 @@ atoc2gtfs <- function(path_in,path_out, name = "gtfs", silent = TRUE, ncores = 1
   #load("data/atoc_agency.RData")
 
   timetables$agency <- agency
+  timetables$stops <- stops
 
   write_gtfs(timetables, folder = path_out, name = name)
 
