@@ -201,8 +201,15 @@ splitDates <- function(cal){
   cal.new = cal.new[cal.new$duration > 0,]
 
   #Append UID to note the changes
-  if(nrow(cal.new) >0){
-    cal.new$UID = paste0(cal.new$UID," ",letters[1:nrow(cal.new)])
+  if(nrow(cal.new) > 0){
+    if(nrow(cal.new) < 27){
+      cal.new$UID = paste0(cal.new$UID," ",letters[1:nrow(cal.new)])
+    }else{
+      # Cases where we need extra letters, gives upto 676 ids
+      lett = paste0(rep(letters, each = 26),rep(letters, times = 26))
+      cal.new$UID = paste0(cal.new$UID," ",lett[1:nrow(cal.new)])
+    }
+
   }else{
     cal.new = NA
   }

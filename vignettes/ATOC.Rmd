@@ -14,15 +14,15 @@ vignette: >
 
 
 ```{r setup, eval=FALSE}
-path_in = "E:/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/ttis381.zip"
-path_out = "E:/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/"
-ncores = 2
+path_in = "C:/Users/Malcolm/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/ttis381.zip"
+path_out = "C:/Users/Malcolm/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/"
+ncores = 3
 silent = FALSE
 source("../R/atoc.R")
 source("../R/atoc_export.R")
 source("../R/atoc_import.R")
 source("../R/atoc_main.R")
-atoc2gtfs(path_in, path_out, silent, ncores)
+atoc2gtfs(path_in = path_in, path_out = path_out, silent = silent, ncores = ncores)
 ```
 
 ## Making Shapes 
