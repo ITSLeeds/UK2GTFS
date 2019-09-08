@@ -71,7 +71,7 @@ schedule2routes = function(stop_times, schedule , silent = TRUE, ncores = 1){
   if(!silent){message(paste0(Sys.time()," Duplicating necessary stop times"))}
 
 
-  stop_times = duplicate.stop_times_alt(calendar = calendar, stop_times = stop_times, ncores = ncores)
+  stop_times = duplicate.stop_times_alt(calendar = calendar, stop_times = stop_times, ncores = 1)
 
   ### SECTION 5: ###############################################################################
   # make make the trips.txt  file by matching the calnedar to the stop_times
