@@ -70,12 +70,15 @@ Load the package, and use the `atoc2gtfs` function. The fucntnon requires the fo
 
 ```{r atoc, eval=FALSE}
 library(UK2GTFS)
-path_in = "C:/Users/Malcolm/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/ttis381.zip"
-path_out = "C:/Users/Malcolm/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/"
+#path_in = "C:/Users/Malcolm/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/ttis381.zip"
+#path_out = "C:/Users/Malcolm/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/"
+path_in = "E:/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/ttis381.zip"
+path_out = "E:/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/"
 atoc2gtfs(path_in = path_in, 
-          path_out = path_out, 
+          path_out = path_out,
+          name = "gtfs4",
           silent = FALSE, 
-          ncores = 2)
+          ncores = 6)
 
 ```
 
