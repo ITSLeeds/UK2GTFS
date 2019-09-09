@@ -22,29 +22,31 @@ transxchange2gtfs <- function(path_in,
                               silent = TRUE,
                               ncores = 1,
                               cal = get_bank_holidays(),
-                              naptan = get_naptan()){
-  if(ncores == 1){message(paste0(Sys.time()," This will take some time, make sure you use 'ncores' to enable multi-core processing"))}
+                              naptan = get_naptan()) {
+  if (ncores == 1) {
+    message(paste0(Sys.time(), " This will take some time, make sure you use 'ncores' to enable multi-core processing"))
+  }
   zips <- list.files(path_in, pattern = ".zip", full.names = TRUE)
-  if(length(zips) > 0){
-    if(!silent){
-      message(paste0(Sys.time()," unzipping folders"))
+  if (length(zips) > 0) {
+    if (!silent) {
+      message(paste0(Sys.time(), " unzipping folders"))
     }
-    dir.create(file.path(tempdir(),"txc"))
-    foo <- pbapply::pblapply(zips, function(x){
-      utils::unzip(x, exdir = file.path(tempdir(),"txc"))
-      })
-  }else{
+    dir.create(file.path(tempdir(), "txc"))
+    foo <- pbapply::pblapply(zips, function(x) {
+      utils::unzip(x, exdir = file.path(tempdir(), "txc"))
+    })
+  } else {
     stop("No zip folders found in path_in")
   }
 
-  files <- list.files(file.path(tempdir(),"txc"), pattern = ".xml", full.names = TRUE)
+  files <- list.files(file.path(tempdir(), "txc"), pattern = ".xml", full.names = TRUE)
 
-  if(ncores == 1){
-    message(paste0(Sys.time()," Importing TransXchange files"))
-    res_all  <- pbapply::pblapply(files[12], transxchange_import, run_debug = TRUE, full_import = FALSE)
-    message(paste0(Sys.time()," Converting to GTFS"))
+  if (ncores == 1) {
+    message(paste0(Sys.time(), " Importing TransXchange files"))
+    res_all <- pbapply::pblapply(files[12], transxchange_import, run_debug = TRUE, full_import = FALSE)
+    message(paste0(Sys.time(), " Converting to GTFS"))
     gtfs_all <- pbapply::pblapply(res_all, transxchange2gtfs, run_debug = TRUE, cal = cal, naptan = naptan)
-  }else{
+  } else {
     cl <- parallel::makeCluster(ncores)
     # parallel::clusterExport(
     #   cl = cl,
@@ -55,28 +57,27 @@ transxchange2gtfs <- function(path_in,
       library(UK2GTFS)
     })
     pbapply::pboptions(use_lb = TRUE)
-    message(paste0(Sys.time()," Importing TransXchange files"))
+    message(paste0(Sys.time(), " Importing TransXchange files"))
     res_all <- pbapply::pblapply(files,
-                                 transxchange_import,
-                                 run_debug = TRUE,
-                                 full_import = FALSE,
-                                 cl = cl
+      transxchange_import,
+      run_debug = TRUE,
+      full_import = FALSE,
+      cl = cl
     )
-    message(paste0(Sys.time()," Converting to GTFS"))
+    message(paste0(Sys.time(), " Converting to GTFS"))
     gtfs_all <- pbapply::pblapply(res_all,
-                                  transxchange2gtfs,
-                                  run_debug = TRUE,
-                                  cal = cal,
-                                  naptan = naptan,
-                                  cl = cl)
+      transxchange2gtfs,
+      run_debug = TRUE,
+      cal = cal,
+      naptan = naptan,
+      cl = cl
+    )
     parallel::stopCluster(cl)
     rm(cl)
-
   }
-  message(paste0(Sys.time()," Merging GTFS objects"))
+  message(paste0(Sys.time(), " Merging GTFS objects"))
   gtfs_merged <- gtfs_merge(gtfs_all)
 
-  message(paste0(Sys.time()," Writing GTFS file"))
+  message(paste0(Sys.time(), " Writing GTFS file"))
   write_gtfs(gtfs = gtfs_merged, folder = path_out, name = name)
-
 }

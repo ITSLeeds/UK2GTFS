@@ -1,10 +1,10 @@
-gtfs_subset <- function(gtfs, bounds){
+gtfs_subset <- function(gtfs, bounds) {
   stops <- gtfs$stops
-  stop_times <-  gtfs$stop_times
+  stop_times <- gtfs$stop_times
 
   bbox <- sf::st_bbox(bounds)
 
-  stops_inc <- stops[!is.na(stops$stop_lon),]
+  stops_inc <- stops[!is.na(stops$stop_lon), ]
   stops_inc$stop_lon <- as.numeric(stops_inc$stop_lon)
   stops_inc$stop_lat <- as.numeric(stops_inc$stop_lat)
 

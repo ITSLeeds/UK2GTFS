@@ -22,74 +22,74 @@
 #'
 #' @export
 
-atoc2gtfs <- function(path_in,path_out, name = "gtfs", silent = TRUE, ncores = 1, locations = tiplocs, agency = atoc_agency){
-
-  if(ncores == 1){message(paste0(Sys.time()," This will take some time, make sure you use 'ncores' to enable multi-core processing"))}
+atoc2gtfs <- function(path_in, path_out, name = "gtfs", silent = TRUE, ncores = 1, locations = tiplocs, agency = atoc_agency) {
+  if (ncores == 1) {
+    message(paste0(Sys.time(), " This will take some time, make sure you use 'ncores' to enable multi-core processing"))
+  }
   # Is input a zip or a folder
-  if(grepl(".zip",path_in)){
+  if (grepl(".zip", path_in)) {
     # Unzip
     files <- utils::unzip(path_in, exdir = "tmp")
     cleanup <- TRUE
-  }else{
+  } else {
     # folder
     cleanup <- FALSE
     files <- list.files(path_in, full.names = T)
   }
 
   # Are all the files we would expect there?
-  files.ext = substr(files, nchar(files) - 3, nchar(files))
-  files.ext.need = c(".alf",".dat",".flf",".mca",".msn",".set",".tsi",".ztr")
-  if(!all(files.ext.need %in% files.ext)){
+  files.ext <- substr(files, nchar(files) - 3, nchar(files))
+  files.ext.need <- c(".alf", ".dat", ".flf", ".mca", ".msn", ".set", ".tsi", ".ztr")
+  if (!all(files.ext.need %in% files.ext)) {
     # Missing Some files
-    files.ext.missing = files.ext.need[!files.ext.need %in% files.ext]
+    files.ext.missing <- files.ext.need[!files.ext.need %in% files.ext]
     warning(paste0("Missing files with the extension(s) ", paste(files.ext.missing, collapse = " ")))
     stop()
   }
 
   # Read In each File
-  alf = importALF(files[grepl(".alf",files)])
-  flf = importFLF(files[grepl(".flf",files)])
-  mca = importMCA(file = files[grepl(".mca",files)], silent = silent, ncores = 1)
-  msn = importMSN(files[grepl(".msn",files)], silent = silent)
-  #ztr = importMCA(files[grepl(".ztr",files)], silent = silent)
+  alf <- importALF(files[grepl(".alf", files)])
+  flf <- importFLF(files[grepl(".flf", files)])
+  mca <- importMCA(file = files[grepl(".mca", files)], silent = silent, ncores = 1)
+  msn <- importMSN(files[grepl(".msn", files)], silent = silent)
+  # ztr = importMCA(files[grepl(".ztr",files)], silent = silent)
 
   # Get the Station Locations
-  if("sf" %in% class(locations)){
-    #load("data/tiplocs.RData")
-    stops = cbind(locations, sf::st_coordinates(locations))
-    stops = as.data.frame(stops)
-    stops = stops[,c("stop_id","stop_code", "stop_name","Y","X","valid")]
-    names(stops) = c("stop_id","stop_code", "stop_name","stop_lat","stop_lon","valid")
-    stops$stop_lat = round(stops$stop_lat, 5)
-    stops$stop_lon = round(stops$stop_lon, 5)
-    stops$valid = NULL
-  }else if(locations == "file"){
-    station = msn[[1]]
-    TI = mca[["TI"]]
-    stops.list = station2stops(station = station, TI = TI)
-    stops = stops.list[["stops"]]
-  }else{
-    stops = utils::read.csv(locations,stringsAsFactors = F)
+  if ("sf" %in% class(locations)) {
+    # load("data/tiplocs.RData")
+    stops <- cbind(locations, sf::st_coordinates(locations))
+    stops <- as.data.frame(stops)
+    stops <- stops[, c("stop_id", "stop_code", "stop_name", "Y", "X", "valid")]
+    names(stops) <- c("stop_id", "stop_code", "stop_name", "stop_lat", "stop_lon", "valid")
+    stops$stop_lat <- round(stops$stop_lat, 5)
+    stops$stop_lon <- round(stops$stop_lon, 5)
+    stops$valid <- NULL
+  } else if (locations == "file") {
+    station <- msn[[1]]
+    TI <- mca[["TI"]]
+    stops.list <- station2stops(station = station, TI = TI)
+    stops <- stops.list[["stops"]]
+  } else {
+    stops <- utils::read.csv(locations, stringsAsFactors = F)
   }
 
-  #Construct the GTFS
-  stop_times = mca[["stop_times"]]
-  schedule = mca[["schedule"]]
+  # Construct the GTFS
+  stop_times <- mca[["stop_times"]]
+  schedule <- mca[["schedule"]]
 
-  stop_times = stop_times[,c("Scheduled Arrival Time","Scheduled Departure Time","Location","stop_sequence","Activity","rowID","schedule")]
-  names(stop_times) = c("arrival_time","departure_time","stop_id","stop_sequence","Activity","rowID","schedule")
+  stop_times <- stop_times[, c("Scheduled Arrival Time", "Scheduled Departure Time", "Location", "stop_sequence", "Activity", "rowID", "schedule")]
+  names(stop_times) <- c("arrival_time", "departure_time", "stop_id", "stop_sequence", "Activity", "rowID", "schedule")
 
   # remove any unused stops
-  stops = stops[stops$stop_id %in% stop_times$stop_id,]
+  stops <- stops[stops$stop_id %in% stop_times$stop_id, ]
 
   # Main Timetable Build
-  timetables = schedule2routes(stop_times = stop_times, schedule = schedule, silent = silent, ncores = ncores)
+  timetables <- schedule2routes(stop_times = stop_times, schedule = schedule, silent = silent, ncores = ncores)
 
-  #load("data/atoc_agency.RData")
+  # load("data/atoc_agency.RData")
 
   timetables$agency <- agency
   timetables$stops <- stops
 
   write_gtfs(timetables, folder = path_out, name = name)
-
 }
