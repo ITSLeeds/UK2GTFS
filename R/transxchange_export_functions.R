@@ -201,12 +201,14 @@ clean_route_type <- function(rt) {
     return(3)
   } else if (rt == "ferry") {
     return(4)
-  } else if (rt == "rail") {
-    return(2)
   } else if (rt == "coach") {
+    return(3)
+  } else if (rt == "rail") {
     return(2)
   } else if (rt == "underground") {
     return(1)
+  } else if (rt == "tram") {
+    return(0)
   } else {
     stop(paste0("Unknown route_type ", rt))
   }
@@ -247,6 +249,8 @@ clean_days <- function(days) {
     res <- c(1, 1, 1, 1, 1, 0, 0)
   } else if (days == "HolidaysOnly") {
     res <- c(0, 0, 0, 0, 0, 0, 0)
+  } else if (days == "Weekend") {
+    res <- c(0, 0, 0, 0, 0, 1, 1)
   } else if (days == "SaturdaySundayHolidaysOnly") {
     res <- c(0, 0, 0, 0, 0, 1, 1)
   } else if (days %in% c("", "MondayToSunday", "MondayToFridaySaturdaySundayHolidaysOnly")) {

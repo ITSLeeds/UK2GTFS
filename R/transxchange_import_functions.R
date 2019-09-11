@@ -116,7 +116,32 @@ clean_sequence <- function(x) {
   return(x)
 }
 
+#' Clean NA from sequence
+#' @param x sequency of numbers
+#' @param y sequence of ids showing when to start a new sequency
+#' @param dispalce if TRUE start at 2 rather than 2
+#'
 
+clean_sequence2 <- function(x, y, displace = FALSE) {
+  if (anyNA(x)) {
+    # Not changes in JPSid
+    ly <- length(y)
+    new_route <- y[seq(1, ly-1)] != y[seq(2, ly)]
+    new_route <- c(TRUE,new_route)
+    start <- seq(1, ly)[new_route]
+    end <- start - 1
+    end <- end[seq(2, length(end))]
+    end <- c(end, ly)
+    diff <- end - start + 1
+    res <- lapply(diff, function(z){seq_len(z)})
+    res <- unlist(res)
+    if(displace){
+      res <- res + 1
+    }
+    return(res)
+  }
+  return(x)
+}
 
 
 #' Import stoppoints
@@ -186,7 +211,7 @@ import_journeypatternsections <- function(journeypatternsections) {
   }
   From.TimingStatus <- import_simple(From, "d1:TimingStatus")
   From.SequenceNumber <- import_FromTo(From, "@SequenceNumber")
-  From.SequenceNumber <- clean_sequence(From.SequenceNumber)
+
 
   if (length(From.SequenceNumber) == 0) {
     From.SequenceNumber <- rep(NA, length(From.StopPointRef))
@@ -200,7 +225,7 @@ import_journeypatternsections <- function(journeypatternsections) {
   }
   To.TimingStatus <- import_simple(To, "d1:TimingStatus")
   To.SequenceNumber <- import_FromTo(To, "@SequenceNumber")
-  To.SequenceNumber <- clean_sequence(To.SequenceNumber)
+
   if (length(To.SequenceNumber) == 0) {
     To.SequenceNumber <- rep(NA, length(From.StopPointRef))
   }
@@ -209,6 +234,8 @@ import_journeypatternsections <- function(journeypatternsections) {
   JPS_id <- import_simple(JPS, "@id")
   JPS_id <- rep(JPS_id, times = xml2::xml_length(JPS, only_elements = FALSE))
 
+  From.SequenceNumber <- clean_sequence2(From.SequenceNumber,JPS_id,FALSE)
+  To.SequenceNumber <- clean_sequence2(To.SequenceNumber,JPS_id,TRUE)
 
   journeypatternsections <- data.frame(
     JPTL_ID = JPTL_ID,
@@ -238,6 +265,10 @@ import_operators <- function(operators) {
   OperatorShortName <- import_simple(operators, ".//d1:OperatorShortName")
   OperatorNameOnLicence <- import_simple(operators, ".//d1:OperatorNameOnLicence")
   TradingName <- import_simple(operators, ".//d1:TradingName")
+
+  if (length(NationalOperatorCode) == 0) {
+    NationalOperatorCode <- OperatorCode
+  }
 
   if (length(OperatorNameOnLicence) == 0) {
     OperatorNameOnLicence <- rep(NA, length(NationalOperatorCode))
@@ -426,7 +457,7 @@ import_vehiclejourneys <- function(vehiclejourneys, Services_main, cal) {
 
   OperatingProfile <- xml2::xml_find_all(vehiclejourneys, ".//d1:OperatingProfile")
   if (length(xml2::xml_length(OperatingProfile)) != nrow(vj_simple) | sum(xml2::xml_length(OperatingProfile)) == 0) {
-    warning("Missing operating profiles in Vehicle Journeys")
+    #warning("Missing operating profiles in Vehicle Journeys")
     vj_simple$DaysOfWeek <- Services_main$DaysOfWeek
     vj_simple$HolidaysOnly <- NA
   } else {
