@@ -38,6 +38,10 @@ gtfs_merge <- function(gtfs_list) {
   names(calendar_dates) <- seq(1, length(calendar_dates))
   suppressWarnings(calendar_dates <- dplyr::bind_rows(calendar_dates, .id = "file_id"))
 
+  # fix typo
+  agency$agency_name[agency$agency_name == "Dockland Light Railway"] <- "Docklands Light Railway"
+
+
   # agency
   agency$file_id <- NULL
   agency <- unique(agency)
@@ -73,6 +77,7 @@ gtfs_merge <- function(gtfs_list) {
     routes <- routes[, c("route_id_new", "agency_id", "route_short_name", "route_long_name", "route_desc", "route_type")]
     names(routes) <- c("route_id", "agency_id", "route_short_name", "route_long_name", "route_desc", "route_type")
   }
+
 
   # calendar
   if (any(duplicated(calendar$service_id))) {
@@ -152,6 +157,9 @@ gtfs_merge <- function(gtfs_list) {
   calendar_dates <- calendar_dates[, c("service_id_new", "date", "exception_type")]
   names(calendar_dates) <- c("service_id", "date", "exception_type")
   calendar_dates <- calendar_dates[!duplicated(calendar_dates$service_id), ]
+
+  stop_times$file_id <- NULL
+  routes$file_id <- NULL
 
   res_final <- list(agency, stops, routes, trips, stop_times, calendar, calendar_dates)
   names(res_final) <- c("agency", "stops", "routes", "trips", "stop_times", "calendar", "calendar_dates")

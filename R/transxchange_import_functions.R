@@ -201,13 +201,17 @@ import_journeypatternsections <- function(journeypatternsections) {
   JPTL_ID <- import_simple(JourneyPatternTimingLink, "@id")
   # JPTL_ID               <- rep(JPTL_ID, times = xml2::xml_length(JourneyPatternTimingLink, only_elements = FALSE))
 
-  RouteLinkRef <- import_simple(JourneyPatternTimingLink, "d1:RouteLinkRef")
+
   RunTime <- import_simple(JourneyPatternTimingLink, "d1:RunTime")
   From <- xml2::xml_find_all(JourneyPatternTimingLink, "d1:From")
   From.StopPointRef <- import_simple(From, "d1:StopPointRef")
   From.Activity <- import_simple(From, "d1:Activity")
   if (length(From.Activity) == 0) {
     From.Activity <- rep(NA, length(From.StopPointRef))
+  }
+  RouteLinkRef <- import_simple(JourneyPatternTimingLink, "d1:RouteLinkRef")
+  if (length(RouteLinkRef) == 0) {
+    RouteLinkRef <- rep(NA, length(From.StopPointRef))
   }
   From.TimingStatus <- import_simple(From, "d1:TimingStatus")
   From.SequenceNumber <- import_FromTo(From, "@SequenceNumber")
@@ -331,6 +335,19 @@ import_services <- function(service, full_import = TRUE) {
   JourneyPatternSectionRefs <- import_simple(ss, ".//d1:JourneyPatternSectionRefs")
   JourneyPatternID <- import_simple(ss, "@id")
 
+  if(length(JourneyPatternSectionRefs) != length(JourneyPatternID)){
+    # Some cases have muliple JourneyPatternSectionRefs
+    lths <- list()
+    for(i in seq(1, length(xml2::xml_length(ss)))){
+      lths[[i]] <- length(xml2::xml_find_all(ss[i], "d1:JourneyPatternSectionRefs"))
+    }
+    lths <- unlist(lths)
+    Direction <- rep(Direction, times = lths)
+    VehicleType <- rep(VehicleType, times = lths)
+    RouteRef <- rep(RouteRef, times = lths)
+    JourneyPatternID <- rep(JourneyPatternID, times = lths)
+  }
+
 
   SpecialDaysOperation <- xml2::xml_find_all(service, ".//d1:SpecialDaysOperation")
   DaysOperation <- xml2::xml_find_all(SpecialDaysOperation, ".//d1:DaysOfOperation")
@@ -440,6 +457,10 @@ import_vehiclejourneys <- function(vehiclejourneys, Services_main, cal) {
   BankHolidaysNoOperate <- xml2::xml_text(xml2::xml_find_all(vehiclejourneys, ".//d1:BankHolidaysNoOperate"))
   if (length(BankHolidaysNoOperate) == 0) {
     BankHolidaysNoOperate <- rep(NA, length(VehicleJourneyCode))
+  }
+
+  if(length(JourneyPatternRef) != length(VehicleJourneyCode)){
+    stop("JourneyPatternRef and VehicleJourneyRefs")
   }
 
 
