@@ -160,8 +160,8 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
   if (run_debug) {
     chk <- gsub("[0-9]", "", JourneyPatternSections$RunTime)
     chk <- unique(chk)
-    if (!all(chk %in% c("PTM", "PTS", "PTMS", "PTHM", "PTH"))) {
-      stop(paste0("Unknown time formats: ", chk[!chk %in% c("PTM", "PTS", "PTMS", "PTHM", "PTH")]))
+    if (!all(chk %in% c("PTM", "PTS", "PTMS", "PTHM", "PTH","PTHMS"))) {
+      stop(paste0("Unknown time formats: ", chk[!chk %in% c("PTM", "PTS", "PTMS", "PTHM", "PTH","PTHMS")]))
     }
     rm(chk)
   }
