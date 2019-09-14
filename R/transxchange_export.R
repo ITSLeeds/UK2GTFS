@@ -209,13 +209,22 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
   } else if (all(routes$agency_id %in% Operators$OperatorCode)) {
     agency_id <- Operators$OperatorCode
   } else {
-    stop("Unable to match OperatorCode between Services_main and Operators")
+    if(length(unique(routes$agency_id)) == 1 & length(unique(Operators$NationalOperatorCode)) == 1){
+      agency_id <- unique(routes$agency_id)
+    }else{
+      stop("Unable to match OperatorCode between Services_main and Operators")
+    }
+
   }
 
   if (is.null(Operators$TradingName)) {
     agency_name <- Operators$OperatorShortName
   } else {
-    agency_name <- Operators$TradingName
+    if(is.na(Operators$TradingName)){
+      agency_name <- Operators$OperatorShortName
+    }else{
+      agency_name <- Operators$TradingName
+    }
   }
 
 
