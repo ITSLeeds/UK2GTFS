@@ -567,6 +567,7 @@ import_vehiclejourneys <- function(vehiclejourneys, Services_main, cal) {
 import_DaysOfOperation <- function(DaysOfOperation, cal, Services_main) {
   result <- list()
   for (i in seq(1, length(xml2::xml_length(DaysOfOperation)))) {
+    #message(i)
     chld <- DaysOfOperation[i]
     if (xml2::xml_length(xml2::xml_child(chld)) == 0) {
       # Text based rather than date based
@@ -590,6 +591,22 @@ import_DaysOfOperation <- function(DaysOfOperation, cal, Services_main) {
         cal2 <- cal[cal$date >= Services_main$StartDate, ]
         cal2 <- cal2[cal2$date >= Services_main$EndDate, ]
         cal2 <- cal2[cal2$name %in% unique(xml2::xml_name(xml2::xml_children(chld))), ]
+        res <- data.frame(
+          VehicleJourneyCode = DaysOfOperation_id,
+          StartDate = cal2$date,
+          EndDate = cal2$date,
+          ServicedOrganisationRef = NA,
+          stringsAsFactors = FALSE
+        )
+      } else if (any(xml2::xml_name(xml2::xml_children(chld)) == "HolidayMondays")){
+        DaysOfOperation_id <- xml2::xml_parent(xml2::xml_parent(xml2::xml_parent(chld)))
+        DaysOfOperation_id <- import_simple(DaysOfOperation_id, ".//d1:VehicleJourneyCode")
+        cal2 <- cal[cal$date >= Services_main$StartDate, ]
+        cal2 <- cal2[cal2$date >= Services_main$EndDate, ]
+        cal2 <- cal2[cal2$name %in% unique(xml2::xml_name(xml2::xml_children(chld))) |
+                       lubridate::wday(cal2$date, TRUE) == "Mon", ]
+
+
         res <- data.frame(
           VehicleJourneyCode = DaysOfOperation_id,
           StartDate = cal2$date,
@@ -783,7 +800,19 @@ import_ServicedOrganisations <- function(ServicedOrganisations, full_import = FA
       WorkingDays.StartDate <- rep(NA, times = rep_lengths)
       WorkingDays.EndDate <- rep(NA, times = rep_lengths)
     } else {
-      stop("Lengths of Holidays and working days do not match in ServicedOrganisations")
+      #stop("Lengths of Holidays and working days do not match in ServicedOrganisations")
+      if(rep_lengths_work > rep_lengths_holiday){
+        rep_lengths <- rep_lengths_work
+        rep_part <- rep_lengths_work - rep_lengths_holiday
+        Holidays.StartDate <- c(Holidays.StartDate, rep(NA, times = rep_part))
+        Holidays.EndDate <- c(Holidays.EndDate, rep(NA, times = rep_part))
+        Holidays.Description <- c(Holidays.Description, rep(NA, times = rep_part))
+      }else{
+        rep_lengths <- rep_lengths_holiday
+        rep_part <- rep_lengths_holiday - rep_lengths_work
+        WorkingDays.StartDate <- c(WorkingDays.StartDate, rep(NA, times = rep_part))
+        WorkingDays.EndDate <- c(WorkingDays.EndDate, rep(NA, times = rep_part))
+      }
     }
 
     OrganisationCode <- rep(OrganisationCode, times = rep_lengths)
