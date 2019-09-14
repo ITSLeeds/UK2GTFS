@@ -15,6 +15,7 @@ get_bank_holidays <- function(url = "https://www.gov.uk/bank-holidays/england-an
   cal$name[cal$name == "New Year\U00E2\U20AC\U2122s Day"] <- "NewYearsDay"
   cal$name[cal$name == "Christmas Day"] <- "ChristmasDay"
   cal$name[cal$name == "Boxing Day"] <- "BoxingDay"
+  cal$name[cal$name == "Good Friday"] <- "GoodFriday"
 
   return(cal)
 }
