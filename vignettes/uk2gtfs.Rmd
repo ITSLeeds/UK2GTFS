@@ -4,7 +4,7 @@ author: "Malcolm Morgan"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteIndexEntry{UK2GTFS: Getting Started}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -68,7 +68,7 @@ Load the package, and use the `atoc2gtfs` function. The fucntnon requires the fo
 * `locations` station locations can be `tiplocs` object provided with the package (default) or taken from the ATOC `"file"` (known to have errors) or file path to CSV file.
 * `agency` agency details which are not included in the network rail files, default used example data provided by the package
 
-```{r atoc, eval=FALSE}
+```{r atoc_example, eval=FALSE}
 library(UK2GTFS)
 #path_in = "C:/Users/Malcolm/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/ttis381.zip"
 #path_out = "C:/Users/Malcolm/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/"

@@ -9,6 +9,25 @@ import_simple <- function(xml1, nm) {
   xml2::xml_text(xml2::xml_find_all(xml1, nm))
 }
 
+#' Import Simple
+#' ????
+#' @param xml1 XML object
+#' @param nm name to find
+#' @noRd
+import_vialoop <- function(xml1, nm) {
+  res <- list()
+  for(i in seq(1, xml2::xml_length(xml1))){
+    chld <- xml2::xml_child(xml1, i)
+    chld <- xml2::xml_text(xml2::xml_child(chld, nm))
+    if(length(chld) == 0){
+      chld <- NA
+    }
+    res[[i]] <- chld
+
+  }
+  res <- unlist(res)
+  return(res)
+}
 
 #' Import When some rows are missing
 #' Checks lengths of obejct against lgth
@@ -64,7 +83,11 @@ import_FromTo <- function(xml1, nm) {
     # There are missing values
     res <- list()
     for (i in seq(1:lth)) {
-      sub <- xml2::xml_text(xml2::xml_find_all(xml1[i], nm))
+      sub <- xml1[i]
+      sub <- xml2::xml_attrs(sub)
+      sub <- unlist(sub)
+      sub <- sub["SequenceNumber"]
+      sub <- unname(sub)
       if (length(sub) == 0) {
         sub <- NA
       }
@@ -74,6 +97,8 @@ import_FromTo <- function(xml1, nm) {
     return(res)
   }
 }
+
+
 
 #' Clean NA from sequence
 #' @param x sequency of numbers
@@ -124,21 +149,28 @@ clean_sequence <- function(x) {
 
 clean_sequence2 <- function(x, y, displace = FALSE) {
   if (anyNA(x)) {
-    # Not changes in JPSid
-    ly <- length(y)
-    new_route <- y[seq(1, ly-1)] != y[seq(2, ly)]
-    new_route <- c(TRUE,new_route)
-    start <- seq(1, ly)[new_route]
-    end <- start - 1
-    end <- end[seq(2, length(end))]
-    end <- c(end, ly)
-    diff <- end - start + 1
-    res <- lapply(diff, function(z){seq_len(z)})
-    res <- unlist(res)
-    if(displace){
-      res <- res + 1
+    if(length(unique(y)) == 1){
+      # Only one Jounrey pattern
+      res <- seq(1, length(y))
+      if(displace){
+        res <- res + 1
+      }
+      return(res)
+    } else {
+      # Not changes in JPSid
+      ly <- length(y)
+      new_route <- y[seq(1, ly-1)] != y[seq(2, ly)]
+      new_route <- c(TRUE,new_route)
+      start <- seq(1, ly)[new_route]
+      end <- start - 1
+      end <- end[seq(2, length(end))]
+      end <- c(end, ly)
+      diff <- end - start + 1
+      res <- lapply(diff, function(z){seq_len(z)})
+      res <- unlist(res)
+
+      return(res)
     }
-    return(res)
   }
   return(x)
 }
@@ -214,8 +246,8 @@ import_journeypatternsections <- function(journeypatternsections) {
     RouteLinkRef <- rep(NA, length(From.StopPointRef))
   }
   From.TimingStatus <- import_simple(From, "d1:TimingStatus")
-  From.SequenceNumber <- import_FromTo(From, "@SequenceNumber")
-
+  #From.SequenceNumber <- import_FromTo(From, "@SequenceNumber")
+  From.SequenceNumber <- xml2::xml_attr(From, "SequenceNumber")
 
   if (length(From.SequenceNumber) == 0) {
     From.SequenceNumber <- rep(NA, length(From.StopPointRef))
@@ -228,7 +260,8 @@ import_journeypatternsections <- function(journeypatternsections) {
     To.Activity <- rep(NA, length(To.StopPointRef))
   }
   To.TimingStatus <- import_simple(To, "d1:TimingStatus")
-  To.SequenceNumber <- import_FromTo(To, "@SequenceNumber")
+  #To.SequenceNumber <- import_FromTo(To, "@SequenceNumber")
+  To.SequenceNumber <- xml2::xml_attr(To, "SequenceNumber")
 
   if (length(To.SequenceNumber) == 0) {
     To.SequenceNumber <- rep(NA, length(From.StopPointRef))
@@ -460,7 +493,13 @@ import_vehiclejourneys <- function(vehiclejourneys, Services_main, cal) {
   }
 
   if(length(JourneyPatternRef) != length(VehicleJourneyCode)){
-    stop("JourneyPatternRef and VehicleJourneyRefs")
+    JourneyPatternRef <- import_withmissing(vehiclejourneys, ".//d1:JourneyPatternRef", 8)
+    VehicleJourneyRef <- import_withmissing(vehiclejourneys, ".//d1:VehicleJourneyRef", 8)
+    # JourneyPatternRef <- ifelse(is.na(JourneyPatternRef),
+    #                             VehicleJourneyRef,
+    #                             JourneyPatternRef)
+
+    stop("JourneyPatternRef and VehicleJourneyRefs not same length")
   }
 
 
@@ -469,6 +508,7 @@ import_vehiclejourneys <- function(vehiclejourneys, Services_main, cal) {
     ServiceRef = ServiceRef,
     LineRef = LineRef,
     JourneyPatternRef = JourneyPatternRef,
+    #VehicleJourneyRef = VehicleJourneyRef,
     DepartureTime = DepartureTime,
     # days = days,
     BankHolidaysOperate = BankHolidaysOperate,
@@ -575,7 +615,7 @@ import_DaysOfOperation <- function(DaysOfOperation, cal, Services_main) {
         DaysOfOperation_id <- xml2::xml_parent(xml2::xml_parent(xml2::xml_parent(chld)))
         DaysOfOperation_id <- import_simple(DaysOfOperation_id, ".//d1:VehicleJourneyCode")
         cal2 <- cal[cal$date >= Services_main$StartDate, ]
-        cal2 <- cal2[cal2$date >= Services_main$EndDate, ]
+        cal2 <- cal2[cal2$date <= Services_main$EndDate, ]
 
         res <- data.frame(
           VehicleJourneyCode = DaysOfOperation_id,
@@ -589,7 +629,7 @@ import_DaysOfOperation <- function(DaysOfOperation, cal, Services_main) {
         DaysOfOperation_id <- xml2::xml_parent(xml2::xml_parent(xml2::xml_parent(chld)))
         DaysOfOperation_id <- import_simple(DaysOfOperation_id, ".//d1:VehicleJourneyCode")
         cal2 <- cal[cal$date >= Services_main$StartDate, ]
-        cal2 <- cal2[cal2$date >= Services_main$EndDate, ]
+        cal2 <- cal2[cal2$date <= Services_main$EndDate, ]
         cal2 <- cal2[cal2$name %in% unique(xml2::xml_name(xml2::xml_children(chld))), ]
         res <- data.frame(
           VehicleJourneyCode = DaysOfOperation_id,
@@ -602,18 +642,23 @@ import_DaysOfOperation <- function(DaysOfOperation, cal, Services_main) {
         DaysOfOperation_id <- xml2::xml_parent(xml2::xml_parent(xml2::xml_parent(chld)))
         DaysOfOperation_id <- import_simple(DaysOfOperation_id, ".//d1:VehicleJourneyCode")
         cal2 <- cal[cal$date >= Services_main$StartDate, ]
-        cal2 <- cal2[cal2$date >= Services_main$EndDate, ]
+        cal2 <- cal2[cal2$date <= Services_main$EndDate, ]
         cal2 <- cal2[cal2$name %in% unique(xml2::xml_name(xml2::xml_children(chld))) |
                        lubridate::wday(cal2$date, TRUE) == "Mon", ]
 
+        if(nrow(cal2) > 0){
+          res <- data.frame(
+            VehicleJourneyCode = DaysOfOperation_id,
+            StartDate = cal2$date,
+            EndDate = cal2$date,
+            ServicedOrganisationRef = NA,
+            stringsAsFactors = FALSE
+          )
+        } else {
+          res <- NULL
+        }
 
-        res <- data.frame(
-          VehicleJourneyCode = DaysOfOperation_id,
-          StartDate = cal2$date,
-          EndDate = cal2$date,
-          ServicedOrganisationRef = NA,
-          stringsAsFactors = FALSE
-        )
+
       } else {
         stop("Unknown Days of Operation")
       }
@@ -716,6 +761,17 @@ import_ServicedOrganisations_internal <- function(ServicedOrganisations, full_im
   WorkingDays.StartDate <- import_simple(WorkingDays, ".//d1:StartDate")
   WorkingDays.EndDate <- import_simple(WorkingDays, ".//d1:EndDate")
 
+  if(length(WorkingDays.StartDate) != length(WorkingDays.EndDate)){
+    WorkingDays.StartDate <- import_vialoop(WorkingDays, ".//d1:StartDate")
+    WorkingDays.EndDate <- import_vialoop(WorkingDays, ".//d1:EndDate")
+    WorkingDays.StartDate <- ifelse(is.na(WorkingDays.StartDate),
+                                    WorkingDays.EndDate,
+                                    WorkingDays.StartDate)
+    WorkingDays.EndDate <- ifelse(is.na(WorkingDays.EndDate),
+                                    WorkingDays.StartDate,
+                                    WorkingDays.EndDate)
+  }
+
   Holidays <- xml2::xml_find_all(ServicedOrganisations, ".//d1:Holidays")
   Holidays.StartDate <- import_simple(Holidays, ".//d1:StartDate")
   Holidays.EndDate <- import_simple(Holidays, ".//d1:EndDate")
@@ -782,6 +838,18 @@ import_ServicedOrganisations <- function(ServicedOrganisations, full_import = FA
     WorkingDays.StartDate <- import_simple(WorkingDays, ".//d1:StartDate")
     WorkingDays.EndDate <- import_simple(WorkingDays, ".//d1:EndDate")
 
+    if(length(WorkingDays.StartDate) != length(WorkingDays.EndDate)){
+      WorkingDays.StartDate <- import_vialoop(WorkingDays, ".//d1:StartDate")
+      WorkingDays.EndDate <- import_vialoop(WorkingDays, ".//d1:EndDate")
+      WorkingDays.StartDate <- ifelse(is.na(WorkingDays.StartDate),
+                                      WorkingDays.EndDate,
+                                      WorkingDays.StartDate)
+      WorkingDays.EndDate <- ifelse(is.na(WorkingDays.EndDate),
+                                      WorkingDays.StartDate,
+                                      WorkingDays.EndDate)
+    }
+
+
     Holidays <- xml2::xml_find_all(sub, ".//d1:Holidays")
     Holidays.StartDate <- import_simple(Holidays, ".//d1:StartDate")
     Holidays.EndDate <- import_simple(Holidays, ".//d1:EndDate")
@@ -789,6 +857,10 @@ import_ServicedOrganisations <- function(ServicedOrganisations, full_import = FA
 
     rep_lengths_work <- sum(xml2::xml_length(WorkingDays))
     rep_lengths_holiday <- sum(xml2::xml_length(Holidays))
+
+    if(length(Holidays.Description) == 0){
+      Holidays.Description <- rep(NA, times = rep_lengths_holiday)
+    }
 
     if (rep_lengths_work > 0 & rep_lengths_holiday == 0) {
       rep_lengths <- rep_lengths_work
@@ -806,7 +878,9 @@ import_ServicedOrganisations <- function(ServicedOrganisations, full_import = FA
         rep_part <- rep_lengths_work - rep_lengths_holiday
         Holidays.StartDate <- c(Holidays.StartDate, rep(NA, times = rep_part))
         Holidays.EndDate <- c(Holidays.EndDate, rep(NA, times = rep_part))
+
         Holidays.Description <- c(Holidays.Description, rep(NA, times = rep_part))
+
       }else{
         rep_lengths <- rep_lengths_holiday
         rep_part <- rep_lengths_holiday - rep_lengths_work

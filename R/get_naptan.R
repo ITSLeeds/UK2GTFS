@@ -2,8 +2,9 @@
 #'
 #' download the naptan stop locations
 #' @param url url to naptan in csv format
+#' @param naptan_missing data frame of missing stops
 #' @export
-get_naptan <- function(url = "http://naptan.app.dft.gov.uk/DataRequest/Naptan.ashx?format=csv") {
+get_naptan <- function(url = "http://naptan.app.dft.gov.uk/DataRequest/Naptan.ashx?format=csv", naptan_missing = naptan_missing) {
   utils::download.file(url = url, destfile = "naptan.zip", mode = "wb")
   dir.create("temp")
   utils::unzip("naptan.zip", exdir = "temp")
@@ -19,24 +20,7 @@ get_naptan <- function(url = "http://naptan.app.dft.gov.uk/DataRequest/Naptan.as
   naptan$stop_lat <- format(round(naptan$stop_lat, 6), scientific = FALSE)
 
   # Append alterative tags
-  extra <- naptan[naptan$stop_id %in% c("9400ZZSDBCK", "9400ZZSDSTV", "9400ZZSDTOT"), ]
-  extra$stop_id <- paste0(extra$stop_id, "0")
-  naptan <- rbind(naptan, extra)
-
-  # Append Missing Stops
-  stop_missing1 <- c("9400ZZLUHPC2", "9400ZZLUBNK8","9400ZZRLWLN1", "9400ZZRLWBY1", "9400ZZRLHHL1")
-  alt_ids       <- c("9400ZZLUHPC", "9400ZZLUBNK","9400ZZRLWLN", "9400ZZRLWBY", "9400ZZRLHHL")
-  extra <- naptan[naptan$stop_id %in% alt_ids, ]
-  extra$stop_id <- stop_missing1
-  naptan <- rbind(naptan, extra)
-
-  stop_missing2 <- c("490000345Z","910GWATRLMN", "490005204Z","490G000117")
-  extra <- naptan[1:4, ]
-  extra$stop_id <- stop_missing2
-  extra$stop_code <- ""
-  extra$stop_name <- c("Hallsville Road","Waterloo Mainline", "Chislehurst Sainsbury's","Colonnades Leisure Park")
-  extra$stop_lon <- c("0.011065","-0.112220", "0.066852","-0.116035")
-  extra$stop_lat <- c("51.513027","51.503703", "51.418832","51.356938")
+  naptan_missing <- naptan_missing[!naptan_missing$stop_id %in% naptan$stop_id,]
   naptan <- rbind(naptan, extra)
 
   return(naptan)

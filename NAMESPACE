@@ -3,6 +3,7 @@
 export(atoc2gtfs)
 export(get_bank_holidays)
 export(get_naptan)
+export(gtfs_compress)
 export(gtfs_fast_trips)
 export(gtfs_merge)
 export(gtfs_split)

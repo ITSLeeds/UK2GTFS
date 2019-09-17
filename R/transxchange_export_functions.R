@@ -251,6 +251,8 @@ clean_days <- function(days) {
     res <- c(0, 0, 0, 0, 0, 0, 0)
   } else if (days == "Weekend") {
     res <- c(0, 0, 0, 0, 0, 1, 1)
+  } else if (days == "MondayToSaturday") {
+    res <- c(1, 1, 1, 1, 1, 1, 0)
   } else if (days == "SaturdaySundayHolidaysOnly") {
     res <- c(0, 0, 0, 0, 0, 1, 1)
   } else if (days %in% c("", "MondayToSunday", "MondayToFridaySaturdaySundayHolidaysOnly")) {

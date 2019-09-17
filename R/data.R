@@ -20,3 +20,11 @@
 #'
 #' @format A data frame code 3 columns
 "activity_codes"
+
+#' Bus Stop Locations
+#'
+#' A database of bus stops that are missing from the NAPTAN but are known to have been used.
+#'
+#'
+#' @format A data frame of 5 columns
+"naptan_missing"
