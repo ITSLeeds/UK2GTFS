@@ -563,7 +563,7 @@ import_vehiclejourneys <- function(vehiclejourneys, Services_main, cal) {
 
   # Special Days
   SpecialDaysOperation <- xml2::xml_find_all(vehiclejourneys, ".//d1:SpecialDaysOperation")
-  DaysOfNonOperation <- xml2::xml_find_all(SpecialDaysOperation, ".//d1:DaysOfNonOperation")
+  DaysOfNonOperation <- xml2::xml_find_all(vehiclejourneys, ".//d1:DaysOfNonOperation")
   DaysOfOperation <- xml2::xml_find_all(vehiclejourneys, ".//d1:DaysOfOperation")
 
   # Probelm days non oprationa re different for each vehicle jounrey

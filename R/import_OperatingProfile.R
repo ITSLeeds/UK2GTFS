@@ -1,0 +1,134 @@
+import_OperatingProfile <- function(OperatingProfile){
+  result <- list()
+  result_special <- list()
+  for(i in seq(1, length(OperatingProfile))){
+    chld <- OperatingProfile[i]
+
+    # Top Level Sections
+    RegularDayType <- xml2::xml_find_first(chld, "d1:RegularDayType")
+    ServicedOrganisationDayType <- xml2::xml_find_first(chld, "d1:ServicedOrganisationDayType")
+    BankHolidayOperation <- xml2::xml_find_first(chld, "d1:BankHolidayOperation")
+    SpecialDaysOperation <- xml2::xml_find_first(chld, "d1:SpecialDaysOperation")
+
+    # Main Section #########################
+    # RegularDayType
+    if(xml2::xml_length(RegularDayType) > 0){
+      DaysOfWeek <- xml2::xml_find_first(RegularDayType, "d1:DaysOfWeek")
+      DaysOfWeek <- xml2::xml_name(xml2::xml_children(DaysOfWeek))
+
+      HolidaysOnly <- xml2::xml_find_all(RegularDayType, "d1:HolidaysOnly")
+      HolidaysOnly <- xml2::xml_name(HolidaysOnly)
+
+      # Clean NA
+      if(length(DaysOfWeek) == 0){
+        DaysOfWeek <- NA
+      }
+
+      if(length(HolidaysOnly) == 0){
+        HolidaysOnly <- NA
+      }
+
+    } else {
+      DaysOfWeek <- NA
+      HolidaysOnly <- NA
+    }
+
+    # ServicedOrganisationDayType
+    if(xml2::xml_length(ServicedOrganisationDayType) > 0){
+      stop("Has Serviced Organisations")
+    } else {
+
+    }
+
+    # BankHolidayOperation
+    if(xml2::xml_length(BankHolidayOperation) > 0){
+      BHDaysOfNonOperation <- xml2::xml_find_first(BankHolidayOperation, "d1:DaysOfNonOperation")
+      BHDaysOfOperation    <- xml2::xml_find_first(BankHolidayOperation, "d1:DaysOfOperation")
+      # Should be text based e.g. "AllBankHolidays"
+      BHDaysOfNonOperation <- xml2::xml_name(xml2::xml_children(BHDaysOfNonOperation))
+      BHDaysOfOperation <- xml2::xml_name(xml2::xml_children(BHDaysOfOperation))
+
+      # Clean NA
+      if(length(BHDaysOfNonOperation) == 0){
+        BHDaysOfNonOperation <- NA
+      }
+
+      if(length(BHDaysOfOperation) == 0){
+        BHDaysOfOperation <- NA
+      }
+
+
+    } else {
+      BHDaysOfNonOperation <- NA
+      BHDaysOfOperation <- NA
+    }
+
+    # SpecialDaysOperation
+    if(xml2::xml_length(SpecialDaysOperation) > 0){
+      SDDaysOfNonOperation <- xml2::xml_find_first(SpecialDaysOperation, "d1:DaysOfNonOperation")
+      SDDaysOfOperation    <- xml2::xml_find_first(SpecialDaysOperation, "d1:DaysOfOperation")
+
+      if(xml2::xml_length(SDDaysOfNonOperation) > 0){
+        SDDaysOfNonOperation_start <- xml2::xml_find_all(SDDaysOfNonOperation, ".//d1:StartDate")
+        SDDaysOfNonOperation_start <- xml2::xml_text(SDDaysOfNonOperation_start)
+        SDDaysOfNonOperation_end <- xml2::xml_find_all(SDDaysOfNonOperation, ".//d1:EndDate")
+        SDDaysOfNonOperation_end <- xml2::xml_text(SDDaysOfNonOperation_end)
+      }else{
+        SDDaysOfNonOperation_start <- NA
+        SDDaysOfNonOperation_end <- NA
+      }
+
+
+      if(xml2::xml_length(SDDaysOfOperation) > 0){
+        SDDaysOfOperation_start <- xml2::xml_find_all(SDDaysOfOperation, ".//d1:StartDate")
+        SDDaysOfOperation_start <- xml2::xml_text(SDDaysOfOperation_start)
+        SDDaysOfOperation_end <- xml2::xml_find_all(SDDaysOfOperation, ".//d1:EndDate")
+        SDDaysOfOperation_end <- xml2::xml_text(SDDaysOfOperation_end)
+      }else{
+        SDDaysOfOperation_start <- NA
+        SDDaysOfOperation_end <- NA
+      }
+
+      # Check for when lenghts don't match
+      lns <- length(SDDaysOfNonOperation_start)
+      lne <- length(SDDaysOfNonOperation_start)
+      los <- length(SDDaysOfNonOperation_start)
+      loe <- length(SDDaysOfNonOperation_start)
+      laa <- c(lns, lne, los, loe)
+
+      if(length(unique(laa)) != 1){
+        stop("Differnt numbers of sepcal dates")
+      }
+
+
+      ssdf <- data.frame(row = i,
+                         OperateStart = SDDaysOfOperation_start,
+                         OperateEnd = SDDaysOfOperation_end,
+                         NoOperateStart = SDDaysOfNonOperation_start,
+                         NoOperateEnd = SDDaysOfNonOperation_end,
+                         stringsAsFactors = FALSE)
+
+      result_special[[i]] <- ssdf
+      rm(SDDaysOfOperation_start, SDDaysOfOperation_end,
+         SDDaysOfNonOperation_start, SDDaysOfNonOperation_end,
+         ssdf)
+
+    } else {
+      result_special[[i]] <- NULL
+    }
+
+
+    # Build Results #######################
+    res <- data.frame(DaysOfWeek = DaysOfWeek,
+                      HolidaysOnly = HolidaysOnly,
+                      BHDaysOfOperation = BHDaysOfOperation,
+                      BHDaysOfNonOperation = BHDaysOfNonOperation,
+                      stringsAsFactors = FALSE)
+    result[[i]] <- res
+    rm(DaysOfWeek, HolidaysOnly,
+       BHDaysOfOperation, BHDaysOfNonOperation)
+
+  }
+  result <- dplyr::bind_rows(result)
+  result_special <- dplyr::bind_rows(result_special)
+}
