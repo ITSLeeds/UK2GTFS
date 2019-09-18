@@ -59,18 +59,40 @@ import_vehiclejourneys2 <- function(vehiclejourneys, Services_main, cal) {
     OperatingProfile <- import_OperatingProfile(OperatingProfile)
     SpecialDays <- OperatingProfile$SpecialDays
     OperatingProfile <- OperatingProfile$OperatingProfile
+    if(nrow(SpecialDays) > 0){
+      SpecialDays$VehicleJourneyCode <- vj_simple$VehicleJourneyCode[SpecialDays$row]
+      DaysOfOperation <- SpecialDays[,c("VehicleJourneyCode","OperateStart","OperateEnd")]
+      DaysOfNonOperation <- SpecialDays[,c("VehicleJourneyCode","NoOperateStart","NoOperateEnd")]
+      names(DaysOfOperation) <- c("VehicleJourneyCode","StartDate","EndDate")
+      names(DaysOfNonOperation) <- c("VehicleJourneyCode","StartDate","EndDate")
+      DaysOfOperation <- DaysOfOperation[!is.na(DaysOfOperation$StartDate), ]
+      DaysOfNonOperation <- DaysOfNonOperation[!is.na(DaysOfNonOperation$StartDate), ]
+      if(nrow(DaysOfOperation) == 0){
+        DaysOfOperation <- NULL
+      }
+      if(nrow(DaysOfNonOperation) == 0){
+        DaysOfNonOperation <- NULL
+      }
+    } else {
+      DaysOfOperation <- NULL
+      DaysOfNonOperation <- NULL
+    }
+
+
   } else {
     OperatingProfile <- NULL
-    SpecialDays <- NULL
+    DaysOfOperation <- NULL
+    DaysOfNonOperation <- NULL
   }
 
+  if(nrow(vj_simple) == nrow(OperatingProfile)){
+    vj_simple <- cbind(vj_simple, OperatingProfile)
+  } else {
+    stop("Rows of vj_simple != OperatingProfile ")
+  }
 
-
-
-
-
-  result <- list(vj_simple, OperatingProfile, SpecialDays, Notes)
-  names(result) <- c("VehicleJourneys", "OperatingProfile", "SpecialDays", "VJ_Notes")
+  result <- list(vj_simple, DaysOfOperation, DaysOfNonOperation, Notes)
+  names(result) <- c("VehicleJourneys", "DaysOfOperation", "DaysOfNonOperation", "VJ_Notes")
   # JPS                   <- xml_children(journeypatternsections)
   # JPS_id                <- xml2::xml_text(xml2::xml_find_all(JPS, "@id"))
   # JPS_id                <- rep(JPS_id, times = xml2::xml_length(JPS, only_elements = FALSE))

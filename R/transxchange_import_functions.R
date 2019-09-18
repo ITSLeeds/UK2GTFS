@@ -467,138 +467,138 @@ import_services <- function(service, full_import = TRUE) {
 #' ????
 #' @param vehiclejourneys desc
 #' @noRd
-import_vehiclejourneys <- function(vehiclejourneys, Services_main, cal) {
-
-  # PrivateCode <- import_simple(vehiclejourneys, ".//d1:PrivateCode")
-  VehicleJourneyCode <- import_simple(vehiclejourneys, ".//d1:VehicleJourneyCode")
-  ServiceRef <- import_simple(vehiclejourneys, ".//d1:ServiceRef")
-  LineRef <- import_simple(vehiclejourneys, ".//d1:LineRef")
-  JourneyPatternRef <- import_simple(vehiclejourneys, ".//d1:JourneyPatternRef")
-  DepartureTime <- import_simple(vehiclejourneys, ".//d1:DepartureTime")
-  BankHolidaysOperate <- import_simple(vehiclejourneys, ".//d1:BankHolidaysOperate")
-  Notes <- xml2::xml_find_all(vehiclejourneys, ".//d1:Note")
-
-  if (any(xml2::xml_length(Notes) > 0)) {
-    Notes <- import_notes2(vehiclejourneys)
-  } else {
-    Notes <- NA
-  }
-
-  if (length(BankHolidaysOperate) == 0) {
-    BankHolidaysOperate <- rep(NA, length(VehicleJourneyCode))
-  }
-  BankHolidaysNoOperate <- xml2::xml_text(xml2::xml_find_all(vehiclejourneys, ".//d1:BankHolidaysNoOperate"))
-  if (length(BankHolidaysNoOperate) == 0) {
-    BankHolidaysNoOperate <- rep(NA, length(VehicleJourneyCode))
-  }
-
-  if(length(JourneyPatternRef) != length(VehicleJourneyCode)){
-    JourneyPatternRef <- import_withmissing(vehiclejourneys, ".//d1:JourneyPatternRef", 8)
-    VehicleJourneyRef <- import_withmissing(vehiclejourneys, ".//d1:VehicleJourneyRef", 8)
-    # JourneyPatternRef <- ifelse(is.na(JourneyPatternRef),
-    #                             VehicleJourneyRef,
-    #                             JourneyPatternRef)
-
-    stop("JourneyPatternRef and VehicleJourneyRefs not same length")
-  }
-
-
-  vj_simple <- data.frame( # PrivateCode = PrivateCode,
-    VehicleJourneyCode = VehicleJourneyCode,
-    ServiceRef = ServiceRef,
-    LineRef = LineRef,
-    JourneyPatternRef = JourneyPatternRef,
-    #VehicleJourneyRef = VehicleJourneyRef,
-    DepartureTime = DepartureTime,
-    # days = days,
-    BankHolidaysOperate = BankHolidaysOperate,
-    BankHolidaysNoOperate = BankHolidaysNoOperate,
-    stringsAsFactors = FALSE
-  )
-
-  OperatingProfile <- xml2::xml_find_all(vehiclejourneys, ".//d1:OperatingProfile")
-  if (length(xml2::xml_length(OperatingProfile)) != nrow(vj_simple) | sum(xml2::xml_length(OperatingProfile)) == 0) {
-    #warning("Missing operating profiles in Vehicle Journeys")
-    vj_simple$DaysOfWeek <- Services_main$DaysOfWeek
-    vj_simple$HolidaysOnly <- NA
-  } else {
-    # Regular pattern
-    RegularDayType <- xml2::xml_find_all(OperatingProfile, ".//d1:RegularDayType")
-    DaysOfWeek <- xml2::xml_find_all(RegularDayType, ".//d1:DaysOfWeek")
-    HolidaysOnly <- xml2::xml_find_all(RegularDayType, ".//d1:HolidaysOnly")
-    RegularDayType_id <- xml2::xml_name(xml2::xml_children(RegularDayType))
-    DaysOfWeek <- xml2::xml_name(xml2::xml_children(DaysOfWeek))
-    HolidaysOnly <- xml2::xml_name(HolidaysOnly)
-
-    RegularDayType_id <- data.frame(RegularDayType = RegularDayType_id, id = as.integer(stats::ave(RegularDayType_id, RegularDayType_id, FUN = seq_along)))
-    RegularDayType_id$DaysOfWeek <- ifelse(RegularDayType_id$RegularDayType == "DaysOfWeek", DaysOfWeek[RegularDayType_id$id], NA)
-    RegularDayType_id$HolidaysOnly <- ifelse(RegularDayType_id$RegularDayType == "HolidaysOnly", HolidaysOnly[RegularDayType_id$id], NA)
-
-    vj_simple$DaysOfWeek <- RegularDayType_id$DaysOfWeek
-    vj_simple$HolidaysOnly <- RegularDayType_id$HolidaysOnly
-  }
-
-
-  # ServicedOrganisations
-  ServicedOrganisationDayType <- xml2::xml_find_all(vehiclejourneys, ".//d1:ServicedOrganisationDayType")
-
-  if (any(xml2::xml_length(ServicedOrganisationDayType) > 0)) {
-    ServicedOrganisationDayType <- import_ServicedOrganisationsDayType(ServicedOrganisationDayType)
-    ServicedDaysOfOperation <- ServicedOrganisationDayType$ServicedDaysOfOperation
-    ServicedDaysOfNonOperation <- ServicedOrganisationDayType$ServicedDaysOfNonOperation
-    if (nrow(ServicedDaysOfOperation) > 0) {
-      vj_simple <- dplyr::left_join(vj_simple, ServicedDaysOfOperation, by = "VehicleJourneyCode")
-    } else {
-      vj_simple$ServicedDaysOfOperation <- NA
-    }
-    if (nrow(ServicedDaysOfNonOperation) > 0) {
-      vj_simple <- dplyr::left_join(vj_simple, ServicedDaysOfNonOperation, by = "VehicleJourneyCode")
-    } else {
-      vj_simple$ServicedDaysOfNonOperation <- NA
-    }
-  } else {
-    vj_simple$ServicedDaysOfOperation <- NA
-    vj_simple$ServicedDaysOfNonOperation <- NA
-  }
-
-  # Special Days
-  SpecialDaysOperation <- xml2::xml_find_all(vehiclejourneys, ".//d1:SpecialDaysOperation")
-  DaysOfNonOperation <- xml2::xml_find_all(vehiclejourneys, ".//d1:DaysOfNonOperation")
-  DaysOfOperation <- xml2::xml_find_all(vehiclejourneys, ".//d1:DaysOfOperation")
-
-  # Probelm days non oprationa re different for each vehicle jounrey
-  # Need to get the right vehicle jounrey code for each day non operation
-
-  if (any(xml2::xml_length(DaysOfNonOperation) > 0)) {
-    DaysOfNonOperation_StartDate <- xml2::xml_text(xml2::xml_find_all(DaysOfNonOperation, ".//d1:StartDate"))
-    DaysOfNonOperation_EndDate <- xml2::xml_text(xml2::xml_find_all(DaysOfNonOperation, ".//d1:EndDate"))
-    DaysOfNonOperation_id <- xml2::xml_parent(xml2::xml_parent(xml2::xml_parent(DaysOfNonOperation)))
-    DaysOfNonOperation_id <- import_simple(DaysOfNonOperation_id, ".//d1:VehicleJourneyCode")
-    DaysOfNonOperation_id <- rep(DaysOfNonOperation_id, times = xml2::xml_length(DaysOfNonOperation))
-    DaysOfNonOperation <- data.frame(
-      VehicleJourneyCode = DaysOfNonOperation_id,
-      StartDate = as.Date(DaysOfNonOperation_StartDate),
-      EndDate = as.Date(DaysOfNonOperation_EndDate),
-      stringsAsFactors = FALSE
-    )
-  } else {
-    DaysOfNonOperation <- NA
-  }
-
-  if (any(xml2::xml_length(DaysOfOperation) > 0)) {
-    DaysOfOperation <- import_DaysOfOperation(DaysOfOperation, Services_main = Services_main, cal = cal)
-  } else {
-    DaysOfOperation <- NA
-  }
-
-
-  result <- list(vj_simple, DaysOfOperation, DaysOfNonOperation, Notes)
-  names(result) <- c("VehicleJourneys", "DaysOfOperation", "DaysOfNonOperation", "VJ_Notes")
-  # JPS                   <- xml_children(journeypatternsections)
-  # JPS_id                <- xml2::xml_text(xml2::xml_find_all(JPS, "@id"))
-  # JPS_id                <- rep(JPS_id, times = xml2::xml_length(JPS, only_elements = FALSE))
-  return(result)
-}
+# import_vehiclejourneys <- function(vehiclejourneys, Services_main, cal) {
+#
+#   # PrivateCode <- import_simple(vehiclejourneys, ".//d1:PrivateCode")
+#   VehicleJourneyCode <- import_simple(vehiclejourneys, ".//d1:VehicleJourneyCode")
+#   ServiceRef <- import_simple(vehiclejourneys, ".//d1:ServiceRef")
+#   LineRef <- import_simple(vehiclejourneys, ".//d1:LineRef")
+#   JourneyPatternRef <- import_simple(vehiclejourneys, ".//d1:JourneyPatternRef")
+#   DepartureTime <- import_simple(vehiclejourneys, ".//d1:DepartureTime")
+#   BankHolidaysOperate <- import_simple(vehiclejourneys, ".//d1:BankHolidaysOperate")
+#   Notes <- xml2::xml_find_all(vehiclejourneys, ".//d1:Note")
+#
+#   if (any(xml2::xml_length(Notes) > 0)) {
+#     Notes <- import_notes2(vehiclejourneys)
+#   } else {
+#     Notes <- NA
+#   }
+#
+#   if (length(BankHolidaysOperate) == 0) {
+#     BankHolidaysOperate <- rep(NA, length(VehicleJourneyCode))
+#   }
+#   BankHolidaysNoOperate <- xml2::xml_text(xml2::xml_find_all(vehiclejourneys, ".//d1:BankHolidaysNoOperate"))
+#   if (length(BankHolidaysNoOperate) == 0) {
+#     BankHolidaysNoOperate <- rep(NA, length(VehicleJourneyCode))
+#   }
+#
+#   if(length(JourneyPatternRef) != length(VehicleJourneyCode)){
+#     JourneyPatternRef <- import_withmissing(vehiclejourneys, ".//d1:JourneyPatternRef", 8)
+#     VehicleJourneyRef <- import_withmissing(vehiclejourneys, ".//d1:VehicleJourneyRef", 8)
+#     # JourneyPatternRef <- ifelse(is.na(JourneyPatternRef),
+#     #                             VehicleJourneyRef,
+#     #                             JourneyPatternRef)
+#
+#     stop("JourneyPatternRef and VehicleJourneyRefs not same length")
+#   }
+#
+#
+#   vj_simple <- data.frame( # PrivateCode = PrivateCode,
+#     VehicleJourneyCode = VehicleJourneyCode,
+#     ServiceRef = ServiceRef,
+#     LineRef = LineRef,
+#     JourneyPatternRef = JourneyPatternRef,
+#     #VehicleJourneyRef = VehicleJourneyRef,
+#     DepartureTime = DepartureTime,
+#     # days = days,
+#     BankHolidaysOperate = BankHolidaysOperate,
+#     BankHolidaysNoOperate = BankHolidaysNoOperate,
+#     stringsAsFactors = FALSE
+#   )
+#
+#   OperatingProfile <- xml2::xml_find_all(vehiclejourneys, ".//d1:OperatingProfile")
+#   if (length(xml2::xml_length(OperatingProfile)) != nrow(vj_simple) | sum(xml2::xml_length(OperatingProfile)) == 0) {
+#     #warning("Missing operating profiles in Vehicle Journeys")
+#     vj_simple$DaysOfWeek <- Services_main$DaysOfWeek
+#     vj_simple$HolidaysOnly <- NA
+#   } else {
+#     # Regular pattern
+#     RegularDayType <- xml2::xml_find_all(OperatingProfile, ".//d1:RegularDayType")
+#     DaysOfWeek <- xml2::xml_find_all(RegularDayType, ".//d1:DaysOfWeek")
+#     HolidaysOnly <- xml2::xml_find_all(RegularDayType, ".//d1:HolidaysOnly")
+#     RegularDayType_id <- xml2::xml_name(xml2::xml_children(RegularDayType))
+#     DaysOfWeek <- xml2::xml_name(xml2::xml_children(DaysOfWeek))
+#     HolidaysOnly <- xml2::xml_name(HolidaysOnly)
+#
+#     RegularDayType_id <- data.frame(RegularDayType = RegularDayType_id, id = as.integer(stats::ave(RegularDayType_id, RegularDayType_id, FUN = seq_along)))
+#     RegularDayType_id$DaysOfWeek <- ifelse(RegularDayType_id$RegularDayType == "DaysOfWeek", DaysOfWeek[RegularDayType_id$id], NA)
+#     RegularDayType_id$HolidaysOnly <- ifelse(RegularDayType_id$RegularDayType == "HolidaysOnly", HolidaysOnly[RegularDayType_id$id], NA)
+#
+#     vj_simple$DaysOfWeek <- RegularDayType_id$DaysOfWeek
+#     vj_simple$HolidaysOnly <- RegularDayType_id$HolidaysOnly
+#   }
+#
+#
+#   # ServicedOrganisations
+#   ServicedOrganisationDayType <- xml2::xml_find_all(vehiclejourneys, ".//d1:ServicedOrganisationDayType")
+#
+#   if (any(xml2::xml_length(ServicedOrganisationDayType) > 0)) {
+#     ServicedOrganisationDayType <- import_ServicedOrganisationsDayType(ServicedOrganisationDayType)
+#     ServicedDaysOfOperation <- ServicedOrganisationDayType$ServicedDaysOfOperation
+#     ServicedDaysOfNonOperation <- ServicedOrganisationDayType$ServicedDaysOfNonOperation
+#     if (nrow(ServicedDaysOfOperation) > 0) {
+#       vj_simple <- dplyr::left_join(vj_simple, ServicedDaysOfOperation, by = "VehicleJourneyCode")
+#     } else {
+#       vj_simple$ServicedDaysOfOperation <- NA
+#     }
+#     if (nrow(ServicedDaysOfNonOperation) > 0) {
+#       vj_simple <- dplyr::left_join(vj_simple, ServicedDaysOfNonOperation, by = "VehicleJourneyCode")
+#     } else {
+#       vj_simple$ServicedDaysOfNonOperation <- NA
+#     }
+#   } else {
+#     vj_simple$ServicedDaysOfOperation <- NA
+#     vj_simple$ServicedDaysOfNonOperation <- NA
+#   }
+#
+#   # Special Days
+#   SpecialDaysOperation <- xml2::xml_find_all(vehiclejourneys, ".//d1:SpecialDaysOperation")
+#   DaysOfNonOperation <- xml2::xml_find_all(vehiclejourneys, ".//d1:DaysOfNonOperation")
+#   DaysOfOperation <- xml2::xml_find_all(vehiclejourneys, ".//d1:DaysOfOperation")
+#
+#   # Probelm days non oprationa re different for each vehicle jounrey
+#   # Need to get the right vehicle jounrey code for each day non operation
+#
+#   if (any(xml2::xml_length(DaysOfNonOperation) > 0)) {
+#     DaysOfNonOperation_StartDate <- xml2::xml_text(xml2::xml_find_all(DaysOfNonOperation, ".//d1:StartDate"))
+#     DaysOfNonOperation_EndDate <- xml2::xml_text(xml2::xml_find_all(DaysOfNonOperation, ".//d1:EndDate"))
+#     DaysOfNonOperation_id <- xml2::xml_parent(xml2::xml_parent(xml2::xml_parent(DaysOfNonOperation)))
+#     DaysOfNonOperation_id <- import_simple(DaysOfNonOperation_id, ".//d1:VehicleJourneyCode")
+#     DaysOfNonOperation_id <- rep(DaysOfNonOperation_id, times = xml2::xml_length(DaysOfNonOperation))
+#     DaysOfNonOperation <- data.frame(
+#       VehicleJourneyCode = DaysOfNonOperation_id,
+#       StartDate = as.Date(DaysOfNonOperation_StartDate),
+#       EndDate = as.Date(DaysOfNonOperation_EndDate),
+#       stringsAsFactors = FALSE
+#     )
+#   } else {
+#     DaysOfNonOperation <- NA
+#   }
+#
+#   if (any(xml2::xml_length(DaysOfOperation) > 0)) {
+#     DaysOfOperation <- import_DaysOfOperation(DaysOfOperation, Services_main = Services_main, cal = cal)
+#   } else {
+#     DaysOfOperation <- NA
+#   }
+#
+#
+#   result <- list(vj_simple, DaysOfOperation, DaysOfNonOperation, Notes)
+#   names(result) <- c("VehicleJourneys", "DaysOfOperation", "DaysOfNonOperation", "VJ_Notes")
+#   # JPS                   <- xml_children(journeypatternsections)
+#   # JPS_id                <- xml2::xml_text(xml2::xml_find_all(JPS, "@id"))
+#   # JPS_id                <- rep(JPS_id, times = xml2::xml_length(JPS, only_elements = FALSE))
+#   return(result)
+# }
 
 #' Imports day of operation
 #' to deal with date range and serviceorganisation working days

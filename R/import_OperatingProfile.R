@@ -5,18 +5,18 @@ import_OperatingProfile <- function(OperatingProfile){
     chld <- OperatingProfile[i]
 
     # Top Level Sections
-    RegularDayType <- xml2::xml_find_first(chld, "d1:RegularDayType")
-    ServicedOrganisationDayType <- xml2::xml_find_first(chld, "d1:ServicedOrganisationDayType")
-    BankHolidayOperation <- xml2::xml_find_first(chld, "d1:BankHolidayOperation")
-    SpecialDaysOperation <- xml2::xml_find_first(chld, "d1:SpecialDaysOperation")
+    RegularDayType <- xml2::xml_child(chld, "d1:RegularDayType")
+    ServicedOrganisationDayType <- xml2::xml_child(chld, "d1:ServicedOrganisationDayType")
+    BankHolidayOperation <- xml2::xml_child(chld, "d1:BankHolidayOperation")
+    SpecialDaysOperation <- xml2::xml_child(chld, "d1:SpecialDaysOperation")
 
     # Main Section #########################
     # RegularDayType
     if(xml2::xml_length(RegularDayType) > 0){
-      DaysOfWeek <- xml2::xml_find_first(RegularDayType, "d1:DaysOfWeek")
+      DaysOfWeek <- xml2::xml_child(RegularDayType, "d1:DaysOfWeek")
       DaysOfWeek <- xml2::xml_name(xml2::xml_children(DaysOfWeek))
 
-      HolidaysOnly <- xml2::xml_find_all(RegularDayType, "d1:HolidaysOnly")
+      HolidaysOnly <- xml2::xml_child(RegularDayType, "d1:HolidaysOnly")
       HolidaysOnly <- xml2::xml_name(HolidaysOnly)
 
       # Clean NA
@@ -37,13 +37,14 @@ import_OperatingProfile <- function(OperatingProfile){
     if(xml2::xml_length(ServicedOrganisationDayType) > 0){
       stop("Has Serviced Organisations")
     } else {
-
+      ServicedDaysOfOperation <- NA
+      ServicedDaysOfNonOperation <- NA
     }
 
     # BankHolidayOperation
     if(xml2::xml_length(BankHolidayOperation) > 0){
-      BHDaysOfNonOperation <- xml2::xml_find_first(BankHolidayOperation, "d1:DaysOfNonOperation")
-      BHDaysOfOperation    <- xml2::xml_find_first(BankHolidayOperation, "d1:DaysOfOperation")
+      BHDaysOfNonOperation <- xml2::xml_child(BankHolidayOperation, "d1:DaysOfNonOperation")
+      BHDaysOfOperation    <- xml2::xml_child(BankHolidayOperation, "d1:DaysOfOperation")
       # Should be text based e.g. "AllBankHolidays"
       BHDaysOfNonOperation <- xml2::xml_name(xml2::xml_children(BHDaysOfNonOperation))
       BHDaysOfOperation <- xml2::xml_name(xml2::xml_children(BHDaysOfOperation))
@@ -65,8 +66,8 @@ import_OperatingProfile <- function(OperatingProfile){
 
     # SpecialDaysOperation
     if(xml2::xml_length(SpecialDaysOperation) > 0){
-      SDDaysOfNonOperation <- xml2::xml_find_first(SpecialDaysOperation, "d1:DaysOfNonOperation")
-      SDDaysOfOperation    <- xml2::xml_find_first(SpecialDaysOperation, "d1:DaysOfOperation")
+      SDDaysOfNonOperation <- xml2::xml_child(SpecialDaysOperation, "d1:DaysOfNonOperation")
+      SDDaysOfOperation    <- xml2::xml_child(SpecialDaysOperation, "d1:DaysOfOperation")
 
       if(xml2::xml_length(SDDaysOfNonOperation) > 0){
         SDDaysOfNonOperation_start <- xml2::xml_find_all(SDDaysOfNonOperation, ".//d1:StartDate")
@@ -102,10 +103,10 @@ import_OperatingProfile <- function(OperatingProfile){
 
 
       ssdf <- data.frame(row = i,
-                         OperateStart = SDDaysOfOperation_start,
-                         OperateEnd = SDDaysOfOperation_end,
-                         NoOperateStart = SDDaysOfNonOperation_start,
-                         NoOperateEnd = SDDaysOfNonOperation_end,
+                         OperateStart = as.Date(SDDaysOfOperation_start),
+                         OperateEnd = as.Date(SDDaysOfOperation_end),
+                         NoOperateStart = as.Date(SDDaysOfNonOperation_start),
+                         NoOperateEnd = as.Date(SDDaysOfNonOperation_end),
                          stringsAsFactors = FALSE)
 
       result_special[[i]] <- ssdf
@@ -119,10 +120,12 @@ import_OperatingProfile <- function(OperatingProfile){
 
 
     # Build Results #######################
-    res <- data.frame(DaysOfWeek = DaysOfWeek,
-                      HolidaysOnly = HolidaysOnly,
-                      BHDaysOfOperation = BHDaysOfOperation,
-                      BHDaysOfNonOperation = BHDaysOfNonOperation,
+    res <- data.frame(DaysOfWeek = paste(DaysOfWeek, collapse = " "),
+                      HolidaysOnly = paste(HolidaysOnly,  collapse = " "),
+                      BHDaysOfOperation = paste(BHDaysOfOperation,  collapse = " "),
+                      BHDaysOfNonOperation = paste(BHDaysOfNonOperation,  collapse = " "),
+                      ServicedDaysOfOperation = ServicedDaysOfOperation,
+                      ServicedDaysOfNonOperation = ServicedDaysOfNonOperation,
                       stringsAsFactors = FALSE)
     result[[i]] <- res
     rm(DaysOfWeek, HolidaysOnly,
@@ -131,4 +134,8 @@ import_OperatingProfile <- function(OperatingProfile){
   }
   result <- dplyr::bind_rows(result)
   result_special <- dplyr::bind_rows(result_special)
+
+  result_final <- list(result, result_special)
+  names(result_final) <- c("OperatingProfile", "SpecialDays")
+  return(result_final)
 }
