@@ -36,7 +36,7 @@ import_OperatingProfile <- function(OperatingProfile){
 
     # ServicedOrganisationDayType
     if(xml2::xml_length(ServicedOrganisationDayType) > 0){
-      message(str(xml2::as_list(ServicedOrganisationDayType)))
+      #message(str(xml2::as_list(ServicedOrganisationDayType)))
       ServicedDaysOfOperation <- xml2::xml_child(ServicedOrganisationDayType, "d1:DaysOfOperation")
       ServicedDaysOfNonOperation <- xml2::xml_child(ServicedOrganisationDayType, "d1:DaysOfNonOperation")
 
