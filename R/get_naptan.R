@@ -21,7 +21,7 @@ get_naptan <- function(url = "http://naptan.app.dft.gov.uk/DataRequest/Naptan.as
 
   # Append alterative tags
   naptan_missing <- naptan_missing[!naptan_missing$stop_id %in% naptan$stop_id,]
-  naptan <- rbind(naptan, extra)
+  naptan <- rbind(naptan, naptan_missing)
 
   return(naptan)
 }
