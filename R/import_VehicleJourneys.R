@@ -60,7 +60,6 @@ import_vehiclejourneys2 <- function(vehiclejourneys, Services_main, cal) {
     SpecialDays <- OperatingProfile$SpecialDays
     OperatingProfile <- OperatingProfile$OperatingProfile
     if(nrow(SpecialDays) > 0){
-      SpecialDays$VehicleJourneyCode <- vj_simple$VehicleJourneyCode[SpecialDays$row]
       DaysOfOperation <- SpecialDays[,c("VehicleJourneyCode","OperateStart","OperateEnd")]
       DaysOfNonOperation <- SpecialDays[,c("VehicleJourneyCode","NoOperateStart","NoOperateEnd")]
       names(DaysOfOperation) <- c("VehicleJourneyCode","StartDate","EndDate")
@@ -78,18 +77,24 @@ import_vehiclejourneys2 <- function(vehiclejourneys, Services_main, cal) {
       DaysOfNonOperation <- NULL
     }
 
+    vj_simple <- dplyr::left_join(vj_simple, OperatingProfile, by = "VehicleJourneyCode")
 
   } else {
     OperatingProfile <- NULL
     DaysOfOperation <- NULL
     DaysOfNonOperation <- NULL
+    vj_simple$DaysOfWeek <- NA
+    vj_simple$HolidaysOnly <- NA
+    vj_simple$BHDaysOfOperation <- NA
+    vj_simple$BHDaysOfNonOperation <- NA
+    vj_simple$ServicedDaysOfOperation <- NA
+    vj_simple$ServicedDaysOfNonOperation <- NA
+
   }
 
-  if(nrow(vj_simple) == nrow(OperatingProfile)){
-    vj_simple <- cbind(vj_simple, OperatingProfile)
-  } else {
-    stop("Rows of vj_simple != OperatingProfile ")
-  }
+
+
+
 
   result <- list(vj_simple, DaysOfOperation, DaysOfNonOperation, Notes)
   names(result) <- c("VehicleJourneys", "DaysOfOperation", "DaysOfNonOperation", "VJ_Notes")

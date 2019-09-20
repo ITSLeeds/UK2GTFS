@@ -243,7 +243,7 @@ clean_days <- function(days) {
     if ("Sunday" %in% days_ul) {
       res[7] <- 1
     }
-  } else if (is.na(days)) {
+  } else if (is.na(days) | days == "NA") {
     res <- c(1, 1, 1, 1, 1, 1, 1)
   } else if (days == "MondayToFriday") {
     res <- c(1, 1, 1, 1, 1, 0, 0)

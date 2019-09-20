@@ -58,101 +58,160 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
   }
 
   # Clean ServicedOrganisations
+  # if (class(ServicedOrganisations) == "data.frame") {
+  #   ServicedOrganisations$StartDate <- as.Date(ifelse(is.na(ServicedOrganisations$WorkingDays.StartDate),
+  #     as.character(ServicedOrganisations$Holidays.StartDate),
+  #     as.character(ServicedOrganisations$WorkingDays.StartDate)
+  #   ))
+  #
+  #   ServicedOrganisations$EndDate <- as.Date(ifelse(is.na(ServicedOrganisations$WorkingDays.EndDate),
+  #     as.character(ServicedOrganisations$Holidays.EndDate),
+  #     as.character(ServicedOrganisations$WorkingDays.EndDate)
+  #   ))
+  #
+  #   ServicedOrganisations <- ServicedOrganisations[, c("OrganisationCode", "StartDate", "EndDate")]
+  # }
+
+  # Split Service Organisations
   if (class(ServicedOrganisations) == "data.frame") {
-    ServicedOrganisations$StartDate <- as.Date(ifelse(is.na(ServicedOrganisations$WorkingDays.StartDate),
-      as.character(ServicedOrganisations$Holidays.StartDate),
-      as.character(ServicedOrganisations$WorkingDays.StartDate)
-    ))
+    vj_so <- VehicleJourneys[,c("VehicleJourneyCode","ServicedDaysOfOperation","ServicedDaysOfNonOperation")]
 
-    ServicedOrganisations$EndDate <- as.Date(ifelse(is.na(ServicedOrganisations$WorkingDays.EndDate),
-      as.character(ServicedOrganisations$Holidays.EndDate),
-      as.character(ServicedOrganisations$WorkingDays.EndDate)
-    ))
+    ServicedOrganisations_workdays <- ServicedOrganisations[,c("OrganisationCode", "WorkingDays.StartDate", "WorkingDays.EndDate")]
+    ServicedOrganisations_holidays <- ServicedOrganisations[,c("OrganisationCode", "Holidays.StartDate",  "Holidays.EndDate",  "Holidays.Description")]
+    ServicedOrganisations_workdays <- ServicedOrganisations_workdays[!is.na(ServicedOrganisations_workdays$WorkingDays.StartDate),]
+    ServicedOrganisations_holidays <- ServicedOrganisations_holidays[!is.na(ServicedOrganisations_holidays$Holidays.StartDate),]
+    if(nrow(ServicedOrganisations_workdays) == 0){
+      ServicedOrganisations_workdays <- NULL
+    } else {
+      vj_so_do <- vj_so[,c("VehicleJourneyCode","ServicedDaysOfOperation")]
+      vj_so_do <- vj_so_do[!is.na(vj_so_do$ServicedDaysOfOperation),]
+      if(nrow(vj_so_do) > 0){
+        ServicedOrganisations_workdays <- dplyr::left_join(vj_so_do,
+                                                            ServicedOrganisations_workdays,
+                                                            by = c("ServicedDaysOfOperation" = "OrganisationCode"))
+        ServicedOrganisations_workdays <- ServicedOrganisations_workdays[,c("VehicleJourneyCode","WorkingDays.StartDate","WorkingDays.EndDate")]
+        names(ServicedOrganisations_workdays) <- c("VehicleJourneyCode","StartDate", "EndDate")
+      } else {
+        ServicedOrganisations_workdays <- NULL
+        #stop("check this, service that runs only during holidays?")
+      }
 
-    ServicedOrganisations <- ServicedOrganisations[, c("OrganisationCode", "StartDate", "EndDate")]
+    }
+
+    if(nrow(ServicedOrganisations_holidays) == 0){
+      ServicedOrganisations_holidays <- NULL
+    } else {
+      vj_so_no <- vj_so[,c("VehicleJourneyCode","ServicedDaysOfNonOperation")]
+      vj_so_no <- vj_so_no[!is.na(vj_so_no$ServicedDaysOfNonOperation),]
+      if(nrow(vj_so_no) > 0){
+        ServicedOrganisations_holidays <- dplyr::left_join(vj_so_no,
+                                                           ServicedOrganisations_holidays,
+                                                           by = c("ServicedDaysOfNonOperation" = "OrganisationCode"))
+        ServicedOrganisations_holidays <- ServicedOrganisations_holidays[,c("VehicleJourneyCode","Holidays.StartDate", "Holidays.EndDate")]
+        names(ServicedOrganisations_holidays) <- c("VehicleJourneyCode","StartDate", "EndDate")
+      } else {
+        ServicedOrganisations_holidays <- NULL
+        #stop("check this, service that runs only during holidays?")
+      }
+    }
+
+
+  } else {
+    ServicedOrganisations_workdays <- NULL
+    ServicedOrganisations_holidays <- NULL
   }
-
 
 
 
   # Append ServicedOrganisations Dates to inclusions and exclusions
   # If VehicleJourneys_exclude or _include have ServicedOrganisationRef rather than Start and End Dates
   if (!is.null(VehicleJourneys_exclude)) {
-    if (class(ServicedOrganisations) == "data.frame") {
-      # Split those with dates and those with service organisations
-      VehicleJourneys_exclude_date <- VehicleJourneys_exclude[is.na(VehicleJourneys_exclude$ServicedOrganisationRef), ]
-      VehicleJourneys_exclude_date <- VehicleJourneys_exclude_date[, c("VehicleJourneyCode", "StartDate", "EndDate")]
-
-      VehicleJourneys_exclude_so <- VehicleJourneys_exclude[!is.na(VehicleJourneys_exclude$ServicedOrganisationRef), ]
-      if (nrow(VehicleJourneys_exclude_so) > 0) {
-        if (all(is.na(VehicleJourneys_exclude_so$StartDate))) {
-          VehicleJourneys_exclude_so$StartDate <- NULL
-        }
-        if (all(is.na(VehicleJourneys_exclude_so$EndDate))) {
-          VehicleJourneys_exclude_so$EndDate <- NULL
-        }
-
-        VehicleJourneys_exclude_so <- dplyr::left_join(VehicleJourneys_exclude_so, ServicedOrganisations, by = c("ServicedOrganisationRef" = "OrganisationCode"))
-        VehicleJourneys_exclude_so <- VehicleJourneys_exclude_so[, c("VehicleJourneyCode", "StartDate", "EndDate")]
-      }
-
-      if (nrow(VehicleJourneys_exclude_date) > 0) {
-        if (nrow(VehicleJourneys_exclude_so) > 0) {
-          VehicleJourneys_exclude <- rbind(VehicleJourneys_exclude_so, VehicleJourneys_exclude_date)
-        } else {
-          VehicleJourneys_exclude <- VehicleJourneys_exclude_date
-        }
-      } else {
-        VehicleJourneys_exclude <- VehicleJourneys_exclude_so
-      }
+    if(!all(names(VehicleJourneys_exclude) %in% c("VehicleJourneyCode", "StartDate","EndDate"))){
+      stop("need to rebuild this case for new ServicedOrganisations")
     }
+
+    # if (class(ServicedOrganisations) == "data.frame") {
+    #
+    #   # Split those with dates and those with service organisations
+    #   VehicleJourneys_exclude_date <- VehicleJourneys_exclude[is.na(VehicleJourneys_exclude$ServicedOrganisationRef), ]
+    #   VehicleJourneys_exclude_date <- VehicleJourneys_exclude_date[, c("VehicleJourneyCode", "StartDate", "EndDate")]
+    #
+    #   VehicleJourneys_exclude_so <- VehicleJourneys_exclude[!is.na(VehicleJourneys_exclude$ServicedOrganisationRef), ]
+    #   if (nrow(VehicleJourneys_exclude_so) > 0) {
+    #     if (all(is.na(VehicleJourneys_exclude_so$StartDate))) {
+    #       VehicleJourneys_exclude_so$StartDate <- NULL
+    #     }
+    #     if (all(is.na(VehicleJourneys_exclude_so$EndDate))) {
+    #       VehicleJourneys_exclude_so$EndDate <- NULL
+    #     }
+    #
+    #     VehicleJourneys_exclude_so <- dplyr::left_join(VehicleJourneys_exclude_so, ServicedOrganisations, by = c("ServicedOrganisationRef" = "OrganisationCode"))
+    #     VehicleJourneys_exclude_so <- VehicleJourneys_exclude_so[, c("VehicleJourneyCode", "StartDate", "EndDate")]
+    #   }
+    #
+    #   if (nrow(VehicleJourneys_exclude_date) > 0) {
+    #     if (nrow(VehicleJourneys_exclude_so) > 0) {
+    #       VehicleJourneys_exclude <- rbind(VehicleJourneys_exclude_so, VehicleJourneys_exclude_date)
+    #     } else {
+    #       VehicleJourneys_exclude <- VehicleJourneys_exclude_date
+    #     }
+    #   } else {
+    #     VehicleJourneys_exclude <- VehicleJourneys_exclude_so
+    #   }
+    # }
   }
 
   if (!is.null(VehicleJourneys_include)) {
-    if (class(ServicedOrganisations) == "data.frame") {
-
-      # Split those with dates and those with service organisations
-      VehicleJourneys_include_date <- VehicleJourneys_include[is.na(VehicleJourneys_include$ServicedOrganisationRef), ]
-      VehicleJourneys_include_date <- VehicleJourneys_include_date[, c("VehicleJourneyCode", "StartDate", "EndDate")]
-
-      VehicleJourneys_include_so <- VehicleJourneys_include[!is.na(VehicleJourneys_include$ServicedOrganisationRef), ]
-      if (nrow(VehicleJourneys_include_so) > 0) {
-        if (all(is.na(VehicleJourneys_include_so$StartDate))) {
-          VehicleJourneys_include_so$StartDate <- NULL
-        }
-        if (all(is.na(VehicleJourneys_include_so$EndDate))) {
-          VehicleJourneys_include_so$EndDate <- NULL
-        }
-        VehicleJourneys_include_so <- dplyr::left_join(VehicleJourneys_include_so, ServicedOrganisations, by = c("ServicedOrganisationRef" = "OrganisationCode"))
-        VehicleJourneys_include_so <- VehicleJourneys_include_so[, c("VehicleJourneyCode", "StartDate", "EndDate")]
-      }
-
-      if (nrow(VehicleJourneys_include_date) > 0) {
-        if (nrow(VehicleJourneys_include_so) > 0) {
-          VehicleJourneys_include <- rbind(VehicleJourneys_include_so, VehicleJourneys_include_date)
-        } else {
-          VehicleJourneys_include <- VehicleJourneys_include_date
-        }
-      } else {
-        VehicleJourneys_include <- VehicleJourneys_include_so
-      }
+    if(!all(names(VehicleJourneys_include) %in% c("VehicleJourneyCode", "StartDate","EndDate"))){
+      stop(stop("need to rebuild this case for new ServicedOrganisations"))
     }
+    # if (class(ServicedOrganisations) == "data.frame") {
+    #
+    #   # Split those with dates and those with service organisations
+    #   VehicleJourneys_include_date <- VehicleJourneys_include[is.na(VehicleJourneys_include$ServicedOrganisationRef), ]
+    #   VehicleJourneys_include_date <- VehicleJourneys_include_date[, c("VehicleJourneyCode", "StartDate", "EndDate")]
+    #
+    #   VehicleJourneys_include_so <- VehicleJourneys_include[!is.na(VehicleJourneys_include$ServicedOrganisationRef), ]
+    #   if (nrow(VehicleJourneys_include_so) > 0) {
+    #     if (all(is.na(VehicleJourneys_include_so$StartDate))) {
+    #       VehicleJourneys_include_so$StartDate <- NULL
+    #     }
+    #     if (all(is.na(VehicleJourneys_include_so$EndDate))) {
+    #       VehicleJourneys_include_so$EndDate <- NULL
+    #     }
+    #     VehicleJourneys_include_so <- dplyr::left_join(VehicleJourneys_include_so, ServicedOrganisations, by = c("ServicedOrganisationRef" = "OrganisationCode"))
+    #     VehicleJourneys_include_so <- VehicleJourneys_include_so[, c("VehicleJourneyCode", "StartDate", "EndDate")]
+    #   }
+    #
+    #   if (nrow(VehicleJourneys_include_date) > 0) {
+    #     if (nrow(VehicleJourneys_include_so) > 0) {
+    #       VehicleJourneys_include <- rbind(VehicleJourneys_include_so, VehicleJourneys_include_date)
+    #     } else {
+    #       VehicleJourneys_include <- VehicleJourneys_include_date
+    #     }
+    #   } else {
+    #     VehicleJourneys_include <- VehicleJourneys_include_so
+    #   }
+    # }
   }
 
 
   # Import ServicedOrganisations in to VehicleJourneys
-  if (class(ServicedOrganisations) == "data.frame") {
-    vj_sub <- VehicleJourneys[, c("VehicleJourneyCode", "ServicedDaysOfOperation", "ServicedDaysOfNonOperation")]
-    vj_sub <- vj_sub[(!is.na(vj_sub$ServicedDaysOfOperation)) | (!is.na(vj_sub$ServicedDaysOfNonOperation)), ]
-    if (!all(is.na(vj_sub$ServicedDaysOfOperation))) {
-      stop("Complex serviced operations")
-    }
-    if (nrow(vj_sub) > 0) {
-      ServicedOrganisations_exe <- dplyr::left_join(ServicedOrganisations, vj_sub, by = c("OrganisationCode" = "ServicedDaysOfNonOperation"))
-      names(ServicedOrganisations_exe) <- c("VehicleJourneyCode", "StartDate", "EndDate")
-      VehicleJourneys_exclude <- rbind(VehicleJourneys_exclude, ServicedOrganisations_exe)
-    }
-  }
+  VehicleJourneys_exclude <- rbind(VehicleJourneys_exclude, ServicedOrganisations_holidays)
+  VehicleJourneys_include <- rbind(VehicleJourneys_include, ServicedOrganisations_workdays)
+
+  # if (class(ServicedOrganisations) == "data.frame") {
+  #   vj_sub <- VehicleJourneys[, c("VehicleJourneyCode", "ServicedDaysOfOperation", "ServicedDaysOfNonOperation")]
+  #   vj_sub <- vj_sub[(!is.na(vj_sub$ServicedDaysOfOperation)) | (!is.na(vj_sub$ServicedDaysOfNonOperation)), ]
+  #   if (!all(is.na(vj_sub$ServicedDaysOfOperation))) {
+  #     stop("Complex serviced operations")
+  #   }
+  #   if (nrow(vj_sub) > 0) {
+  #     ServicedOrganisations_exe <- dplyr::left_join(ServicedOrganisations, vj_sub, by = c("OrganisationCode" = "ServicedDaysOfNonOperation"))
+  #     names(ServicedOrganisations_exe) <- c("VehicleJourneyCode", "StartDate", "EndDate")
+  #     VehicleJourneys_exclude <- rbind(VehicleJourneys_exclude, ServicedOrganisations_exe)
+  #   }
+  # }
 
 
   # Journey Pattern Sections ------------------------------------------------
@@ -327,6 +386,10 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
     calendar_dates <- rbind(calendar_dates, trips_include)
   }
 
+  if(nrow(calendar_dates) == 0){
+    calendar_dates <- NULL
+  }
+
   # Step 4: Make the calendar
   calendar <- trips[, c("trip_id", "StartDate", "EndDate", "DaysOfWeek")]
   names(calendar) <- c("trip_id", "start_date", "end_date", "DaysOfWeek")
@@ -338,7 +401,8 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
     calendar_dates <- data.frame(
       trip_id = character(),
       date = character(),
-      exception_type = character()
+      exception_type = character(),
+      stringsAsFactors = FALSE
     )
     calendar_summary <- dplyr::group_by(calendar, start_date, end_date, DaysOfWeek)
   } else {
@@ -346,6 +410,7 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
     calendar_dates_summary <- dplyr::summarise(calendar_dates_summary,
       pattern = paste(c(date, exception_type), collapse = "")
     )
+    calendar_summary$trip_id <- as.character(calendar_summary$trip_id)
     calendar_summary <- dplyr::left_join(calendar, calendar_dates_summary, by = "trip_id")
     calendar_summary <- dplyr::group_by(calendar_summary, start_date, end_date, DaysOfWeek, pattern)
   }
@@ -363,7 +428,7 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
 
   # Check SpecialDaysOperation
   if (!is.null(SpecialDaysOperation)) {
-    # stop("Must consider ")
+     stop("check against new method ")
     SpecialDaysOperation$exception_type <- ifelse(SpecialDaysOperation$type == "DaysOperation", 1, 2)
     service_ids <- unique(calendar_dates$service_id)
     SpecialDaysOperation <- data.frame(

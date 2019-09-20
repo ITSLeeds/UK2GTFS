@@ -3,6 +3,7 @@ import_OperatingProfile <- function(OperatingProfile){
   result_special <- list()
   for(i in seq(1, length(OperatingProfile))){
     chld <- OperatingProfile[i]
+    VehicleJourneyCode <- xml2::xml_text(xml2::xml_child(xml2::xml_parent(chld), "d1:VehicleJourneyCode"))
 
     # Top Level Sections
     RegularDayType <- xml2::xml_child(chld, "d1:RegularDayType")
@@ -35,7 +36,24 @@ import_OperatingProfile <- function(OperatingProfile){
 
     # ServicedOrganisationDayType
     if(xml2::xml_length(ServicedOrganisationDayType) > 0){
-      stop("Has Serviced Organisations")
+      message(str(xml2::as_list(ServicedOrganisationDayType)))
+      ServicedDaysOfOperation <- xml2::xml_child(ServicedOrganisationDayType, "d1:DaysOfOperation")
+      ServicedDaysOfNonOperation <- xml2::xml_child(ServicedOrganisationDayType, "d1:DaysOfNonOperation")
+
+      if(any(xml2::xml_length(ServicedDaysOfOperation) > 0)){
+        ServicedDaysOfOperation <- xml2::xml_find_all(ServicedDaysOfOperation, ".//d1:ServicedOrganisationRef")
+        ServicedDaysOfOperation <- xml2::xml_text(ServicedDaysOfOperation)
+      } else {
+        ServicedDaysOfOperation <- NA
+      }
+
+      if(any(xml2::xml_length(ServicedDaysOfNonOperation) > 0)){
+        ServicedDaysOfNonOperation <- xml2::xml_find_all(ServicedDaysOfNonOperation, ".//d1:ServicedOrganisationRef")
+        ServicedDaysOfNonOperation <- xml2::xml_text(ServicedDaysOfNonOperation)
+      } else {
+        ServicedDaysOfNonOperation <- NA
+      }
+
     } else {
       ServicedDaysOfOperation <- NA
       ServicedDaysOfNonOperation <- NA
@@ -102,7 +120,7 @@ import_OperatingProfile <- function(OperatingProfile){
       }
 
 
-      ssdf <- data.frame(row = i,
+      ssdf <- data.frame(VehicleJourneyCode = VehicleJourneyCode,
                          OperateStart = as.Date(SDDaysOfOperation_start),
                          OperateEnd = as.Date(SDDaysOfOperation_end),
                          NoOperateStart = as.Date(SDDaysOfNonOperation_start),
@@ -120,7 +138,8 @@ import_OperatingProfile <- function(OperatingProfile){
 
 
     # Build Results #######################
-    res <- data.frame(DaysOfWeek = paste(DaysOfWeek, collapse = " "),
+    res <- data.frame(VehicleJourneyCode = VehicleJourneyCode,
+                      DaysOfWeek = paste(DaysOfWeek, collapse = " "),
                       HolidaysOnly = paste(HolidaysOnly,  collapse = " "),
                       BHDaysOfOperation = paste(BHDaysOfOperation,  collapse = " "),
                       BHDaysOfNonOperation = paste(BHDaysOfNonOperation,  collapse = " "),
