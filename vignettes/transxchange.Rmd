@@ -1,8 +1,10 @@
-pack---
-title: "transxchange"
+---
+title: "TransXchange - Bus, Tram, and Tube Timetables"
+author: "Malcolm Morgan"
+date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{transxchange}
+  %\VignetteIndexEntry{TransXchange}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

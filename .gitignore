@@ -38,3 +38,5 @@ extras/export
 *.tsi
 *.ztr
 *.dat
+doc
+Meta
