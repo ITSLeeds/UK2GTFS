@@ -3,5 +3,6 @@ pkgdown: 1.4.1
 pkgdown_sha: ~
 articles:
   ATOC: ATOC.html
-  uk2gtfs: uk2gtfs.html
+  transxchange: transxchange.html
+  UK2GTFS: UK2GTFS.html
 
