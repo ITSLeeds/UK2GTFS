@@ -16,6 +16,11 @@ knitr::opts_chunk$set(
 )
 ```
 
+### TransXchange Data - for bus, tram, and metro
+
+Data for other modes can be downloaded from https://www.travelinedata.org.uk/traveline-open-data/data-reporting/ you will need to apply for access to the FTP sever to download the data.
+
+
 ```{r setup}
 library(UK2GTFS)
 ```

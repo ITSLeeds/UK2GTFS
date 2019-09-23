@@ -9,6 +9,46 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+## Getting Data
+
+### ATOC Data - for trains
+
+Data for trains can be downloaded from http://data.atoc.org/how-to you will need to register for a free account and login.
+
+
+
+## Using the package
+
+### Converting ATOC Data to GTFS
+
+Load the package, and use the `atoc2gtfs` function. The fucntnon requires the following arguments.
+
+* `path_in` is the file path to the ATOC timetable file, this comes a ziped folder with a name like `ttis123.zip`
+* `path_out` is the path to a folder where the results will be saved
+* `name` is the file name of the result by default `gtfs.zip`
+* `silent` if FALSE extra information is displayed duing processing
+* `ncores` If > 1 then mulicore processing is used to speed up the processing
+* `locations` station locations can be `tiplocs` object provided with the package (default) or taken from the ATOC `"file"` (known to have errors) or file path to CSV file.
+* `agency` agency details which are not included in the network rail files, default used example data provided by the package
+
+```{r atoc_example, eval=FALSE}
+library(UK2GTFS)
+#path_in = "C:/Users/Malcolm/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/ttis381.zip"
+#path_out = "C:/Users/Malcolm/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/"
+path_in = "E:/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/ttis381.zip"
+path_out = "E:/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/"
+atoc2gtfs(path_in = path_in, 
+          path_out = path_out,
+          name = "gtfs4",
+          silent = FALSE, 
+          ncores = 6)
+
+```
+
+
+
+
+
 ## Making a GTFS file from the ATOC Data
 
 

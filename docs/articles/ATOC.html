@@ -44,9 +44,6 @@
   </a>
 </li>
 <li>
-  <a href="../articles/UK2GTFS.html">Get started</a>
-</li>
-<li>
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
@@ -90,27 +87,73 @@
 
     
     
+<div id="getting-data" class="section level2">
+<h2 class="hasAnchor">
+<a href="#getting-data" class="anchor"></a>Getting Data</h2>
+<div id="atoc-data---for-trains" class="section level3">
+<h3 class="hasAnchor">
+<a href="#atoc-data---for-trains" class="anchor"></a>ATOC Data - for trains</h3>
+<p>Data for trains can be downloaded from <a href="http://data.atoc.org/how-to" class="uri">http://data.atoc.org/how-to</a> you will need to register for a free account and login.</p>
+</div>
+</div>
+<div id="using-the-package" class="section level2">
+<h2 class="hasAnchor">
+<a href="#using-the-package" class="anchor"></a>Using the package</h2>
+<div id="converting-atoc-data-to-gtfs" class="section level3">
+<h3 class="hasAnchor">
+<a href="#converting-atoc-data-to-gtfs" class="anchor"></a>Converting ATOC Data to GTFS</h3>
+<p>Load the package, and use the <code>atoc2gtfs</code> function. The fucntnon requires the following arguments.</p>
+<ul>
+<li>
+<code>path_in</code> is the file path to the ATOC timetable file, this comes a ziped folder with a name like <code>ttis123.zip</code>
+</li>
+<li>
+<code>path_out</code> is the path to a folder where the results will be saved</li>
+<li>
+<code>name</code> is the file name of the result by default <code>gtfs.zip</code>
+</li>
+<li>
+<code>silent</code> if FALSE extra information is displayed duing processing</li>
+<li>
+<code>ncores</code> If &gt; 1 then mulicore processing is used to speed up the processing</li>
+<li>
+<code>locations</code> station locations can be <code>tiplocs</code> object provided with the package (default) or taken from the ATOC <code>"file"</code> (known to have errors) or file path to CSV file.</li>
+<li>
+<code>agency</code> agency details which are not included in the network rail files, default used example data provided by the package</li>
+</ul>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(UK2GTFS)</a>
+<a class="sourceLine" id="cb1-2" title="2"><span class="co">#path_in = "C:/Users/Malcolm/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/ttis381.zip"</span></a>
+<a class="sourceLine" id="cb1-3" title="3"><span class="co">#path_out = "C:/Users/Malcolm/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/"</span></a>
+<a class="sourceLine" id="cb1-4" title="4">path_in =<span class="st"> "E:/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/ttis381.zip"</span></a>
+<a class="sourceLine" id="cb1-5" title="5">path_out =<span class="st"> "E:/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/"</span></a>
+<a class="sourceLine" id="cb1-6" title="6"><span class="kw"><a href="../reference/atoc2gtfs.html">atoc2gtfs</a></span>(<span class="dt">path_in =</span> path_in, </a>
+<a class="sourceLine" id="cb1-7" title="7">          <span class="dt">path_out =</span> path_out,</a>
+<a class="sourceLine" id="cb1-8" title="8">          <span class="dt">name =</span> <span class="st">"gtfs4"</span>,</a>
+<a class="sourceLine" id="cb1-9" title="9">          <span class="dt">silent =</span> <span class="ot">FALSE</span>, </a>
+<a class="sourceLine" id="cb1-10" title="10">          <span class="dt">ncores =</span> <span class="dv">6</span>)</a></code></pre></div>
+</div>
+</div>
 <div id="making-a-gtfs-file-from-the-atoc-data" class="section level2">
 <h2 class="hasAnchor">
 <a href="#making-a-gtfs-file-from-the-atoc-data" class="anchor"></a>Making a GTFS file from the ATOC Data</h2>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1">path_in =<span class="st"> "E:/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/ttis381.zip"</span></a>
-<a class="sourceLine" id="cb1-2" title="2">path_out =<span class="st"> "E:/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/"</span></a>
-<a class="sourceLine" id="cb1-3" title="3">ncores =<span class="st"> </span><span class="dv">5</span></a>
-<a class="sourceLine" id="cb1-4" title="4">silent =<span class="st"> </span><span class="ot">FALSE</span></a>
-<a class="sourceLine" id="cb1-5" title="5"><span class="kw"><a href="https://rdrr.io/r/base/source.html">source</a></span>(<span class="st">"../R/atoc.R"</span>)</a>
-<a class="sourceLine" id="cb1-6" title="6"><span class="kw"><a href="https://rdrr.io/r/base/source.html">source</a></span>(<span class="st">"../R/atoc_export.R"</span>)</a>
-<a class="sourceLine" id="cb1-7" title="7"><span class="kw"><a href="https://rdrr.io/r/base/source.html">source</a></span>(<span class="st">"../R/atoc_import.R"</span>)</a>
-<a class="sourceLine" id="cb1-8" title="8"><span class="kw"><a href="https://rdrr.io/r/base/source.html">source</a></span>(<span class="st">"../R/atoc_main.R"</span>)</a>
-<a class="sourceLine" id="cb1-9" title="9"><span class="kw"><a href="../reference/atoc2gtfs.html">atoc2gtfs</a></span>(<span class="dt">path_in =</span> path_in, <span class="dt">path_out =</span> path_out, <span class="dt">silent =</span> silent, <span class="dt">ncores =</span> ncores)</a></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1">path_in =<span class="st"> "E:/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/ttis381.zip"</span></a>
+<a class="sourceLine" id="cb2-2" title="2">path_out =<span class="st"> "E:/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/"</span></a>
+<a class="sourceLine" id="cb2-3" title="3">ncores =<span class="st"> </span><span class="dv">5</span></a>
+<a class="sourceLine" id="cb2-4" title="4">silent =<span class="st"> </span><span class="ot">FALSE</span></a>
+<a class="sourceLine" id="cb2-5" title="5"><span class="kw"><a href="https://rdrr.io/r/base/source.html">source</a></span>(<span class="st">"../R/atoc.R"</span>)</a>
+<a class="sourceLine" id="cb2-6" title="6"><span class="kw"><a href="https://rdrr.io/r/base/source.html">source</a></span>(<span class="st">"../R/atoc_export.R"</span>)</a>
+<a class="sourceLine" id="cb2-7" title="7"><span class="kw"><a href="https://rdrr.io/r/base/source.html">source</a></span>(<span class="st">"../R/atoc_import.R"</span>)</a>
+<a class="sourceLine" id="cb2-8" title="8"><span class="kw"><a href="https://rdrr.io/r/base/source.html">source</a></span>(<span class="st">"../R/atoc_main.R"</span>)</a>
+<a class="sourceLine" id="cb2-9" title="9"><span class="kw"><a href="../reference/atoc2gtfs.html">atoc2gtfs</a></span>(<span class="dt">path_in =</span> path_in, <span class="dt">path_out =</span> path_out, <span class="dt">silent =</span> silent, <span class="dt">ncores =</span> ncores)</a></code></pre></div>
 </div>
 <div id="making-shapes" class="section level2">
 <h2 class="hasAnchor">
 <a href="#making-shapes" class="anchor"></a>Making Shapes</h2>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1">trips =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/utils/read.table.html">read.csv</a></span>(<span class="st">"D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs/trips.txt"</span>,, <span class="dt">stringsAsFactors =</span> F)</a>
-<a class="sourceLine" id="cb2-2" title="2">routes =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/utils/read.table.html">read.csv</a></span>(<span class="st">"D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs/routes.txt"</span>, <span class="dt">stringsAsFactors =</span> F)</a>
-<a class="sourceLine" id="cb2-3" title="3">stop_times =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/utils/read.table.html">read.csv</a></span>(<span class="st">"D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs/stop_times.txt"</span>, <span class="dt">stringsAsFactors =</span> F)</a>
-<a class="sourceLine" id="cb2-4" title="4"><span class="co">#stops = read.csv("D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs/stops.txt")</span></a>
-<a class="sourceLine" id="cb2-5" title="5">stops =<span class="st"> </span>sf<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/sf/man/st_read.html">st_read</a></span>(<span class="st">"D:/Users/earmmor/OneDrive - University of Leeds/Routing/osm/stops_fixed.shp"</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1">trips =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/utils/read.table.html">read.csv</a></span>(<span class="st">"D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs/trips.txt"</span>,, <span class="dt">stringsAsFactors =</span> F)</a>
+<a class="sourceLine" id="cb3-2" title="2">routes =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/utils/read.table.html">read.csv</a></span>(<span class="st">"D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs/routes.txt"</span>, <span class="dt">stringsAsFactors =</span> F)</a>
+<a class="sourceLine" id="cb3-3" title="3">stop_times =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/utils/read.table.html">read.csv</a></span>(<span class="st">"D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs/stop_times.txt"</span>, <span class="dt">stringsAsFactors =</span> F)</a>
+<a class="sourceLine" id="cb3-4" title="4"><span class="co">#stops = read.csv("D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs/stops.txt")</span></a>
+<a class="sourceLine" id="cb3-5" title="5">stops =<span class="st"> </span>sf<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/sf/man/st_read.html">st_read</a></span>(<span class="st">"D:/Users/earmmor/OneDrive - University of Leeds/Routing/osm/stops_fixed.shp"</span>)</a></code></pre></div>
 </div>
   </div>
 
@@ -120,7 +163,9 @@
       <h2 class="hasAnchor">
 <a href="#tocnav" class="anchor"></a>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
-<li><a href="#making-a-gtfs-file-from-the-atoc-data">Making a GTFS file from the ATOC Data</a></li>
+<li><a href="#getting-data">Getting Data</a></li>
+      <li><a href="#using-the-package">Using the package</a></li>
+      <li><a href="#making-a-gtfs-file-from-the-atoc-data">Making a GTFS file from the ATOC Data</a></li>
       <li><a href="#making-shapes">Making Shapes</a></li>
       </ul>
 </div>
