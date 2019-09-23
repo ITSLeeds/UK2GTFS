@@ -1,3 +1,4 @@
+inst/doc
 # History files
 .Rhistory
 .Rapp.history
@@ -26,13 +27,14 @@ vignettes/*.pdf
 # Shiny token, see https://shiny.rstudio.com/articles/shinyapps.html
 rsconnect/
 #Temport Directory
-/tmp
-inst/doc
-vignettes/tmp/ttisf898.alf
-vignettes/tmp/ttisf898.dat
-vignettes/tmp/ttisf898.mca
-vignettes/tmp/ttisf898.flf
-vignettes/tmp/ttisf898.msn
-vignettes/tmp/ttisf898.set
-vignettes/tmp/ttisf898.tsi
-vignettes/tmp/ttisf898.ztr
+vignettes/tmp
+extras/tmp
+extras/export
+*.alf
+*.flf
+*.mca
+*.msn
+*.set
+*.tsi
+*.ztr
+*.dat

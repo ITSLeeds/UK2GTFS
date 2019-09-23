@@ -1,18 +1,31 @@
 Package: UK2GTFS
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Converts UK transport timetable datasets to GTFS format
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Author: Malcolm Morgan
+Maintainer: Malcolm Morgan <m.morgan1@leeds.ac.uk>
+Description: The UK uses a range of odd formats to store timtable data, this package converts them to the nice GTFS format.
+Depends: R (>= 2.10)
+Language: EN-GB
+License: file LICENSE
 Encoding: UTF-8
 LazyData: true
 Imports:
   dplyr,
   sf,
-  parallel
+  parallel,
+  RANN,
+  calendar,
+  dodgr,
+  geodist,
+  iotools,
+  jsonlite,
+  lubridate,
+  tmap,
+  xml2,
+  zip,
+  pbapply
 Suggests: knitr,
     rmarkdown
 VignetteBuilder: knitr
+RoxygenNote: 6.1.1
