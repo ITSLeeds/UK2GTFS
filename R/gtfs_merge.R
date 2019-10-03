@@ -36,6 +36,7 @@ gtfs_merge <- function(gtfs_list) {
   suppressWarnings(calendar <- dplyr::bind_rows(calendar, .id = "file_id"))
 
   names(calendar_dates) <- seq(1, length(calendar_dates))
+  calendar_dates <- calendar_dates[sapply(calendar_dates, nrow) > 0]
   suppressWarnings(calendar_dates <- dplyr::bind_rows(calendar_dates, .id = "file_id"))
 
   # fix typo

@@ -323,7 +323,8 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
     if (nrow(trips_exclude) > 0) {
       trips_exclude <- data.frame(
         trip_id = rep(trips_exclude$trip_id, times = lengths(trips_exclude$exclude_days)),
-        date = as.Date(unlist(trips_exclude$exclude_days), origin = "1970-01-01")
+        date = as.Date(unlist(trips_exclude$exclude_days), origin = "1970-01-01"),
+        stringsAsFactors = FALSE
       )
       trips_exclude$exception_type <- 2
     } else {
@@ -406,6 +407,7 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
     )
     calendar_summary <- dplyr::group_by(calendar, start_date, end_date, DaysOfWeek)
   } else {
+    calendar_summary <- dplyr::group_by(calendar, start_date, end_date, DaysOfWeek)
     calendar_dates_summary <- dplyr::group_by(calendar_dates, trip_id)
     calendar_dates_summary <- dplyr::summarise(calendar_dates_summary,
       pattern = paste(c(date, exception_type), collapse = "")
@@ -428,9 +430,10 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
 
   # Check SpecialDaysOperation
   if (!is.null(SpecialDaysOperation)) {
-     stop("check against new method ")
+     #stop("check against new method ")
     SpecialDaysOperation$exception_type <- ifelse(SpecialDaysOperation$type == "DaysOperation", 1, 2)
-    service_ids <- unique(calendar_dates$service_id)
+    #service_ids <- unique(calendar_dates$service_id)
+    service_ids <- unique(calendar$service_id)
     SpecialDaysOperation <- data.frame(
       service_id = rep(service_ids, nrow(SpecialDaysOperation)),
       date = rep(SpecialDaysOperation$StartDate, length(service_ids)),
