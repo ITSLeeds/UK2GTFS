@@ -41,6 +41,11 @@ gtfs_merge <- function(gtfs_list) {
 
   # fix typo
   agency$agency_name[agency$agency_name == "Dockland Light Railway"] <- "Docklands Light Railway"
+  agency$agency_name[agency$agency_name == "Edward Bros"] <- "Edwards Bros"
+  agency$agency_name[agency$agency_name == "John`s Coaches"] <- "John's Coaches"
+
+  # fix duplicated agency_ids - special cases
+  agency$agency_id[agency$agency_name == "Tanat Valley Coaches"] <- "TanVaCo"
 
 
   # agency
@@ -53,7 +58,7 @@ gtfs_merge <- function(gtfs_list) {
     agency.check$agency_name <- tolower(agency.check$agency_name)
     agency.check <- unique(agency.check)
     if (any(duplicated(agency.check$agency_id))) {
-      stop("Duplicated Agency IDS")
+      stop(paste0("Duplicated Agency IDs ",paste(agency.check$agency_id[duplicated(agency.check$agency_id)], collapse = " ")))
     } else {
       agency <- agency[!duplicated(agency$agency_id), ]
     }

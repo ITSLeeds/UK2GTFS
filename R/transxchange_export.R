@@ -86,11 +86,12 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
       vj_so_do <- vj_so[,c("VehicleJourneyCode","ServicedDaysOfOperation")]
       vj_so_do <- vj_so_do[!is.na(vj_so_do$ServicedDaysOfOperation),]
       if(nrow(vj_so_do) > 0){
-        ServicedOrganisations_workdays <- dplyr::left_join(vj_so_do,
-                                                            ServicedOrganisations_workdays,
-                                                            by = c("ServicedDaysOfOperation" = "OrganisationCode"))
+        ServicedOrganisations_workdays <- dplyr::left_join(ServicedOrganisations_workdays,
+                                                           vj_so_do,
+                                                           by = c("OrganisationCode" = "ServicedDaysOfOperation"))
         ServicedOrganisations_workdays <- ServicedOrganisations_workdays[,c("VehicleJourneyCode","WorkingDays.StartDate","WorkingDays.EndDate")]
         names(ServicedOrganisations_workdays) <- c("VehicleJourneyCode","StartDate", "EndDate")
+
       } else {
         ServicedOrganisations_workdays <- NULL
         #stop("check this, service that runs only during holidays?")
@@ -104,11 +105,14 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
       vj_so_no <- vj_so[,c("VehicleJourneyCode","ServicedDaysOfNonOperation")]
       vj_so_no <- vj_so_no[!is.na(vj_so_no$ServicedDaysOfNonOperation),]
       if(nrow(vj_so_no) > 0){
-        ServicedOrganisations_holidays <- dplyr::left_join(vj_so_no,
-                                                           ServicedOrganisations_holidays,
-                                                           by = c("ServicedDaysOfNonOperation" = "OrganisationCode"))
+        ServicedOrganisations_holidays <- dplyr::left_join(ServicedOrganisations_holidays,
+                                                           vj_so_no,
+                                                           by = c("OrganisationCode" = "ServicedDaysOfNonOperation"))
         ServicedOrganisations_holidays <- ServicedOrganisations_holidays[,c("VehicleJourneyCode","Holidays.StartDate", "Holidays.EndDate")]
         names(ServicedOrganisations_holidays) <- c("VehicleJourneyCode","StartDate", "EndDate")
+        if(all(is.na(ServicedOrganisations_holidays$VehicleJourneyCode))){
+          ServicedOrganisations_holidays <- NULL
+        }
       } else {
         ServicedOrganisations_holidays <- NULL
         #stop("check this, service that runs only during holidays?")
@@ -292,8 +296,21 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
     agency_name = agency_name,
     agency_url = "http://www.URL-IS-MISSING.com",
     agency_timezone = "Europe/London",
-    agency_lang = "en"
+    agency_lang = "en",
+    stringsAsFactors = FALSE
   )
+
+
+  for(j in seq(1, nrow(agency))){
+    if(agency$agency_id[j] == "O1"){
+      aid <- strsplit(as.character(agency$agency_name[j])," ")[[1]]
+      aid <- paste(substr(aid,1,2), collapse = "")
+      agency$agency_id[j] <- aid
+      routes$agency_id[routes$agency_id == "O1"] <- aid
+      warning(paste0("Agency ID is O1 changing to ",aid))
+    }
+  }
+
 
 
   # trips calendar calendar_dates -------------------------------------------------

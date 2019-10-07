@@ -392,7 +392,8 @@ import_services <- function(service, full_import = TRUE) {
       type = "DaysOperation",
       StartDate = DaysOperation_StartDate,
       EndDate = DaysOperation_EndDate,
-      Note = DaysOperation_Note
+      Note = DaysOperation_Note,
+      stringsAsFactors = FALSE
     )
   } else {
     DaysOperation <- NULL
@@ -401,13 +402,17 @@ import_services <- function(service, full_import = TRUE) {
   if (xml2::xml_length(DaysNonOperation) > 0) {
     DaysNonOperation_StartDate <- import_simple(DaysNonOperation, ".//d1:StartDate")
     DaysNonOperation_EndDate <- import_simple(DaysNonOperation, ".//d1:EndDate")
-    # DaysNonOperation_Note        <- import_simple(DaysNonOperation, ".//d1:Note")
+    DaysNonOperation_Note        <- import_simple(DaysNonOperation, ".//d1:Note")
+    if (length(DaysNonOperation_Note) == 0) {
+      DaysNonOperation_Note <- rep(NA, length(DaysNonOperation_StartDate))
+    }
     DaysNonOperation <- data.frame(
       type = "DaysNonOperation",
       StartDate = DaysNonOperation_StartDate,
-      EndDate = DaysNonOperation_EndDate
-    ) # ,
-    # Note =      DaysNonOperation_Note)
+      EndDate = DaysNonOperation_EndDate,
+      Note = DaysNonOperation_Note,
+      stringsAsFactors = FALSE
+    )
   } else {
     DaysNonOperation <- NULL
   }

@@ -4,7 +4,7 @@
 #' @param url url to naptan in csv format
 #' @param naptan_missing data frame of missing stops
 #' @export
-get_naptan <- function(url = "http://naptan.app.dft.gov.uk/DataRequest/Naptan.ashx?format=csv", naptan_missing = naptan_missing) {
+get_naptan <- function(url = "http://naptan.app.dft.gov.uk/DataRequest/Naptan.ashx?format=csv", naptan_extra = naptan_missing) {
   utils::download.file(url = url, destfile = "naptan.zip", mode = "wb")
   dir.create("temp")
   utils::unzip("naptan.zip", exdir = "temp")
@@ -21,7 +21,7 @@ get_naptan <- function(url = "http://naptan.app.dft.gov.uk/DataRequest/Naptan.as
 
   # Append alterative tags
   naptan_missing <- naptan_missing[!naptan_missing$stop_id %in% naptan$stop_id,]
-  naptan <- rbind(naptan, naptan_missing)
+  naptan <- rbind(naptan, naptan_extra)
 
   return(naptan)
 }
