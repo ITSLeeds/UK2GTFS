@@ -16,6 +16,10 @@ get_naptan <- function(url = "http://naptan.app.dft.gov.uk/datarequest/GTFS.ashx
   names(naptan) <- c("stop_id", "stop_code", "stop_name", "stop_lat", "stop_lon", "stop_url",  "vehicle_type")
   naptan <- naptan[,names(naptan_extra)]
 
+  # format
+  naptan$stop_lon <- format(round(naptan$stop_lon, 6), scientific = FALSE)
+  naptan$stop_lat <- format(round(naptan$stop_lat, 6), scientific = FALSE)
+
   # Append extra data
   naptan_extra <- naptan_extra[!naptan_extra$stop_id %in% naptan$stop_id,]
   naptan <- rbind(naptan, naptan_extra)

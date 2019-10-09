@@ -23,4 +23,11 @@ Data for other modes can be downloaded from https://www.travelinedata.org.uk/tra
 
 ```{r setup}
 library(UK2GTFS)
+path_in = "E:/Users/earmmor/OneDrive - University of Leeds/Routing/TransitExchangeData/data_20191008/EA.zip"
+path_out = "E:/Users/earmmor/OneDrive - University of Leeds/Routing/TransitExchangeData/gtfs_20191008"
+transxchange2gtfs(path_in = path_in,
+                  path_out = path_out,
+                  name = "EA_gtfs",
+                  ncores = 4)
+
 ```
