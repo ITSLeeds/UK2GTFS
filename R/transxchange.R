@@ -3,7 +3,7 @@
 #' @details
 #' Convert transxchange files to GTFS
 #'
-#' @param path_in Path to ATOC File
+#' @param path_in Path to zipped transxchange files
 #' @param path_out Path to where GTFS files should be saved
 #' @param name name that should be given to the gtfs file, without the .zip extension
 #' @param silent Logical, should progress be shown
@@ -26,18 +26,21 @@ transxchange2gtfs <- function(path_in,
   if (ncores == 1) {
     message(paste0(Sys.time(), " This will take some time, make sure you use 'ncores' to enable multi-core processing"))
   }
-  zips <- list.files(path_in, pattern = ".zip", full.names = TRUE)
-  if (length(zips) > 0) {
-    if (!silent) {
-      message(paste0(Sys.time(), " unzipping folders"))
-    }
-    dir.create(file.path(tempdir(), "txc"))
-    foo <- pbapply::pblapply(zips, function(x) {
-      utils::unzip(x, exdir = file.path(tempdir(), "txc"))
-    })
-  } else {
-    stop("No zip folders found in path_in")
-  }
+  # zips <- list.files(path_in, pattern = ".zip", full.names = TRUE)
+  # if (length(zips) > 0) {
+  #   if (!silent) {
+  #     message(paste0(Sys.time(), " unzipping folders"))
+  #   }
+  #   dir.create(file.path(tempdir(), "txc"))
+  #   foo <- pbapply::pblapply(zips, function(x) {
+  #     utils::unzip(x, exdir = file.path(tempdir(), "txc"))
+  #   })
+  # } else {
+  #   stop("No zip folders found in path_in")
+  # }
+  dir.create(file.path(tempdir(), "txc"))
+  utils::unzip(path_in, exdir = file.path(tempdir(), "txc"))
+
 
   files <- list.files(file.path(tempdir(), "txc"), pattern = ".xml", full.names = TRUE)
 
@@ -80,4 +83,5 @@ transxchange2gtfs <- function(path_in,
 
   message(paste0(Sys.time(), " Writing GTFS file"))
   write_gtfs(gtfs = gtfs_merged, folder = path_out, name = name)
+  unlink(file.path(tempdir(), "txc"))
 }
