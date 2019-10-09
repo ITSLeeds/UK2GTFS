@@ -11,7 +11,7 @@ clean_sequence2(x, y, displace = FALSE)
 
 \item{y}{sequence of ids showing when to start a new sequency}
 
-\item{dispalce}{if TRUE start at 2 rather than 2}
+\item{displace}{if TRUE start at 2 rather than 2}
 }
 \description{
 Clean NA from sequence

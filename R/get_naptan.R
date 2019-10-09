@@ -2,7 +2,7 @@
 #'
 #' download the naptan stop locations
 #' @param url url to naptan in csv format
-#' @param naptan_missing data frame of missing stops
+#' @param naptan_extra data frame of missing stops
 #' @export
 get_naptan <- function(url = "http://naptan.app.dft.gov.uk/datarequest/GTFS.ashx", naptan_extra = naptan_missing) {
   utils::download.file(url = url, destfile = "naptan.zip", mode = "wb")

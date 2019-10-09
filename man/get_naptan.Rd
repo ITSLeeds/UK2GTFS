@@ -4,9 +4,8 @@
 \alias{get_naptan}
 \title{get naptan}
 \usage{
-
-  get_naptan(url = "http://naptan.app.dft.gov.uk/DataRequest/Naptan.ashx?format=csv",
-  naptan_missing = naptan_missing)
+get_naptan(url = "http://naptan.app.dft.gov.uk/datarequest/GTFS.ashx",
+  naptan_extra = naptan_missing)
 }
 \arguments{
 \item{url}{url to naptan in csv format}

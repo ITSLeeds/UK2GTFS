@@ -6,7 +6,7 @@
 #' @param trip_ids a vector of trips ids
 #' @export
 
-gtfs_split <- function(gtfs, trip_ids) {
+gtfs_split_ids <- function(gtfs, trip_ids) {
   agency <- gtfs$agency
   stops <- gtfs$stops
   routes <- gtfs$routes

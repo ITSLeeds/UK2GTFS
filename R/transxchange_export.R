@@ -61,20 +61,7 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
     }
   }
 
-  # Clean ServicedOrganisations
-  # if (class(ServicedOrganisations) == "data.frame") {
-  #   ServicedOrganisations$StartDate <- as.Date(ifelse(is.na(ServicedOrganisations$WorkingDays.StartDate),
-  #     as.character(ServicedOrganisations$Holidays.StartDate),
-  #     as.character(ServicedOrganisations$WorkingDays.StartDate)
-  #   ))
-  #
-  #   ServicedOrganisations$EndDate <- as.Date(ifelse(is.na(ServicedOrganisations$WorkingDays.EndDate),
-  #     as.character(ServicedOrganisations$Holidays.EndDate),
-  #     as.character(ServicedOrganisations$WorkingDays.EndDate)
-  #   ))
-  #
-  #   ServicedOrganisations <- ServicedOrganisations[, c("OrganisationCode", "StartDate", "EndDate")]
-  # }
+
 
   # Split Service Organisations
   if (class(ServicedOrganisations) == "data.frame") {

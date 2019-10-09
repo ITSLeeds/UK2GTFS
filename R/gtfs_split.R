@@ -1,6 +1,7 @@
 #' Split a gtfs file
 #'
 #' @param gtfs a gtfs object
+#' @param n_split how many to split into default 2
 #' @export
 gtfs_split <- function(gtfs, n_split = 2){
   agency <- gtfs$agency
