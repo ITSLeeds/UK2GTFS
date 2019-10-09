@@ -44,6 +44,10 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
     "VehicleJourneyCode", "ServiceRef", "JourneyPatternRef", "DepartureTime", "DaysOfWeek",
     "BankHolidaysOperate", "BankHolidaysNoOperate", "ServicedDaysOfOperation", "ServicedDaysOfNonOperation"
   )]
+  if(anyNA(VehicleJourneys$JourneyPatternRef)){
+    warning(paste0("missing JourneyPatternRefs are excluded in ", Services_main$ServiceCode))
+  }
+  VehicleJourneys <- VehicleJourneys[!is.na(VehicleJourneys$JourneyPatternRef),]
   Services_main$StartDate <- as.Date(Services_main$StartDate)
   Services_main$EndDate <- as.Date(Services_main$EndDate)
 

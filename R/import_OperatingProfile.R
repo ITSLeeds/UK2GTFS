@@ -1,6 +1,7 @@
 import_OperatingProfile <- function(OperatingProfile){
   result <- list()
   result_special <- list()
+  #for(i in seq(1, 10)){
   for(i in seq(1, length(OperatingProfile))){
     chld <- OperatingProfile[i]
     VehicleJourneyCode <- xml2::xml_text(xml2::xml_child(xml2::xml_parent(chld), "d1:VehicleJourneyCode"))
@@ -110,13 +111,28 @@ import_OperatingProfile <- function(OperatingProfile){
 
       # Check for when lenghts don't match
       lns <- length(SDDaysOfNonOperation_start)
-      lne <- length(SDDaysOfNonOperation_start)
-      los <- length(SDDaysOfNonOperation_start)
-      loe <- length(SDDaysOfNonOperation_start)
+      lne <- length(SDDaysOfNonOperation_end)
+      los <- length(SDDaysOfOperation_start)
+      loe <- length(SDDaysOfOperation_end)
       laa <- c(lns, lne, los, loe)
 
+
       if(length(unique(laa)) != 1){
-        stop("Differnt numbers of sepcal dates")
+        if(lns != max(laa)){
+          SDDaysOfNonOperation_start <- c(SDDaysOfNonOperation_start, rep(NA, times = max(laa) - lns))
+        }
+
+        if(lne != max(laa)){
+          SDDaysOfNonOperation_end <- c(SDDaysOfNonOperation_end, rep(NA, times = max(laa) - lne))
+        }
+
+        if(lns != max(los)){
+          SDDaysOfOperation_start <- c(SDDaysOfOperation_start, rep(NA, times = max(laa) - los))
+        }
+
+        if(lns != max(loe)){
+          SDDaysOfOperation_end <- c(SDDaysOfOperation_end, rep(NA, times = max(laa) - loe))
+        }
       }
 
 
@@ -158,3 +174,5 @@ import_OperatingProfile <- function(OperatingProfile){
   names(result_final) <- c("OperatingProfile", "SpecialDays")
   return(result_final)
 }
+
+#profvis::profvis(import_OperatingProfile(OperatingProfile))

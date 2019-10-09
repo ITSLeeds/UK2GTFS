@@ -97,9 +97,11 @@ gtfs_merge <- function(gtfs_list) {
     calendar <- calendar[, c("service_id_new", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "start_date", "end_date")]
     names(calendar) <- c("service_id", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "start_date", "end_date")
 
-    calendar_dates <- dplyr::left_join(calendar_dates, service_id, by = c("file_id", "service_id"))
-    calendar_dates <- calendar_dates[, c("service_id_new", "date", "exception_type")]
-    names(calendar_dates) <- c("service_id", "date", "exception_type")
+    if(nrow(calendar_dates) > 0){
+      calendar_dates <- dplyr::left_join(calendar_dates, service_id, by = c("file_id", "service_id"))
+      calendar_dates <- calendar_dates[, c("service_id_new", "date", "exception_type")]
+      names(calendar_dates) <- c("service_id", "date", "exception_type")
+    }
   }
 
 
@@ -135,34 +137,37 @@ gtfs_merge <- function(gtfs_list) {
   names(trips) <- c("route_id", "service_id", "trip_id")
 
   # Condense Duplicate Service patterns
-  message("Condensing duplicated servie patterns")
-  calendar_dates_summary <- dplyr::group_by(calendar_dates, service_id)
-  calendar_dates_summary <- dplyr::summarise(calendar_dates_summary,
-    pattern = paste(c(date, exception_type), collapse = "")
-  )
-  calendar_summary <- dplyr::left_join(calendar, calendar_dates_summary, by = "service_id")
-  calendar_summary <- dplyr::group_by(
-    calendar_summary,
-    start_date, end_date, monday, tuesday, wednesday,
-    thursday, friday, saturday, sunday, pattern
-  )
-  calendar_summary$service_id_new <- dplyr::group_indices(calendar_summary)
-  calendar_summary <- calendar_summary[, c("service_id_new", "service_id")]
+  if(nrow(calendar_dates) > 0){
+    message("Condensing duplicated service patterns")
+    calendar_dates_summary <- dplyr::group_by(calendar_dates, service_id)
+    calendar_dates_summary <- dplyr::summarise(calendar_dates_summary,
+                                               pattern = paste(c(date, exception_type), collapse = "")
+    )
+    calendar_summary <- dplyr::left_join(calendar, calendar_dates_summary, by = "service_id")
+    calendar_summary <- dplyr::group_by(
+      calendar_summary,
+      start_date, end_date, monday, tuesday, wednesday,
+      thursday, friday, saturday, sunday, pattern
+    )
+    calendar_summary$service_id_new <- dplyr::group_indices(calendar_summary)
+    calendar_summary <- calendar_summary[, c("service_id_new", "service_id")]
 
-  trips <- dplyr::left_join(trips, calendar_summary, by = c("service_id"))
-  trips <- trips[, c("route_id", "service_id_new", "trip_id")]
-  names(trips) <- c("route_id", "service_id", "trip_id")
+    trips <- dplyr::left_join(trips, calendar_summary, by = c("service_id"))
+    trips <- trips[, c("route_id", "service_id_new", "trip_id")]
+    names(trips) <- c("route_id", "service_id", "trip_id")
 
-  calendar <- dplyr::left_join(calendar, calendar_summary, by = c("service_id"))
-  calendar <- calendar[, c("service_id_new", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "start_date", "end_date")]
-  names(calendar) <- c("service_id", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "start_date", "end_date")
-  calendar <- calendar[!duplicated(calendar$service_id), ]
+    calendar <- dplyr::left_join(calendar, calendar_summary, by = c("service_id"))
+    calendar <- calendar[, c("service_id_new", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "start_date", "end_date")]
+    names(calendar) <- c("service_id", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "start_date", "end_date")
+    calendar <- calendar[!duplicated(calendar$service_id), ]
 
 
-  calendar_dates <- dplyr::left_join(calendar_dates, calendar_summary, by = c("service_id"))
-  calendar_dates <- calendar_dates[, c("service_id_new", "date", "exception_type")]
-  names(calendar_dates) <- c("service_id", "date", "exception_type")
-  calendar_dates <- calendar_dates[!duplicated(calendar_dates$service_id), ]
+    calendar_dates <- dplyr::left_join(calendar_dates, calendar_summary, by = c("service_id"))
+    calendar_dates <- calendar_dates[, c("service_id_new", "date", "exception_type")]
+    names(calendar_dates) <- c("service_id", "date", "exception_type")
+    calendar_dates <- calendar_dates[!duplicated(calendar_dates$service_id), ]
+
+  }
 
   stop_times$file_id <- NULL
   routes$file_id <- NULL

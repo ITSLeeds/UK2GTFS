@@ -255,6 +255,8 @@ clean_days <- function(days) {
     res <- c(1, 1, 1, 1, 1, 1, 0)
   } else if (days == "SaturdaySundayHolidaysOnly") {
     res <- c(0, 0, 0, 0, 0, 1, 1)
+  } else if (days == "MondayToFriday Sunday") {
+    res <- c(1, 1, 1, 1, 1, 0, 1)
   } else if (days %in% c("", "MondayToSunday", "MondayToFridaySaturdaySundayHolidaysOnly")) {
     res <- c(1, 1, 1, 1, 1, 1, 1)
   } else {
@@ -432,9 +434,10 @@ expand_stop_times2 <- function(i, jps, trips) {
   jps_sub <- jps[[i]]
   trips_sub <- trips[trips$JourneyPatternRef == jps_sub$JourneyPatternID[1], ]
   jps_sub$To.Activity[is.na(jps_sub$To.Activity)] <- "pickUpAndSetDown"
-  if (all(is.na(jps_sub$To.SequenceNumber))) {
+  # To.SequenceNumber are often buggy, so overwiriting and relying on file order
+  #if (all(is.na(jps_sub$To.SequenceNumber))) {
     jps_sub$To.SequenceNumber <- seq(2, nrow(jps_sub) + 1)
-  }
+  #}
 
 
   st_sub <- jps_sub[, c("To.StopPointRef", "To.Activity", "To.SequenceNumber", "JourneyPatternID", "To.WaitTime", "To.TimingStatus", "RunTime")]

@@ -11,10 +11,13 @@ import_vehiclejourneys2 <- function(vehiclejourneys, Services_main, cal) {
   VehicleJourneyCode <- import_simple(vehiclejourneys, ".//d1:VehicleJourneyCode")
   ServiceRef <- import_simple(vehiclejourneys, ".//d1:ServiceRef")
   LineRef <- import_simple(vehiclejourneys, ".//d1:LineRef")
-  JourneyPatternRef <- import_simple(vehiclejourneys, ".//d1:JourneyPatternRef")
+  #JourneyPatternRef <- import_simple(vehiclejourneys, ".//d1:JourneyPatternRef")
   DepartureTime <- import_simple(vehiclejourneys, ".//d1:DepartureTime")
   BankHolidaysOperate <- import_simple(vehiclejourneys, ".//d1:BankHolidaysOperate")
   Notes <- xml2::xml_find_all(vehiclejourneys, ".//d1:Note")
+
+  JourneyPatternRef <- xml2::xml_text(xml2::xml_find_first(xml2::xml_children(vehiclejourneys), "d1:JourneyPatternRef"))
+  VehicleJourneyRef <- xml2::xml_text(xml2::xml_find_first(xml2::xml_children(vehiclejourneys), "d1:VehicleJourneyRef"))
 
   if (any(xml2::xml_length(Notes) > 0)) {
     Notes <- import_notes2(vehiclejourneys)
@@ -31,13 +34,14 @@ import_vehiclejourneys2 <- function(vehiclejourneys, Services_main, cal) {
   }
 
   if(length(JourneyPatternRef) != length(VehicleJourneyCode)){
-    JourneyPatternRef <- import_withmissing(vehiclejourneys, ".//d1:JourneyPatternRef", 8)
-    VehicleJourneyRef <- import_withmissing(vehiclejourneys, ".//d1:VehicleJourneyRef", 8)
+    #JourneyPatternRef <- import_withmissing(vehiclejourneys, ".//d1:JourneyPatternRef", 8)
+
+    #VehicleJourneyRef <- import_withmissing(vehiclejourneys, ".//d1:VehicleJourneyRef", 8)
     # JourneyPatternRef <- ifelse(is.na(JourneyPatternRef),
     #                             VehicleJourneyRef,
     #                             JourneyPatternRef)
 
-    stop("JourneyPatternRef and VehicleJourneyRefs not same length")
+    stop("JourneyPatternRef and VehicleJourneyCode not same length")
   }
 
 
@@ -46,7 +50,7 @@ import_vehiclejourneys2 <- function(vehiclejourneys, Services_main, cal) {
     ServiceRef = ServiceRef,
     LineRef = LineRef,
     JourneyPatternRef = JourneyPatternRef,
-    #VehicleJourneyRef = VehicleJourneyRef,
+    VehicleJourneyRef = VehicleJourneyRef,
     DepartureTime = DepartureTime,
     # days = days,
     BankHolidaysOperate = BankHolidaysOperate,

@@ -11,7 +11,9 @@
 write_gtfs <- function(gtfs, folder = getwd(), name = "gtfs") {
   dir.create(paste0(folder, "/gtfs_temp"))
   utils::write.csv(gtfs$calendar, paste0(folder, "/gtfs_temp/calendar.txt"), row.names = FALSE)
-  utils::write.csv(gtfs$calendar_dates, paste0(folder, "/gtfs_temp/calendar_dates.txt"), row.names = FALSE)
+  if(nrow(gtfs$calendar_dates) > 0){
+    utils::write.csv(gtfs$calendar_dates, paste0(folder, "/gtfs_temp/calendar_dates.txt"), row.names = FALSE)
+  }
   utils::write.csv(gtfs$routes, paste0(folder, "/gtfs_temp/routes.txt"), row.names = FALSE)
   utils::write.csv(gtfs$stop_times, paste0(folder, "/gtfs_temp/stop_times.txt"), row.names = FALSE)
   utils::write.csv(gtfs$trips, paste0(folder, "/gtfs_temp/trips.txt"), row.names = FALSE)
