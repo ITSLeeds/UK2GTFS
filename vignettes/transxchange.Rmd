@@ -28,6 +28,6 @@ path_out = "E:/Users/earmmor/OneDrive - University of Leeds/Routing/TransitExcha
 transxchange2gtfs(path_in = path_in,
                   path_out = path_out,
                   name = "EA_gtfs",
-                  ncores = 4)
+                  ncores = 1)
 
 ```

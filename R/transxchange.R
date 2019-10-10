@@ -43,12 +43,20 @@ transxchange2gtfs <- function(path_in,
 
 
   files <- list.files(file.path(tempdir(), "txc"), pattern = ".xml", full.names = TRUE)
+  files = files[order(file.size(files))]
+
+  # TO balance progress bars interleave files
+  seq_mid <- floor(length(files) / 2)
+  seq_up <- seq(1, seq_mid)
+  seq_down <- seq(length(files), seq_mid + 1)
+  files = files[c(rbind(seq_up, seq_down))]
+
 
   if (ncores == 1) {
     message(paste0(Sys.time(), " Importing TransXchange files"))
-    res_all <- pbapply::pblapply(files[12], transxchange_import, run_debug = TRUE, full_import = FALSE)
+    res_all <- pbapply::pblapply(files, transxchange_import, run_debug = TRUE, full_import = FALSE)
     message(paste0(Sys.time(), " Converting to GTFS"))
-    gtfs_all <- pbapply::pblapply(res_all, transxchange2gtfs, run_debug = TRUE, cal = cal, naptan = naptan)
+    gtfs_all <- pbapply::pblapply(res_all, transxchange_export, run_debug = TRUE, cal = cal, naptan = naptan)
   } else {
     cl <- parallel::makeCluster(ncores)
     # parallel::clusterExport(
@@ -69,7 +77,7 @@ transxchange2gtfs <- function(path_in,
     )
     message(paste0(Sys.time(), " Converting to GTFS"))
     gtfs_all <- pbapply::pblapply(res_all,
-      transxchange2gtfs,
+      transxchange_export,
       run_debug = TRUE,
       cal = cal,
       naptan = naptan,
