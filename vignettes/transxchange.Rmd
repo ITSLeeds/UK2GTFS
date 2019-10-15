@@ -21,7 +21,7 @@ knitr::opts_chunk$set(
 Data for other modes can be downloaded from https://www.travelinedata.org.uk/traveline-open-data/data-reporting/ you will need to apply for access to the FTP sever to download the data.
 
 
-```{r setup}
+```{r setup, eval =  FALSE}
 library(UK2GTFS)
 path_in = "E:/Users/earmmor/OneDrive - University of Leeds/Routing/TransitExchangeData/data_20191008/EA.zip"
 path_out = "E:/Users/earmmor/OneDrive - University of Leeds/Routing/TransitExchangeData/gtfs_20191008"

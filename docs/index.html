@@ -77,13 +77,45 @@
 <div id="uk2gtfs" class="section level1">
 <div class="page-header"><h1 class="hasAnchor">
 <a href="#uk2gtfs" class="anchor"></a>UK2GTFS</h1></div>
-<p>The goal of UK2GTFS is to convert train, tram, bus, and metro timetable data from the unfriendly and difficult to use formats used in the UK to the easy to use <a href="https://developers.google.com/transit/gtfs/">GTFS</a> format. For a full explanation see the <a href="https://itsleeds.github.io/UK2GTFS/articles/articles/transxchange.html">getting started vignette</a>.</p>
+<p>The goal of UK2GTFS is to convert train, tram, bus, and metro timetable data from the unfriendly and difficult to use formats used in the UK to the easy to use <a href="https://developers.google.com/transit/gtfs/">GTFS</a> format. The main purpose of developing the package is to support using <a href="https://github.com/ITSLeeds/opentripplanner">OpenTripPlanner</a> in the UK.</p>
+<p><strong>Example results are published as <a href="https://github.com/ITSLeeds/UK2GTFS/releases">GitHub releases</a> these come with no guarantee of quality.</strong></p>
+<div id="introduction" class="section level2">
+<h2 class="hasAnchor">
+<a href="#introduction" class="anchor"></a>Introduction</h2>
+<p>The UK has two main sources of public transport timetable data <a href="https://www.travelinedata.org.uk/"><strong>traveline</strong></a> publishes data on buses and light rail and <a href="http://data.atoc.org/rail-industry-data"><strong>ATOC</strong></a> publishes data on heavy rail. Each uses a data format that is unique to that organisation and both formats are old and difficult to use. Many countries have adopted the <a href="https://developers.google.com/transit/gtfs/">GTFS</a> format which was developed by Google as a simple standard for publishing timetable data. Due to the wide-spread adoption of GTFS many useful tools have been develope that accept GTFS files as inputs. This package is intended to make the conversion of UK data to the GTFS format simple and easy.</p>
+</div>
+<div id="capabilities---why-we-need-another-package" class="section level2">
+<h2 class="hasAnchor">
+<a href="#capabilities---why-we-need-another-package" class="anchor"></a>Capabilities - why we need another package</h2>
+<p>There are a number of pre-existing options for converting data to GTFS. This package aims to go beyond basic conversion by providing a range of additional functionality:</p>
+<ol>
+<li>Data conversion
+<ul>
+<li>Conversion of TransXchange to GTFS</li>
+<li>Conversion of ATOC CIF files to GTFS</li>
+</ul>
+</li>
+<li>Data cleaning, the raw data often contains clear errors, the package does not blindly convert but also corrects some known errors
+<ul>
+<li>Improved locations of tiplocs</li>
+<li>Correction of misspelt organisations</li>
+<li>Removal of on-demand bus services (GTFS does not support services that are on-demand)</li>
+</ul>
+</li>
+<li>Data polishing
+<ul>
+<li>Support of journeys past midnight</li>
+<li>Routing of train journeys along tracks rather than straight lines between stops</li>
+</ul>
+</li>
+</ol>
+</div>
 <div id="installation" class="section level2">
 <h2 class="hasAnchor">
 <a href="#installation" class="anchor"></a>Installation</h2>
 <p>Install the package with <strong>devtools</strong> as follows:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1"><span class="kw"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">"devtools"</span>) <span class="co"># If you do not already have the devtools package</span></a>
-<a class="sourceLine" id="cb1-2" title="2">devtools<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/devtools/man/reexports.html">install_github</a></span>(<span class="st">"ITSleeds/UK2GTFS"</span>)</a></code></pre></div>
+<a class="sourceLine" id="cb1-2" title="2">devtools<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/devtools/man/remote-reexports.html">install_github</a></span>(<span class="st">"ITSleeds/UK2GTFS"</span>)</a></code></pre></div>
 </div>
 <div id="package-status" class="section level2">
 <h2 class="hasAnchor">
@@ -117,7 +149,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.0.</p>
 </div>
 
       </footer>
