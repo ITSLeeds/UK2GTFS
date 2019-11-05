@@ -33,6 +33,7 @@ import_vialoop <- function(xml1, nm) {
 #' Import over nodeset using loop
 #' Loops over a nodeset returing a value
 #' @param xml1 XML object
+#' @param nm name to find
 #' @noRd
 import_loop <- function(xml1, nm) {
   res <- list()
