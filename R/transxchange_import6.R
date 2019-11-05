@@ -49,8 +49,9 @@ transxchange_import <- function(file, run_debug = FALSE, full_import = FALSE) {
 
 
   ## Routes ##########################################
-  Routes <- xml2::xml_child(xml, "d1:Routes")
-  Routes <- import_routes(Routes)
+  # Routes <- xml2::xml_child(xml, "d1:Routes")
+  # Routes <- import_routes(Routes)
+  Routes <- NULL
 
   ## JourneyPatternSections ##########################################
   JourneyPatternSections <- xml2::xml_child(xml, "d1:JourneyPatternSections")
