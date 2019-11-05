@@ -9,8 +9,8 @@ import_simple <- function(xml1, nm) {
   xml2::xml_text(xml2::xml_find_all(xml1, nm))
 }
 
-#' Import Simple
-#' ????
+#' Import Via Loop
+#' Loops over children
 #' @param xml1 XML object
 #' @param nm name to find
 #' @noRd
@@ -27,6 +27,59 @@ import_vialoop <- function(xml1, nm) {
   }
   res <- unlist(res)
   return(res)
+}
+
+
+#' Import over nodeset using loop
+#' Loops over a nodeset returing a value
+#' @param xml1 XML object
+#' @noRd
+import_loop <- function(xml1, nm) {
+  res <- list()
+  for(i in seq(1, length(xml1))){
+    chld <- xml1[i]
+    chld <- xml2::xml_text(xml2::xml_child(chld, nm))
+    if(length(chld) == 0){
+      chld <- NA
+    }
+    res[[i]] <- chld
+
+  }
+  res <- unlist(res)
+  return(res)
+}
+
+
+#' Import all
+#' Modified version of xml2::xml_find_all combined with import_simple
+#' Shoudl handel missing values at higher speeds
+#' @param xml1 XML object
+#' @param nm name to find
+#' @noRd
+import_simple_xml <- function(xml1, nm) {
+  if (length(xml1) == 0)
+    return(xml_nodeset())
+
+  nodes <- lapply(xml1, function(x) {
+                    res <- xml2:::xpath_search(x$node,
+                                 x$doc,
+                                 xpath = nm,
+                                 nsMap = xml2::xml_ns(x),
+                                 num_results = Inf)
+
+                    if(length(res) == 0){
+                      return(NA)
+                    } else if (length(res) == 1){
+                      res <- xml2::xml_text(res[[1]])
+                      return(res)
+                    } else {
+                      stop("res is not of length 0 or 1")
+                    }
+
+                  }
+  )
+  nodes <- unlist(nodes, recursive = FALSE)
+  return(nodes)
 }
 
 #' Import When some rows are missing
@@ -362,7 +415,9 @@ import_services <- function(service, full_import = TRUE) {
   ss <- xml2::xml_find_all(service, ".//d1:JourneyPattern")
   Direction <- import_simple(ss, ".//d1:Direction")
   VehicleType <- import_withmissing2(ss, ".//d1:Description", 3, "@id")
-  RouteRef <- import_simple(ss, ".//d1:RouteRef")
+  #RouteRef <- import_simple(ss, ".//d1:RouteRef")
+  RouteRef <- import_simple_xml(ss, ".//d1:RouteRef")
+
   if (length(RouteRef) == 0) {
     RouteRef <- rep(NA, length(Direction))
   }
