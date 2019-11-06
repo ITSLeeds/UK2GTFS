@@ -8,7 +8,7 @@ transxchange2gtfs(path_in, path_out, name = "gtfs", silent = TRUE,
   ncores = 1, cal = get_bank_holidays(), naptan = get_naptan())
 }
 \arguments{
-\item{path_in}{Path to ATOC File}
+\item{path_in}{Path to zipped transxchange files}
 
 \item{path_out}{Path to where GTFS files should be saved}
 

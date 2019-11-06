@@ -10,7 +10,7 @@ get_naptan(url = "http://naptan.app.dft.gov.uk/datarequest/GTFS.ashx",
 \arguments{
 \item{url}{url to naptan in csv format}
 
-\item{naptan_missing}{data frame of missing stops}
+\item{naptan_extra}{data frame of missing stops}
 }
 \description{
 download the naptan stop locations
