@@ -38,6 +38,10 @@ transxchange2gtfs <- function(path_in,
   # } else {
   #   stop("No zip folders found in path_in")
   # }
+  nrow(cal)
+  nrow(naptan)
+
+
   message(paste0(Sys.time(), " Unzipping data to temp folder"))
   dir.create(file.path(tempdir(), "txc"))
   utils::unzip(path_in, exdir = file.path(tempdir(), "txc"))
