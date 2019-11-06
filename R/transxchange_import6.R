@@ -108,7 +108,7 @@ transxchange_import <- function(file, run_debug = FALSE, full_import = FALSE) {
 
   ## VehicleJourneys ##########################################
   VehicleJourneys <- xml2::xml_child(xml, "d1:VehicleJourneys")
-  VehicleJourneys <- import_vehiclejourneys2(VehicleJourneys, Services_main, cal)
+  VehicleJourneys <- import_vehiclejourneys2(VehicleJourneys)
 
   DaysOfOperation <- VehicleJourneys$DaysOfOperation
   DaysOfNonOperation <- VehicleJourneys$DaysOfNonOperation

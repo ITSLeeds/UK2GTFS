@@ -1,34 +1,55 @@
+import_child <- function(children, nms, nm){
+  if(nm %in% nms){
+    return(children[match(nm, nms)])
+  } else {
+    return(NULL)
+  }
+}
+
+import_name <- function(node){
+  if(!is.null(node)){
+    return(xml2::xml_name(xml2::xml_children(node)))
+  }else{
+    return(NA)
+  }
+}
+
 import_OperatingProfile <- function(OperatingProfile){
   result <- list()
   result_special <- list()
   #for(i in seq(1, 10)){
   for(i in seq(1, length(OperatingProfile))){
     chld <- OperatingProfile[i]
-    VehicleJourneyCode <- xml2::xml_text(xml2::xml_child(xml2::xml_parent(chld), "d1:VehicleJourneyCode"))
+    #VehicleJourneyCode <- xml2::xml_text(xml2::xml_child(xml2::xml_parent(chld), "d1:VehicleJourneyCode"))
+    VehicleJourneyCode <- xml2::xml_children(xml2::xml_parent(chld))
+    nms_VehicleJourneyCode <- xml2::xml_name(VehicleJourneyCode)
+    VehicleJourneyCode <- import_child(VehicleJourneyCode, nms_VehicleJourneyCode, "VehicleJourneyCode")
+    VehicleJourneyCode <- xml2::xml_text(VehicleJourneyCode)
 
     # Top Level Sections
-    RegularDayType <- xml2::xml_child(chld, "d1:RegularDayType")
-    ServicedOrganisationDayType <- xml2::xml_child(chld, "d1:ServicedOrganisationDayType")
-    BankHolidayOperation <- xml2::xml_child(chld, "d1:BankHolidayOperation")
-    SpecialDaysOperation <- xml2::xml_child(chld, "d1:SpecialDaysOperation")
+    chld <- xml2::xml_children(chld)
+    nms <- xml2::xml_name(chld)
+    RegularDayType <- import_child(chld, nms, "RegularDayType")
+    ServicedOrganisationDayType <- import_child(chld, nms, "ServicedOrganisationDayType")
+    BankHolidayOperation <- import_child(chld, nms, "BankHolidayOperation")
+    SpecialDaysOperation <- import_child(chld, nms, "SpecialDaysOperation")
 
     # Main Section #########################
     # RegularDayType
-    if(xml2::xml_length(RegularDayType) > 0){
-      DaysOfWeek <- xml2::xml_child(RegularDayType, "d1:DaysOfWeek")
-      DaysOfWeek <- xml2::xml_name(xml2::xml_children(DaysOfWeek))
+    if(!is.null(RegularDayType)){
+      RegularDayType <- xml2::xml_children(RegularDayType)
+      nms_RegularDayType <- xml2::xml_name(RegularDayType)
 
-      HolidaysOnly <- xml2::xml_child(RegularDayType, "d1:HolidaysOnly")
-      HolidaysOnly <- xml2::xml_name(HolidaysOnly)
+      DaysOfWeek <- import_child(RegularDayType, nms_RegularDayType, "DaysOfWeek")
+      DaysOfWeek <- import_name(DaysOfWeek)
 
-      # Clean NA
-      if(length(DaysOfWeek) == 0){
-        DaysOfWeek <- NA
-      }
-
-      if(length(HolidaysOnly) == 0){
+      HolidaysOnly <- import_child(RegularDayType, nms_RegularDayType, "HolidaysOnly")
+      if(!is.null(HolidaysOnly)){
+        HolidaysOnly <- xml2::xml_name(HolidaysOnly)
+      } else {
         HolidaysOnly <- NA
       }
+
 
     } else {
       DaysOfWeek <- NA
@@ -36,19 +57,25 @@ import_OperatingProfile <- function(OperatingProfile){
     }
 
     # ServicedOrganisationDayType
-    if(xml2::xml_length(ServicedOrganisationDayType) > 0){
-      #message(str(xml2::as_list(ServicedOrganisationDayType)))
-      ServicedDaysOfOperation <- xml2::xml_child(ServicedOrganisationDayType, "d1:DaysOfOperation")
-      ServicedDaysOfNonOperation <- xml2::xml_child(ServicedOrganisationDayType, "d1:DaysOfNonOperation")
+    if(!is.null(ServicedOrganisationDayType)){
+      ServicedOrganisationDayType <- xml2::xml_children(ServicedOrganisationDayType)
+      nms_ServicedOrganisationDayType <- xml2::xml_name(ServicedOrganisationDayType)
 
-      if(any(xml2::xml_length(ServicedDaysOfOperation) > 0)){
+      ServicedDaysOfOperation <- import_child(ServicedOrganisationDayType, nms_ServicedOrganisationDayType, "DaysOfOperation")
+      ServicedDaysOfNonOperation <- import_child(ServicedOrganisationDayType, nms_ServicedOrganisationDayType, "DaysOfNonOperation")
+
+      #message(str(xml2::as_list(ServicedOrganisationDayType)))
+      #ServicedDaysOfOperation <- xml2::xml_child(ServicedOrganisationDayType, "d1:DaysOfOperation")
+      #ServicedDaysOfNonOperation <- xml2::xml_child(ServicedOrganisationDayType, "d1:DaysOfNonOperation")
+
+      if(!is.null(ServicedDaysOfOperation)){
         ServicedDaysOfOperation <- xml2::xml_find_all(ServicedDaysOfOperation, ".//d1:ServicedOrganisationRef")
         ServicedDaysOfOperation <- xml2::xml_text(ServicedDaysOfOperation)
       } else {
         ServicedDaysOfOperation <- NA
       }
 
-      if(any(xml2::xml_length(ServicedDaysOfNonOperation) > 0)){
+      if(!is.null(ServicedDaysOfNonOperation)){
         ServicedDaysOfNonOperation <- xml2::xml_find_all(ServicedDaysOfNonOperation, ".//d1:ServicedOrganisationRef")
         ServicedDaysOfNonOperation <- xml2::xml_text(ServicedDaysOfNonOperation)
       } else {
@@ -61,21 +88,31 @@ import_OperatingProfile <- function(OperatingProfile){
     }
 
     # BankHolidayOperation
-    if(xml2::xml_length(BankHolidayOperation) > 0){
-      BHDaysOfNonOperation <- xml2::xml_child(BankHolidayOperation, "d1:DaysOfNonOperation")
-      BHDaysOfOperation    <- xml2::xml_child(BankHolidayOperation, "d1:DaysOfOperation")
-      # Should be text based e.g. "AllBankHolidays"
-      BHDaysOfNonOperation <- xml2::xml_name(xml2::xml_children(BHDaysOfNonOperation))
-      BHDaysOfOperation <- xml2::xml_name(xml2::xml_children(BHDaysOfOperation))
+    if(!is.null(BankHolidayOperation)){
+      BankHolidayOperation <- xml2::xml_children(BankHolidayOperation)
+      nms_BankHolidayOperation <- xml2::xml_name(BankHolidayOperation)
 
-      # Clean NA
-      if(length(BHDaysOfNonOperation) == 0){
-        BHDaysOfNonOperation <- NA
-      }
+      BHDaysOfNonOperation <- import_child(BankHolidayOperation, nms_BankHolidayOperation, "DaysOfNonOperation")
+      BHDaysOfNonOperation <- import_name(BHDaysOfNonOperation)
 
-      if(length(BHDaysOfOperation) == 0){
-        BHDaysOfOperation <- NA
-      }
+      BHDaysOfOperation <- import_child(BankHolidayOperation, nms_BankHolidayOperation, "DaysOfOperation")
+      BHDaysOfOperation <- import_name(BHDaysOfOperation)
+
+      # BHDaysOfNonOperation <- xml2::xml_child(BankHolidayOperation, "d1:DaysOfNonOperation")
+      # BHDaysOfOperation    <- xml2::xml_child(BankHolidayOperation, "d1:DaysOfOperation")
+      #
+      # # Should be text based e.g. "AllBankHolidays"
+      # BHDaysOfNonOperation <- xml2::xml_name(xml2::xml_children(BHDaysOfNonOperation))
+      # BHDaysOfOperation <- xml2::xml_name(xml2::xml_children(BHDaysOfOperation))
+
+      # # Clean NA
+      # if(length(BHDaysOfNonOperation) == 0){
+      #   BHDaysOfNonOperation <- NA
+      # }
+      #
+      # if(length(BHDaysOfOperation) == 0){
+      #   BHDaysOfOperation <- NA
+      # }
 
 
     } else {
@@ -84,11 +121,17 @@ import_OperatingProfile <- function(OperatingProfile){
     }
 
     # SpecialDaysOperation
-    if(xml2::xml_length(SpecialDaysOperation) > 0){
-      SDDaysOfNonOperation <- xml2::xml_child(SpecialDaysOperation, "d1:DaysOfNonOperation")
-      SDDaysOfOperation    <- xml2::xml_child(SpecialDaysOperation, "d1:DaysOfOperation")
+    if(!is.null(SpecialDaysOperation)){
+      SpecialDaysOperation <- xml2::xml_children(SpecialDaysOperation)
+      nms_SpecialDaysOperation <- xml2::xml_name(SpecialDaysOperation)
 
-      if(xml2::xml_length(SDDaysOfNonOperation) > 0){
+      SDDaysOfNonOperation <- import_child(SpecialDaysOperation, nms_SpecialDaysOperation, "DaysOfNonOperation")
+      SDDaysOfOperation <- import_child(SpecialDaysOperation, nms_SpecialDaysOperation, "DaysOfOperation")
+
+      #SDDaysOfNonOperation <- xml2::xml_child(SpecialDaysOperation, "d1:DaysOfNonOperation")
+      #SDDaysOfOperation    <- xml2::xml_child(SpecialDaysOperation, "d1:DaysOfOperation")
+
+      if(!is.null(SDDaysOfNonOperation)){
         SDDaysOfNonOperation_start <- xml2::xml_find_all(SDDaysOfNonOperation, ".//d1:StartDate")
         SDDaysOfNonOperation_start <- xml2::xml_text(SDDaysOfNonOperation_start)
         SDDaysOfNonOperation_end <- xml2::xml_find_all(SDDaysOfNonOperation, ".//d1:EndDate")
@@ -99,7 +142,7 @@ import_OperatingProfile <- function(OperatingProfile){
       }
 
 
-      if(xml2::xml_length(SDDaysOfOperation) > 0){
+      if(!is.null(SDDaysOfOperation)){
         SDDaysOfOperation_start <- xml2::xml_find_all(SDDaysOfOperation, ".//d1:StartDate")
         SDDaysOfOperation_start <- xml2::xml_text(SDDaysOfOperation_start)
         SDDaysOfOperation_end <- xml2::xml_find_all(SDDaysOfOperation, ".//d1:EndDate")

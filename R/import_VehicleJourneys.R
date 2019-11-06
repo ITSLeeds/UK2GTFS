@@ -1,11 +1,9 @@
 #' Import Vehicle Journeys
 #' ????
 #' @param vehiclejourneys desc
-#' @param Services_main desc
-#' @param cal cal object
 #' @noRd
 
-import_vehiclejourneys2 <- function(vehiclejourneys, Services_main, cal) {
+import_vehiclejourneys2 <- function(vehiclejourneys) {
 
   # PrivateCode <- import_simple(vehiclejourneys, ".//d1:PrivateCode")
   VehicleJourneyCode <- import_simple(vehiclejourneys, ".//d1:VehicleJourneyCode")
