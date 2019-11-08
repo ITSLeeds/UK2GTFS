@@ -49,8 +49,8 @@ transxchange2gtfs <- function(path_in,
     files <- list.files(file.path(tempdir(), "txc"), pattern = ".xml", full.names = TRUE)
   }
 
-  nrow(cal)
-  nrow(naptan)
+  #nrow(cal)
+  #nrow(naptan)
 
 
   files <- files[order(file.size(files), decreasing = TRUE)] # Large to small give optimum performance
