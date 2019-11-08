@@ -55,7 +55,7 @@ transxchange2gtfs <- function(path_in,
   message(paste0(Sys.time(), " Unzipping data to temp folder"))
   dir.create(file.path(tempdir(), "txc"))
   utils::unzip(path_in, exdir = file.path(tempdir(), "txc"))
-
+  message(paste0(Sys.time(), " Unzipping complete"))
 
   files <- list.files(file.path(tempdir(), "txc"), pattern = ".xml", full.names = TRUE)
   files <- files[order(file.size(files), decreasing = TRUE)] # Large to small give optimum performance
