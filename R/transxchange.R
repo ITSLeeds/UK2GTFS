@@ -49,6 +49,8 @@ transxchange2gtfs <- function(path_in,
     files <- list.files(file.path(tempdir(), "txc"), pattern = ".xml", full.names = TRUE)
   }
 
+  message(length(files)," xml files have been found")
+
   #nrow(cal)
   #nrow(naptan)
 
@@ -62,39 +64,80 @@ transxchange2gtfs <- function(path_in,
   #files = files[c(rbind(seq_up, seq_down))]
 
 
+
   if (ncores == 1) {
-    message(paste0(Sys.time(), " Importing TransXchange files"))
+    message(paste0(Sys.time(), " Importing TransXchange files, single core"))
     res_all <- pbapply::pblapply(files, transxchange_import, run_debug = TRUE, full_import = FALSE)
-    message(paste0(Sys.time(), " Converting to GTFS"))
+    message(paste0(Sys.time(), " Converting to GTFS, single core"))
     gtfs_all <- pbapply::pblapply(res_all, transxchange_export, run_debug = TRUE, cal = cal, naptan = naptan)
   } else {
-    cl <- parallel::makeCluster(ncores)
-    # parallel::clusterExport(
-    #   cl = cl,
-    #   varlist = c("files", "cal", "naptan"),
-    #   envir = environment()
+    # cl <- parallel::makeCluster(ncores)
+    # # parallel::clusterExport(
+    # #   cl = cl,
+    # #   varlist = c("files", "cal", "naptan"),
+    # #   envir = environment()
+    # # )
+    # parallel::clusterEvalQ(cl, {
+    #   library(UK2GTFS)
+    # })
+    # pbapply::pboptions(use_lb = FALSE)
+    # res_all <- pbapply::pblapply(files,
+    #                              transxchange_import,
+    #                              run_debug = TRUE,
+    #                              full_import = FALSE,
+    #                              cl = cl
     # )
-    parallel::clusterEvalQ(cl, {
-      library(UK2GTFS)
-    })
-    pbapply::pboptions(use_lb = TRUE)
-    message(paste0(Sys.time(), " Importing TransXchange files"))
-    res_all <- pbapply::pblapply(files,
-      transxchange_import,
-      run_debug = TRUE,
-      full_import = FALSE,
-      cl = cl
-    )
-    message(paste0(Sys.time(), " Converting to GTFS"))
-    gtfs_all <- pbapply::pblapply(res_all,
-      transxchange_export,
-      run_debug = TRUE,
-      cal = cal,
-      naptan = naptan,
-      cl = cl
-    )
+
+    message(paste0(Sys.time(), " Importing TransXchange files, multicore"))
+
+    pb <- utils::txtProgressBar(max = length(files), style = 3)
+    progress <- function(n) utils::setTxtProgressBar(pb, n)
+    opts <- list(progress = progress)
+    cl <- parallel::makeCluster(ncores)
+    doSNOW::registerDoSNOW(cl)
+    boot <- foreach::foreach(i = files, .options.snow = opts)
+    res_all <- foreach::`%dopar%`(boot, transxchange_import(i))
     parallel::stopCluster(cl)
     rm(cl)
+
+    message(paste0(Sys.time(), " Converting to GTFS, multicore"))
+    # cl <- parallel::makeCluster(ncores)
+    # # parallel::clusterExport(
+    # #   cl = cl,
+    # #   varlist = c("files", "cal", "naptan"),
+    # #   envir = environment()
+    # # )
+    # parallel::clusterEvalQ(cl, {
+    #   library(UK2GTFS)
+    # })
+    # gtfs_all <- pbapply::pblapply(res_all,
+    #   transxchange_export,
+    #   run_debug = TRUE,
+    #   cal = cal,
+    #   naptan = naptan,
+    #   cl = cl
+    # )
+    # parallel::stopCluster(cl)
+    pb <- utils::txtProgressBar(min = 0, max = length(res_all), style = 3)
+    progress <- function(n) utils::setTxtProgressBar(pb, n)
+    opts <- list(progress = progress)
+    cl <- parallel::makeCluster(ncores)
+    doSNOW::registerDoSNOW(cl)
+    boot <- foreach::foreach(i = 1:length(res_all), .options.snow = opts)
+    gtfs_all <- foreach::`%dopar%`(boot, {
+        transxchange_export(res_all[[i]], cal = cal, naptan = naptan)
+        #setTxtProgressBar(pb, i)
+    })
+
+    # gtfs_all <- foreach::foreach(i = 1:length(res_all), .options.snow = opts) foreach::`%dopar%` {
+    #   transxchange_export(res_all[[i]], cal = cal, naptan = naptan)
+    # }
+    # boot <- foreach::foreach(i = 1:length(res_all) .options.snow = opts)
+    # gtfs_all <- foreach::`%dopar%`(boot, transxchange_export(i))
+    parallel::stopCluster(cl)
+    rm(cl)
+
+
   }
   message(paste0(Sys.time(), " Merging GTFS objects"))
 
