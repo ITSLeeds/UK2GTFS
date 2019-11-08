@@ -36,28 +36,22 @@ transxchange2gtfs <- function(path_in,
   if (ncores == 1) {
     message(paste0(Sys.time(), " This will take some time, make sure you use 'ncores' to enable multi-core processing"))
   }
-  # zips <- list.files(path_in, pattern = ".zip", full.names = TRUE)
-  # if (length(zips) > 0) {
-  #   if (!silent) {
-  #     message(paste0(Sys.time(), " unzipping folders"))
-  #   }
-  #   dir.create(file.path(tempdir(), "txc"))
-  #   foo <- pbapply::pblapply(zips, function(x) {
-  #     utils::unzip(x, exdir = file.path(tempdir(), "txc"))
-  #   })
-  # } else {
-  #   stop("No zip folders found in path_in")
-  # }
+
+  if(length(path_in) > 1){
+    files <- files[substr(files, nchar(files)-4+1, nchar(files)) == ".xml"]
+  } else {
+    dir.create(file.path(tempdir(), "txc"))
+    message(paste0(Sys.time(), " Unzipping data to temp folder"))
+    utils::unzip(path_in, exdir = file.path(tempdir(), "txc"))
+    message(paste0(Sys.time(), " Unzipping complete"))
+
+    files <- list.files(file.path(tempdir(), "txc"), pattern = ".xml", full.names = TRUE)
+  }
+
   nrow(cal)
   nrow(naptan)
 
 
-  message(paste0(Sys.time(), " Unzipping data to temp folder"))
-  dir.create(file.path(tempdir(), "txc"))
-  utils::unzip(path_in, exdir = file.path(tempdir(), "txc"))
-  message(paste0(Sys.time(), " Unzipping complete"))
-
-  files <- list.files(file.path(tempdir(), "txc"), pattern = ".xml", full.names = TRUE)
   files <- files[order(file.size(files), decreasing = TRUE)] # Large to small give optimum performance
 
   # TO balance progress bars interleave files
