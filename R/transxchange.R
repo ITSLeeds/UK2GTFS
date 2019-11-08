@@ -13,6 +13,16 @@
 #'
 #' @details
 #'
+#' This is a meta fucntion which aids TransXchange to GTFS conversion. It simple runs
+#' transxchange_import(), transxchange_export(), gtfs_merge(), write_gtfs()
+#'
+#' Progress Bars
+#'
+#' To minimise overall processing when using mulitple cores the fucntion works
+#' from largest to smallest file.This can mean the progress bar sits a 0% for
+#' quite some time, before starting to move rapidly.
+#'
+#'
 #' @export
 
 
@@ -48,13 +58,13 @@ transxchange2gtfs <- function(path_in,
 
 
   files <- list.files(file.path(tempdir(), "txc"), pattern = ".xml", full.names = TRUE)
-  files = files[order(file.size(files))]
+  files <- files[order(file.size(files), decreasing = TRUE)] # Large to small give optimum performance
 
   # TO balance progress bars interleave files
-  seq_mid <- floor(length(files) / 2)
-  seq_up <- seq(1, seq_mid)
-  seq_down <- seq(length(files), seq_mid + 1)
-  files = files[c(rbind(seq_up, seq_down))]
+  #seq_mid <- floor(length(files) / 2)
+  #seq_up <- seq(1, seq_mid)
+  #seq_down <- seq(length(files), seq_mid + 1)
+  #files = files[c(rbind(seq_up, seq_down))]
 
 
   if (ncores == 1) {
@@ -92,7 +102,14 @@ transxchange2gtfs <- function(path_in,
     rm(cl)
   }
   message(paste0(Sys.time(), " Merging GTFS objects"))
-  gtfs_merged <- gtfs_merge(gtfs_all)
+
+
+  gtfs_merged <- try(gtfs_merge(gtfs_all))
+
+  if(class(gtfs_merged) == "try-error"){
+    message("Merging failed, returing unmerged GFTS object for analysis")
+    return(gtfs_all)
+  }
 
   message(paste0(Sys.time(), " Writing GTFS file"))
   write_gtfs(gtfs = gtfs_merged, folder = path_out, name = name)
