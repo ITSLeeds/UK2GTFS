@@ -209,6 +209,8 @@ clean_route_type <- function(rt) {
     return(1)
   } else if (rt == "tram") {
     return(0)
+  } else if (rt == "metro") {
+    return(1)
   } else {
     stop(paste0("Unknown route_type ", rt))
   }
