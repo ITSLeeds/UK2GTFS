@@ -11,6 +11,7 @@ License: file LICENSE
 Encoding: UTF-8
 LazyData: true
 Imports:
+  doSNOW,
   dplyr,
   sf,
   parallel,
@@ -21,11 +22,10 @@ Imports:
   iotools,
   jsonlite,
   lubridate,
-  tmap,
   xml2,
   zip,
   pbapply
 Suggests: knitr,
     rmarkdown
 VignetteBuilder: knitr
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.0
