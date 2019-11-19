@@ -197,7 +197,9 @@ clean_times <- function(x) {
 #' @param rt character route type
 #' @noRd
 clean_route_type <- function(rt) {
-  if (rt == "bus") {
+  if(is.na(rt)){
+    return(3)
+  } else if (rt == "bus") {
     return(3)
   } else if (rt == "ferry") {
     return(4)
