@@ -98,7 +98,7 @@ transxchange2gtfs <- function(path_in,
     boot <- foreach::foreach(i = files, .options.snow = opts)
     res_all <- foreach::`%dopar%`(boot, transxchange_import(i))
     parallel::stopCluster(cl)
-    rm(cl)
+    rm(cl, boot, opts, pb, progress)
 
     message(paste0(Sys.time(), " Converting to GTFS, multicore"))
     # cl <- parallel::makeCluster(ncores)
@@ -135,7 +135,7 @@ transxchange2gtfs <- function(path_in,
     # boot <- foreach::foreach(i = 1:length(res_all) .options.snow = opts)
     # gtfs_all <- foreach::`%dopar%`(boot, transxchange_export(i))
     parallel::stopCluster(cl)
-    rm(cl)
+    rm(cl, boot, opts, pb, progress)
 
 
   }

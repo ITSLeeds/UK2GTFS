@@ -48,6 +48,24 @@ gtfs_merge <- function(gtfs_list) {
   # fix duplicated agency_ids - special cases
   agency$agency_id[agency$agency_name == "Tanat Valley Coaches"] <- "TanVaCo"
 
+  # if agency names are same as IDs but not always
+  if(any(agency$agency_name == agency$agency_id)){
+    agency_sub <- agency
+    agency_sub$file_id <- NULL
+    agency_sub <- unique(agency)
+    id_dups <- agency_sub$agency_id[duplicated(agency_sub$agency_id)]
+    if(length(id_dups) > 0){
+      agency_sub <- agency_sub[agency_sub$agency_id %in% id_dups,]
+      agency_sub <- agency_sub[agency_sub$agency_id != agency_sub$agency_name,]
+      for(i in seq(1, nrow(agency_sub))){
+        agency$agency_name[agency$agency_name == agency_sub$agency_id[i]] <- agency_sub$agency_name[i]
+      }
+
+    } else {
+      rm(agency_sub, id_dups)
+    }
+  }
+
 
   # agency
   agency$file_id <- NULL
