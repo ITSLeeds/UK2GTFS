@@ -9,7 +9,7 @@
 #'  If export is NULL returns a list of data.frames else saves results to the `export` folder as a RDS file
 #' @export
 
-transxchange_import <- function(file, run_debug = FALSE, full_import = FALSE) {
+transxchange_import <- function(file, run_debug = TRUE, full_import = FALSE) {
   xml <- xml2::read_xml(file)
 
   ## StopPoints ##########################################

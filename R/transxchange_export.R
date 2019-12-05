@@ -311,8 +311,8 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
   trips[] <- lapply(trips, as.character)
 
 
-  trips$StartDate <- as.Date(Services_main$StartDate)
-  trips$EndDate <- as.Date(Services_main$EndDate)
+  trips$StartDate <- unique(Services_main$StartDate) # unique is bodge to add in support for mulitple services
+  trips$EndDate <- unique(Services_main$EndDate)
   # trips$service_id_temp <- seq(1,nrow(trips))
   trips$trip_id <- as.character(trips$trip_id)
 
