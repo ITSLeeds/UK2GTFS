@@ -100,6 +100,7 @@ transxchange2gtfs <- function(path_in,
     parallel::stopCluster(cl)
     rm(cl, boot, opts, pb, progress)
 
+    message(" ")
     message(paste0(Sys.time(), " Converting to GTFS, multicore"))
     # cl <- parallel::makeCluster(ncores)
     # # parallel::clusterExport(
@@ -139,6 +140,7 @@ transxchange2gtfs <- function(path_in,
 
 
   }
+  message(" ")
   message(paste0(Sys.time(), " Merging GTFS objects"))
 
 
