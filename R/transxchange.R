@@ -151,5 +151,5 @@ transxchange2gtfs <- function(path_in,
 
   message(paste0(Sys.time(), " Writing GTFS file"))
   write_gtfs(gtfs = gtfs_merged, folder = path_out, name = name)
-  unlink(file.path(tempdir(), "txc"))
+  unlink(file.path(tempdir(), "txc"), recursive = TRUE)
 }
