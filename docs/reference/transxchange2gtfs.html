@@ -124,15 +124,22 @@
     <p>TransXchange to GTFS</p>
     </div>
 
-    <pre class="usage"><span class='fu'>transxchange2gtfs</span>(<span class='no'>path_in</span>, <span class='no'>path_out</span>, <span class='kw'>name</span> <span class='kw'>=</span> <span class='st'>"gtfs"</span>, <span class='kw'>silent</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>ncores</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>cal</span> <span class='kw'>=</span> <span class='fu'><a href='get_bank_holidays.html'>get_bank_holidays</a></span>(), <span class='kw'>naptan</span> <span class='kw'>=</span> <span class='fu'><a href='get_naptan.html'>get_naptan</a></span>())</pre>
+    <pre class="usage"><span class='fu'>transxchange2gtfs</span>(
+  <span class='no'>path_in</span>,
+  <span class='no'>path_out</span>,
+  <span class='kw'>name</span> <span class='kw'>=</span> <span class='st'>"gtfs"</span>,
+  <span class='kw'>silent</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>ncores</span> <span class='kw'>=</span> <span class='fl'>1</span>,
+  <span class='kw'>cal</span> <span class='kw'>=</span> <span class='fu'><a href='get_bank_holidays.html'>get_bank_holidays</a></span>(),
+  <span class='kw'>naptan</span> <span class='kw'>=</span> <span class='fu'><a href='get_naptan.html'>get_naptan</a></span>()
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>path_in</th>
-      <td><p>Path to ATOC File</p></td>
+      <td><p>Path to zipped transxchange files</p></td>
     </tr>
     <tr>
       <th>path_out</th>
@@ -163,8 +170,12 @@
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>Convert transxchange files to GTFS</p>
-
-
+<p>This is a meta fucntion which aids TransXchange to GTFS conversion. It simple runs
+transxchange_import(), transxchange_export(), gtfs_merge(), write_gtfs()</p>
+<p>Progress Bars</p>
+<p>To minimise overall processing when using mulitple cores the fucntion works
+from largest to smallest file.This can mean the progress bar sits a 0<!-- % for -->
+quite some time, before starting to move rapidly.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -184,7 +195,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.</p>
 </div>
 
       </footer>

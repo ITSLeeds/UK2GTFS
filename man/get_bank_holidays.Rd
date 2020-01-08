@@ -2,14 +2,15 @@
 % Please edit documentation in R/get_cal.R
 \name{get_bank_holidays}
 \alias{get_bank_holidays}
-\title{get bank holidays}
+\title{Get Bank Holiday Calendar}
 \usage{
-
-  get_bank_holidays(url = "https://www.gov.uk/bank-holidays/england-and-wales.ics")
+get_bank_holidays(
+  url = "https://www.gov.uk/bank-holidays/england-and-wales.ics"
+)
 }
 \arguments{
 \item{url}{url to ics file}
 }
 \description{
-Donload the UK bank holidays
+Downloads and formats the bank holiday calendar for use with TransXchange data.
 }

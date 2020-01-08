@@ -1,10 +1,11 @@
-#' get bank holidays
+#' Get Bank Holiday Calendar
 #'
-#' Donload the UK bank holidays
+#' Downloads and formats the bank holiday calendar for use with TransXchange data.
 #' @param url url to ics file
 #' @export
 #'
 get_bank_holidays <- function(url = "https://www.gov.uk/bank-holidays/england-and-wales.ics") {
+  message("Scottish holidays not yet supported")
   utils::download.file(url = url, destfile = "bankholidays.ics")
   cal <- as.data.frame(calendar::ic_read("bankholidays.ics"))
   file.remove("bankholidays.ics")

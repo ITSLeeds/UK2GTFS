@@ -28,4 +28,4 @@ Imports:
 Suggests: knitr,
     rmarkdown
 VignetteBuilder: knitr
-RoxygenNote: 7.0.0
+RoxygenNote: 7.0.2

@@ -4,7 +4,7 @@
 \alias{transxchange_import}
 \title{Import a TransXchange XML file}
 \usage{
-transxchange_import(file, run_debug = FALSE, full_import = FALSE)
+transxchange_import(file, run_debug = TRUE, full_import = FALSE)
 }
 \arguments{
 \item{file}{character, path to an XML file e.g. "C:/data/file.xml"}

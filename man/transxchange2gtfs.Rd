@@ -4,8 +4,15 @@
 \alias{transxchange2gtfs}
 \title{TransXchange to GTFS}
 \usage{
-transxchange2gtfs(path_in, path_out, name = "gtfs", silent = TRUE,
-  ncores = 1, cal = get_bank_holidays(), naptan = get_naptan())
+transxchange2gtfs(
+  path_in,
+  path_out,
+  name = "gtfs",
+  silent = TRUE,
+  ncores = 1,
+  cal = get_bank_holidays(),
+  naptan = get_naptan()
+)
 }
 \arguments{
 \item{path_in}{Path to zipped transxchange files}
@@ -28,5 +35,12 @@ TransXchange to GTFS
 \details{
 Convert transxchange files to GTFS
 
+This is a meta fucntion which aids TransXchange to GTFS conversion. It simple runs
+transxchange_import(), transxchange_export(), gtfs_merge(), write_gtfs()
 
+Progress Bars
+
+To minimise overall processing when using mulitple cores the fucntion works
+from largest to smallest file.This can mean the progress bar sits a 0% for
+quite some time, before starting to move rapidly.
 }
