@@ -19,50 +19,59 @@ trips2shapes <- function(trips, routes, stops, stop_times, ncores = 1) {
   stops_rail <- stops[stops$stop_id %in% stop_times_rail$stop_id, ]
 
   # read in map
-  rail <- sf::st_read("./data/railway.gpkg")
-  rail$geometry <- rail$geom
-  sf::st_crs(rail) <- 27700
+  #rail <- sf::st_read("./data/railway.gpkg")
+  rail <- rail
+  #rail$geometry <- rail$geom
+  #sf::st_crs(rail) <- 27700
   # rail = sf::st_read("./data/railway_fixed.shp")
   # rail = rail[,c("id","type","geometry")]
   # st_crs(rail) = 27700
   # write_sf(rail,"./data/railway.gpkg", delete_dsn = T)
-  rail <- sf::st_transform(rail, 27700)
-  rail <- rail[rail$type == "rail", ]
-
+  #rail <- sf::st_transform(rail, 27700)
+  rail_heavy <- rail[rail$type == "rail", ]
+  rail_light <- rail[rail$type == "light_rail", ]
   # rail = sf::st_transform(rail, 27700)
   # rail$railway = "rail"
   # rail$id = 1:nrow(rail)
   # make graph
   # make a graph
   wts <- c(1)
-  names(wts) <- as.character(unique(rail$type))
-  graph <- dodgr::weight_streetnet(rail, type_col = "type", wt_profile = wts, id_col = "id")
+  names(wts) <- as.character(unique(rail_heavy$type))
+  graph <- dodgr::weight_streetnet(rail_heavy, type_col = "type", wt_profile = wts, id_col = "id")
 
   # match stops to graph
   verts <- dodgr::dodgr_vertices(graph)
-  stops.bng <- sf::st_as_sf(stops_rail, coords = c("stop_lon", "stop_lat"), crs = 4326)
-  stops.bng <- sf::st_transform(stops.bng, 27700)
-  stops.bng.coords <- sf::st_coordinates(stops.bng)
-  stops.bng$X <- stops.bng.coords[, 1]
-  stops.bng$Y <- stops.bng.coords[, 2]
-  stops.bng <- as.data.frame(stops.bng)
-  # stops.bng = sf::st_coordinates(stops)
+  dists <- geodist::geodist(stops[,c("stop_lon", "stop_lat")], verts[,c("x","y")],
+                            paired = FALSE, sequential = FALSE, pad = FALSE,measure = "cheap")
 
-  # near = RANN::nn2(data = verts[,c("x","y")], query = stops[,c("stop_lon","stop_lat")], k = 1)
+  stops$vert <- apply(dists, 1, which.min)
+  stops$dist <- apply(dists, 1, min)
 
-  near <- RANN::nn2(data = verts[, c("x", "y")], query = stops.bng[, c("X", "Y")], k = 1)
-  near.dist <- near[["nn.dists"]][, 1]
-  near.index <- near[["nn.idx"]][, 1]
-
-  stops_rail$vert <- near.index
-  stops_rail$dist <- round(near.dist, 2)
-
-  stops.bng$vert <- near.index
-  stops.bng$dist <- round(near.dist, 2)
+  # stops.bng <- sf::st_as_sf(stops_rail, coords = c("stop_lon", "stop_lat"), crs = 4326)
+  # stops.bng <- sf::st_transform(stops.bng, 27700)
+  # stops.bng.coords <- sf::st_coordinates(stops.bng)
+  # stops.bng$X <- stops.bng.coords[, 1]
+  # stops.bng$Y <- stops.bng.coords[, 2]
+  # stops.bng <- as.data.frame(stops.bng)
+  # #stops.bng = sf::st_coordinates(stops)
+  #
+  # #near <- RANN::nn2(data = verts[,c("x","y")], query = stops[,c("stop_lon","stop_lat")], k = 1)
+  #
+  # near <- RANN::nn2(data = verts[, c("x", "y")], query = stops.bng[, c("X", "Y")], k = 1)
+  # near.dist <- near[["nn.dists"]][, 1]
+  # near.index <- near[["nn.idx"]][, 1]
+  #
+  # stops_rail$vert <- near.index
+  # stops_rail$dist <- round(near.dist, 2)
+  #
+  # stops.bng$vert <- near.index
+  # stops.bng$dist <- round(near.dist, 2)
 
   # stops$vert[stops$dist > 100] = NA
-  foo <- stops.bng[stops.bng$dist > 40, ]
-  # foo = sf::st_as_sf(foo, coords = c("stop_lon","stop_lat"), crs = 4326)
+  #foo <- stops.bng[stops.bng$dist > 40, ]
+
+  foo = stops[stops$dist > 40,]
+  foo = sf::st_as_sf(foo, coords = c("stop_lon","stop_lat"), crs = 4326)
   foo <- sf::st_sf(foo)
   qtm(foo[, ]) # +
   # qtm(rail)

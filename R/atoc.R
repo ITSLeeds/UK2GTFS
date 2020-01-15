@@ -48,10 +48,15 @@ atoc2gtfs <- function(path_in, path_out, name = "gtfs", silent = TRUE, ncores = 
   }
 
   # Read In each File
-  alf <- importALF(files[grepl(".alf", files)])
-  flf <- importFLF(files[grepl(".flf", files)])
-  mca <- importMCA(file = files[grepl(".mca", files)], silent = silent, ncores = 1)
-  msn <- importMSN(files[grepl(".msn", files)], silent = silent)
+  # alf <- importALF(files[grepl(".alf", files)])
+  # flf <- importFLF(files[grepl(".flf", files)])
+  if ("sf" %in% class(locations)) {
+    mca <- importMCA(file = files[grepl(".mca", files)], silent = silent, ncores = 1)
+  } else if (locations == "file") {
+    mca <- importMCA(file = files[grepl(".mca", files)], silent = silent, ncores = 1, full_import = TRUE)
+  } else {
+    mca <- importMCA(file = files[grepl(".mca", files)], silent = silent, ncores = 1)
+  }
   # ztr = importMCA(files[grepl(".ztr",files)], silent = silent)
 
   # Get the Station Locations
@@ -65,6 +70,7 @@ atoc2gtfs <- function(path_in, path_out, name = "gtfs", silent = TRUE, ncores = 
     stops$stop_lon <- round(stops$stop_lon, 5)
     stops$valid <- NULL
   } else if (locations == "file") {
+    msn <- importMSN(files[grepl(".msn", files)], silent = silent)
     station <- msn[[1]]
     TI <- mca[["TI"]]
     stops.list <- station2stops(station = station, TI = TI)
@@ -76,6 +82,9 @@ atoc2gtfs <- function(path_in, path_out, name = "gtfs", silent = TRUE, ncores = 
   # Construct the GTFS
   stop_times <- mca[["stop_times"]]
   schedule <- mca[["schedule"]]
+  rm(mca)
+  gc()
+  #rm(alf, flf, mca, msn)
 
   stop_times <- stop_times[, c("Scheduled Arrival Time", "Scheduled Departure Time", "Location", "stop_sequence", "Activity", "rowID", "schedule")]
   names(stop_times) <- c("arrival_time", "departure_time", "stop_id", "stop_sequence", "Activity", "rowID", "schedule")
@@ -85,11 +94,19 @@ atoc2gtfs <- function(path_in, path_out, name = "gtfs", silent = TRUE, ncores = 
 
   # Main Timetable Build
   timetables <- schedule2routes(stop_times = stop_times, schedule = schedule, silent = silent, ncores = ncores)
-
+  rm(schedule)
+  gc()
   # load("data/atoc_agency.RData")
+
+  #TODO: check for stop_times that are not valid stops
 
   timetables$agency <- agency
   timetables$stops <- stops
 
-  write_gtfs(timetables, folder = path_out, name = name)
+  # Build Shapes
+  if(TRUE){
+    return(timetables)
+  } else {
+    write_gtfs(timetables, folder = path_out, name = name)
+  }
 }

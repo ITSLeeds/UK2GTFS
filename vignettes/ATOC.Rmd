@@ -65,6 +65,32 @@ source("../R/atoc_main.R")
 atoc2gtfs(path_in = path_in, path_out = path_out, silent = silent, ncores = ncores)
 ```
 
+```{r setup, eval=FALSE}
+path_in = "~/data/ttis508.zip"
+path_out = "~/data"
+ncores = 3
+silent = FALSE
+name = "gtfs"
+library(UK2GTFS)
+load("../data/rail_heavy.rda")
+source("../R/atoc.R")
+source("../R/atoc_export.R")
+source("../R/atoc_import.R")
+source("../R/atoc_main.R")
+timetables <- atoc2gtfs(path_in = path_in, path_out = path_out, silent = silent, ncores = ncores)
+saveRDS(timetables,"ATOC_timetables.Rds")
+timetables <- readRDS("ATOC_timetables.Rds")
+shapes <- trips2shapes(trips = timetables$trips,
+                           routes = timetables$routes,
+                           stops = timetables$stops,
+                           stop_times = timetables$stop_times,
+                           ncores = ncores)
+
+
+```
+
+
+
 ## Making Shapes 
 
 ```{r, eval=FALSE}
