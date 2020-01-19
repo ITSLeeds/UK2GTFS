@@ -11,7 +11,15 @@
 #' @noRd
 #'
 #'
-trips2shapes <- function(trips, routes, stops, stop_times, ncores = 1) {
+trips2shapes <- function(gtfs, ncores = 1, agency = gtfs$agency$agency_id[1]) {
+
+  trips <- gtfs$trips
+  routes <- gtfs$routes
+  stops <- gtfs$stops
+  stop_times <- gtfs$stop_times
+  #rm(gtfs)
+  routes <- routes[routes$agency_id == agency,]
+
 
   # Make Graph of Railway
   #rail <- rail
@@ -76,12 +84,20 @@ trips2shapes <- function(trips, routes, stops, stop_times, ncores = 1) {
   # Convert to Linestrings
   dp.list <- unlist(dp.list, recursive = FALSE)
 
-  path_to_sf <- function(dp, verts) {
+  path_to_sf <- function(dp, verts, simplify = TRUE) {
     # Check for emplyr paths
     if (length(dp) > 0) {
       path <- verts[match(dp, verts$id), ]
       path <- matrix(c(path$x, path$y), ncol = 2)
       path <- sf::st_linestring(path)
+
+      if(simplify){
+        path <- sf::st_as_sfc(list(path), crs = 4326)
+        path <- sf::st_transform(path, 27700)
+        path <- sf::st_simplify(path, 5, preserveTopology = TRUE)
+        path <- sf::st_transform(path, 4326)
+        path <- path[[1]]
+      }
       return(path)
     } else {
       return(NA)
@@ -142,7 +158,7 @@ trips2shapes <- function(trips, routes, stops, stop_times, ncores = 1) {
     }
     shapes <- as.data.frame(sf::st_coordinates(shapes))
     names(shapes) <- c("shape_pt_lon","shape_pt_lat","L1")
-    shapes$L1 <- NULL
+    shapes <- shapes[,c("shape_pt_lon","shape_pt_lat")]
     shapes$trip_id <- x$trip_id[1]
     shapes$shape_pt_sequence <- seq(1, nrow(shapes))
 
@@ -170,10 +186,10 @@ trips2shapes <- function(trips, routes, stops, stop_times, ncores = 1) {
 
   stop_times_rail <- lapply(shape_res, `[[`, 2)
   shapes <- lapply(shape_res, `[[`, 1)
-  rm(shape_res)
+  rm(shape_res, st_split, trips_rail, stops_rail)
   gc()
   stop_times_rail <- dplyr::bind_rows(stop_times_rail)
-  shapes <- dplyr::bind_rows(shapes, .id = "shape_id")
+  shapes2 <- dplyr::bind_rows(shapes, .id = "shape_id")
   # dists <- geodist::geodist(stops_rail[,c("stop_lon", "stop_lat")], verts[,c("x","y")],
   #                           paired = FALSE, sequential = FALSE, pad = FALSE,measure = "cheap")
   #
