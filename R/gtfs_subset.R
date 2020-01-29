@@ -1,3 +1,8 @@
+#' Split a gtfs file by location
+#'
+#' @param gtfs a gtfs object
+#' @param bounds an sf object
+#' @export
 gtfs_subset <- function(gtfs, bounds) {
   stops <- gtfs$stops
   stop_times <- gtfs$stop_times
