@@ -21,7 +21,7 @@ gtfs_subset <- function(gtfs, bounds) {
   # qtm(stops2)
 
   tripids <- unique(stop_times$trip_id[stop_times$stop_id %in% stops_inc$stop_id])
-  gtfs <- gtfs_split(gtfs_merged, tripids)
+  gtfs <- gtfs_split_ids(gtfs, tripids)
   gtfs <- gtfs$true
   return(gtfs)
 }
