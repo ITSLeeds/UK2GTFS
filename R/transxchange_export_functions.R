@@ -64,7 +64,9 @@ list_exclude_days <- function(exclude_days) {
 list_include_days <- function(include_days) {
   res <- mapply(
     function(ExStartTime, ExEndTime) {
-      seq(ExStartTime, ExEndTime, by = "days")
+      if(ExEndTime >= ExStartTime){
+        seq.Date(ExStartTime, ExEndTime, by = "days")
+      }
     },
     include_days$StartDate,
     include_days$EndDate
