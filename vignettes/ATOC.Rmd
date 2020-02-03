@@ -65,7 +65,7 @@ source("../R/atoc_main.R")
 atoc2gtfs(path_in = path_in, path_out = path_out, silent = silent, ncores = ncores)
 ```
 
-```{r setup, eval=FALSE}
+```{r setup2, eval=FALSE}
 path_in = "~/data/ttis508.zip"
 path_out = "~/data"
 ncores = 5

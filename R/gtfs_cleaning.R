@@ -98,3 +98,15 @@ gtfs_fast_trips <- function(gtfs, maxspeed = 30) {
   fast_trips <- times$trip_id[times$speed > maxspeed]
   return(fast_trips)
 }
+
+
+#' Clean simple errors from GTFS files
+#'
+#' @param gtfs gtfs list
+#' @export
+gtfs_clean <- function(gtfs){
+  # 1 Remove stops with no locations
+  gtfs$stop_times <- gtfs$stop_times[gtfs$stop_times$stop_id %in% unique(gtfs$stops$stop_id),]
+
+  return(gtfs)
+}
