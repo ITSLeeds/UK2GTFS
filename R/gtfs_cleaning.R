@@ -108,5 +108,8 @@ gtfs_clean <- function(gtfs){
   # 1 Remove stops with no locations
   gtfs$stop_times <- gtfs$stop_times[gtfs$stop_times$stop_id %in% unique(gtfs$stops$stop_id),]
 
+  # 2 Remove stops that are never used
+  gtfs$stops <- gtfs$stops[gtfs$stops$stop_id %in% unique(gtfs$stop_times$stop_id),]
+
   return(gtfs)
 }
