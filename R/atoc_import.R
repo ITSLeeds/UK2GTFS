@@ -85,7 +85,8 @@ importFLF <- function(file) {
 
   # Bind dother a few columns
   table[[1]] <- paste0(table[[1]], " ", table[[2]])
-  names(table) <- c("Type", "del1", "Mode", "del2", "from", "del3", "to", "del4", "time", "units")
+  names(table) <- c("Type", "del1", "Mode", "del2", "from", "del3",
+                    "to", "del4", "time", "units")
   table <- table[, c("Type", "Mode", "from", "to", "time", "units")]
   return(table)
 }
@@ -149,7 +150,8 @@ importMSN <- function(file, silent = TRUE) {
   )
 
   station$Reserved1 <- NULL
-  # n.b. merging Reserved2 into station name as that is what is seems to be for
+  # n.b. merging Reserved2 into station name as that is what is seems to
+  # be for
   station$Reserved3 <- NULL
   station$Reserved4 <- NULL
   station$Reserved5 <- NULL
@@ -164,7 +166,9 @@ importMSN <- function(file, silent = TRUE) {
   station$`Ordnance Survey Grid Ref East` <- station$`Ordnance Survey Grid Ref East` * 100 - 1e6
   station$`Ordnance Survey Grid Ref North` <- station$`Ordnance Survey Grid Ref North` * 100 - 6e6
 
-  station <- sf::st_as_sf(station, coords = c("Ordnance Survey Grid Ref East", "Ordnance Survey Grid Ref North"), crs = 27700)
+  station <- sf::st_as_sf(station, coords = c("Ordnance Survey Grid Ref East",
+                                              "Ordnance Survey Grid Ref North"),
+                          crs = 27700)
   station <- sf::st_transform(station, 4326)
 
   # GB Timetable numbers
@@ -181,10 +185,12 @@ importMSN <- function(file, silent = TRUE) {
     widths = c(1, 4, 26 + 4, 45)
   )
 
-  names(timetable) <- c("Record Type", "Reserved1", "Station Name", "GBTT numbers")
+  names(timetable) <- c("Record Type", "Reserved1", "Station Name",
+                        "GBTT numbers")
 
   timetable$Reserved1 <- NULL
-  # n.b. merging Reserved2 into station name as that is what is seems to be for
+  # n.b. merging Reserved2 into station name as that is what is seems
+  # to be for
   timetable$`Record Type` <- NULL
 
   timetable <- strip_whitespace(timetable)
@@ -216,10 +222,12 @@ importMSN <- function(file, silent = TRUE) {
     widths = c(1, 4, 26 + 5, 26, 20)
   )
 
-  names(alias) <- c("Record Type", "Reserved1", "Station Name", "Station Alias", "Reserved3")
+  names(alias) <- c("Record Type", "Reserved1", "Station Name",
+                    "Station Alias", "Reserved3")
 
   alias$Reserved1 <- NULL
-  # n.b. merging Reserved2 into station name as that is what is seems to be for
+  # n.b. merging Reserved2 into station name as that is what is seems
+  # to be for
   alias$Reserved3 <- NULL
   alias$`Record Type` <- NULL
   alias <- strip_whitespace(alias)
@@ -232,7 +240,8 @@ importMSN <- function(file, silent = TRUE) {
 #' Strip White Space
 #'
 #' @details
-#' Strips whitespace from a dataframe of charters vectors and returns the data frame
+#' Strips whitespace from a dataframe of charters vectors and returns
+#'     the data frame
 #'
 #' @param df data frame
 #' @noRd
@@ -282,14 +291,17 @@ importMCA <- function(file, silent = TRUE, ncores = 1, full_import = FALSE) {
   BS <- iotools::dstrfw(
     x = BS,
     col_types = rep("character", 26),
-    widths = c(2, 1, 6, 6, 6, 7, 1, 1, 2, 4, 4, 1, 8, 1, 3, 4, 3, 6, 1, 1, 1, 1, 4, 4, 1, 1)
+    widths = c(2, 1, 6, 6, 6, 7, 1, 1, 2, 4, 4, 1, 8, 1, 3, 4, 3,
+               6, 1, 1, 1, 1, 4, 4, 1, 1)
   )
   names(BS) <- c(
-    "Record Identity", "Transaction Type", "Train UID", "Date Runs From", "Date Runs To",
-    "Days Run", "Bank Holiday Running", "Train Status", "Train Category", "Train Identity",
-    "Headcode", "Course Indicator", "Profit Centre Code/ Train Service Code", "Business Sector",
-    "Power Type", "Timing Load", "Speed", "Operating Chars", "Train Class", "Sleepers", "Reservations",
-    "Connect Indicator", "Catering Code", "Service Branding", "Spare", "STP indicator"
+    "Record Identity", "Transaction Type", "Train UID", "Date Runs From",
+    "Date Runs To", "Days Run", "Bank Holiday Running", "Train Status",
+    "Train Category", "Train Identity", "Headcode", "Course Indicator",
+    "Profit Centre Code/ Train Service Code", "Business Sector",
+    "Power Type", "Timing Load", "Speed", "Operating Chars",
+    "Train Class", "Sleepers", "Reservations","Connect Indicator",
+    "Catering Code", "Service Branding", "Spare", "STP indicator"
   )
 
   BS$Spare <- NULL
@@ -322,8 +334,8 @@ importMCA <- function(file, silent = TRUE, ncores = 1, full_import = FALSE) {
     widths = c(2, 4, 5, 2, 1, 8, 1, 57)
   )
   names(BX) <- c(
-    "Record Identity", "Traction Class", "UIC Code", "ATOC Code", "Applicable Timetable Code",
-    "Retail Train ID", "Source", "Spare"
+    "Record Identity", "Traction Class", "UIC Code", "ATOC Code",
+    "Applicable Timetable Code", "Retail Train ID", "Source", "Spare"
   )
   BX$Spare <- NULL
   BX$`Record Identity` <- NULL
@@ -344,8 +356,10 @@ importMCA <- function(file, silent = TRUE, ncores = 1, full_import = FALSE) {
     widths = c(2, 7, 1, 5, 4, 3, 3, 2, 2, 12, 2, 37)
   )
   names(LO) <- c(
-    "Record Identity", "Location", "Suffix", "Scheduled Departure Time", "Public Departure Time", "Platform",
-    "Line", "Engineering Allowance", "Pathing Allowance", "Pathing Allowance", "Performance Allowance", "Spare"
+    "Record Identity", "Location", "Suffix", "Scheduled Departure Time",
+    "Public Departure Time", "Platform", "Line", "Engineering Allowance",
+    "Pathing Allowance", "Pathing Allowance", "Performance Allowance",
+    "Spare"
   )
   LO$Spare <- NULL
   LO$`Record Identity` <- NULL
@@ -368,9 +382,11 @@ importMCA <- function(file, silent = TRUE, ncores = 1, full_import = FALSE) {
     widths = c(2, 7, 1, 5, 5, 5, 4, 4, 3, 3, 3, 12, 2, 2, 2, 20)
   )
   names(LI) <- c(
-    "Record Identity", "Location", "Suffix", "Scheduled Arrival Time", "Scheduled Departure Time",
-    "Scheduled Pass", "Public Arrival Time", "Public Departure Time", "Platform", "Line",
-    "Path", "Activity", "Engineering Allowance", "Pathing Allowance", "Performance Allowance", "Spare"
+    "Record Identity", "Location", "Suffix", "Scheduled Arrival Time",
+    "Scheduled Departure Time", "Scheduled Pass", "Public Arrival Time",
+    "Public Departure Time", "Platform", "Line", "Path", "Activity",
+    "Engineering Allowance", "Pathing Allowance", "Performance Allowance",
+    "Spare"
   )
   LI$Spare <- NULL
   LI$`Record Identity` <- NULL
@@ -393,7 +409,8 @@ importMCA <- function(file, silent = TRUE, ncores = 1, full_import = FALSE) {
   LI$`Scheduled Arrival Time` <- gsub("H", "", LI$`Scheduled Arrival Time`)
   LI$`Scheduled Departure Time` <- gsub("H", "", LI$`Scheduled Departure Time`)
 
-  LI <- LI[, c("Location", "Scheduled Arrival Time", "Scheduled Departure Time", "Activity", "rowID")]
+  LI <- LI[, c("Location", "Scheduled Arrival Time",
+               "Scheduled Departure Time", "Activity", "rowID")]
 
 
 
@@ -408,8 +425,8 @@ importMCA <- function(file, silent = TRUE, ncores = 1, full_import = FALSE) {
     widths = c(2, 7, 1, 5, 4, 3, 3, 12, 43)
   )
   names(LT) <- c(
-    "Record Identity", "Location", "Suffix", "Scheduled Arrival Time", "Public Arrival Time",
-    "Platform", "Path", "Activity", "Spare"
+    "Record Identity", "Location", "Suffix", "Scheduled Arrival Time",
+    "Public Arrival Time", "Platform", "Path", "Activity", "Spare"
   )
   LT$Spare <- NULL
   LT$`Record Identity` <- NULL
@@ -431,13 +448,16 @@ importMCA <- function(file, silent = TRUE, ncores = 1, full_import = FALSE) {
     CR <- iotools::dstrfw(
       x = CR,
       col_types = rep("character", 22),
-      widths = c(2, 8, 2, 4, 4, 1, 8, 1, 3, 4, 3, 6, 1, 1, 1, 1, 4, 4, 4, 5, 8, 5)
+      widths = c(2, 8, 2, 4, 4, 1, 8, 1, 3, 4, 3, 6, 1, 1, 1, 1, 4,
+                 4, 4, 5, 8, 5)
     )
     names(CR) <- c(
-      "Record Identity", "Location", "Train Category", "Train Identity", "Headcode", "Course Indicator",
-      "Profit Centre Code/ Train Service Code", "Business Sector", "Power Type", "Timing Load", "Speed",
-      "Operating Chars", "Train Class", "Sleepers", "Reservations", "Connect Indicator", "Catering Code",
-      "Service Branding", "Traction Class", "UIC Code", "Retail Train ID", "Spare"
+      "Record Identity", "Location", "Train Category", "Train Identity",
+      "Headcode", "Course Indicator", "Profit Centre Code/ Train Service Code",
+      "Business Sector", "Power Type", "Timing Load", "Speed",
+      "Operating Chars", "Train Class", "Sleepers", "Reservations",
+      "Connect Indicator", "Catering Code", "Service Branding",
+      "Traction Class", "UIC Code", "Retail Train ID", "Spare"
     )
     CR$Spare <- NULL
     CR$`Record Identity` <- NULL
@@ -456,7 +476,8 @@ importMCA <- function(file, silent = TRUE, ncores = 1, full_import = FALSE) {
       widths = c(2, 7, 2, 6, 1, 26, 5, 4, 3, 16, 8)
     )
     names(TI) <- c(
-      "Record Identity", "TIPLOC code", "Capitals", "NALCO", "NLC Check Character", "TPS Description",
+      "Record Identity", "TIPLOC code", "Capitals", "NALCO",
+      "NLC Check Character", "TPS Description",
       "STANOX", "PO MCP Code", "CRS Code", "Description", "Spare"
     )
     TI$Spare <- NULL
@@ -477,8 +498,9 @@ importMCA <- function(file, silent = TRUE, ncores = 1, full_import = FALSE) {
       widths = c(2, 7, 2, 6, 1, 26, 5, 4, 3, 16, 7, 1)
     )
     names(TA) <- c(
-      "Record Identity", "TIPLOC code", "Capitals", "NALCO", "NLC Check Character", "TPS Description",
-      "STANOX", "PO MCP Code", "CRS Code", "Description", "New TIPLOC", "Spare"
+      "Record Identity", "TIPLOC code", "Capitals", "NALCO",
+      "NLC Check Character", "TPS Description", "STANOX", "PO MCP Code",
+      "CRS Code", "Description", "New TIPLOC", "Spare"
     )
     TA$Spare <- NULL
     TA$`Record Identity` <- NULL
@@ -519,9 +541,11 @@ importMCA <- function(file, silent = TRUE, ncores = 1, full_import = FALSE) {
       widths = c(2, 1, 6, 6, 6, 6, 7, 2, 1, 7, 1, 1, 1, 1, 31, 1)
     )
     names(AA) <- c(
-      "Record Identity", "Transaction Type", "Base UID", "Assoc UID", "Assoc Start date", "Assoc End date",
-      "Assoc Days", "Assoc Cat", "Assoc Date Ind", "Assoc Location", "Base Location Suffix", "Assoc Location Suffix",
-      "Diagram Type", "Association Type", "Filler", "STP indicator"
+      "Record Identity", "Transaction Type", "Base UID", "Assoc UID",
+      "Assoc Start date", "Assoc End date", "Assoc Days", "Assoc Cat",
+      "Assoc Date Ind", "Assoc Location", "Base Location Suffix",
+      "Assoc Location Suffix", "Diagram Type", "Association Type",
+      "Filler", "STP indicator"
     )
 
     AA$Filler <- NULL
@@ -544,8 +568,6 @@ importMCA <- function(file, silent = TRUE, ncores = 1, full_import = FALSE) {
     AA$rowID <- seq(from = 1, to = length(types))[types == "AA"]
   }
 
-
-  # Trailer Record
   # Trailer Record
   if (!silent) {
     message(paste0(Sys.time(), " importing Trailer Record"))
@@ -569,7 +591,9 @@ importMCA <- function(file, silent = TRUE, ncores = 1, full_import = FALSE) {
   }
   stop_times <- dplyr::bind_rows(list(LO, LI, LT))
   stop_times <- stop_times[order(stop_times$rowID), ]
-  stop_times$schedule <- as.integer(as.character(cut(stop_times$rowID, c(BS$rowID, ZZ$rowID[1]), labels = BS$rowID)))
+  stop_times$schedule <- as.integer(as.character(cut(stop_times$rowID,
+                                                     c(BS$rowID, ZZ$rowID[1]),
+                                                     labels = BS$rowID)))
   stop_times$stop_sequence <- sequence(rle(stop_times$schedule)$lengths)
 
 
