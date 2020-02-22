@@ -64,7 +64,7 @@ list_exclude_days <- function(exclude_days) {
 list_include_days <- function(include_days) {
   res <- mapply(
     function(ExStartTime, ExEndTime) {
-      if(ExEndTime >= ExStartTime){
+      if (ExEndTime >= ExStartTime) {
         seq.Date(ExStartTime, ExEndTime, by = "days")
       }
     },
@@ -114,9 +114,6 @@ classify_exclusions <- function(ExStartTime, ExEndTime, StartDate, EndDate) {
 clean_times <- function(x) {
   x <- as.character(x)
   x <- gsub("PT", "", x)
-  # x <- strsplit(x,"M")
-  # mins <- grepl("M",x)
-  # secs <- grepl("S",x)
 
   help_times3 <- function(x_sub) {
     if (is.na(x_sub)) {
@@ -151,45 +148,7 @@ clean_times <- function(x) {
     return(secs + (mins * 60) + (hours * 3600))
   }
 
-  # help_times2 <- function(x_sub){
-  #   if(length(x_sub) == 2){
-  #     if(!grepl("S",x_sub[2])){stop("Unknwown Time Structure")}
-  #     time <- (as.integer(x_sub[1]) * 60) +  as.integer(gsub("S","",x_sub[2]))
-  #   }else if(length(x_sub) == 1){
-  #     if(grepl("S",x_sub)){
-  #       time <- as.integer(gsub("S","",x_sub))
-  #     }else if(is.na(x_sub)){
-  #       time <- 0
-  #     }else{
-  #       time <- (as.integer(x_sub) * 60)
-  #     }
-  #   }else{
-  #     stop("Terrible error")
-  #   }
-  # }
 
-  # help_times <- function(x_sub, min_sub, secs_sub){
-  #   if(min_sub & secs_sub){
-  #     # Mins and Seconds
-  #     message("Mins and Secs")
-  #     stop()
-  #   }else if(min_sub & !secs_sub){
-  #     # Mins only
-  #     time <- as.numeric(gsub("M","",x_sub)) * 60
-  #   }else if(!min_sub & secs_sub){
-  #     # Secs only
-  #     time <- as.numeric(gsub("S","",x_sub))
-  #   }else if(!min_sub & !secs_sub){
-  #     # Neither, due to NAs
-  #     time <- 0
-  #   }else{
-  #     message("Terrible error")
-  #     stop()
-  #   }
-  #   #time <- unname(time)
-  #   return(time)
-  # }
-  # times <- unname(mapply(help_times, x_sub = x, min_sub = mins, secs_sub = secs, SIMPLIFY = T))
   times <- sapply(x, help_times3)
   return(times)
 }
@@ -199,7 +158,7 @@ clean_times <- function(x) {
 #' @param rt character route type
 #' @noRd
 clean_route_type <- function(rt) {
-  if(is.na(rt)){
+  if (is.na(rt)) {
     return(3)
   } else if (rt == "bus") {
     return(3)
@@ -441,9 +400,9 @@ expand_stop_times2 <- function(i, jps, trips) {
   trips_sub <- trips[trips$JourneyPatternRef == jps_sub$JourneyPatternID[1], ]
   jps_sub$To.Activity[is.na(jps_sub$To.Activity)] <- "pickUpAndSetDown"
   # To.SequenceNumber are often buggy, so overwiriting and relying on file order
-  #if (all(is.na(jps_sub$To.SequenceNumber))) {
-    jps_sub$To.SequenceNumber <- seq(2, nrow(jps_sub) + 1)
-  #}
+  # if (all(is.na(jps_sub$To.SequenceNumber))) {
+  jps_sub$To.SequenceNumber <- seq(2, nrow(jps_sub) + 1)
+  # }
 
 
   st_sub <- jps_sub[, c("To.StopPointRef", "To.Activity", "To.SequenceNumber", "JourneyPatternID", "To.WaitTime", "To.TimingStatus", "RunTime")]

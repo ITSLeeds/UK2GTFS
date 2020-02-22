@@ -14,15 +14,17 @@ import_ServicedOrganisations_internal <- function(ServicedOrganisations, full_im
   WorkingDays.StartDate <- import_simple(WorkingDays, ".//d1:StartDate")
   WorkingDays.EndDate <- import_simple(WorkingDays, ".//d1:EndDate")
 
-  if(length(WorkingDays.StartDate) != length(WorkingDays.EndDate)){
+  if (length(WorkingDays.StartDate) != length(WorkingDays.EndDate)) {
     WorkingDays.StartDate <- import_vialoop(WorkingDays, ".//d1:StartDate")
     WorkingDays.EndDate <- import_vialoop(WorkingDays, ".//d1:EndDate")
     WorkingDays.StartDate <- ifelse(is.na(WorkingDays.StartDate),
-                                    WorkingDays.EndDate,
-                                    WorkingDays.StartDate)
+      WorkingDays.EndDate,
+      WorkingDays.StartDate
+    )
     WorkingDays.EndDate <- ifelse(is.na(WorkingDays.EndDate),
-                                  WorkingDays.StartDate,
-                                  WorkingDays.EndDate)
+      WorkingDays.StartDate,
+      WorkingDays.EndDate
+    )
   }
 
   Holidays <- xml2::xml_find_all(ServicedOrganisations, ".//d1:Holidays")
@@ -91,15 +93,17 @@ import_ServicedOrganisations <- function(ServicedOrganisations, full_import = FA
     WorkingDays.StartDate <- import_simple(WorkingDays, ".//d1:StartDate")
     WorkingDays.EndDate <- import_simple(WorkingDays, ".//d1:EndDate")
 
-    if(length(WorkingDays.StartDate) != length(WorkingDays.EndDate)){
+    if (length(WorkingDays.StartDate) != length(WorkingDays.EndDate)) {
       WorkingDays.StartDate <- import_vialoop(WorkingDays, ".//d1:StartDate")
       WorkingDays.EndDate <- import_vialoop(WorkingDays, ".//d1:EndDate")
       WorkingDays.StartDate <- ifelse(is.na(WorkingDays.StartDate),
-                                      WorkingDays.EndDate,
-                                      WorkingDays.StartDate)
+        WorkingDays.EndDate,
+        WorkingDays.StartDate
+      )
       WorkingDays.EndDate <- ifelse(is.na(WorkingDays.EndDate),
-                                    WorkingDays.StartDate,
-                                    WorkingDays.EndDate)
+        WorkingDays.StartDate,
+        WorkingDays.EndDate
+      )
     }
 
 
@@ -111,7 +115,7 @@ import_ServicedOrganisations <- function(ServicedOrganisations, full_import = FA
     rep_lengths_work <- sum(xml2::xml_length(WorkingDays))
     rep_lengths_holiday <- sum(xml2::xml_length(Holidays))
 
-    if(length(Holidays.Description) == 0){
+    if (length(Holidays.Description) == 0) {
       Holidays.Description <- rep(NA, times = rep_lengths_holiday)
     }
 
@@ -125,16 +129,15 @@ import_ServicedOrganisations <- function(ServicedOrganisations, full_import = FA
       WorkingDays.StartDate <- rep(NA, times = rep_lengths)
       WorkingDays.EndDate <- rep(NA, times = rep_lengths)
     } else {
-      #stop("Lengths of Holidays and working days do not match in ServicedOrganisations")
-      if(rep_lengths_work > rep_lengths_holiday){
+      # stop("Lengths of Holidays and working days do not match in ServicedOrganisations")
+      if (rep_lengths_work > rep_lengths_holiday) {
         rep_lengths <- rep_lengths_work
         rep_part <- rep_lengths_work - rep_lengths_holiday
         Holidays.StartDate <- c(Holidays.StartDate, rep(NA, times = rep_part))
         Holidays.EndDate <- c(Holidays.EndDate, rep(NA, times = rep_part))
 
         Holidays.Description <- c(Holidays.Description, rep(NA, times = rep_part))
-
-      }else{
+      } else {
         rep_lengths <- rep_lengths_holiday
         rep_part <- rep_lengths_holiday - rep_lengths_work
         WorkingDays.StartDate <- c(WorkingDays.StartDate, rep(NA, times = rep_part))

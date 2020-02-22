@@ -28,3 +28,19 @@
 #'
 #' @format A data frame of 5 columns
 "naptan_missing"
+
+#' Rail Network
+#'
+#' A simplified version of the UK rail network.
+#'
+#'
+#' @format A SF data frame
+"rail"
+
+#' Heavy Rail Network
+#'
+#' A simplified version of the UK heavy rail network.
+#'
+#'
+#' @format A SF data frame
+"rail_heavy"

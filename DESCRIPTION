@@ -15,6 +15,7 @@ Imports:
   dplyr,
   sf,
   parallel,
+  foreach, 
   RANN,
   calendar,
   dodgr,

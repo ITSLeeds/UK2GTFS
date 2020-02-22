@@ -49,18 +49,17 @@ gtfs_merge <- function(gtfs_list) {
   agency$agency_id[agency$agency_name == "Tanat Valley Coaches"] <- "TanVaCo"
 
   # if agency names are same as IDs but not always
-  if(any(agency$agency_name == agency$agency_id)){
+  if (any(agency$agency_name == agency$agency_id)) {
     agency_sub <- agency
     agency_sub$file_id <- NULL
     agency_sub <- unique(agency)
     id_dups <- agency_sub$agency_id[duplicated(agency_sub$agency_id)]
-    if(length(id_dups) > 0){
-      agency_sub <- agency_sub[agency_sub$agency_id %in% id_dups,]
-      agency_sub <- agency_sub[agency_sub$agency_id != agency_sub$agency_name,]
-      for(i in seq(1, nrow(agency_sub))){
+    if (length(id_dups) > 0) {
+      agency_sub <- agency_sub[agency_sub$agency_id %in% id_dups, ]
+      agency_sub <- agency_sub[agency_sub$agency_id != agency_sub$agency_name, ]
+      for (i in seq(1, nrow(agency_sub))) {
         agency$agency_name[agency$agency_name == agency_sub$agency_id[i]] <- agency_sub$agency_name[i]
       }
-
     } else {
       rm(agency_sub, id_dups)
     }
@@ -77,7 +76,7 @@ gtfs_merge <- function(gtfs_list) {
     agency.check$agency_name <- tolower(agency.check$agency_name)
     agency.check <- unique(agency.check)
     if (any(duplicated(agency.check$agency_id))) {
-      stop(paste0("Duplicated Agency IDs ",paste(agency.check$agency_id[duplicated(agency.check$agency_id)], collapse = " ")))
+      stop(paste0("Duplicated Agency IDs ", paste(agency.check$agency_id[duplicated(agency.check$agency_id)], collapse = " ")))
     } else {
       agency <- agency[!duplicated(agency$agency_id), ]
     }
@@ -116,7 +115,7 @@ gtfs_merge <- function(gtfs_list) {
     calendar <- calendar[, c("service_id_new", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "start_date", "end_date")]
     names(calendar) <- c("service_id", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "start_date", "end_date")
 
-    if(nrow(calendar_dates) > 0){
+    if (nrow(calendar_dates) > 0) {
       calendar_dates <- dplyr::left_join(calendar_dates, service_id, by = c("file_id", "service_id"))
       calendar_dates <- calendar_dates[, c("service_id_new", "date", "exception_type")]
       names(calendar_dates) <- c("service_id", "date", "exception_type")
@@ -156,11 +155,11 @@ gtfs_merge <- function(gtfs_list) {
   names(trips) <- c("route_id", "service_id", "trip_id")
 
   # Condense Duplicate Service patterns
-  if(nrow(calendar_dates) > 0){
+  if (nrow(calendar_dates) > 0) {
     message("Condensing duplicated service patterns")
     calendar_dates_summary <- dplyr::group_by(calendar_dates, service_id)
     calendar_dates_summary <- dplyr::summarise(calendar_dates_summary,
-                                               pattern = paste(c(date, exception_type), collapse = "")
+      pattern = paste(c(date, exception_type), collapse = "")
     )
     calendar_summary <- dplyr::left_join(calendar, calendar_dates_summary, by = "service_id")
     calendar_summary <- dplyr::group_by(
@@ -185,7 +184,6 @@ gtfs_merge <- function(gtfs_list) {
     calendar_dates <- calendar_dates[, c("service_id_new", "date", "exception_type")]
     names(calendar_dates) <- c("service_id", "date", "exception_type")
     calendar_dates <- calendar_dates[!duplicated(calendar_dates$service_id), ]
-
   }
 
   stop_times$file_id <- NULL

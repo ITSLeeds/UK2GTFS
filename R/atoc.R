@@ -84,7 +84,7 @@ atoc2gtfs <- function(path_in, path_out, name = "gtfs", silent = TRUE, ncores = 
   schedule <- mca[["schedule"]]
   rm(mca)
   gc()
-  #rm(alf, flf, mca, msn)
+  # rm(alf, flf, mca, msn)
 
   stop_times <- stop_times[, c("Scheduled Arrival Time", "Scheduled Departure Time", "Location", "stop_sequence", "Activity", "rowID", "schedule")]
   names(stop_times) <- c("arrival_time", "departure_time", "stop_id", "stop_sequence", "Activity", "rowID", "schedule")
@@ -98,13 +98,13 @@ atoc2gtfs <- function(path_in, path_out, name = "gtfs", silent = TRUE, ncores = 
   gc()
   # load("data/atoc_agency.RData")
 
-  #TODO: check for stop_times that are not valid stops
+  # TODO: check for stop_times that are not valid stops
 
   timetables$agency <- agency
   timetables$stops <- stops
 
   # Build Shapes
-  if(TRUE){
+  if (TRUE) {
     return(timetables)
   } else {
     write_gtfs(timetables, folder = path_out, name = name)

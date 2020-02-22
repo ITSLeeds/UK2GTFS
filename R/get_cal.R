@@ -1,5 +1,5 @@
 #' Get Bank Holiday Calendar
-#'
+#' TODO: Get scottosh holidays
 #' Downloads and formats the bank holiday calendar for use with TransXchange data.
 #' @param url url to ics file
 #' @export

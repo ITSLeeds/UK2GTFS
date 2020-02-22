@@ -238,7 +238,7 @@ importMSN <- function(file, silent = TRUE) {
 #' @noRd
 #'
 strip_whitespace <- function(df) {
-  sws <- function(val){
+  sws <- function(val) {
     val <- trimws(val, which = "right")
     val[val == ""] <- NA
     return(val)
@@ -422,7 +422,7 @@ importMCA <- function(file, silent = TRUE, ncores = 1, full_import = FALSE) {
   LT$rowID <- seq(from = 1, to = length(types))[types == "LT"]
 
   # TIPLOC Insert
-  if(full_import){
+  if (full_import) {
     # Changes En Route
     if (!silent) {
       message(paste0(Sys.time(), " importing Changes En Route"))
@@ -508,7 +508,7 @@ importMCA <- function(file, silent = TRUE, ncores = 1, full_import = FALSE) {
 
 
   # Association
-  if(full_import){
+  if (full_import) {
     if (!silent) {
       message(paste0(Sys.time(), " importing Association"))
     }
@@ -577,7 +577,7 @@ importMCA <- function(file, silent = TRUE, ncores = 1, full_import = FALSE) {
   BX$rowID <- NULL
   schedule <- dplyr::left_join(BS, BX, by = c("rowID" = "rowIDm1"))
 
-  if(full_import){
+  if (full_import) {
     results <- list(stop_times, schedule, TI, TA, TD, AA, CR)
     names(results) <- c("stop_times", "schedule", "TI", "TA", "TD", "AA", "CR")
   } else {

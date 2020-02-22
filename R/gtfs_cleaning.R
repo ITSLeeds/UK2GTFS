@@ -67,15 +67,15 @@ gtfs_fast_trips <- function(gtfs, maxspeed = 30) {
     nstops = n(),
     time_start = arrival_time[stop_sequence == min(stop_sequence)],
     time_end = if (nstops == 2) {
-      arrival_time[stop_sequence == max(stop_sequence) ]
+      arrival_time[stop_sequence == max(stop_sequence)]
     } else {
-      arrival_time[stop_sequence == stop_sequence[floor(stats::median(1:nstops))] ]
+      arrival_time[stop_sequence == stop_sequence[floor(stats::median(1:nstops))]]
     },
     stop_start = stop_id[stop_sequence == min(stop_sequence)],
     stop_end = if (nstops == 2) {
-      stop_id[stop_sequence == max(stop_sequence) ]
+      stop_id[stop_sequence == max(stop_sequence)]
     } else {
-      stop_id[stop_sequence == stop_sequence[floor(stats::median(1:nstops))] ]
+      stop_id[stop_sequence == stop_sequence[floor(stats::median(1:nstops))]]
     }
   )
 
@@ -104,12 +104,12 @@ gtfs_fast_trips <- function(gtfs, maxspeed = 30) {
 #'
 #' @param gtfs gtfs list
 #' @export
-gtfs_clean <- function(gtfs){
+gtfs_clean <- function(gtfs) {
   # 1 Remove stops with no locations
-  gtfs$stop_times <- gtfs$stop_times[gtfs$stop_times$stop_id %in% unique(gtfs$stops$stop_id),]
+  gtfs$stop_times <- gtfs$stop_times[gtfs$stop_times$stop_id %in% unique(gtfs$stops$stop_id), ]
 
   # 2 Remove stops that are never used
-  gtfs$stops <- gtfs$stops[gtfs$stops$stop_id %in% unique(gtfs$stop_times$stop_id),]
+  gtfs$stops <- gtfs$stops[gtfs$stops$stop_id %in% unique(gtfs$stop_times$stop_id), ]
 
   return(gtfs)
 }

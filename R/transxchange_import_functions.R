@@ -16,14 +16,13 @@ import_simple <- function(xml1, nm) {
 #' @noRd
 import_vialoop <- function(xml1, nm) {
   res <- list()
-  for(i in seq(1, xml2::xml_length(xml1))){
+  for (i in seq(1, xml2::xml_length(xml1))) {
     chld <- xml2::xml_child(xml1, i)
     chld <- xml2::xml_text(xml2::xml_child(chld, nm))
-    if(length(chld) == 0){
+    if (length(chld) == 0) {
       chld <- NA
     }
     res[[i]] <- chld
-
   }
   res <- unlist(res)
   return(res)
@@ -37,14 +36,13 @@ import_vialoop <- function(xml1, nm) {
 #' @noRd
 import_loop <- function(xml1, nm) {
   res <- list()
-  for(i in seq(1, length(xml1))){
+  for (i in seq(1, length(xml1))) {
     chld <- xml1[i]
     chld <- xml2::xml_text(xml2::xml_child(chld, nm))
-    if(length(chld) == 0){
+    if (length(chld) == 0) {
       chld <- NA
     }
     res[[i]] <- chld
-
   }
   res <- unlist(res)
   return(res)
@@ -58,27 +56,28 @@ import_loop <- function(xml1, nm) {
 #' @param nm name to find
 #' @noRd
 import_simple_xml <- function(xml1, nm) {
-  if (length(xml1) == 0)
-    return(xml_nodeset())
+  if (length(xml1) == 0) {
+    return(xml1)
+  }
+  # return(xml_nodeset())
 
   nodes <- lapply(xml1, function(x) {
-                    res <- xml2:::xpath_search(x$node,
-                                 x$doc,
-                                 xpath = nm,
-                                 nsMap = xml2::xml_ns(x),
-                                 num_results = Inf)
+    res <- xml2:::xpath_search(x$node,
+      x$doc,
+      xpath = nm,
+      nsMap = xml2::xml_ns(x),
+      num_results = Inf
+    )
 
-                    if(length(res) == 0){
-                      return(NA)
-                    } else if (length(res) == 1){
-                      res <- xml2::xml_text(res[[1]])
-                      return(res)
-                    } else {
-                      stop("res is not of length 0 or 1")
-                    }
-
-                  }
-  )
+    if (length(res) == 0) {
+      return(NA)
+    } else if (length(res) == 1) {
+      res <- xml2::xml_text(res[[1]])
+      return(res)
+    } else {
+      stop("res is not of length 0 or 1")
+    }
+  })
   nodes <- unlist(nodes, recursive = FALSE)
   return(nodes)
 }
@@ -206,23 +205,25 @@ clean_sequence <- function(x) {
 
 clean_sequence2 <- function(x, y, displace = FALSE) {
   if (anyNA(x)) {
-    if(length(unique(y)) == 1){
+    if (length(unique(y)) == 1) {
       # Only one Jounrey pattern
       res <- seq(1, length(y))
     } else {
       # Not changes in JPSid
       ly <- length(y)
-      new_route <- y[seq(1, ly-1)] != y[seq(2, ly)]
-      new_route <- c(TRUE,new_route)
+      new_route <- y[seq(1, ly - 1)] != y[seq(2, ly)]
+      new_route <- c(TRUE, new_route)
       start <- seq(1, ly)[new_route]
       end <- start - 1
       end <- end[seq(2, length(end))]
       end <- c(end, ly)
       diff <- end - start + 1
-      res <- lapply(diff, function(z){seq_len(z)})
+      res <- lapply(diff, function(z) {
+        seq_len(z)
+      })
       res <- unlist(res)
     }
-    if(displace){
+    if (displace) {
       res <- res + 1
     }
     return(res)
@@ -301,7 +302,7 @@ import_journeypatternsections <- function(journeypatternsections) {
     RouteLinkRef <- rep(NA, length(From.StopPointRef))
   }
   From.TimingStatus <- import_simple(From, "d1:TimingStatus")
-  #From.SequenceNumber <- import_FromTo(From, "@SequenceNumber")
+  # From.SequenceNumber <- import_FromTo(From, "@SequenceNumber")
   From.SequenceNumber <- xml2::xml_attr(From, "SequenceNumber")
 
   if (length(From.SequenceNumber) == 0) {
@@ -315,7 +316,7 @@ import_journeypatternsections <- function(journeypatternsections) {
     To.Activity <- rep(NA, length(To.StopPointRef))
   }
   To.TimingStatus <- import_simple(To, "d1:TimingStatus")
-  #To.SequenceNumber <- import_FromTo(To, "@SequenceNumber")
+  # To.SequenceNumber <- import_FromTo(To, "@SequenceNumber")
   To.SequenceNumber <- xml2::xml_attr(To, "SequenceNumber")
 
   if (length(To.SequenceNumber) == 0) {
@@ -326,8 +327,8 @@ import_journeypatternsections <- function(journeypatternsections) {
   JPS_id <- import_simple(JPS, "@id")
   JPS_id <- rep(JPS_id, times = xml2::xml_length(JPS, only_elements = FALSE))
 
-  From.SequenceNumber <- clean_sequence2(From.SequenceNumber,JPS_id,FALSE)
-  To.SequenceNumber <- clean_sequence2(To.SequenceNumber,JPS_id,TRUE)
+  From.SequenceNumber <- clean_sequence2(From.SequenceNumber, JPS_id, FALSE)
+  To.SequenceNumber <- clean_sequence2(To.SequenceNumber, JPS_id, TRUE)
 
   journeypatternsections <- data.frame(
     JPTL_ID = JPTL_ID,
@@ -419,7 +420,7 @@ import_services <- function(service, full_import = TRUE) {
   ss <- xml2::xml_find_all(service, ".//d1:JourneyPattern")
   Direction <- import_simple(ss, ".//d1:Direction")
   VehicleType <- import_withmissing2(ss, ".//d1:Description", 3, "@id")
-  #RouteRef <- import_simple(ss, ".//d1:RouteRef")
+  # RouteRef <- import_simple(ss, ".//d1:RouteRef")
   RouteRef <- import_simple_xml(ss, ".//d1:RouteRef")
 
   if (length(RouteRef) == 0) {
@@ -428,10 +429,10 @@ import_services <- function(service, full_import = TRUE) {
   JourneyPatternSectionRefs <- import_simple(ss, ".//d1:JourneyPatternSectionRefs")
   JourneyPatternID <- import_simple(ss, "@id")
 
-  if(length(JourneyPatternSectionRefs) != length(JourneyPatternID)){
+  if (length(JourneyPatternSectionRefs) != length(JourneyPatternID)) {
     # Some cases have muliple JourneyPatternSectionRefs
     lths <- list()
-    for(i in seq(1, length(xml2::xml_length(ss)))){
+    for (i in seq(1, length(xml2::xml_length(ss)))) {
       lths[[i]] <- length(xml2::xml_find_all(ss[i], "d1:JourneyPatternSectionRefs"))
     }
     lths <- unlist(lths)
@@ -464,7 +465,7 @@ import_services <- function(service, full_import = TRUE) {
   if (xml2::xml_length(DaysNonOperation) > 0) {
     DaysNonOperation_StartDate <- import_simple(DaysNonOperation, ".//d1:StartDate")
     DaysNonOperation_EndDate <- import_simple(DaysNonOperation, ".//d1:EndDate")
-    DaysNonOperation_Note        <- import_simple(DaysNonOperation, ".//d1:Note")
+    DaysNonOperation_Note <- import_simple(DaysNonOperation, ".//d1:Note")
     if (length(DaysNonOperation_Note) == 0) {
       DaysNonOperation_Note <- rep(NA, length(DaysNonOperation_StartDate))
     }
@@ -534,7 +535,7 @@ import_services <- function(service, full_import = TRUE) {
 import_DaysOfOperation <- function(DaysOfOperation, cal, Services_main) {
   result <- list()
   for (i in seq(1, length(xml2::xml_length(DaysOfOperation)))) {
-    #message(i)
+    # message(i)
     chld <- DaysOfOperation[i]
     if (xml2::xml_length(xml2::xml_child(chld)) == 0) {
       # Text based rather than date based
@@ -565,15 +566,15 @@ import_DaysOfOperation <- function(DaysOfOperation, cal, Services_main) {
           ServicedOrganisationRef = NA,
           stringsAsFactors = FALSE
         )
-      } else if (any(xml2::xml_name(xml2::xml_children(chld)) == "HolidayMondays")){
+      } else if (any(xml2::xml_name(xml2::xml_children(chld)) == "HolidayMondays")) {
         DaysOfOperation_id <- xml2::xml_parent(xml2::xml_parent(xml2::xml_parent(chld)))
         DaysOfOperation_id <- import_simple(DaysOfOperation_id, ".//d1:VehicleJourneyCode")
         cal2 <- cal[cal$date >= Services_main$StartDate, ]
         cal2 <- cal2[cal2$date <= Services_main$EndDate, ]
         cal2 <- cal2[cal2$name %in% unique(xml2::xml_name(xml2::xml_children(chld))) |
-                       lubridate::wday(cal2$date, TRUE) == "Mon", ]
+          lubridate::wday(cal2$date, TRUE) == "Mon", ]
 
-        if(nrow(cal2) > 0){
+        if (nrow(cal2) > 0) {
           res <- data.frame(
             VehicleJourneyCode = DaysOfOperation_id,
             StartDate = cal2$date,
@@ -584,8 +585,6 @@ import_DaysOfOperation <- function(DaysOfOperation, cal, Services_main) {
         } else {
           res <- NULL
         }
-
-
       } else {
         stop("Unknown Days of Operation")
       }
@@ -671,5 +670,3 @@ import_notes2 <- function(vehiclejourneys) {
 
   return(result)
 }
-
-

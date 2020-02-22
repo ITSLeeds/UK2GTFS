@@ -20,11 +20,7 @@ schedule2routes <- function(stop_times, schedule, silent = TRUE, ncores = 1) {
 
   # Convert Activity to pickup_type and drop_off_type
   stop_times$Activity[is.na(stop_times$Activity) & stop_times$stop_sequence == 1] <- "U" # No activity specified at start
-  # activities = strsplit(stop_times$Activity," ")
 
-  # upoffs = t(sapply(activities,clean_activities))
-  # upoffs = as.data.frame(upoffs)
-  # names(upoffs) = c("pickup_type","drop_off_type")
   upoffs <- clean_activities2(stop_times$Activity)
   stop_times <- cbind(stop_times, upoffs)
 
@@ -84,15 +80,6 @@ schedule2routes <- function(stop_times, schedule, silent = TRUE, ncores = 1) {
   ### SECTION 5: ###############################################################################
   # make make the trips.txt  file by matching the calnedar to the stop_times
 
-  # trips = calendar[c("UID","trip_id")]
-  # names(trips) = c("service_id","trip_id")
-  #
-  # route_id = strsplit(trips$service_id,  " ")
-  # route_id = lapply(route_id, `[[`, 1)
-  # route_id = unlist(route_id)
-  # trips$route_id = route_id
-  # trips = trips[,c("route_id","service_id","trip_id")]
-
   trips <- calendar[, c("service_id", "trip_id", "rowID", "ATOC Code", "Train Status")]
   trips <- longnames(routes = trips, stop_times = stop_times)
 
@@ -111,11 +98,6 @@ schedule2routes <- function(stop_times, schedule, silent = TRUE, ncores = 1) {
 
   trips <- dplyr::left_join(trips, routes, by = c("ATOC Code" = "ATOC Code", "route_long_name" = "route_long_name", "Train Status" = "Train Status"))
 
-  # routes = schedule[schedule$`STP indicator` != "C",]
-  # routes = routes[!duplicated(routes$`Train UID`),]
-  # routes = routes[,c("rowID","Train UID","Train Status","ATOC Code")]
-  # names(routes) = c("rowID","route_id","Train Status","agency_id")
-
   train_status <- data.frame(
     train_status = c("B", "F", "P", "S", "T", "1", "2", "3", "4", "5"),
     route_type = c(3, NA, 2, 4, NA, 2, NA, NA, 4, 3),
@@ -131,16 +113,6 @@ schedule2routes <- function(stop_times, schedule, silent = TRUE, ncores = 1) {
   routes$route_short_name <- routes$route_id
 
   routes$route_type[routes$agency_id == "LT"] <- 1 # London Underground is Metro
-
-
-  # make the long names from the desitnation and time
-  # if(!silent){message(paste0(Sys.time()," Building long route names"))}
-  #
-  # routes = longnames(routes = routes, stop_times = stop_times)
-  # routes = routes[,c("route_id","agency_id","route_short_name","route_long_name","route_type","rowID")]
-  # head(routes)
-
-
 
   ### Section 6: #######################################################
   # Final Checks

@@ -9,7 +9,7 @@ import_vehiclejourneys2 <- function(vehiclejourneys) {
   VehicleJourneyCode <- import_simple(vehiclejourneys, ".//d1:VehicleJourneyCode")
   ServiceRef <- import_simple(vehiclejourneys, ".//d1:ServiceRef")
   LineRef <- import_simple(vehiclejourneys, ".//d1:LineRef")
-  #JourneyPatternRef <- import_simple(vehiclejourneys, ".//d1:JourneyPatternRef")
+  # JourneyPatternRef <- import_simple(vehiclejourneys, ".//d1:JourneyPatternRef")
   DepartureTime <- import_simple(vehiclejourneys, ".//d1:DepartureTime")
   BankHolidaysOperate <- import_simple(vehiclejourneys, ".//d1:BankHolidaysOperate")
   Notes <- xml2::xml_find_all(vehiclejourneys, ".//d1:Note")
@@ -31,10 +31,10 @@ import_vehiclejourneys2 <- function(vehiclejourneys) {
     BankHolidaysNoOperate <- rep(NA, length(VehicleJourneyCode))
   }
 
-  if(length(JourneyPatternRef) != length(VehicleJourneyCode)){
-    #JourneyPatternRef <- import_withmissing(vehiclejourneys, ".//d1:JourneyPatternRef", 8)
+  if (length(JourneyPatternRef) != length(VehicleJourneyCode)) {
+    # JourneyPatternRef <- import_withmissing(vehiclejourneys, ".//d1:JourneyPatternRef", 8)
 
-    #VehicleJourneyRef <- import_withmissing(vehiclejourneys, ".//d1:VehicleJourneyRef", 8)
+    # VehicleJourneyRef <- import_withmissing(vehiclejourneys, ".//d1:VehicleJourneyRef", 8)
     # JourneyPatternRef <- ifelse(is.na(JourneyPatternRef),
     #                             VehicleJourneyRef,
     #                             JourneyPatternRef)
@@ -57,21 +57,21 @@ import_vehiclejourneys2 <- function(vehiclejourneys) {
   )
 
   OperatingProfile <- xml2::xml_find_all(vehiclejourneys, ".//d1:OperatingProfile")
-  if(length(OperatingProfile) > 0){
+  if (length(OperatingProfile) > 0) {
     OperatingProfile <- import_OperatingProfile(OperatingProfile)
     SpecialDays <- OperatingProfile$SpecialDays
     OperatingProfile <- OperatingProfile$OperatingProfile
-    if(nrow(SpecialDays) > 0){
-      DaysOfOperation <- SpecialDays[,c("VehicleJourneyCode","OperateStart","OperateEnd")]
-      DaysOfNonOperation <- SpecialDays[,c("VehicleJourneyCode","NoOperateStart","NoOperateEnd")]
-      names(DaysOfOperation) <- c("VehicleJourneyCode","StartDate","EndDate")
-      names(DaysOfNonOperation) <- c("VehicleJourneyCode","StartDate","EndDate")
+    if (nrow(SpecialDays) > 0) {
+      DaysOfOperation <- SpecialDays[, c("VehicleJourneyCode", "OperateStart", "OperateEnd")]
+      DaysOfNonOperation <- SpecialDays[, c("VehicleJourneyCode", "NoOperateStart", "NoOperateEnd")]
+      names(DaysOfOperation) <- c("VehicleJourneyCode", "StartDate", "EndDate")
+      names(DaysOfNonOperation) <- c("VehicleJourneyCode", "StartDate", "EndDate")
       DaysOfOperation <- DaysOfOperation[!is.na(DaysOfOperation$StartDate), ]
       DaysOfNonOperation <- DaysOfNonOperation[!is.na(DaysOfNonOperation$StartDate), ]
-      if(nrow(DaysOfOperation) == 0){
+      if (nrow(DaysOfOperation) == 0) {
         DaysOfOperation <- NULL
       }
-      if(nrow(DaysOfNonOperation) == 0){
+      if (nrow(DaysOfNonOperation) == 0) {
         DaysOfNonOperation <- NULL
       }
     } else {
@@ -80,7 +80,6 @@ import_vehiclejourneys2 <- function(vehiclejourneys) {
     }
 
     vj_simple <- dplyr::left_join(vj_simple, OperatingProfile, by = "VehicleJourneyCode")
-
   } else {
     OperatingProfile <- NULL
     DaysOfOperation <- NULL
@@ -91,7 +90,6 @@ import_vehiclejourneys2 <- function(vehiclejourneys) {
     vj_simple$BHDaysOfNonOperation <- NA
     vj_simple$ServicedDaysOfOperation <- NA
     vj_simple$ServicedDaysOfNonOperation <- NA
-
   }
 
 

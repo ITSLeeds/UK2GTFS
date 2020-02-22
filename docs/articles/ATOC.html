@@ -78,7 +78,7 @@
       <h1>ATOC - Train Timetables</h1>
                         <h4 class="author">Malcolm Morgan</h4>
             
-            <h4 class="date">2020-01-08</h4>
+            <h4 class="date">2020-02-22</h4>
       
       
       <div class="hidden name"><code>ATOC.Rmd</code></div>
@@ -145,15 +145,30 @@
 <a class="sourceLine" id="cb2-7" data-line-number="7"><span class="kw"><a href="https://rdrr.io/r/base/source.html">source</a></span>(<span class="st">"../R/atoc_import.R"</span>)</a>
 <a class="sourceLine" id="cb2-8" data-line-number="8"><span class="kw"><a href="https://rdrr.io/r/base/source.html">source</a></span>(<span class="st">"../R/atoc_main.R"</span>)</a>
 <a class="sourceLine" id="cb2-9" data-line-number="9"><span class="kw"><a href="../reference/atoc2gtfs.html">atoc2gtfs</a></span>(<span class="dt">path_in =</span> path_in, <span class="dt">path_out =</span> path_out, <span class="dt">silent =</span> silent, <span class="dt">ncores =</span> ncores)</a></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1">path_in =<span class="st"> "~/data/ttis508.zip"</span></a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">path_out =<span class="st"> "~/data"</span></a>
+<a class="sourceLine" id="cb3-3" data-line-number="3">ncores =<span class="st"> </span><span class="dv">5</span></a>
+<a class="sourceLine" id="cb3-4" data-line-number="4">silent =<span class="st"> </span><span class="ot">FALSE</span></a>
+<a class="sourceLine" id="cb3-5" data-line-number="5">name =<span class="st"> "gtfs"</span></a>
+<a class="sourceLine" id="cb3-6" data-line-number="6"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(UK2GTFS)</a>
+<a class="sourceLine" id="cb3-7" data-line-number="7"><span class="kw"><a href="https://rdrr.io/r/base/load.html">load</a></span>(<span class="st">"../data/rail_heavy.rda"</span>)</a>
+<a class="sourceLine" id="cb3-8" data-line-number="8"><span class="kw"><a href="https://rdrr.io/r/base/source.html">source</a></span>(<span class="st">"../R/atoc.R"</span>)</a>
+<a class="sourceLine" id="cb3-9" data-line-number="9"><span class="kw"><a href="https://rdrr.io/r/base/source.html">source</a></span>(<span class="st">"../R/atoc_export.R"</span>)</a>
+<a class="sourceLine" id="cb3-10" data-line-number="10"><span class="kw"><a href="https://rdrr.io/r/base/source.html">source</a></span>(<span class="st">"../R/atoc_import.R"</span>)</a>
+<a class="sourceLine" id="cb3-11" data-line-number="11"><span class="kw"><a href="https://rdrr.io/r/base/source.html">source</a></span>(<span class="st">"../R/atoc_main.R"</span>)</a>
+<a class="sourceLine" id="cb3-12" data-line-number="12"><span class="co">#timetables &lt;- atoc2gtfs(path_in = path_in, path_out = path_out, silent = silent, ncores = ncores)</span></a>
+<a class="sourceLine" id="cb3-13" data-line-number="13"><span class="co">#saveRDS(timetables,"ATOC_timetables.Rds")</span></a>
+<a class="sourceLine" id="cb3-14" data-line-number="14">gtfs &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/readRDS.html">readRDS</a></span>(<span class="st">"ATOC_timetables.Rds"</span>)</a>
+<a class="sourceLine" id="cb3-15" data-line-number="15">shapes &lt;-<span class="st"> </span><span class="kw">trips2shapes</span>(<span class="dt">gtfs =</span> gtfs,  <span class="dt">ncores =</span> ncores)</a></code></pre></div>
 </div>
 <div id="making-shapes" class="section level2">
 <h2 class="hasAnchor">
 <a href="#making-shapes" class="anchor"></a>Making Shapes</h2>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1">trips =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/utils/read.table.html">read.csv</a></span>(<span class="st">"D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs/trips.txt"</span>,, <span class="dt">stringsAsFactors =</span> F)</a>
-<a class="sourceLine" id="cb3-2" data-line-number="2">routes =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/utils/read.table.html">read.csv</a></span>(<span class="st">"D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs/routes.txt"</span>, <span class="dt">stringsAsFactors =</span> F)</a>
-<a class="sourceLine" id="cb3-3" data-line-number="3">stop_times =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/utils/read.table.html">read.csv</a></span>(<span class="st">"D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs/stop_times.txt"</span>, <span class="dt">stringsAsFactors =</span> F)</a>
-<a class="sourceLine" id="cb3-4" data-line-number="4"><span class="co">#stops = read.csv("D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs/stops.txt")</span></a>
-<a class="sourceLine" id="cb3-5" data-line-number="5">stops =<span class="st"> </span>sf<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/sf/man/st_read.html">st_read</a></span>(<span class="st">"D:/Users/earmmor/OneDrive - University of Leeds/Routing/osm/stops_fixed.shp"</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" data-line-number="1">trips =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/utils/read.table.html">read.csv</a></span>(<span class="st">"D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs/trips.txt"</span>,, <span class="dt">stringsAsFactors =</span> F)</a>
+<a class="sourceLine" id="cb4-2" data-line-number="2">routes =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/utils/read.table.html">read.csv</a></span>(<span class="st">"D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs/routes.txt"</span>, <span class="dt">stringsAsFactors =</span> F)</a>
+<a class="sourceLine" id="cb4-3" data-line-number="3">stop_times =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/utils/read.table.html">read.csv</a></span>(<span class="st">"D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs/stop_times.txt"</span>, <span class="dt">stringsAsFactors =</span> F)</a>
+<a class="sourceLine" id="cb4-4" data-line-number="4"><span class="co">#stops = read.csv("D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs/stops.txt")</span></a>
+<a class="sourceLine" id="cb4-5" data-line-number="5">stops =<span class="st"> </span>sf<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/sf/man/st_read.html">st_read</a></span>(<span class="st">"D:/Users/earmmor/OneDrive - University of Leeds/Routing/osm/stops_fixed.shp"</span>)</a></code></pre></div>
 </div>
   </div>
 
