@@ -7,11 +7,14 @@ TODO: Get scottosh holidays
 Downloads and formats the bank holiday calendar for use with TransXchange data.}
 \usage{
 get_bank_holidays(
-  url = "https://www.gov.uk/bank-holidays/england-and-wales.ics"
+  url_ew = "https://www.gov.uk/bank-holidays/england-and-wales.ics",
+  url_scot = "https://www.gov.uk/bank-holidays/scotland.ics"
 )
 }
 \arguments{
-\item{url}{url to ics file}
+\item{url_ew}{url to ics file for England and Wales}
+
+\item{url_scot}{url to ics file for Scotland}
 }
 \description{
 Get Bank Holiday Calendar

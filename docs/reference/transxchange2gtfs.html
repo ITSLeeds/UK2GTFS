@@ -131,7 +131,8 @@
   <span class='kw'>silent</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>ncores</span> <span class='kw'>=</span> <span class='fl'>1</span>,
   <span class='kw'>cal</span> <span class='kw'>=</span> <span class='fu'><a href='get_bank_holidays.html'>get_bank_holidays</a></span>(),
-  <span class='kw'>naptan</span> <span class='kw'>=</span> <span class='fu'><a href='get_naptan.html'>get_naptan</a></span>()
+  <span class='kw'>naptan</span> <span class='kw'>=</span> <span class='fu'><a href='get_naptan.html'>get_naptan</a></span>(),
+  <span class='kw'>scotland</span> <span class='kw'>=</span> <span class='st'>"auto"</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -164,6 +165,13 @@
     <tr>
       <th>naptan</th>
       <td><p>Naptan stop locations from get_naptan()</p></td>
+    </tr>
+    <tr>
+      <th>scotland</th>
+      <td><p>character, should Scottish bank holidays be used?
+Can be "auto" (defualt), "yes", "no". If "auto" and path_in ends with "S.zip"
+Scottish bank holidays will be used, otherwise England and Wales bank holidays
+are used.</p></td>
     </tr>
     </table>
 

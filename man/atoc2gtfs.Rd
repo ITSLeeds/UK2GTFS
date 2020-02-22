@@ -19,13 +19,15 @@ atoc2gtfs(
 
 \item{path_out}{Path to where GTFS files should be saved}
 
-\item{name}{name that should be given to the gtfs file, without the .zip extension}
+\item{name}{name that should be given to the gtfs file, without the .zip
+extension}
 
 \item{silent}{Logical, should progress be shown}
 
 \item{ncores}{Numeric, When parallel processing how many cores to use}
 
-\item{locations}{deafult tiplocs object inncluded with package, or "file" or path to stops.txt GTFS file}
+\item{locations}{deafult tiplocs object inncluded with package, or "file"
+or path to stops.txt GTFS file}
 
 \item{agency}{the GTFS agency file, default is taken from the package}
 }
@@ -36,10 +38,13 @@ ATOC to GTFS
 Convert ATOC Files to GTFS
 
 Locations
-The .msn file contains the physical locations of stations and other TIPLOC codes (e.g. junctions).
-However, the quality of the locations is often poor only accurate to about 1km and occasionally very wrong.
-Therefore, the UK2GTFS package contains an internal dataset of the TIPLOC locations with better location accuracy.
+The .msn file contains the physical locations of stations and other TIPLOC
+codes (e.g. junctions). However, the quality of the locations is often poor
+only accurate to about 1km and occasionally very wrong Therefore, the
+UK2GTFS package contains an internal dataset of the TIPLOC locations with
+better location accuracy.
 
 Agency
-The ATOC files do not contain the necessary information to build the agency.txt file. Therfore this data is provided with the package.
+The ATOC files do not contain the necessary information to build the
+agency.txt file. Therfore this data is provided with the package.
 }

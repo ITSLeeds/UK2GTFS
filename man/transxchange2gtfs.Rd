@@ -11,7 +11,8 @@ transxchange2gtfs(
   silent = TRUE,
   ncores = 1,
   cal = get_bank_holidays(),
-  naptan = get_naptan()
+  naptan = get_naptan(),
+  scotland = "auto"
 )
 }
 \arguments{
@@ -28,6 +29,11 @@ transxchange2gtfs(
 \item{cal}{Calendar object from get_bank_holidays()}
 
 \item{naptan}{Naptan stop locations from get_naptan()}
+
+\item{scotland}{character, should Scottish bank holidays be used?
+Can be "auto" (defualt), "yes", "no". If "auto" and path_in ends with "S.zip"
+Scottish bank holidays will be used, otherwise England and Wales bank holidays
+are used.}
 }
 \description{
 TransXchange to GTFS
