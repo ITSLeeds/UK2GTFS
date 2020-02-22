@@ -49,7 +49,7 @@ transxchange2gtfs <- function(path_in,
     scotland <- FALSE
   } else if(scotland == "auto"){
     # Decide where we are
-    loc <- substr(path_in, nchar(path_in) - 6, nchar(path_in))
+    loc <- substr(path_in, nchar(path_in) - 5, nchar(path_in))
     if(loc == "/S.zip"){
       scotland <- TRUE
       warning("Using Scottish Bank Holidays")
