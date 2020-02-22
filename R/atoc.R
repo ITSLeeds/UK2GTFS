@@ -34,7 +34,7 @@ atoc2gtfs <- function(path_in, path_out, name = "gtfs", silent = TRUE, ncores = 
   } else {
     # folder
     cleanup <- FALSE
-    files <- list.files(path_in, full.names = T)
+    files <- list.files(path_in, full.names = TRUE)
   }
 
   # Are all the files we would expect there?
@@ -76,7 +76,7 @@ atoc2gtfs <- function(path_in, path_out, name = "gtfs", silent = TRUE, ncores = 
     stops.list <- station2stops(station = station, TI = TI)
     stops <- stops.list[["stops"]]
   } else {
-    stops <- utils::read.csv(locations, stringsAsFactors = F)
+    stops <- utils::read.csv(locations, stringsAsFactors = FALSE)
   }
 
   # Construct the GTFS

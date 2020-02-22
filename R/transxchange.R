@@ -79,7 +79,7 @@ transxchange2gtfs <- function(path_in,
     opts <- list(progress = progress)
     cl <- parallel::makeCluster(ncores)
     doSNOW::registerDoSNOW(cl)
-    boot <- foreach::foreach(i = 1:length(res_all), .options.snow = opts)
+    boot <- foreach::foreach(i = seq_len(length(res_all)), .options.snow = opts)
     gtfs_all <- foreach::`%dopar%`(boot, {
       transxchange_export(res_all[[i]], cal = cal, naptan = naptan)
       # setTxtProgressBar(pb, i)

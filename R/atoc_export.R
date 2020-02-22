@@ -391,7 +391,7 @@ makeCalendar <- function(schedule, ncores = 1) {
   days <- lapply(res.calendar$Days, function(x) {
     as.integer(substring(x, 1:7, 1:7))
   })
-  days <- matrix(unlist(days), ncol = 7, byrow = T)
+  days <- matrix(unlist(days), ncol = 7, byrow = TRUE)
   days <- as.data.frame(days)
   names(days) <- c("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
 
@@ -594,7 +594,7 @@ afterMidnight <- function(stop_times, safe = TRUE) {
     stop_times.summary2 <- dplyr::group_by(stop_times2, trip_id)
     stop_times.summary2 <- dplyr::summarise(stop_times.summary2,
       arv_last = arvfinal[stop_sequence == max(stop_sequence)],
-      arv_max = max(arvfinal, na.rm = T)
+      arv_max = max(arvfinal, na.rm = TRUE)
     )
 
     check <- stop_times.summary2$arv_last < stop_times.summary2$arv_max

@@ -359,7 +359,7 @@ expand_stop_times <- function(i, jps) {
     To.WaitTime = 0,
     timepoint = jps_sub$From.TimingStatus[1],
     RunTime = 0,
-    stringsAsFactors = F
+    stringsAsFactors = FALSE
   )
   st_sub <- rbind(st_top, st_sub)
   st_sub$RunTime <- as.integer(st_sub$RunTime)
@@ -415,7 +415,7 @@ expand_stop_times2 <- function(i, jps, trips) {
     To.WaitTime = 0,
     timepoint = jps_sub$From.TimingStatus[1],
     RunTime = 0,
-    stringsAsFactors = F
+    stringsAsFactors = FALSE
   )
   if (is.na(st_top$To.Activity)) {
     st_top$To.Activity <- "pickUp"

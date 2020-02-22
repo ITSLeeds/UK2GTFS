@@ -20,6 +20,6 @@ write_gtfs <- function(gtfs, folder = getwd(), name = "gtfs") {
   utils::write.csv(gtfs$stops, paste0(folder, "/gtfs_temp/stops.txt"), row.names = FALSE, quote = FALSE)
   utils::write.csv(gtfs$agency, paste0(folder, "/gtfs_temp/agency.txt"), row.names = FALSE, quote = FALSE)
   zip::zipr(paste0(folder, "/", name, ".zip"), list.files(paste0(folder, "/gtfs_temp"), full.names = TRUE), recurse = FALSE)
-  unlink(paste0(folder, "/gtfs_temp"), recursive = T)
+  unlink(paste0(folder, "/gtfs_temp"), recursive = TRUE)
   message(paste0(folder, "/", name, ".zip"))
 }

@@ -35,7 +35,7 @@ transxchange_import <- function(file, run_debug = TRUE, full_import = FALSE) {
         x <- x[c("From", "To", "Distance", "Direction", "LinkID")]
         return(x)
       })
-      rs <- data.frame(matrix(unlist(rs), nrow = length(rs), byrow = T), stringsAsFactors = FALSE)
+      rs <- data.frame(matrix(unlist(rs), nrow = length(rs), byrow = TRUE), stringsAsFactors = FALSE)
       names(rs) <- c("From", "To", "Distance", "Direction", "LinkID")
       rs$SectionID <- rs_attr
       return(rs)
