@@ -10,6 +10,10 @@
 #' @param ncores Numeric, When parallel processing how many cores to use
 #' @param cal Calendar object from get_bank_holidays()
 #' @param naptan Naptan stop locations from get_naptan()
+#' @param scotland character, should Scottish bank holidays be used?
+#'     Can be "auto" (defualt), "yes", "no". If "auto" and path_in ends with "S.zip"
+#'     Scottish bank holidays will be used, otherwise England and Wales bank holidays
+#'     are used.
 #'
 #' @details
 #'
@@ -32,9 +36,28 @@ transxchange2gtfs <- function(path_in,
                               silent = TRUE,
                               ncores = 1,
                               cal = get_bank_holidays(),
-                              naptan = get_naptan()) {
+                              naptan = get_naptan(),
+                              scotland = "auto") {
   if (ncores == 1) {
     message(paste0(Sys.time(), " This will take some time, make sure you use 'ncores' to enable multi-core processing"))
+  }
+
+  # Are we in Scotland?
+  if(scotland == "yes"){
+    scotland <- TRUE
+  } else if(scotland == "no"){
+    scotland <- FALSE
+  } else if(scotland == "auto"){
+    # Decide where we are
+    loc <- substr(path_in, nchar(path_in) - 6, nchar(path_in))
+    if(loc == "/S.zip"){
+      scotland <- TRUE
+      warning("Using Scottish Bank Holidays")
+    } else {
+      scotland <- TRUE
+    }
+  } else{
+    stop("Unknown value for scotland, can be 'yes' 'no' or 'auto'")
   }
 
   if (length(path_in) > 1) {
@@ -57,7 +80,8 @@ transxchange2gtfs <- function(path_in,
     message(paste0(Sys.time(), " Importing TransXchange files, single core"))
     res_all <- pbapply::pblapply(files, transxchange_import, run_debug = TRUE, full_import = FALSE)
     message(paste0(Sys.time(), " Converting to GTFS, single core"))
-    gtfs_all <- pbapply::pblapply(res_all, transxchange_export, run_debug = TRUE, cal = cal, naptan = naptan)
+    gtfs_all <- pbapply::pblapply(res_all, transxchange_export, run_debug = TRUE,
+                                  cal = cal, naptan = naptan, scotland = scotland)
   } else {
     message(paste0(Sys.time(), " Importing TransXchange files, multicore"))
 
@@ -81,7 +105,7 @@ transxchange2gtfs <- function(path_in,
     doSNOW::registerDoSNOW(cl)
     boot <- foreach::foreach(i = seq_len(length(res_all)), .options.snow = opts)
     gtfs_all <- foreach::`%dopar%`(boot, {
-      transxchange_export(res_all[[i]], cal = cal, naptan = naptan)
+      transxchange_export(res_all[[i]], cal = cal, naptan = naptan, scotland = scotland)
       # setTxtProgressBar(pb, i)
     })
 

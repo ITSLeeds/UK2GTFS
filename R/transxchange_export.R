@@ -5,10 +5,14 @@
 #' @param cal calendar
 #' @param naptan naptan
 #' @param quiet logical should messages be displayed
+#' @param scotland logical should Scottish bank holidays be used?
 #'
 #' @noRd
 #'
-transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays(), naptan = get_naptan(), quiet = TRUE) {
+transxchange_export <- function(obj, run_debug = TRUE,
+                                cal = get_bank_holidays(),
+                                naptan = get_naptan(),
+                                quiet = TRUE, scotland = FALSE) {
   JourneyPatternSections <- obj[["JourneyPatternSections"]]
   Operators <- obj[["Operators"]]
   Routes <- obj[["Routes"]]
@@ -24,6 +28,13 @@ transxchange_export <- function(obj, run_debug = TRUE, cal = get_bank_holidays()
   VehicleJourneys_notes <- obj[["VehicleJourneys_notes"]]
   # VehicleJourneysTimingLinks <- obj[["VehicleJourneysTimingLinks"]]
   ServicedOrganisations <- obj[["ServicedOrganisations"]]
+
+  #select holidays to use
+  if(scotland){
+    cal <- cal[cal$Scotland,]
+  } else {
+    cal <- cal[cal$EnglandWales,]
+  }
 
   # Swtich NA to NULL
   if (length(VehicleJourneys_exclude) == 1) {
