@@ -305,7 +305,6 @@ transxchange_export <- function(obj, run_debug = TRUE,
   bank_holidays$BankHolidaysOperate[bank_holidays$BankHolidaysOperate == "AllBankHolidays"] <- paste(cal$name, collapse = " ")
   bank_holidays$BankHolidaysNoOperate[bank_holidays$BankHolidaysNoOperate == "AllBankHolidays"] <- paste(cal$name, collapse = " ")
 
-
   bank_holidays_inc <- break_up_holidays2(bank_holidays, "BankHolidaysOperate")
   bank_holidays_exc <- break_up_holidays2(bank_holidays, "BankHolidaysNoOperate")
   if (!is.null(bank_holidays_inc)) {
