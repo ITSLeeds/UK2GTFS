@@ -4,7 +4,7 @@
 \alias{write_gtfs}
 \title{Write GTFS}
 \usage{
-write_gtfs(gtfs, folder = getwd(), name = "gtfs")
+write_gtfs(gtfs, folder = getwd(), name = "gtfs", stripComma = TRUE)
 }
 \arguments{
 \item{gtfs}{named list of data.frames}
@@ -12,6 +12,8 @@ write_gtfs(gtfs, folder = getwd(), name = "gtfs")
 \item{folder}{folder to save the gtfs file to}
 
 \item{name}{the name of the zip file, default "gtfs"}
+
+\item{stripComma}{logical, should commas be stripped from text, default = TRUE}
 }
 \description{
 Takes a list of data.frames represneting the GTFS fromat and saves them as GTFS

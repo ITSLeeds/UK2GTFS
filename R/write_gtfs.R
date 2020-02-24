@@ -6,9 +6,17 @@
 #' @param gtfs named list of data.frames
 #' @param folder folder to save the gtfs file to
 #' @param name the name of the zip file, default "gtfs"
+#' @param stripComma logical, should commas be stripped from text, default = TRUE
 #' @export
 #'
-write_gtfs <- function(gtfs, folder = getwd(), name = "gtfs") {
+write_gtfs <- function(gtfs, folder = getwd(), name = "gtfs", stripComma = TRUE) {
+  if(stripComma){
+    for(i in seq_len(length(gtfs))){
+      gtfs[[i]] <- stripCommas(gtfs[[i]])
+    }
+  }
+
+
   dir.create(paste0(folder, "/gtfs_temp"))
   utils::write.csv(gtfs$calendar, paste0(folder, "/gtfs_temp/calendar.txt"), row.names = FALSE, quote = FALSE)
   if (nrow(gtfs$calendar_dates) > 0) {
@@ -22,4 +30,22 @@ write_gtfs <- function(gtfs, folder = getwd(), name = "gtfs") {
   zip::zipr(paste0(folder, "/", name, ".zip"), list.files(paste0(folder, "/gtfs_temp"), full.names = TRUE), recurse = FALSE)
   unlink(paste0(folder, "/gtfs_temp"), recursive = TRUE)
   message(paste0(folder, "/", name, ".zip"))
+}
+
+
+#' Strip Commas
+#'
+#' Remove commas from data frame
+#'
+#' @param df data frame
+#' @noRd
+#'
+stripCommas <- function(df){
+  df[] <- lapply(df, function(x){
+    if(class(x) == "character"){
+      x <- gsub(","," ",x, fixed = TRUE)
+    }
+    return(x)
+  })
+  return(df)
 }
