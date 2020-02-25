@@ -11,6 +11,7 @@ License: file LICENSE
 Encoding: UTF-8
 LazyData: true
 Imports:
+  checkmate,
   doSNOW,
   dplyr,
   sf,

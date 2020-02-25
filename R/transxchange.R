@@ -38,9 +38,16 @@ transxchange2gtfs <- function(path_in,
                               cal = get_bank_holidays(),
                               naptan = get_naptan(),
                               scotland = "auto") {
+  # Check inputs
+  checkmate::assert_numeric(ncores)
+  checkmate::assert_logical(silent)
+  checkmate::assert_character(name)
+  checkmate::assert_character(scotland)
+
   if (ncores == 1) {
     message(paste0(Sys.time(), " This will take some time, make sure you use 'ncores' to enable multi-core processing"))
   }
+
 
   # Are we in Scotland?
   if(scotland == "yes"){
