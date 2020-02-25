@@ -126,7 +126,13 @@ Zip file." />
 Zip file.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>write_gtfs</span>(<span class='no'>gtfs</span>, <span class='kw'>folder</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/getwd.html'>getwd</a></span>(), <span class='kw'>name</span> <span class='kw'>=</span> <span class='st'>"gtfs"</span>)</pre>
+    <pre class="usage"><span class='fu'>write_gtfs</span>(
+  <span class='no'>gtfs</span>,
+  <span class='kw'>folder</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/getwd.html'>getwd</a></span>(),
+  <span class='kw'>name</span> <span class='kw'>=</span> <span class='st'>"gtfs"</span>,
+  <span class='kw'>stripComma</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>quote</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -142,6 +148,14 @@ Zip file.</p>
     <tr>
       <th>name</th>
       <td><p>the name of the zip file, default "gtfs"</p></td>
+    </tr>
+    <tr>
+      <th>stripComma</th>
+      <td><p>logical, should commas be stripped from text, default = TRUE</p></td>
+    </tr>
+    <tr>
+      <th>quote</th>
+      <td><p>logical, should strings be quoted, default = FALSE</p></td>
     </tr>
     </table>
 

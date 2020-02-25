@@ -7,9 +7,10 @@
 #' @param folder folder to save the gtfs file to
 #' @param name the name of the zip file, default "gtfs"
 #' @param stripComma logical, should commas be stripped from text, default = TRUE
+#' @param quote logical, should strings be quoted, default = FALSE
 #' @export
 #'
-write_gtfs <- function(gtfs, folder = getwd(), name = "gtfs", stripComma = TRUE) {
+write_gtfs <- function(gtfs, folder = getwd(), name = "gtfs", stripComma = TRUE, quote = FALSE) {
   if(stripComma){
     for(i in seq_len(length(gtfs))){
       gtfs[[i]] <- stripCommas(gtfs[[i]])
@@ -18,15 +19,15 @@ write_gtfs <- function(gtfs, folder = getwd(), name = "gtfs", stripComma = TRUE)
 
 
   dir.create(paste0(folder, "/gtfs_temp"))
-  utils::write.csv(gtfs$calendar, paste0(folder, "/gtfs_temp/calendar.txt"), row.names = FALSE, quote = FALSE)
+  utils::write.csv(gtfs$calendar, paste0(folder, "/gtfs_temp/calendar.txt"), row.names = FALSE, quote = quote)
   if (nrow(gtfs$calendar_dates) > 0) {
-    utils::write.csv(gtfs$calendar_dates, paste0(folder, "/gtfs_temp/calendar_dates.txt"), row.names = FALSE, quote = FALSE)
+    utils::write.csv(gtfs$calendar_dates, paste0(folder, "/gtfs_temp/calendar_dates.txt"), row.names = FALSE, quote = quote)
   }
-  utils::write.csv(gtfs$routes, paste0(folder, "/gtfs_temp/routes.txt"), row.names = FALSE, quote = FALSE)
-  utils::write.csv(gtfs$stop_times, paste0(folder, "/gtfs_temp/stop_times.txt"), row.names = FALSE, quote = FALSE)
-  utils::write.csv(gtfs$trips, paste0(folder, "/gtfs_temp/trips.txt"), row.names = FALSE, quote = FALSE)
-  utils::write.csv(gtfs$stops, paste0(folder, "/gtfs_temp/stops.txt"), row.names = FALSE, quote = FALSE)
-  utils::write.csv(gtfs$agency, paste0(folder, "/gtfs_temp/agency.txt"), row.names = FALSE, quote = FALSE)
+  utils::write.csv(gtfs$routes, paste0(folder, "/gtfs_temp/routes.txt"), row.names = FALSE, quote = quote)
+  utils::write.csv(gtfs$stop_times, paste0(folder, "/gtfs_temp/stop_times.txt"), row.names = FALSE, quote = quote)
+  utils::write.csv(gtfs$trips, paste0(folder, "/gtfs_temp/trips.txt"), row.names = FALSE, quote = quote)
+  utils::write.csv(gtfs$stops, paste0(folder, "/gtfs_temp/stops.txt"), row.names = FALSE, quote = quote)
+  utils::write.csv(gtfs$agency, paste0(folder, "/gtfs_temp/agency.txt"), row.names = FALSE, quote = quote)
   zip::zipr(paste0(folder, "/", name, ".zip"), list.files(paste0(folder, "/gtfs_temp"), full.names = TRUE), recurse = FALSE)
   unlink(paste0(folder, "/gtfs_temp"), recursive = TRUE)
   message(paste0(folder, "/", name, ".zip"))
