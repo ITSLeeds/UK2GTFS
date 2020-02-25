@@ -40,6 +40,7 @@ gtfs_merge <- function(gtfs_list) {
   suppressWarnings(calendar_dates <- dplyr::bind_rows(calendar_dates, .id = "file_id"))
 
   # fix typo
+  agency$agency_name <- as.character(agency$agency_name)
   agency$agency_name[agency$agency_name == "Dockland Light Railway"] <- "Docklands Light Railway"
   agency$agency_name[agency$agency_name == "Edward Bros"] <- "Edwards Bros"
   agency$agency_name[agency$agency_name == "John`s Coaches"] <- "John's Coaches"
