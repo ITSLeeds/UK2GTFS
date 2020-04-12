@@ -28,9 +28,7 @@ Imports:
   lubridate,
   zip,
   pbapply
-Remotes:
-  cran/xml2@1.2.5
-  
+Remotes: cran/xml2@1.2.5
 Suggests: knitr,
     rmarkdown
 VignetteBuilder: knitr
