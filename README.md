@@ -60,12 +60,17 @@ additional functionality:
 
 ## Installation
 
-Install the package with **devtools** as follows:
+Install the package with **remotes** as follows:
 
 ``` r
-install.packages("devtools") # If you do not already have the devtools package
-devtools::install_github("ITSleeds/UK2GTFS")
+install.packages("remotes") # If you do not already have the devtools package
+remotes::install_version("xml2", version = "1.2.5")
+remotes::install_github("ITSleeds/UK2GTFS")
+library(UK2GTFS)
 ```
+
+**Note: A recent update to the package `xml2` breaks `UK2GTFS` please
+use version 1.2.5**
 
 ## Package Status
 
