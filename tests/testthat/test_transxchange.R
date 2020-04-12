@@ -8,7 +8,7 @@ dir.create(file_path)
 unzip("inst/extdata/transxchange.zip", exdir = file_path)
 
 test_that("test transxchange2gtfs", {
-  transxchange2gtfs(path_in = file_path,
+  transxchange2gtfs(path_in = "inst/extdata/transxchange.zip",
                     path_out = file_path)
   expect_true(file.exists(file.path(file_path,"/gtfs.zip")))
 

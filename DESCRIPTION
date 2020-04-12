@@ -24,7 +24,7 @@ Imports:
   iotools,
   jsonlite,
   lubridate,
-  xml2,
+  xml2 (<= 1.2.5),
   zip,
   pbapply
 Suggests: knitr,
