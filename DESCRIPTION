@@ -26,9 +26,10 @@ Imports:
   iotools,
   jsonlite,
   lubridate,
-  xml2 (<= 1.2.5),
   zip,
   pbapply
+Remotes:
+  Remotes: cran/xml2@1.2.5
 Suggests: knitr,
     rmarkdown
 VignetteBuilder: knitr
