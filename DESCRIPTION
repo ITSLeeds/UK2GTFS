@@ -29,7 +29,8 @@ Imports:
   zip,
   pbapply
 Remotes:
-  Remotes: cran/xml2@1.2.5
+  cran/xml2@1.2.5
+  
 Suggests: knitr,
     rmarkdown
 VignetteBuilder: knitr
