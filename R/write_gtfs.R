@@ -11,8 +11,8 @@
 #' @export
 #'
 write_gtfs <- function(gtfs, folder = getwd(), name = "gtfs", stripComma = TRUE, quote = FALSE) {
-  if(stripComma){
-    for(i in seq_len(length(gtfs))){
+  if (stripComma) {
+    for (i in seq_len(length(gtfs))) {
       gtfs[[i]] <- stripCommas(gtfs[[i]])
     }
   }
@@ -41,10 +41,10 @@ write_gtfs <- function(gtfs, folder = getwd(), name = "gtfs", stripComma = TRUE,
 #' @param df data frame
 #' @noRd
 #'
-stripCommas <- function(df){
-  df[] <- lapply(df, function(x){
-    if(class(x) == "character"){
-      x <- gsub(","," ",x, fixed = TRUE)
+stripCommas <- function(df) {
+  df[] <- lapply(df, function(x) {
+    if (class(x) == "character") {
+      x <- gsub(",", " ", x, fixed = TRUE)
     }
     return(x)
   })

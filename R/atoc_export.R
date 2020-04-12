@@ -31,9 +31,11 @@ station2stops <- function(station, TI) {
   sf::st_crs(jnd) <- 4326
 
   jnd$CRS <- ifelse(is.na(jnd$`CRS Code.y`), jnd$`CRS Code.x`,
-                    jnd$`CRS Code.y`)
+    jnd$`CRS Code.y`
+  )
   jnd$name <- ifelse(is.na(jnd$`TPS Description`), jnd$`Station Name`,
-                     jnd$`TPS Description`)
+    jnd$`TPS Description`
+  )
 
   stops <- jnd[, c("CRS", "TIPLOC code", "name")]
   stops <- stops[!sf::st_is_empty(stops), ]
@@ -99,22 +101,32 @@ station2transfers <- function(station, flf, path_out) {
   transfers3 <- transfers2[, c("TIPLOC Code", "CRS Code")]
   names(transfers3) <- c("from_stop_id", "CRS Code")
   transfers1 <- dplyr::left_join(transfers1, transfers3,
-                                 by = c("from" = "CRS Code"))
+    by = c("from" = "CRS Code")
+  )
   names(transfers3) <- c("to_stop_id", "CRS Code")
   transfers1 <- dplyr::left_join(transfers1, transfers3,
-                                 by = c("to" = "CRS Code"))
-  transfers1 <- transfers1[, c("from_stop_id", "to_stop_id",
-                               "transfer_type", "time")]
-  names(transfers1) <- c("from_stop_id", "to_stop_id",
-                         "transfer_type", "min_transfer_time")
+    by = c("to" = "CRS Code")
+  )
+  transfers1 <- transfers1[, c(
+    "from_stop_id", "to_stop_id",
+    "transfer_type", "time"
+  )]
+  names(transfers1) <- c(
+    "from_stop_id", "to_stop_id",
+    "transfer_type", "min_transfer_time"
+  )
 
   transfers2$min_transfer_time <- as.integer(transfers2$`Minimum Change Time`) * 60
   transfers2$to_stop_id <- transfers2$`TIPLOC Code`
   transfers2$transfer_type <- 2
-  names(transfers2) <- c("from_stop_id", "CRS Code", "Minimum Change Time",
-                         "min_transfer_time", "to_stop_id", "transfer_type")
-  transfers2 <- transfers2[, c("from_stop_id", "to_stop_id", "transfer_type",
-                               "min_transfer_time")]
+  names(transfers2) <- c(
+    "from_stop_id", "CRS Code", "Minimum Change Time",
+    "min_transfer_time", "to_stop_id", "transfer_type"
+  )
+  transfers2 <- transfers2[, c(
+    "from_stop_id", "to_stop_id", "transfer_type",
+    "min_transfer_time"
+  )]
 
   transfers <- rbind(transfers1, transfers2)
   return(transfers)
@@ -138,8 +150,11 @@ splitDates <- function(cal) {
   )
 
   cal.new <- dplyr::left_join(dates.df, cal,
-                              by = c("start_date" = "start_date",
-                                     "end_date" = "end_date"))
+    by = c(
+      "start_date" = "start_date",
+      "end_date" = "end_date"
+    )
+  )
 
   if ("P" %in% cal$STP) {
     match <- "P"
@@ -154,21 +169,21 @@ splitDates <- function(cal) {
       st_tmp <- cal.new$start_date[j]
       ed_tmp <- cal.new$end_date[j]
       new.UID <- cal$UID[cal$STP == match & cal$start_date <= st_tmp &
-                           cal$end_date >= ed_tmp]
+        cal$end_date >= ed_tmp]
       new.Days <- cal$Days[cal$STP == match & cal$start_date <= st_tmp &
-                             cal$end_date >= ed_tmp]
+        cal$end_date >= ed_tmp]
       new.roWID <- cal$rowID[cal$STP == match & cal$start_date <= st_tmp &
-                               cal$end_date >= ed_tmp]
+        cal$end_date >= ed_tmp]
       new.ATOC <- cal$`ATOC Code`[cal$STP == match & cal$start_date <= st_tmp &
-                                    cal$end_date >= ed_tmp]
+        cal$end_date >= ed_tmp]
       new.Retail <- cal$`Retail Train ID`[cal$STP == match &
-                                            cal$start_date <= st_tmp &
-                                            cal$end_date >= ed_tmp]
+        cal$start_date <= st_tmp &
+        cal$end_date >= ed_tmp]
       new.head <- cal$Headcode[cal$STP == match & cal$start_date <= st_tmp &
-                                 cal$end_date >= ed_tmp]
+        cal$end_date >= ed_tmp]
       new.Status <- cal$`Train Status`[cal$STP == match &
-                                         cal$start_date <= st_tmp &
-                                         cal$end_date >= ed_tmp]
+        cal$start_date <= st_tmp &
+        cal$end_date >= ed_tmp]
       if (length(new.UID) == 1) {
         cal.new$UID[j] <- new.UID
         cal.new$Days[j] <- new.Days
@@ -253,9 +268,11 @@ splitDates <- function(cal) {
 #' @noRd
 #'
 matchRoutes <- function(schedule.rowID, stop_times.rowID, ncores = 1) {
-  schedule_tmp <- matrix(c(schedule.rowID,
-                           schedule.rowID[2:length(schedule.rowID)],
-                           max(schedule.rowID) + 99999), ncol = 2)
+  schedule_tmp <- matrix(c(
+    schedule.rowID,
+    schedule.rowID[2:length(schedule.rowID)],
+    max(schedule.rowID) + 99999
+  ), ncol = 2)
 
   if (ncores == 1) {
     matches <- lapply(1:nrow(schedule_tmp), function(x) {
@@ -267,20 +284,26 @@ matchRoutes <- function(schedule.rowID, stop_times.rowID, ncores = 1) {
     })
   } else {
     CL <- parallel::makeCluster(ncores) # make clusert and set number of core
-    parallel::clusterExport(cl = CL, varlist = c("stop_times.rowID",
-                                                 "schedule_tmp"),
-                            envir = environment())
+    parallel::clusterExport(
+      cl = CL, varlist = c(
+        "stop_times.rowID",
+        "schedule_tmp"
+      ),
+      envir = environment()
+    )
     parallel::clusterEvalQ(cl = CL, {
       library(dplyr)
     })
-    matches <- parallel::parLapply(cl = CL, 1:nrow(schedule_tmp),
-                                   function(x) {
-      stop_times.rowID[dplyr::between(
-        stop_times.rowID,
-        schedule_tmp[x, 1],
-        schedule_tmp[x, 2]
-      )]
-    })
+    matches <- parallel::parLapply(
+      cl = CL, 1:nrow(schedule_tmp),
+      function(x) {
+        stop_times.rowID[dplyr::between(
+          stop_times.rowID,
+          schedule_tmp[x, 1],
+          schedule_tmp[x, 2]
+        )]
+      }
+    )
     parallel::stopCluster(CL)
   }
 
@@ -309,12 +332,16 @@ checkrows <- function(tmp) {
   # tmp = res.calendar[i,]
   # message(paste0("done ",i))
   if (tmp$duration < 7) {
-    days.valid <- weekdays(seq.POSIXt(from = as.POSIXct.Date(tmp$start_date),
-                                      to = as.POSIXct.Date(tmp$end_date),
-                                      by = "DSTday"))
+    days.valid <- weekdays(seq.POSIXt(
+      from = as.POSIXct.Date(tmp$start_date),
+      to = as.POSIXct.Date(tmp$end_date),
+      by = "DSTday"
+    ))
     days.valid <- tolower(days.valid)
-    days.match <- tmp[, c("monday", "tuesday", "wednesday", "thursday",
-                          "friday", "saturday", "sunday")]
+    days.match <- tmp[, c(
+      "monday", "tuesday", "wednesday", "thursday",
+      "friday", "saturday", "sunday"
+    )]
     days.match <- sapply(days.match, function(x) {
       x == 1
     })
@@ -349,11 +376,15 @@ longnames <- function(routes, stop_times) {
     stop_b = stop_id[stop_sequence == max(stop_sequence)]
   )
 
-  stop_times_sub$route_long_name <- paste0("Train from ", stop_times_sub$stop_a, " to ", stop_times_sub$stop_b)
+  stop_times_sub$route_long_name <- paste0("Train from ",
+                                           stop_times_sub$stop_a,
+                                           " to ",
+                                           stop_times_sub$stop_b)
   stop_times_sub <- stop_times_sub[!duplicated(stop_times_sub$schedule), ]
   stop_times_sub <- stop_times_sub[, c("schedule", "route_long_name")]
 
-  routes <- dplyr::left_join(routes, stop_times_sub, by = c("rowID" = "schedule"))
+  routes <- dplyr::left_join(routes, stop_times_sub,
+                             by = c("rowID" = "schedule"))
 
   return(routes)
 }
@@ -369,10 +400,14 @@ longnames <- function(routes, stop_times) {
 #'
 makeCalendar <- function(schedule, ncores = 1) {
   # prep the inputs
-  calendar <- schedule[, c("Train UID", "Date Runs From", "Date Runs To", "Days Run", "STP indicator", "rowID", "Headcode", "ATOC Code", "Retail Train ID", "Train Status")]
+  calendar <- schedule[, c("Train UID", "Date Runs From", "Date Runs To",
+                           "Days Run", "STP indicator", "rowID", "Headcode",
+                           "ATOC Code", "Retail Train ID", "Train Status")]
   calendar$`STP indicator` <- as.character(calendar$`STP indicator`)
   # calendar = calendar[order(-calendar$`STP indicator`),]
-  names(calendar) <- c("UID", "start_date", "end_date", "Days", "STP", "rowID", "Headcode", "ATOC Code", "Retail Train ID", "Train Status")
+  names(calendar) <- c("UID", "start_date", "end_date", "Days", "STP",
+                       "rowID", "Headcode", "ATOC Code",
+                       "Retail Train ID", "Train Status")
   calendar$duration <- calendar$end_date - calendar$start_date + 1
 
   # UIDs = unique(calendar$UID)
@@ -422,14 +457,18 @@ makeCalendar <- function(schedule, ncores = 1) {
   })
   days <- matrix(unlist(days), ncol = 7, byrow = TRUE)
   days <- as.data.frame(days)
-  names(days) <- c("monday", "tuesday", "wednesday", "thursday",
-                   "friday", "saturday", "sunday")
+  names(days) <- c(
+    "monday", "tuesday", "wednesday", "thursday",
+    "friday", "saturday", "sunday"
+  )
 
   res.calendar <- cbind(res.calendar, days)
   res.calendar$Days <- NULL
 
-  message(paste0(Sys.time(),
-                 " Removing trips that only occur on days of the week that are non-operational"))
+  message(paste0(
+    Sys.time(),
+    " Removing trips that only occur on days of the week that are non-operational"
+  ))
   res.calendar.split <- split(res.calendar, seq(1, nrow(res.calendar)))
 
 
@@ -470,7 +509,7 @@ makeCalendar.inner <- function(calendar.sub) { # i, UIDs, calendar){
     typ <- calendar.sub$STP[calendar.sub$STP != "P"]
     typ.all <- calendar.sub$STP
     if (all(dur == 1) & all(typ == "C") & length(typ) > 0 &
-        length(typ.all) == 2) {
+      length(typ.all) == 2) {
       # One Day cancelationss
       # Modify in the calendar_dates.txt
       return(list(
@@ -480,7 +519,7 @@ makeCalendar.inner <- function(calendar.sub) { # i, UIDs, calendar){
     } else {
       # check for identical day pattern
       if (length(unique(calendar.sub$Days)) == 1 &
-          sum(typ.all == "P") == 1) {
+        sum(typ.all == "P") == 1) {
         calendar.new <- UK2GTFS:::splitDates(calendar.sub)
         return(list(calendar.new, NA))
       } else {
@@ -490,7 +529,8 @@ makeCalendar.inner <- function(calendar.sub) { # i, UIDs, calendar){
         for (k in seq(1, length(daypatterns))) {
           # select for each patter but include cancellations with a
           # different day pattern
-          calendar.sub.day <- calendar.sub[calendar.sub$Days == daypatterns[k] | calendar.sub$STP == "C", ]
+          calendar.sub.day <- calendar.sub[calendar.sub$Days == daypatterns[k] |
+                                             calendar.sub$STP == "C", ]
 
           if (all(calendar.sub.day$STP == "C")) {
             # ignore cases of only cancleds
@@ -528,7 +568,8 @@ duplicate.stop_times_alt <- function(calendar, stop_times, ncores = 1) {
   rowID.unique <- as.data.frame(table(calendar.dup$rowID))
   rowID.unique$Var1 <- as.integer(as.character(rowID.unique$Var1))
   stop_times <- dplyr::left_join(stop_times, rowID.unique,
-                                 by = c("schedule" = "Var1"))
+    by = c("schedule" = "Var1")
+  )
   stop_times_split <- split(stop_times, stop_times$schedule)
 
   # TODO: The could handle cases of non duplicated stoptimes within duplicate.stop_times.int

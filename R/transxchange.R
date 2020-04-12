@@ -50,15 +50,15 @@ transxchange2gtfs <- function(path_in,
 
 
   # Are we in Scotland?
-  if(scotland == "yes"){
+  if (scotland == "yes") {
     scotland <- TRUE
-  } else if(scotland == "no"){
+  } else if (scotland == "no") {
     scotland <- FALSE
-  } else if(scotland == "auto"){
+  } else if (scotland == "auto") {
     # Decide where we are
-    if(length(path_in) == 1){
+    if (length(path_in) == 1) {
       loc <- substr(path_in, nchar(path_in) - 5, nchar(path_in))
-      if(loc == "/S.zip"){
+      if (loc == "/S.zip") {
         scotland <- TRUE
         warning("Using Scottish Bank Holidays")
       } else {
@@ -67,8 +67,7 @@ transxchange2gtfs <- function(path_in,
     } else {
       scotland <- FALSE
     }
-
-  } else{
+  } else {
     stop("Unknown value for scotland, can be 'yes' 'no' or 'auto'")
   }
 
@@ -92,8 +91,10 @@ transxchange2gtfs <- function(path_in,
     message(paste0(Sys.time(), " Importing TransXchange files, single core"))
     res_all <- pbapply::pblapply(files, transxchange_import, run_debug = TRUE, full_import = FALSE)
     message(paste0(Sys.time(), " Converting to GTFS, single core"))
-    gtfs_all <- pbapply::pblapply(res_all, transxchange_export, run_debug = TRUE,
-                                  cal = cal, naptan = naptan, scotland = scotland)
+    gtfs_all <- pbapply::pblapply(res_all, transxchange_export,
+      run_debug = TRUE,
+      cal = cal, naptan = naptan, scotland = scotland
+    )
   } else {
     message(paste0(Sys.time(), " Importing TransXchange files, multicore"))
 

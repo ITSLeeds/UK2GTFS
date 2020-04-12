@@ -8,19 +8,31 @@
 get_bank_holidays <- function(url_ew = "https://www.gov.uk/bank-holidays/england-and-wales.ics",
                               url_scot = "https://www.gov.uk/bank-holidays/scotland.ics") {
   message("Scottish holidays are downloaded but not properly supported")
-  dir.create(file.path(tempdir(),"UK2GTFS"))
-  utils::download.file(url = url_ew,
-                       destfile = file.path(tempdir(),"UK2GTFS",
-                                            "bankholidays_EW.ics"),
-                       quiet = TRUE)
-  utils::download.file(url = url_scot,
-                       destfile = file.path(tempdir(),"UK2GTFS",
-                                            "bankholidays_Scot.ics"),
-                       quiet = TRUE)
-  cal_ew <- as.data.frame(calendar::ic_read(file.path(tempdir(),"UK2GTFS",
-                                                      "bankholidays_EW.ics")))
-  cal_scot <- as.data.frame(calendar::ic_read(file.path(tempdir(),"UK2GTFS",
-                                                      "bankholidays_Scot.ics")))
+  dir.create(file.path(tempdir(), "UK2GTFS"))
+  utils::download.file(
+    url = url_ew,
+    destfile = file.path(
+      tempdir(), "UK2GTFS",
+      "bankholidays_EW.ics"
+    ),
+    quiet = TRUE
+  )
+  utils::download.file(
+    url = url_scot,
+    destfile = file.path(
+      tempdir(), "UK2GTFS",
+      "bankholidays_Scot.ics"
+    ),
+    quiet = TRUE
+  )
+  cal_ew <- as.data.frame(calendar::ic_read(file.path(
+    tempdir(), "UK2GTFS",
+    "bankholidays_EW.ics"
+  )))
+  cal_scot <- as.data.frame(calendar::ic_read(file.path(
+    tempdir(), "UK2GTFS",
+    "bankholidays_Scot.ics"
+  )))
   names(cal_ew) <- c("start", "date", "name", "UID", "SEQUENCE", "DTSTAMP")
   names(cal_scot) <- c("start", "date", "name", "UID", "SEQUENCE", "DTSTAMP")
   cal_ew <- cal_ew[, c("name", "date")]
@@ -28,10 +40,10 @@ get_bank_holidays <- function(url_ew = "https://www.gov.uk/bank-holidays/england
 
   # Remove duplicated days from scotland
   cal <- rbind(cal_ew, cal_scot)
-  cal <- cal[!duplicated(cal$date),]
+  cal <- cal[!duplicated(cal$date), ]
   cal$EnglandWales <- cal$date %in% cal_ew$date
   cal$Scotland <- cal$date %in% cal_scot$date
-  cal <- cal[order(cal$date),]
+  cal <- cal[order(cal$date), ]
 
   cal$name[cal$name == "Summer bank holiday"] <- "LateSummerBankHolidayNotScotland"
   cal$name[cal$name == "Spring bank holiday"] <- "SpringBank"

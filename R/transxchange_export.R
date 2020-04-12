@@ -29,11 +29,11 @@ transxchange_export <- function(obj, run_debug = TRUE,
   # VehicleJourneysTimingLinks <- obj[["VehicleJourneysTimingLinks"]]
   ServicedOrganisations <- obj[["ServicedOrganisations"]]
 
-  #select holidays to use
-  if(scotland){
-    cal <- cal[cal$Scotland,]
+  # select holidays to use
+  if (scotland) {
+    cal <- cal[cal$Scotland, ]
   } else {
-    cal <- cal[cal$EnglandWales,]
+    cal <- cal[cal$EnglandWales, ]
   }
 
   # Swtich NA to NULL

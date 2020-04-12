@@ -85,8 +85,10 @@ importFLF <- function(file) {
 
   # Bind dother a few columns
   table[[1]] <- paste0(table[[1]], " ", table[[2]])
-  names(table) <- c("Type", "del1", "Mode", "del2", "from", "del3",
-                    "to", "del4", "time", "units")
+  names(table) <- c(
+    "Type", "del1", "Mode", "del2", "from", "del3",
+    "to", "del4", "time", "units"
+  )
   table <- table[, c("Type", "Mode", "from", "to", "time", "units")]
   return(table)
 }
@@ -166,9 +168,13 @@ importMSN <- function(file, silent = TRUE) {
   station$`Ordnance Survey Grid Ref East` <- station$`Ordnance Survey Grid Ref East` * 100 - 1e6
   station$`Ordnance Survey Grid Ref North` <- station$`Ordnance Survey Grid Ref North` * 100 - 6e6
 
-  station <- sf::st_as_sf(station, coords = c("Ordnance Survey Grid Ref East",
-                                              "Ordnance Survey Grid Ref North"),
-                          crs = 27700)
+  station <- sf::st_as_sf(station,
+    coords = c(
+      "Ordnance Survey Grid Ref East",
+      "Ordnance Survey Grid Ref North"
+    ),
+    crs = 27700
+  )
   station <- sf::st_transform(station, 4326)
 
   # GB Timetable numbers
@@ -185,8 +191,10 @@ importMSN <- function(file, silent = TRUE) {
     widths = c(1, 4, 26 + 4, 45)
   )
 
-  names(timetable) <- c("Record Type", "Reserved1", "Station Name",
-                        "GBTT numbers")
+  names(timetable) <- c(
+    "Record Type", "Reserved1", "Station Name",
+    "GBTT numbers"
+  )
 
   timetable$Reserved1 <- NULL
   # n.b. merging Reserved2 into station name as that is what is seems
@@ -222,8 +230,10 @@ importMSN <- function(file, silent = TRUE) {
     widths = c(1, 4, 26 + 5, 26, 20)
   )
 
-  names(alias) <- c("Record Type", "Reserved1", "Station Name",
-                    "Station Alias", "Reserved3")
+  names(alias) <- c(
+    "Record Type", "Reserved1", "Station Name",
+    "Station Alias", "Reserved3"
+  )
 
   alias$Reserved1 <- NULL
   # n.b. merging Reserved2 into station name as that is what is seems
@@ -267,7 +277,10 @@ strip_whitespace <- function(df) {
 #' @param full_import import all data, default FALSE
 #' @noRd
 #'
-importMCA <- function(file, silent = TRUE, ncores = 1, full_import = FALSE) {
+importMCA <- function(file,
+                      silent = TRUE,
+                      ncores = 1,
+                      full_import = FALSE) {
 
   # see https://wiki.openraildata.com/index.php/CIF_File_Format
   if (!silent) {
@@ -291,8 +304,10 @@ importMCA <- function(file, silent = TRUE, ncores = 1, full_import = FALSE) {
   BS <- iotools::dstrfw(
     x = BS,
     col_types = rep("character", 26),
-    widths = c(2, 1, 6, 6, 6, 7, 1, 1, 2, 4, 4, 1, 8, 1, 3, 4, 3,
-               6, 1, 1, 1, 1, 4, 4, 1, 1)
+    widths = c(
+      2, 1, 6, 6, 6, 7, 1, 1, 2, 4, 4, 1, 8, 1, 3, 4, 3,
+      6, 1, 1, 1, 1, 4, 4, 1, 1
+    )
   )
   names(BS) <- c(
     "Record Identity", "Transaction Type", "Train UID", "Date Runs From",
@@ -300,7 +315,7 @@ importMCA <- function(file, silent = TRUE, ncores = 1, full_import = FALSE) {
     "Train Category", "Train Identity", "Headcode", "Course Indicator",
     "Profit Centre Code/ Train Service Code", "Business Sector",
     "Power Type", "Timing Load", "Speed", "Operating Chars",
-    "Train Class", "Sleepers", "Reservations","Connect Indicator",
+    "Train Class", "Sleepers", "Reservations", "Connect Indicator",
     "Catering Code", "Service Branding", "Spare", "STP indicator"
   )
 
@@ -364,7 +379,8 @@ importMCA <- function(file, silent = TRUE, ncores = 1, full_import = FALSE) {
   LO$Spare <- NULL
   LO$`Record Identity` <- NULL
   LO <- strip_whitespace(LO)
-  LO$`Scheduled Departure Time` <- gsub("H", "", LO$`Scheduled Departure Time`)
+  LO$`Scheduled Departure Time` <- gsub("H", "",
+                                        LO$`Scheduled Departure Time`)
 
   LO <- LO[, c("Location", "Scheduled Departure Time")]
 
@@ -406,11 +422,15 @@ importMCA <- function(file, silent = TRUE, ncores = 1, full_import = FALSE) {
     any(acts %in% x)
   }), ]
   # Check for errors in the times
-  LI$`Scheduled Arrival Time` <- gsub("H", "", LI$`Scheduled Arrival Time`)
-  LI$`Scheduled Departure Time` <- gsub("H", "", LI$`Scheduled Departure Time`)
+  LI$`Scheduled Arrival Time` <- gsub("H", "",
+                                      LI$`Scheduled Arrival Time`)
+  LI$`Scheduled Departure Time` <- gsub("H", "",
+                                        LI$`Scheduled Departure Time`)
 
-  LI <- LI[, c("Location", "Scheduled Arrival Time",
-               "Scheduled Departure Time", "Activity", "rowID")]
+  LI <- LI[, c(
+    "Location", "Scheduled Arrival Time",
+    "Scheduled Departure Time", "Activity", "rowID"
+  )]
 
 
 
@@ -448,12 +468,15 @@ importMCA <- function(file, silent = TRUE, ncores = 1, full_import = FALSE) {
     CR <- iotools::dstrfw(
       x = CR,
       col_types = rep("character", 22),
-      widths = c(2, 8, 2, 4, 4, 1, 8, 1, 3, 4, 3, 6, 1, 1, 1, 1, 4,
-                 4, 4, 5, 8, 5)
+      widths = c(
+        2, 8, 2, 4, 4, 1, 8, 1, 3, 4, 3, 6, 1, 1, 1, 1, 4,
+        4, 4, 5, 8, 5
+      )
     )
     names(CR) <- c(
       "Record Identity", "Location", "Train Category", "Train Identity",
-      "Headcode", "Course Indicator", "Profit Centre Code/ Train Service Code",
+      "Headcode", "Course Indicator",
+      "Profit Centre Code/ Train Service Code",
       "Business Sector", "Power Type", "Timing Load", "Speed",
       "Operating Chars", "Train Class", "Sleepers", "Reservations",
       "Connect Indicator", "Catering Code", "Service Branding",
@@ -592,8 +615,9 @@ importMCA <- function(file, silent = TRUE, ncores = 1, full_import = FALSE) {
   stop_times <- dplyr::bind_rows(list(LO, LI, LT))
   stop_times <- stop_times[order(stop_times$rowID), ]
   stop_times$schedule <- as.integer(as.character(cut(stop_times$rowID,
-                                                     c(BS$rowID, ZZ$rowID[1]),
-                                                     labels = BS$rowID)))
+    c(BS$rowID, ZZ$rowID[1]),
+    labels = BS$rowID
+  )))
   stop_times$stop_sequence <- sequence(rle(stop_times$schedule)$lengths)
 
 
