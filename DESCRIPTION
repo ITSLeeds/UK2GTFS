@@ -25,8 +25,8 @@ Imports:
   jsonlite,
   lubridate,
   zip,
-  pbapply
-Remotes: cran/xml2@1.2.5
+  pbapply,
+  xml2
 Suggests: 
     covr,
     knitr,

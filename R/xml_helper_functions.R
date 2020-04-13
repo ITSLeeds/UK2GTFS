@@ -39,38 +39,49 @@ import_simple_xml <- function(xml1, nm) {
   if (length(xml1) == 0) {
     return(xml1)
   }
-  # return(xml_nodeset())
 
-  nodes <- lapply(xml1, function(x) {
-    res <- xml2:::xpath_search(x$node,
-                               x$doc,
-                               xpath = nm,
-                               nsMap = xml2::xml_ns(x),
-                               num_results = Inf
-    )
-
-    # Alt method see https://stackoverflow.com/questions/35103804/what-is-the-preferred-method-for-sharing-compiled-c-code-in-an-r-package-and-run
-    # res <- .Call("xpath_search",
-    #   x$node,
-    #   x$doc,
-    #   xpath = nm,
-    #   nsMap = xml2::xml_ns(x),
-    #   num_results = Inf,
-    #   PACKAGE="xml2"
-    # )
-
-    if (length(res) == 0) {
-      return(NA)
-    } else if (length(res) == 1) {
-      res <- xml2::xml_text(res[[1]])
-      return(res)
-    } else {
-      stop("res is not of length 0 or 1")
-    }
-  })
-  nodes <- unlist(nodes, recursive = FALSE)
+  nodes <- xml2::xml_find_first(xml1, nm)
+  nodes <- xml2::xml_text(nodes)
   return(nodes)
 }
+# import_simple_xml <- function(xml1, nm) {
+#   if (length(xml1) == 0) {
+#     return(xml1)
+#   }
+#   # return(xml_nodeset())
+#
+#   nodes <- lapply(xml1, function(x) {
+#     res <- xml2:::xpath_search(x$node,
+#                                x$doc,
+#                                xpath = nm,
+#                                nsMap = xml2::xml_ns(x),
+#                                num_results = Inf
+#     )
+#
+#     # Alt method see https://stackoverflow.com/questions/35103804/what-is-the-preferred-method-for-sharing-compiled-c-code-in-an-r-package-and-run
+#     # res <- .Call("xpath_search",
+#     #   x$node,
+#     #   x$doc,
+#     #   xpath = nm,
+#     #   nsMap = xml2::xml_ns(x),
+#     #   num_results = Inf,
+#     #   PACKAGE="xml2"
+#     # )
+#
+#     if (length(res) == 0) {
+#       return(NA)
+#     } else if (length(res) == 1) {
+#       res <- xml2::xml_text(res[[1]])
+#       return(res)
+#     } else {
+#       stop("res is not of length 0 or 1")
+#     }
+#   })
+#   nodes <- unlist(nodes, recursive = FALSE)
+#   return(nodes)
+# }
+
+
 
 #' Import When some rows are missing
 #' Checks lengths of obejct against lgth

@@ -9,11 +9,21 @@ test_that("test transxchange data is there", {
 
 })
 
+# Download Data
+cal = get_bank_holidays()
+naptan = get_naptan()
+
+test_that("test file downloads", {
+  expect_true("data.frame" %in% class(cal))
+  expect_true("data.frame" %in% class(naptan))
+})
 
 
 test_that("test transxchange2gtfs multicore", {
   transxchange2gtfs(path_in = file.path(.libPaths()[1],"UK2GTFS/extdata/transxchange.zip"),
                     path_out = file_path,
+                    cal = cal,
+                    naptan = naptan,
                     ncores = 2)
   expect_true(file.exists(file.path(file_path,"gtfs.zip")))
 
@@ -22,6 +32,8 @@ test_that("test transxchange2gtfs multicore", {
 test_that("test transxchange2gtfs singlecore", {
   transxchange2gtfs(path_in = file.path(.libPaths()[1],"UK2GTFS/extdata/transxchange.zip"),
                     path_out = file_path,
+                    cal = cal,
+                    naptan = naptan,
                     ncores = 1)
   expect_true(file.exists(file.path(file_path,"gtfs.zip")))
 
