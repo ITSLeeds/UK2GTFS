@@ -4,7 +4,9 @@
 \name{rail}
 \alias{rail}
 \title{Rail Network}
-\format{A SF data frame}
+\format{
+A SF data frame
+}
 \usage{
 rail
 }

@@ -16,7 +16,8 @@ test_that("test transxchange data is there", {
 
 test_that("test transxchange2gtfs", {
   transxchange2gtfs(path_in = file.path(.libPaths()[1],"UK2GTFS/extdata/transxchange.zip"),
-                    path_out = file_path)
+                    path_out = file_path,
+                    ncores = 2)
   expect_true(file.exists(file.path(file_path,"gtfs.zip")))
 
 })

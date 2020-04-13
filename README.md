@@ -9,7 +9,7 @@
 status](https://travis-ci.org/ITSLeeds/UK2GTFS.svg?branch=master)](https://travis-ci.org/itsleeds/UK2GTFS)
 [![CRAN
 status](https://www.r-pkg.org/badges/version/UK2GTFS)](https://cran.r-project.org/package=UK2GTFS)
-<!-- [![codecov](https://codecov.io/gh/itsleeds/od/branch/master/graph/badge.svg)](https://codecov.io/gh/itsleeds/od) -->
+[![codecov](https://codecov.io/gh/itsleeds/UK2GTFS/branch/master/graph/badge.svg)](https://codecov.io/gh/itsleeds/UK2GTFS)
 <!-- badges: end -->
 
 The goal of UK2GTFS is to convert train, tram, bus, and metro timetable

@@ -4,7 +4,9 @@
 \name{tiplocs}
 \alias{tiplocs}
 \title{Tiploc Locations}
-\format{A SF data frame for points}
+\format{
+A SF data frame for points
+}
 \usage{
 tiplocs
 }

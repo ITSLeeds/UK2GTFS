@@ -4,7 +4,9 @@
 \name{naptan_missing}
 \alias{naptan_missing}
 \title{Bus Stop Locations}
-\format{A data frame of 5 columns}
+\format{
+A data frame of 5 columns
+}
 \usage{
 naptan_missing
 }

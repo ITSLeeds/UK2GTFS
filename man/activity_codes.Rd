@@ -4,7 +4,9 @@
 \name{activity_codes}
 \alias{activity_codes}
 \title{Activity Codes}
-\format{A data frame code 3 columns}
+\format{
+A data frame code 3 columns
+}
 \usage{
 activity_codes
 }

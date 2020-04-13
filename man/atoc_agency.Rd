@@ -4,7 +4,9 @@
 \name{atoc_agency}
 \alias{atoc_agency}
 \title{Agency.txt for ATOC data}
-\format{A data frame}
+\format{
+A data frame
+}
 \usage{
 atoc_agency
 }
