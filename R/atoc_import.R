@@ -4,7 +4,7 @@
 #' Imports the .alf file and returns data.frame
 #'
 #' @param file Path to .alf file
-#' @noRd
+#' @export
 #'
 importALF <- function(file) {
   nc <- max(utils::count.fields(file, sep = ","))
@@ -67,7 +67,7 @@ importALF <- function(file) {
 #' Imports the .flf file and returns data.frame
 #'
 #' @param file Path to .flf file
-#' @noRd
+#' @export
 #'
 importFLF <- function(file) {
   table <- utils::read.table(
@@ -99,7 +99,7 @@ importFLF <- function(file) {
 #' Imports the .tsi file and returns data.frame
 #'
 #' @param file Path to .tsi file
-#' @noRd
+#' @export
 #'
 importTSI <- function(file) {
   table <- utils::read.table(
@@ -120,7 +120,7 @@ importTSI <- function(file) {
 #'
 #' @param file Path to .flf file
 #' @param silent logical, should messages be displayed
-#' @noRd
+#' @export
 #'
 importMSN <- function(file, silent = TRUE) {
   raw <- readLines(
@@ -275,7 +275,7 @@ strip_whitespace <- function(df) {
 #' @param silent logical, should messages be displayed
 #' @param ncores number of cores to use when paralell processing
 #' @param full_import import all data, default FALSE
-#' @noRd
+#' @export
 #'
 importMCA <- function(file,
                       silent = TRUE,
