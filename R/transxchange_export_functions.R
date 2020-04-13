@@ -236,31 +236,7 @@ clean_days <- function(days) {
   res
 }
 
-#' break up holidays
-#' ????
-#' @param cal_data desc
-#' @param cl desc
-#' @noRd
-break_up_holidays <- function(cal_dat, cl) {
-  cal_dat <- cal_dat[cal_dat[[cl]] != "", ]
-  if (nrow(cal_dat) == 0) {
-    return(NULL)
-  } else {
-    cal_dat_holidays <- lapply(strsplit(cal_dat[[cl]], " "), function(x) {
-      x[x != ""]
-    })
-    cal_dat <- cal_dat[rep(1:nrow(cal_dat),
-                           times = lengths(cal_dat_holidays)), ]
-    cal_dat$hols <- unlist(cal_dat_holidays)
-    if (cl == "BankHolidaysOperate") {
-      cal_dat$exception_type <- 1L
-    } else {
-      cal_dat$exception_type <- 2L
-    }
-    cal_dat <- cal_dat[, c("JourneyPatternRef", "hols", "exception_type")]
-    return(cal_dat)
-  }
-}
+
 
 #' break up holidays2
 #' ????
@@ -286,30 +262,6 @@ break_up_holidays2 <- function(cal_dat, cl, cal) {
     }
     cal_dat <- cal_dat[, c("trip_id", "hols", "exception_type")]
     return(cal_dat)
-  }
-}
-
-#' check duplicated holidays
-#' ????
-#' @param i desc
-#' @noRd
-#'
-check_duplicate_holidays <- function(i) {
-  cal_dat <- calendar_dates[i, ]
-  if (cal_dat$exception_type == 2) {
-    jpr <- calendar_dates$JourneyPatternRef[1]
-    hols <- calendar_dates$hols[1]
-    cal_sub <- calendar_dates[calendar_dates$JourneyPatternRef == jpr, ]
-    cal_sub <- cal_sub[cal_sub$hols == hols, ]
-    if (nrow(cal_sub) == 2) {
-      return(FALSE)
-    } else if (nrow(cal_sub) == 1) {
-      return(TRUE)
-    } else {
-      stop(paste0("Invalid number of rows ", i))
-    }
-  } else {
-    return(TRUE)
   }
 }
 
@@ -346,70 +298,7 @@ clean_activity <- function(x, type) {
   x
 }
 
-#' Expan stop_times
-#' ????
-#' @param i desc
-#' @param jps desc
-#' @noRd
-#'
-expand_stop_times <- function(i, jps) {
-  jps_sub <- jps[[i]]
-  trips_sub <- trips[trips$service_id == jps_sub$JourneyPatternID[1], ]
 
-  st_sub <- jps_sub[, c("To.StopPointRef", "To.Activity", "To.SequenceNumber",
-                        "JourneyPatternID", "To.WaitTime", "To.TimingStatus",
-                        "RunTime")]
-  names(st_sub) <- c("stop_id", "To.Activity", "stop_sequence", "service_id",
-                     "To.WaitTime", "timepoint", "RunTime")
-  st_top <- data.frame(
-    stop_id = jps_sub$From.StopPointRef[1],
-    To.Activity = jps_sub$From.Activity[1],
-    stop_sequence = "1",
-    service_id = jps_sub$JourneyPatternID[1],
-    To.WaitTime = 0,
-    timepoint = jps_sub$From.TimingStatus[1],
-    RunTime = 0,
-    stringsAsFactors = FALSE
-  )
-  st_sub <- rbind(st_top, st_sub)
-  st_sub$RunTime <- as.integer(st_sub$RunTime)
-  st_sub$To.WaitTime <- as.integer(st_sub$To.WaitTime)
-  st_sub$departure_time <- cumsum(st_sub$RunTime + st_sub$To.WaitTime)
-  st_sub$arrival_time <- st_sub$departure_time - st_sub$To.WaitTime
-  st_sub$pickup_type <- sapply(st_sub$To.Activity,
-                               clean_activity, type = "pickup")
-  st_sub$drop_off_type <- sapply(st_sub$To.Activity,
-                                 clean_activity, type = "drop_off")
-
-  n_stops <- nrow(st_sub)
-  n_trips <- nrow(trips_sub)
-  st_sub <- st_sub[rep(1:n_stops, times = n_trips), ]
-  st_sub$trip_id <- rep(trips_sub$trip_id, each = n_stops)
-  st_sub$DepartureTime <- lubridate::hms(rep(trips_sub$DepartureTime,
-                                             each = n_stops))
-
-  st_sub$arrival_time <- lubridate::seconds_to_period(lubridate::as.duration(
-    st_sub$arrival_time) + lubridate::as.duration(st_sub$DepartureTime))
-  st_sub$arrival_time <- sprintf("%02d:%02d:%02d",
-                                 st_sub$arrival_time@day * 24 +
-                                   st_sub$arrival_time@hour,
-                                 minute(st_sub$arrival_time),
-                                 second(st_sub$arrival_time))
-
-  st_sub$departure_time <- lubridate::seconds_to_period(lubridate::as.duration(
-    st_sub$departure_time) + lubridate::as.duration(st_sub$DepartureTime))
-  st_sub$departure_time <- sprintf("%02d:%02d:%02d", st_sub$departure_time@day *
-                                     24 + st_sub$departure_time@hour,
-                                   minute(st_sub$departure_time),
-                                   second(st_sub$departure_time))
-
-  st_sub$timepoint <- sapply(st_sub$timepoint, clean_timepoints)
-
-  st_sub <- st_sub[, c("trip_id", "arrival_time", "departure_time",
-                       "stop_id", "stop_sequence", "timepoint")]
-
-  return(st_sub)
-}
 
 #' Expan stop_times2
 #' ????
@@ -552,19 +441,3 @@ clean_pass <- function(jps) {
   return(jps)
 }
 
-#' Check stop time sequence
-#' Check that stoptimes are in order
-#' @param stop_times list of data frames
-#' @noRd
-check_stop_times <- function(stop_times) {
-  stop_times <- split(stop_times, stop_times$trip_id)
-
-  st_int <- function(st) {
-    st$stop_sequence <- st$stop_sequence[order(st$stop_sequence)]
-    return(st)
-  }
-
-  stop_times <- lapply(stop_times, st_int)
-  stop_times <- dplyr::bind_rows(stop_times)
-  return(stop_times)
-}
