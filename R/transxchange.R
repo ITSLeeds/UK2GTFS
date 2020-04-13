@@ -83,7 +83,12 @@ transxchange2gtfs <- function(path_in,
     files <- list.files(file.path(tempdir(), "txc"), pattern = ".xml", full.names = TRUE)
   }
 
-  message(length(files), " xml files have been found")
+  if(length(files) == 0){
+    stop("No XML files found")
+  } else {
+    message(length(files), " xml files have been found")
+  }
+
 
   files <- files[order(file.size(files), decreasing = TRUE)] # Large to small give optimum performance
 
