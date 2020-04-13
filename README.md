@@ -56,7 +56,7 @@ additional functionality:
 3.  Data polishing
       - Support of journeys past midnight
       - Routing of train journeys along tracks rather than straight
-        lines between stops
+        lines between stops (work in progress)
 
 ## Installation
 

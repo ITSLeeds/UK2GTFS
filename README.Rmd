@@ -43,7 +43,7 @@ There are a number of pre-existing options for converting data to GTFS. This pac
     + Removal of on-demand bus services (GTFS does not support services that are on-demand)
 1. Data polishing
     + Support of journeys past midnight
-    + Routing of train journeys along tracks rather than straight lines between stops
+    + Routing of train journeys along tracks rather than straight lines between stops (work in progress)
 
 
 ## Installation
