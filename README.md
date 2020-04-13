@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# UK2GTFS <a href='https://itsleeds.github.io/'><img src='man/figures/logo.png' align="right" height=180/></a>
+# UK2GTFS <a href='https://itsleeds.github.io/'><img src='man/figures/logo.png' align="right" height=215/></a>
 
 <!-- badges: start -->
 
