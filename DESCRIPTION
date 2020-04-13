@@ -4,7 +4,7 @@ Title: Converts UK transport timetable datasets to GTFS format
 Version: 0.1.0
 Author: Malcolm Morgan
 Maintainer: Malcolm Morgan <m.morgan1@leeds.ac.uk>
-Description: The UK uses a range of odd formats to store timtable data, this package converts them to the nice GTFS format.
+Description: The UK uses a range of odd formats to store timetable data, this package converts them to the nice GTFS format.
 Depends: R (>= 3.5)
 Language: EN-GB
 License: GPL-3
@@ -29,7 +29,10 @@ Imports:
   zip,
   pbapply
 Remotes: cran/xml2@1.2.5
-Suggests: knitr,
-    rmarkdown
+Suggests: 
+    covr,
+    knitr,
+    rmarkdown,
+    testthat
 VignetteBuilder: knitr
 RoxygenNote: 7.0.2
