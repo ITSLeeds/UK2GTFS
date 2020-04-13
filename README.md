@@ -50,6 +50,7 @@ additional functionality:
 2.  Data cleaning, the raw data often contains clear errors, the package
     does not blindly convert but also corrects some known errors
       - Improved locations of tiplocs
+      - Add bus stops missing in the NAPTAN
       - Correction of misspelt organisations
       - Removal of on-demand bus services (GTFS does not support
         services that are on-demand)
