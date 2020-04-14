@@ -42,7 +42,7 @@ test_that("test importFLF", {
 
 test_that("test importMSN", {
   r1 <- importMSN(file.path(file_path,"ttisf585.msn"))
-  expect_true(class(r1) == "data.frame")
+  expect_true(class(r1) == "list")
 })
 
 test_that("test importFLF", {
