@@ -1,8 +1,11 @@
 Package: UK2GTFS
 Type: Package
 Title: Converts UK transport timetable datasets to GTFS format
-Version: 0.1.0
-Author: Malcolm Morgan
+Version: 0.1.1
+Authors@R: c(
+    person("Malcolm", "Morgan", email = "m.morgan1@leeds.ac.uk", role = c("aut","cre"), 
+      comment = c(ORCID = "0000-0002-9488-9183"))
+    )
 Maintainer: Malcolm Morgan <m.morgan1@leeds.ac.uk>
 Description: The UK uses a range of odd formats to store timetable data, this package converts them to the nice GTFS format.
 Depends: R (>= 3.5)
