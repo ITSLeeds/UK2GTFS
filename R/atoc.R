@@ -37,7 +37,7 @@ atoc2gtfs <- function(path_in,
                       locations = tiplocs,
                       agency = atoc_agency,
                       shapes = FALSE,
-                      transferes = TRUE) {
+                      transfers = TRUE) {
   if (ncores == 1) {
     message(paste0(
       Sys.time(),

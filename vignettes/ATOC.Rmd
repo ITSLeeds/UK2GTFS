@@ -32,8 +32,8 @@ Load the package, and use the `atoc2gtfs` function. The fucntnon requires the fo
 
 ```{r atoc_example, eval=FALSE}
 library(UK2GTFS)
-path_in <- "E:/OneDrive - University of Leeds/Data/UK2GTFS/ATOC/timetable/"
-path_in <-  file.path(path_in,"ttis381.zip")
+path_in <- "E:/OneDrive - University of Leeds/Data/UK2GTFS/ATOC/timetable"
+path_in <-  file.path(path_in,"ttis898.zip")
 path_out = "E:/GTFS"
 atoc2gtfs(path_in = path_in, 
           path_out = path_out,
