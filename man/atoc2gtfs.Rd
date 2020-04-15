@@ -13,7 +13,7 @@ atoc2gtfs(
   locations = tiplocs,
   agency = atoc_agency,
   shapes = FALSE,
-  transferes = TRUE
+  transfers = TRUE
 )
 }
 \arguments{
