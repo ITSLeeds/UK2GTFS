@@ -17,13 +17,13 @@ write_gtfs(
 
 \item{folder}{folder to save the gtfs file to}
 
-\item{name}{the name of the zip file, default "gtfs"}
+\item{name}{the name of the zip file without the .zip extension, default "gtfs"}
 
 \item{stripComma}{logical, should commas be stripped from text, default = TRUE}
 
 \item{quote}{logical, should strings be quoted, default = FALSE}
 }
 \description{
-Takes a list of data.frames represneting the GTFS fromat and saves them as GTFS
+Takes a list of data frames represneting the GTFS fromat and saves them as GTFS
 Zip file.
 }

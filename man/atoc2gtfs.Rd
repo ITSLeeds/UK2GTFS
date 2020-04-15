@@ -11,7 +11,9 @@ atoc2gtfs(
   silent = TRUE,
   ncores = 1,
   locations = tiplocs,
-  agency = atoc_agency
+  agency = atoc_agency,
+  shapes = FALSE,
+  transferes = TRUE
 )
 }
 \arguments{
@@ -30,6 +32,10 @@ extension}
 or path to stops.txt GTFS file}
 
 \item{agency}{the GTFS agency file, default is taken from the package}
+
+\item{shapes}{Logical, should shapes.txt be generated (default FALSE)}
+
+\item{transfers}{Logical, should transfers.txt be generated (default TRUE)}
 }
 \description{
 ATOC to GTFS

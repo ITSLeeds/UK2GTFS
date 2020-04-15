@@ -81,7 +81,6 @@ station2stops <- function(station, TI) {
 #'
 #' @param station station SF data frame from the importMSN function
 #' @param flf imported flf file from importFLF
-#' @param path_out Path to save file to
 #' @noRd
 #'
 station2transfers <- function(station, flf, path_out) {

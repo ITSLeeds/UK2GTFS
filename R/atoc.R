@@ -12,6 +12,8 @@
 #' @param locations deafult tiplocs object inncluded with package, or "file"
 #'     or path to stops.txt GTFS file
 #' @param agency the GTFS agency file, default is taken from the package
+#' @param shapes Logical, should shapes.txt be generated (default FALSE)
+#' @param transfers Logical, should transfers.txt be generated (default TRUE)
 #'
 #' @details
 #' Locations
@@ -33,7 +35,9 @@ atoc2gtfs <- function(path_in,
                       silent = TRUE,
                       ncores = 1,
                       locations = tiplocs,
-                      agency = atoc_agency) {
+                      agency = atoc_agency,
+                      shapes = FALSE,
+                      transferes = TRUE) {
   if (ncores == 1) {
     message(paste0(
       Sys.time(),
@@ -53,23 +57,24 @@ atoc2gtfs <- function(path_in,
 
   # Are all the files we would expect there?
   files.ext <- substr(files, nchar(files) - 3, nchar(files))
-  files.ext.need <- c(
-    ".alf", ".dat", ".flf", ".mca", ".msn", ".set",
-    ".tsi", ".ztr"
-  )
+  # ".alf", ".dat", ".set", ".ztr", ".tsi" Not used
+  files.ext.need <- c(".flf", ".mca", ".msn")
+
   if (!all(files.ext.need %in% files.ext)) {
     # Missing Some files
     files.ext.missing <- files.ext.need[!files.ext.need %in% files.ext]
-    warning(paste0(
+    stop(paste0(
       "Missing files with the extension(s) ",
       paste(files.ext.missing, collapse = " ")
     ))
-    stop()
   }
 
   # Read In each File
   # alf <- importALF(files[grepl(".alf", files)])
-  # flf <- importFLF(files[grepl(".flf", files)])
+  if(transfers){
+    flf <- importFLF(files[grepl(".flf", files)])
+  }
+
   if ("sf" %in% class(locations)) {
     mca <- importMCA(
       file = files[grepl(".mca", files)],
@@ -110,6 +115,7 @@ atoc2gtfs <- function(path_in,
     TI <- mca[["TI"]]
     stops.list <- station2stops(station = station, TI = TI)
     stops <- stops.list[["stops"]]
+    rm(msn,TI,stops.list)
   } else {
     stops <- utils::read.csv(locations, stringsAsFactors = FALSE)
   }
@@ -150,10 +156,19 @@ atoc2gtfs <- function(path_in,
   timetables$agency <- agency
   timetables$stops <- stops
 
-  # Build Shapes
-  if (TRUE) {
-    return(timetables)
-  } else {
-    write_gtfs(timetables, folder = path_out, name = name)
+  if (transfers) {
+    if(!exists("station")){
+      msn <- importMSN(files[grepl(".msn", files)], silent = silent)
+      station <- msn[[1]]
+    }
+    timetables$transfers <- station2transfers(station = station, flf = flf)
   }
+
+
+  # Build Shapes
+  if (shapes) {
+    message("Shapes are not yet supported")
+  }
+
+  write_gtfs(timetables, folder = path_out, name = name)
 }

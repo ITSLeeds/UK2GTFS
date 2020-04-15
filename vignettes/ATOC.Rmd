@@ -16,7 +16,6 @@ vignette: >
 Data for trains can be downloaded from http://data.atoc.org/how-to you will need to register for a free account and login.
 
 
-
 ## Using the package
 
 ### Converting ATOC Data to GTFS
@@ -33,15 +32,14 @@ Load the package, and use the `atoc2gtfs` function. The fucntnon requires the fo
 
 ```{r atoc_example, eval=FALSE}
 library(UK2GTFS)
-#path_in = "C:/Users/Malcolm/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/ttis381.zip"
-#path_out = "C:/Users/Malcolm/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/"
-path_in = "E:/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/ttis381.zip"
-path_out = "E:/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/"
+path_in <- "E:/OneDrive - University of Leeds/Data/UK2GTFS/ATOC/timetable/"
+path_in <-  file.path(path_in,"ttis381.zip")
+path_out = "E:/GTFS"
 atoc2gtfs(path_in = path_in, 
           path_out = path_out,
-          name = "gtfs4",
+          name = "ttis381_gtfs",
           silent = FALSE, 
-          ncores = 6)
+          ncores = 5)
 
 ```
 
