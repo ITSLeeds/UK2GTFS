@@ -1,31 +1,38 @@
 #' ATOC to GTFS
 #'
-#' @details
-#' Convert ATOC Files to GTFS
+#' Convert ATOC CIF files to GTFS
 #'
-#' @param path_in Path to ATOC File
-#' @param path_out Path to where GTFS files should be saved
-#' @param name name that should be given to the gtfs file, without the .zip
-#'     extension
-#' @param silent Logical, should progress be shown
+#' @param path_in Character, path to ATOC file e.g."C:/input/ttis123.zip"
+#' @param path_out Character, path to where GTFS files should be saved e.g.
+#'   "C:/output"
+#' @param name Character, name that should be given to the gtfs file, without
+#'   the .zip extension (default "gtfs")
+#' @param silent Logical, should progress messages be surpressed (default TRUE)
 #' @param ncores Numeric, When parallel processing how many cores to use
-#' @param locations deafult tiplocs object inncluded with package, or "file"
-#'     or path to stops.txt GTFS file
-#' @param agency the GTFS agency file, default is taken from the package
+#'   (default 1)
+#' @param locations where to get tiploc locations (see details)
+#' @param agency where to get agency.txt (see details)
 #' @param shapes Logical, should shapes.txt be generated (default FALSE)
 #' @param transfers Logical, should transfers.txt be generated (default TRUE)
+#' @family main
 #'
-#' @details
-#' Locations
+#' @details Locations
+#'
 #' The .msn file contains the physical locations of stations and other TIPLOC
 #' codes (e.g. junctions). However, the quality of the locations is often poor
-#' only accurate to about 1km and occasionally very wrong Therefore, the
+#' only accurate to about 1km and occasionally very wrong. Therefore, the
 #' UK2GTFS package contains an internal dataset of the TIPLOC locations with
-#' better location accuracy.
+#' better location accuracy, which are used by default.
+#'
+#' However you can also specify `locations = "file"` to use the TIPLOC locations
+#' in the ATOC data or provide an SF data frame of your own.
 #'
 #' Agency
+#'
 #' The ATOC files do not contain the necessary information to build the
-#' agency.txt file. Therfore this data is provided with the package.
+#' agency.txt file. Therfore this data is provided with the package. You can
+#' also pass your own data frame of agency information.
+#'
 #'
 #' @export
 
@@ -144,7 +151,8 @@ atoc2gtfs <- function(path_in,
   # Main Timetable Build
   timetables <- schedule2routes(
     stop_times = stop_times,
-    schedule = schedule, silent = silent,
+    schedule = schedule,
+    silent = silent,
     ncores = ncores
   )
   rm(schedule)

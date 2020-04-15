@@ -4,8 +4,9 @@
 #' Export ATOC stations as GTFS stops.txt
 #'
 #' @param station station SF data frame from the importMSN function
-#' @param TI TI object
-#' @noRd
+#' @param TI TI object from the importMCA function
+#' @family atoc
+#' @export
 #'
 station2stops <- function(station, TI) {
 

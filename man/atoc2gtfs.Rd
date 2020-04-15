@@ -17,40 +17,46 @@ atoc2gtfs(
 )
 }
 \arguments{
-\item{path_in}{Path to ATOC File}
+\item{path_in}{Character, path to ATOC file e.g."C:/input/ttis123.zip"}
 
-\item{path_out}{Path to where GTFS files should be saved}
+\item{path_out}{Character, path to where GTFS files should be saved e.g.
+"C:/output"}
 
-\item{name}{name that should be given to the gtfs file, without the .zip
-extension}
+\item{name}{Character, name that should be given to the gtfs file, without
+the .zip extension (default "gtfs")}
 
-\item{silent}{Logical, should progress be shown}
+\item{silent}{Logical, should progress messages be surpressed (default TRUE)}
 
-\item{ncores}{Numeric, When parallel processing how many cores to use}
+\item{ncores}{Numeric, When parallel processing how many cores to use
+(default 1)}
 
-\item{locations}{deafult tiplocs object inncluded with package, or "file"
-or path to stops.txt GTFS file}
+\item{locations}{where to get tiploc locations (see details)}
 
-\item{agency}{the GTFS agency file, default is taken from the package}
+\item{agency}{where to get agency.txt (see details)}
 
 \item{shapes}{Logical, should shapes.txt be generated (default FALSE)}
 
 \item{transfers}{Logical, should transfers.txt be generated (default TRUE)}
 }
 \description{
-ATOC to GTFS
+Convert ATOC CIF files to GTFS
 }
 \details{
-Convert ATOC Files to GTFS
-
 Locations
+
 The .msn file contains the physical locations of stations and other TIPLOC
 codes (e.g. junctions). However, the quality of the locations is often poor
-only accurate to about 1km and occasionally very wrong Therefore, the
+only accurate to about 1km and occasionally very wrong. Therefore, the
 UK2GTFS package contains an internal dataset of the TIPLOC locations with
-better location accuracy.
+better location accuracy, which are used by default.
+
+However you can also specify `locations = "file"` to use the TIPLOC locations
+in the ATOC data or provide an SF data frame of your own.
 
 Agency
+
 The ATOC files do not contain the necessary information to build the
-agency.txt file. Therfore this data is provided with the package.
+agency.txt file. Therfore this data is provided with the package. You can
+also pass your own data frame of agency information.
 }
+\concept{main}
