@@ -136,15 +136,14 @@
 <code>agency</code> agency details which are not included in the network rail files, default used example data provided by the package</li>
 </ul>
 <div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">UK2GTFS</span>)
-<span class="co">#path_in = "C:/Users/Malcolm/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/ttis381.zip"</span>
-<span class="co">#path_out = "C:/Users/Malcolm/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/"</span>
-<span class="no">path_in</span> <span class="kw">=</span> <span class="st">"E:/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/ttis381.zip"</span>
-<span class="no">path_out</span> <span class="kw">=</span> <span class="st">"E:/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/"</span>
+<span class="no">path_in</span> <span class="kw">&lt;-</span> <span class="st">"E:/OneDrive - University of Leeds/Data/UK2GTFS/ATOC/timetable"</span>
+<span class="no">path_in</span> <span class="kw">&lt;-</span>  <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span>(<span class="no">path_in</span>,<span class="st">"ttis898.zip"</span>)
+<span class="no">path_out</span> <span class="kw">=</span> <span class="st">"E:/GTFS"</span>
 <span class="fu"><a href="../reference/atoc2gtfs.html">atoc2gtfs</a></span>(<span class="kw">path_in</span> <span class="kw">=</span> <span class="no">path_in</span>,
           <span class="kw">path_out</span> <span class="kw">=</span> <span class="no">path_out</span>,
-          <span class="kw">name</span> <span class="kw">=</span> <span class="st">"gtfs4"</span>,
+          <span class="kw">name</span> <span class="kw">=</span> <span class="st">"ttis381_gtfs"</span>,
           <span class="kw">silent</span> <span class="kw">=</span> <span class="fl">FALSE</span>,
-          <span class="kw">ncores</span> <span class="kw">=</span> <span class="fl">6</span>)</pre></body></html></div>
+          <span class="kw">ncores</span> <span class="kw">=</span> <span class="fl">5</span>)</pre></body></html></div>
 </div>
 </div>
 <div id="making-a-gtfs-file-from-the-atoc-data" class="section level2">

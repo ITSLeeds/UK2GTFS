@@ -147,7 +147,9 @@
   <span class='kw'>silent</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>ncores</span> <span class='kw'>=</span> <span class='fl'>1</span>,
   <span class='kw'>locations</span> <span class='kw'>=</span> <span class='no'>tiplocs</span>,
-  <span class='kw'>agency</span> <span class='kw'>=</span> <span class='no'>atoc_agency</span>
+  <span class='kw'>agency</span> <span class='kw'>=</span> <span class='no'>atoc_agency</span>,
+  <span class='kw'>shapes</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>transfers</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -182,6 +184,14 @@ or path to stops.txt GTFS file</p></td>
     <tr>
       <th>agency</th>
       <td><p>the GTFS agency file, default is taken from the package</p></td>
+    </tr>
+    <tr>
+      <th>shapes</th>
+      <td><p>Logical, should shapes.txt be generated (default FALSE)</p></td>
+    </tr>
+    <tr>
+      <th>transfers</th>
+      <td><p>Logical, should transfers.txt be generated (default TRUE)</p></td>
     </tr>
     </table>
 
