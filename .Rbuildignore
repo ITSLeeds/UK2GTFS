@@ -9,3 +9,4 @@
 ^_pkgdown\.yml$
 ^pkgdown$
 ^tic\.R$
+^appveyor\.yml$
