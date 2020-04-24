@@ -39,7 +39,7 @@ path_in <-  file.path(path_in,"ttis898.zip")
 path_out = "E:/GTFS"
 atoc2gtfs(path_in = path_in, 
           path_out = path_out,
-          name = "ttis381_gtfs",
+          name = "ttis898_gtfs",
           ncores = 5)
 
 ```
