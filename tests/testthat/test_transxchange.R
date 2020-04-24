@@ -42,3 +42,45 @@ test_that("test transxchange2gtfs singlecore", {
   expect_true(file.exists(file.path(file_path,"txc_gtfs2.zip")))
 
 })
+
+context("Test GTFS manipulation")
+gtfs <- gtfs_read(file.path(file_path, "txc_gtfs2.zip"))
+
+test_that("Can read GTFS", {
+  expect_true(class(gtfs) == "list")
+})
+
+test_that("Can clean GTFS", {
+  gtfs2 <- gtfs_clean(gtfs)
+  expect_true(class(gtfs2) == "list")
+})
+
+
+# test_that("Can find fast GTFS", {
+#   gtfs3 <- gtfs_fast_trips(gtfs, maxspeed = 30)
+#   expect_true(class(gtfs3) == "list")
+# })
+
+
+test_that("Can subset GTFS", {
+  bounds <- sf::st_polygon(list(rbind(c(-0.148989, 52.123243),
+                                  c(-0.148989,52.617931),
+                                  c(0.760130, 52.617931),
+                                  c(0.760130,52.123243),
+                                  c(-0.148989, 52.123243))))
+  bounds <- sf::st_as_sfc(list(bounds))
+  bounds <- sf::st_as_sf(data.frame(id = 1,
+                                    geometry = bounds),
+                         crs = 4326)
+
+  gtfs4 <- gtfs_clip(gtfs, bounds)
+  expect_true(class(gtfs4) == "list")
+})
+
+
+test_that("Can compress GTFS", {
+  gtfs5 <- gtfs_compress(gtfs)
+  expect_true(class(gtfs5) == "list")
+  expect_true(as.numeric(object.size(gtfs5)) < as.numeric(object.size(gtfs)))
+})
+

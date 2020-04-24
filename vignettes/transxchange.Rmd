@@ -16,18 +16,33 @@ knitr::opts_chunk$set(
 )
 ```
 
-### TransXchange Data - for bus, tram, and metro
+This vigneete outlines how to produce GTFS timetables for busses and light rail network using TransXchange files.
+
+## TransXchange Data - for bus, tram, and metro
 
 Data for other modes can be downloaded from https://www.travelinedata.org.uk/traveline-open-data/data-reporting/ you will need to apply for access to the FTP sever to download the data.
 
+The data comes as zipped folders for different regions of the UK.
+
+## Converting TransXchange to GTFS
+
+To do a simple conversion to GTFS, load the package, and use the `transxchange2gtfs()` function. The function requires the following arguments.
+
+* `path_in` is the file path to either a single zip folder or many XML files
+* `path_out` is the path to a folder where the results will be saved
+* `name` is the file name of the result by default `gtfs.zip`
+* `ncores` If > 1 then multicore processing is used to speed up the processing. Alwasy leave one spare core for your OS.
+
+A simple example is shown below:
 
 ```{r setup, eval =  FALSE}
 library(UK2GTFS)
-path_in = "E:/Users/earmmor/OneDrive - University of Leeds/Routing/TransitExchangeData/data_20191008/EA.zip"
-path_out = "E:/Users/earmmor/OneDrive - University of Leeds/Routing/TransitExchangeData/gtfs_20191008"
+path_in <- "E:/OneDrive - University of Leeds/Data/UK2GTFS/TransXchange/timetable"
+path_in <-  file.path(path_in,"EA.zip")
+path_out = "E:/GTFS"
 transxchange2gtfs(path_in = path_in,
                   path_out = path_out,
                   name = "EA_gtfs",
-                  ncores = 1)
+                  ncores = 4)
 
 ```

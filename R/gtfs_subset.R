@@ -1,17 +1,25 @@
-#' Split a gtfs file by location
+#' Clip a GTFS object to a geographical area
+#'
+#' Clips the GTFS file to only include routes that stop at least once within the bounds object
 #'
 #' @param gtfs a gtfs object
-#' @param bounds an sf object
+#' @param bounds an sf data frame of polygons or multipolygons with CRS 4326
 #' @export
-gtfs_subset <- function(gtfs, bounds) {
-  stops <- gtfs$stops
-  stop_times <- gtfs$stop_times
+gtfs_clip <- function(gtfs, bounds) {
+
+  crs <- sf::st_crs(bounds)
+  if(crs$input != "EPSG:4326"){
+    stop("The CRS of bounds is not EPSG:4326, please reproject with sf::st_transform(bounds, 4326)")
+  }
 
   if (nrow(bounds) > 1) {
     message("Multiple geometrys offered, using total area of all geometries")
     bounds <- sf::st_combine(bounds)
-    suppressWarnings(bounds <- sf::st_buffer(bounds, 0.001))
+    suppressWarnings(bounds <- sf::st_buffer(bounds, 0))
   }
+
+  stops <- gtfs$stops
+  stop_times <- gtfs$stop_times
 
   # bbox <- sf::st_bbox(bounds)
   stops_inc <- stops[!is.na(stops$stop_lon), ]
