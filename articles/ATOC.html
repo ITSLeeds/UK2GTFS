@@ -92,7 +92,7 @@
       <h1 data-toc-skip>ATOC - Train Timetables</h1>
                         <h4 class="author">Malcolm Morgan</h4>
             
-            <h4 class="date">2020-04-15</h4>
+            <h4 class="date">2020-04-24</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/itsleeds/uk2gtfs/blob/master/vignettes/ATOC.Rmd"><code>vignettes/ATOC.Rmd</code></a></small>
       <div class="hidden name"><code>ATOC.Rmd</code></div>
@@ -101,22 +101,22 @@
 
     
     
+<p>This vigneete outlines how to produce GTFS timetables for the heavy rail network using ATOC CIF files.</p>
 <div id="getting-data" class="section level2">
 <h2 class="hasAnchor">
 <a href="#getting-data" class="anchor"></a>Getting Data</h2>
-<div id="atoc-data---for-trains" class="section level3">
-<h3 class="hasAnchor">
-<a href="#atoc-data---for-trains" class="anchor"></a>ATOC Data - for trains</h3>
-<p>Data for trains can be downloaded from <a href="http://data.atoc.org/how-to" class="uri">http://data.atoc.org/how-to</a> you will need to register for a free account and login.</p>
+<p>Data for train timtetables can be downloaded from <a href="http://data.atoc.org/how-to" class="uri">http://data.atoc.org/how-to</a> you will need to register for a free account and login.</p>
+<div class="figure" style="text-align: center">
+<img src="images/atoc_download.jpg" alt="\label{fig:atoc_download}Download ATOC data"><p class="caption">
+Download ATOC data
+</p>
 </div>
+<p>You will get a zipped folder with a name like <code>ttis123.zip</code>.</p>
 </div>
-<div id="using-the-package" class="section level2">
+<div id="converting-atoc-data-to-gtfs" class="section level2">
 <h2 class="hasAnchor">
-<a href="#using-the-package" class="anchor"></a>Using the package</h2>
-<div id="converting-atoc-data-to-gtfs" class="section level3">
-<h3 class="hasAnchor">
-<a href="#converting-atoc-data-to-gtfs" class="anchor"></a>Converting ATOC Data to GTFS</h3>
-<p>Load the package, and use the <code>atoc2gtfs</code> function. The fucntnon requires the following arguments.</p>
+<a href="#converting-atoc-data-to-gtfs" class="anchor"></a>Converting ATOC Data to GTFS</h2>
+<p>To do a simple conversion to GTFS, load the package, and use the <code>atoc2gtfs</code> function. The function requires the following arguments.</p>
 <ul>
 <li>
 <code>path_in</code> is the file path to the ATOC timetable file, this comes a ziped folder with a name like <code>ttis123.zip</code>
@@ -127,61 +127,45 @@
 <code>name</code> is the file name of the result by default <code>gtfs.zip</code>
 </li>
 <li>
-<code>silent</code> if FALSE extra information is displayed duing processing</li>
-<li>
-<code>ncores</code> If &gt; 1 then mulicore processing is used to speed up the processing</li>
-<li>
-<code>locations</code> station locations can be <code>tiplocs</code> object provided with the package (default) or taken from the ATOC <code>"file"</code> (known to have errors) or file path to CSV file.</li>
-<li>
-<code>agency</code> agency details which are not included in the network rail files, default used example data provided by the package</li>
+<code>ncores</code> If &gt; 1 then multicore processing is used to speed up the processing. Alwasy leave one spare core for your OS.</li>
 </ul>
+<p>A simple example is shown below:</p>
 <div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">UK2GTFS</span>)
 <span class="no">path_in</span> <span class="kw">&lt;-</span> <span class="st">"E:/OneDrive - University of Leeds/Data/UK2GTFS/ATOC/timetable"</span>
 <span class="no">path_in</span> <span class="kw">&lt;-</span>  <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span>(<span class="no">path_in</span>,<span class="st">"ttis898.zip"</span>)
 <span class="no">path_out</span> <span class="kw">=</span> <span class="st">"E:/GTFS"</span>
 <span class="fu"><a href="../reference/atoc2gtfs.html">atoc2gtfs</a></span>(<span class="kw">path_in</span> <span class="kw">=</span> <span class="no">path_in</span>,
           <span class="kw">path_out</span> <span class="kw">=</span> <span class="no">path_out</span>,
-          <span class="kw">name</span> <span class="kw">=</span> <span class="st">"ttis381_gtfs"</span>,
-          <span class="kw">silent</span> <span class="kw">=</span> <span class="fl">FALSE</span>,
+          <span class="kw">name</span> <span class="kw">=</span> <span class="st">"ttis898_gtfs"</span>,
           <span class="kw">ncores</span> <span class="kw">=</span> <span class="fl">5</span>)</pre></body></html></div>
+<p>This will save the GTFS file to <code>E:/GTFS/ttis381_gtfs.zip</code></p>
 </div>
-</div>
-<div id="making-a-gtfs-file-from-the-atoc-data" class="section level2">
+<div id="advanced-features" class="section level2">
 <h2 class="hasAnchor">
-<a href="#making-a-gtfs-file-from-the-atoc-data" class="anchor"></a>Making a GTFS file from the ATOC Data</h2>
-<div class="sourceCode" id="cb2"><html><body><pre class="r"><span class="no">path_in</span> <span class="kw">=</span> <span class="st">"E:/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/ttis381.zip"</span>
-<span class="no">path_out</span> <span class="kw">=</span> <span class="st">"E:/OneDrive - University of Leeds/UK Trains Timetables/ATOC Data/2019-08-31/"</span>
-<span class="no">ncores</span> <span class="kw">=</span> <span class="fl">5</span>
-<span class="no">silent</span> <span class="kw">=</span> <span class="fl">FALSE</span>
-<span class="fu"><a href="https://rdrr.io/r/base/source.html">source</a></span>(<span class="st">"../R/atoc.R"</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/source.html">source</a></span>(<span class="st">"../R/atoc_export.R"</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/source.html">source</a></span>(<span class="st">"../R/atoc_import.R"</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/source.html">source</a></span>(<span class="st">"../R/atoc_main.R"</span>)
-<span class="fu"><a href="../reference/atoc2gtfs.html">atoc2gtfs</a></span>(<span class="kw">path_in</span> <span class="kw">=</span> <span class="no">path_in</span>, <span class="kw">path_out</span> <span class="kw">=</span> <span class="no">path_out</span>, <span class="kw">silent</span> <span class="kw">=</span> <span class="no">silent</span>, <span class="kw">ncores</span> <span class="kw">=</span> <span class="no">ncores</span>)</pre></body></html></div>
-<div class="sourceCode" id="cb3"><html><body><pre class="r"><span class="no">path_in</span> <span class="kw">=</span> <span class="st">"~/data/ttis508.zip"</span>
-<span class="no">path_out</span> <span class="kw">=</span> <span class="st">"~/data"</span>
-<span class="no">ncores</span> <span class="kw">=</span> <span class="fl">5</span>
-<span class="no">silent</span> <span class="kw">=</span> <span class="fl">FALSE</span>
-<span class="no">name</span> <span class="kw">=</span> <span class="st">"gtfs"</span>
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">UK2GTFS</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/load.html">load</a></span>(<span class="st">"../data/rail_heavy.rda"</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/source.html">source</a></span>(<span class="st">"../R/atoc.R"</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/source.html">source</a></span>(<span class="st">"../R/atoc_export.R"</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/source.html">source</a></span>(<span class="st">"../R/atoc_import.R"</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/source.html">source</a></span>(<span class="st">"../R/atoc_main.R"</span>)
-<span class="co">#timetables &lt;- atoc2gtfs(path_in = path_in, path_out = path_out, silent = silent, ncores = ncores)</span>
-<span class="co">#saveRDS(timetables,"ATOC_timetables.Rds")</span>
-<span class="no">gtfs</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html">readRDS</a></span>(<span class="st">"ATOC_timetables.Rds"</span>)
-<span class="no">shapes</span> <span class="kw">&lt;-</span> <span class="fu">trips2shapes</span>(<span class="kw">gtfs</span> <span class="kw">=</span> <span class="no">gtfs</span>,  <span class="kw">ncores</span> <span class="kw">=</span> <span class="no">ncores</span>)</pre></body></html></div>
+<a href="#advanced-features" class="anchor"></a>Advanced features</h2>
+<p>The <code><a href="../reference/atoc2gtfs.html">atoc2gtfs()</a></code> function gives some customisation options to how the GTFS file is built. It is also just a wrapper around ofther functions in the package. This section will explain the main steps.</p>
+<div id="importing-atoc-data" class="section level3">
+<h3 class="hasAnchor">
+<a href="#importing-atoc-data" class="anchor"></a>Importing ATOC Data</h3>
+<p>After unzipping the folder, the reading of the ATOC data is done with the following functions:</p>
+<ul>
+<li>
+<code><a href="../reference/importMCA.html">importMCA()</a></code> the main file with the timetable data,</li>
+<li>
+<code><a href="../reference/importFLF.html">importFLF()</a></code> optional file used if <code>transfers = TRUE</code>
+</li>
+<li>
+<code><a href="../reference/importMSN.html">importMSN()</a></code> optional file used if <code>locations = "file"</code>
+</li>
+</ul>
+<p>Other files are currently ignored.</p>
 </div>
-<div id="making-shapes" class="section level2">
-<h2 class="hasAnchor">
-<a href="#making-shapes" class="anchor"></a>Making Shapes</h2>
-<div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="no">trips</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.csv</a></span>(<span class="st">"D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs/trips.txt"</span>,, <span class="kw">stringsAsFactors</span> <span class="kw">=</span> <span class="no">F</span>)
-<span class="no">routes</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.csv</a></span>(<span class="st">"D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs/routes.txt"</span>, <span class="kw">stringsAsFactors</span> <span class="kw">=</span> <span class="no">F</span>)
-<span class="no">stop_times</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.csv</a></span>(<span class="st">"D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs/stop_times.txt"</span>, <span class="kw">stringsAsFactors</span> <span class="kw">=</span> <span class="no">F</span>)
-<span class="co">#stops = read.csv("D:/Users/earmmor/OneDrive - University of Leeds/Routing/gtfs/stops.txt")</span>
-<span class="no">stops</span> <span class="kw">=</span> <span class="kw pkg">sf</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/sf/man/st_read.html">st_read</a></span>(<span class="st">"D:/Users/earmmor/OneDrive - University of Leeds/Routing/osm/stops_fixed.shp"</span>)</pre></body></html></div>
+<div id="tiploc-locations" class="section level3">
+<h3 class="hasAnchor">
+<a href="#tiploc-locations" class="anchor"></a>TIPLOC Locations</h3>
+<p>The timetable data referes to locations such as stations, junctions, etc using a TIPLOC id. The locations of these are stored in the <code>.msn</code> file, but are not always accurate. Therfore the package comes with a <code>tiplocs</code> object which includes improved location data for TIPLOCS.</p>
+<p>IF you wanted to build using the locations included in the ATOC data, then you can use <code>locations = "file"</code> in <code><a href="../reference/atoc2gtfs.html">atoc2gtfs()</a></code> or manually build the stops using <code><a href="../reference/station2stops.html">station2stops()</a></code>.</p>
+</div>
 </div>
   </div>
 

@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>ATOC to GTFS — atoc2gtfs • UK2GTFS</title>
+<title>Export ATOC stations as GTFS stops.txt — station2stops • UK2GTFS</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,8 +46,8 @@
 
 
 
-<meta property="og:title" content="ATOC to GTFS — atoc2gtfs" />
-<meta property="og:description" content="Convert ATOC CIF files to GTFS" />
+<meta property="og:title" content="Export ATOC stations as GTFS stops.txt — station2stops" />
+<meta property="og:description" content="Export ATOC stations as GTFS stops.txt" />
 <meta property="og:image" content="/logo.png" />
 
 
@@ -131,85 +131,33 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>ATOC to GTFS</h1>
-    <small class="dont-index">Source: <a href='https://github.com/itsleeds/uk2gtfs/blob/master/R/atoc.R'><code>R/atoc.R</code></a></small>
-    <div class="hidden name"><code>atoc2gtfs.Rd</code></div>
+    <h1>Export ATOC stations as GTFS stops.txt</h1>
+    <small class="dont-index">Source: <a href='https://github.com/itsleeds/uk2gtfs/blob/master/R/atoc_export.R'><code>R/atoc_export.R</code></a></small>
+    <div class="hidden name"><code>station2stops.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Convert ATOC CIF files to GTFS</p>
+    <p>Export ATOC stations as GTFS stops.txt</p>
     </div>
 
-    <pre class="usage"><span class='fu'>atoc2gtfs</span>(
-  <span class='no'>path_in</span>,
-  <span class='no'>path_out</span>,
-  <span class='kw'>name</span> <span class='kw'>=</span> <span class='st'>"gtfs"</span>,
-  <span class='kw'>silent</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>ncores</span> <span class='kw'>=</span> <span class='fl'>1</span>,
-  <span class='kw'>locations</span> <span class='kw'>=</span> <span class='no'>tiplocs</span>,
-  <span class='kw'>agency</span> <span class='kw'>=</span> <span class='no'>atoc_agency</span>,
-  <span class='kw'>shapes</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>transfers</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
-)</pre>
+    <pre class="usage"><span class='fu'>station2stops</span>(<span class='no'>station</span>, <span class='no'>TI</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>path_in</th>
-      <td><p>Character, path to ATOC file e.g."C:/input/ttis123.zip"</p></td>
+      <th>station</th>
+      <td><p>station SF data frame from the importMSN function</p></td>
     </tr>
     <tr>
-      <th>path_out</th>
-      <td><p>Character, path to where GTFS files should be saved e.g.
-"C:/output"</p></td>
-    </tr>
-    <tr>
-      <th>name</th>
-      <td><p>Character, name that should be given to the gtfs file, without
-the .zip extension (default "gtfs")</p></td>
-    </tr>
-    <tr>
-      <th>silent</th>
-      <td><p>Logical, should progress messages be surpressed (default TRUE)</p></td>
-    </tr>
-    <tr>
-      <th>ncores</th>
-      <td><p>Numeric, When parallel processing how many cores to use
-(default 1)</p></td>
-    </tr>
-    <tr>
-      <th>locations</th>
-      <td><p>where to get tiploc locations (see details)</p></td>
-    </tr>
-    <tr>
-      <th>agency</th>
-      <td><p>where to get agency.txt (see details)</p></td>
-    </tr>
-    <tr>
-      <th>shapes</th>
-      <td><p>Logical, should shapes.txt be generated (default FALSE)</p></td>
-    </tr>
-    <tr>
-      <th>transfers</th>
-      <td><p>Logical, should transfers.txt be generated (default TRUE)</p></td>
+      <th>TI</th>
+      <td><p>TI object from the importMCA function</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>Locations</p>
-<p>The .msn file contains the physical locations of stations and other TIPLOC
-codes (e.g. junctions). However, the quality of the locations is often poor
-only accurate to about 1km and occasionally very wrong. Therefore, the
-UK2GTFS package contains an internal dataset of the TIPLOC locations with
-better location accuracy, which are used by default.</p>
-<p>However you can also specify `locations = "file"` to use the TIPLOC locations
-in the ATOC data or provide an SF data frame of your own.</p>
-<p>Agency</p>
-<p>The ATOC files do not contain the necessary information to build the
-agency.txt file. Therfore this data is provided with the package. You can
-also pass your own data frame of agency information.</p>
+    <p>Export ATOC stations as GTFS stops.txt</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
