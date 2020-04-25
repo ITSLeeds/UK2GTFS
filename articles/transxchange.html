@@ -92,7 +92,7 @@
       <h1 data-toc-skip>TransXchange - Bus, Tram, and Tube Timetables</h1>
                         <h4 class="author">Malcolm Morgan</h4>
             
-            <h4 class="date">2020-04-24</h4>
+            <h4 class="date">2020-04-25</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/itsleeds/uk2gtfs/blob/master/vignettes/transxchange.Rmd"><code>vignettes/transxchange.Rmd</code></a></small>
       <div class="hidden name"><code>transxchange.Rmd</code></div>
@@ -101,23 +101,45 @@
 
     
     
-<div id="transxchange-data---for-bus-tram-and-metro" class="section level3">
-<h3 class="hasAnchor">
-<a href="#transxchange-data---for-bus-tram-and-metro" class="anchor"></a>TransXchange Data - for bus, tram, and metro</h3>
+<p>This vigneete outlines how to produce GTFS timetables for busses and light rail network using TransXchange files.</p>
+<div id="transxchange-data---for-bus-tram-and-metro" class="section level2">
+<h2 class="hasAnchor">
+<a href="#transxchange-data---for-bus-tram-and-metro" class="anchor"></a>TransXchange Data - for bus, tram, and metro</h2>
 <p>Data for other modes can be downloaded from <a href="https://www.travelinedata.org.uk/traveline-open-data/data-reporting/" class="uri">https://www.travelinedata.org.uk/traveline-open-data/data-reporting/</a> you will need to apply for access to the FTP sever to download the data.</p>
+<p>The data comes as zipped folders for different regions of the UK.</p>
+</div>
+<div id="converting-transxchange-to-gtfs" class="section level2">
+<h2 class="hasAnchor">
+<a href="#converting-transxchange-to-gtfs" class="anchor"></a>Converting TransXchange to GTFS</h2>
+<p>To do a simple conversion to GTFS, load the package, and use the <code><a href="../reference/transxchange2gtfs.html">transxchange2gtfs()</a></code> function. The function requires the following arguments.</p>
+<ul>
+<li>
+<code>path_in</code> is the file path to either a single zip folder or many XML files</li>
+<li>
+<code>path_out</code> is the path to a folder where the results will be saved</li>
+<li>
+<code>name</code> is the file name of the result by default <code>gtfs.zip</code>
+</li>
+<li>
+<code>ncores</code> If &gt; 1 then multicore processing is used to speed up the processing. Alwasy leave one spare core for your OS.</li>
+</ul>
+<p>A simple example is shown below:</p>
 <div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">UK2GTFS</span>)
-<span class="no">path_in</span> <span class="kw">=</span> <span class="st">"E:/Users/earmmor/OneDrive - University of Leeds/Routing/TransitExchangeData/data_20191008/EA.zip"</span>
-<span class="no">path_out</span> <span class="kw">=</span> <span class="st">"E:/Users/earmmor/OneDrive - University of Leeds/Routing/TransitExchangeData/gtfs_20191008"</span>
+<span class="no">path_in</span> <span class="kw">&lt;-</span> <span class="st">"E:/OneDrive - University of Leeds/Data/UK2GTFS/TransXchange/timetable"</span>
+<span class="no">path_in</span> <span class="kw">&lt;-</span>  <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span>(<span class="no">path_in</span>,<span class="st">"EA.zip"</span>)
+<span class="no">path_out</span> <span class="kw">=</span> <span class="st">"E:/GTFS"</span>
 <span class="fu"><a href="../reference/transxchange2gtfs.html">transxchange2gtfs</a></span>(<span class="kw">path_in</span> <span class="kw">=</span> <span class="no">path_in</span>,
                   <span class="kw">path_out</span> <span class="kw">=</span> <span class="no">path_out</span>,
                   <span class="kw">name</span> <span class="kw">=</span> <span class="st">"EA_gtfs"</span>,
-                  <span class="kw">ncores</span> <span class="kw">=</span> <span class="fl">1</span>)</pre></body></html></div>
+                  <span class="kw">ncores</span> <span class="kw">=</span> <span class="fl">4</span>)</pre></body></html></div>
 </div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
 
-      </div>
+        <nav id="toc" data-toggle="toc"><h2 data-toc-skip>Contents</h2>
+    </nav>
+</div>
 
 </div>
 

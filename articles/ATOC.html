@@ -92,7 +92,7 @@
       <h1 data-toc-skip>ATOC - Train Timetables</h1>
                         <h4 class="author">Malcolm Morgan</h4>
             
-            <h4 class="date">2020-04-24</h4>
+            <h4 class="date">2020-04-25</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/itsleeds/uk2gtfs/blob/master/vignettes/ATOC.Rmd"><code>vignettes/ATOC.Rmd</code></a></small>
       <div class="hidden name"><code>ATOC.Rmd</code></div>
@@ -101,11 +101,11 @@
 
     
     
-<p>This vigneete outlines how to produce GTFS timetables for the heavy rail network using ATOC CIF files.</p>
+<p>This vignette outlines how to produce GTFS timetables for the heavy rail network using ATOC CIF files.</p>
 <div id="getting-data" class="section level2">
 <h2 class="hasAnchor">
 <a href="#getting-data" class="anchor"></a>Getting Data</h2>
-<p>Data for train timtetables can be downloaded from <a href="http://data.atoc.org/how-to" class="uri">http://data.atoc.org/how-to</a> you will need to register for a free account and login.</p>
+<p>Data for train timetables can be downloaded from <a href="http://data.atoc.org/how-to" class="uri">http://data.atoc.org/how-to</a> you will need to register for a free account and log in.</p>
 <div class="figure" style="text-align: center">
 <img src="images/atoc_download.jpg" alt="\label{fig:atoc_download}Download ATOC data"><p class="caption">
 Download ATOC data
@@ -119,7 +119,7 @@ Download ATOC data
 <p>To do a simple conversion to GTFS, load the package, and use the <code>atoc2gtfs</code> function. The function requires the following arguments.</p>
 <ul>
 <li>
-<code>path_in</code> is the file path to the ATOC timetable file, this comes a ziped folder with a name like <code>ttis123.zip</code>
+<code>path_in</code> is the file path to the ATOC timetable file, this comes a zipped folder with a name like <code>ttis123.zip</code>
 </li>
 <li>
 <code>path_out</code> is the path to a folder where the results will be saved</li>
@@ -127,7 +127,7 @@ Download ATOC data
 <code>name</code> is the file name of the result by default <code>gtfs.zip</code>
 </li>
 <li>
-<code>ncores</code> If &gt; 1 then multicore processing is used to speed up the processing. Alwasy leave one spare core for your OS.</li>
+<code>ncores</code> If &gt; 1 then multicore processing is used to speed up the processing. Always leave one spare core for your OS.</li>
 </ul>
 <p>A simple example is shown below:</p>
 <div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">UK2GTFS</span>)
@@ -143,7 +143,7 @@ Download ATOC data
 <div id="advanced-features" class="section level2">
 <h2 class="hasAnchor">
 <a href="#advanced-features" class="anchor"></a>Advanced features</h2>
-<p>The <code><a href="../reference/atoc2gtfs.html">atoc2gtfs()</a></code> function gives some customisation options to how the GTFS file is built. It is also just a wrapper around ofther functions in the package. This section will explain the main steps.</p>
+<p>The <code><a href="../reference/atoc2gtfs.html">atoc2gtfs()</a></code> function gives some customization options to how the GTFS file is built. It is also just a wrapper around other functions in the package. This section will explain the main steps.</p>
 <div id="importing-atoc-data" class="section level3">
 <h3 class="hasAnchor">
 <a href="#importing-atoc-data" class="anchor"></a>Importing ATOC Data</h3>
@@ -163,8 +163,13 @@ Download ATOC data
 <div id="tiploc-locations" class="section level3">
 <h3 class="hasAnchor">
 <a href="#tiploc-locations" class="anchor"></a>TIPLOC Locations</h3>
-<p>The timetable data referes to locations such as stations, junctions, etc using a TIPLOC id. The locations of these are stored in the <code>.msn</code> file, but are not always accurate. Therfore the package comes with a <code>tiplocs</code> object which includes improved location data for TIPLOCS.</p>
+<p>The timetable data refers to locations such as stations, junctions, etc using a TIPLOC id. The locations of these are stored in the <code>.msn</code> file, but are not always accurate. Therefore the package comes with a <code>tiplocs</code> object which includes improved location data for TIPLOCS.</p>
 <p>IF you wanted to build using the locations included in the ATOC data, then you can use <code>locations = "file"</code> in <code><a href="../reference/atoc2gtfs.html">atoc2gtfs()</a></code> or manually build the stops using <code><a href="../reference/station2stops.html">station2stops()</a></code>.</p>
+</div>
+<div id="agency" class="section level3">
+<h3 class="hasAnchor">
+<a href="#agency" class="anchor"></a>Agency</h3>
+<p>The data required to create the GTFS <code>agency.txt</code> file is not present in the ATOC CIF files. Therefore the package contains an example file instead.</p>
 </div>
 </div>
   </div>
