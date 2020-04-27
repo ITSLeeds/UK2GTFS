@@ -44,7 +44,7 @@ test_that("test transxchange2gtfs singlecore", {
 })
 
 context("Test GTFS manipulation")
-gtfs <- gtfs_read(file.path(file_path, "txc_gtfs2.zip"))
+gtfs <- gtfs_read(file.path(file_path, "txc_gtfs.zip"))
 
 test_that("Can read GTFS", {
   expect_true(class(gtfs) == "list")
@@ -82,5 +82,12 @@ test_that("Can compress GTFS", {
   gtfs5 <- gtfs_compress(gtfs)
   expect_true(class(gtfs5) == "list")
   expect_true(as.numeric(object.size(gtfs5)) < as.numeric(object.size(gtfs)))
+})
+
+
+test_that("Can split GTFS", {
+  gtfs6 <- gtfs_split(gtfs)
+  expect_true(class(gtfs6) == "list")
+  expect_true(length(gtfs6) == 2)
 })
 
