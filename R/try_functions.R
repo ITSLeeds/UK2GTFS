@@ -10,8 +10,8 @@ transxchange_import_try <- function(file, run_debug, full_import){
   res <- try(transxchange_import(file, run_debug = run_debug, full_import = full_import))
 
   if("try-error" %in% class(res)){
-    message(paste0("Failed to import ",file," with error: ",res[1]))
-    return(NULL)
+
+    return(paste0(file," with error: ",res[1]))
   } else {
     return(res)
   }

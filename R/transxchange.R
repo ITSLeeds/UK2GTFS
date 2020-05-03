@@ -94,7 +94,15 @@ transxchange2gtfs <- function(path_in,
 
   if (ncores == 1) {
     message(paste0(Sys.time(), " Importing TransXchange files, single core"))
-    res_all <- pbapply::pblapply(files, transxchange_import_try, run_debug = TRUE, full_import = FALSE)
+    res_all <- pbapply::pblapply(files[1000:1380], transxchange_import_try, run_debug = TRUE, full_import = FALSE)
+    res_all_message <- res_all[sapply(res_all, class) == "character"]
+    res_all <- res_all[sapply(res_all, class) == "list"]
+    if(length(res_all_message) > 0){
+      message(" ")
+      message("Failed to import files: ")
+      res_all_message <- unlist(res_all_message)
+      message(paste(res_all_message, collapse = ",  "))
+    }
     message(paste0(Sys.time(), " Converting to GTFS, single core"))
     gtfs_all <- pbapply::pblapply(res_all, transxchange_export,
       run_debug = TRUE,
@@ -112,6 +120,15 @@ transxchange2gtfs <- function(path_in,
     res_all <- foreach::`%dopar%`(boot, transxchange_import_try(i))
     parallel::stopCluster(cl)
     rm(cl, boot, opts, pb, progress)
+
+    res_all_message <- res_all[sapply(res_all, class) == "character"]
+    res_all <- res_all[sapply(res_all, class) == "list"]
+    if(length(res_all_message) > 0){
+      message(" ")
+      message("Failed to import files: ")
+      res_all_message <- unlist(res_all_message)
+      message(paste(res_all_message, collapse = ",  "))
+    }
 
     message(" ")
     message(paste0(Sys.time(), " Converting to GTFS, multicore"))
