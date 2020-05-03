@@ -94,7 +94,7 @@ transxchange2gtfs <- function(path_in,
 
   if (ncores == 1) {
     message(paste0(Sys.time(), " Importing TransXchange files, single core"))
-    res_all <- pbapply::pblapply(files, transxchange_import, run_debug = TRUE, full_import = FALSE)
+    res_all <- pbapply::pblapply(files, transxchange_import_try, run_debug = TRUE, full_import = FALSE)
     message(paste0(Sys.time(), " Converting to GTFS, single core"))
     gtfs_all <- pbapply::pblapply(res_all, transxchange_export,
       run_debug = TRUE,
@@ -109,7 +109,7 @@ transxchange2gtfs <- function(path_in,
     cl <- parallel::makeCluster(ncores)
     doSNOW::registerDoSNOW(cl)
     boot <- foreach::foreach(i = files, .options.snow = opts)
-    res_all <- foreach::`%dopar%`(boot, transxchange_import(i))
+    res_all <- foreach::`%dopar%`(boot, transxchange_import_try(i))
     parallel::stopCluster(cl)
     rm(cl, boot, opts, pb, progress)
 
