@@ -55,7 +55,7 @@ transxchange_import <- function(file, run_debug = TRUE, full_import = FALSE) {
 
   ## JourneyPatternSections ##########################################
   JourneyPatternSections <- xml2::xml_child(xml, "d1:JourneyPatternSections")
-  JourneyPatternSections <- import_journeypatternsections(JourneyPatternSections)
+  JourneyPatternSections <- import_journeypatternsections(journeypatternsections = JourneyPatternSections)
 
   ## Services ##########################################
   Services <- xml2::xml_child(xml, "d1:Services")
@@ -82,7 +82,7 @@ transxchange_import <- function(file, run_debug = TRUE, full_import = FALSE) {
 
   ## Operators ##########################################
   Operators <- xml2::xml_child(xml, "d1:Operators")
-  Operators <- import_operators(Operators)
+  Operators <- import_operators(operators = Operators)
   if (nrow(Operators) != 1) {
     Operators <- Operators[Operators$OperatorCode %in% Services_main$RegisteredOperatorRef, ]
     if (nrow(Operators) != 1) {

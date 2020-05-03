@@ -81,7 +81,7 @@ import_journeypatternsections <- function(journeypatternsections) {
   if (length(From.Activity) == 0) {
     From.Activity <- rep(NA, length(From.StopPointRef))
   }
-  RouteLinkRef <- import_simple(JourneyPatternTimingLink, "d1:RouteLinkRef")
+  RouteLinkRef <- import_simple_xml(JourneyPatternTimingLink, "d1:RouteLinkRef")
   if (length(RouteLinkRef) == 0) {
     RouteLinkRef <- rep(NA, length(From.StopPointRef))
   }
@@ -137,11 +137,13 @@ import_journeypatternsections <- function(journeypatternsections) {
 #' @param operators operators object
 #' @noRd
 import_operators <- function(operators) {
-  NationalOperatorCode <- import_simple(operators, ".//d1:NationalOperatorCode")
-  OperatorCode <- import_simple(operators, ".//d1:OperatorCode")
-  OperatorShortName <- import_simple(operators, ".//d1:OperatorShortName")
-  OperatorNameOnLicence <- import_simple(operators, ".//d1:OperatorNameOnLicence")
-  TradingName <- import_simple(operators, ".//d1:TradingName")
+  operators <- xml2::xml_find_all(operators, "./d1:Operator")
+
+  NationalOperatorCode <- import_simple_xml(operators, ".//d1:NationalOperatorCode")
+  OperatorCode <- import_simple_xml(operators, ".//d1:OperatorCode")
+  OperatorShortName <- import_simple_xml(operators, ".//d1:OperatorShortName")
+  OperatorNameOnLicence <- import_simple_xml(operators, ".//d1:OperatorNameOnLicence")
+  TradingName <- import_simple_xml(operators, ".//d1:TradingName")
 
   if (length(NationalOperatorCode) == 0) {
     NationalOperatorCode <- OperatorCode
