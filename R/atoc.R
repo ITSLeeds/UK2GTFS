@@ -178,5 +178,7 @@ atoc2gtfs <- function(path_in,
     message("Shapes are not yet supported")
   }
 
+  gtfs_validate_internal(timetables)
+
   write_gtfs(timetables, folder = path_out, name = name)
 }

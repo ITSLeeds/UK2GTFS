@@ -4,84 +4,84 @@
 #' @export
 
 gtfs_validate_internal <- function(gtfs) {
-  agency <- gtfs$agency
-  warnings <- gtfs$warnings
-  routes <- gtfs$routes
-  trips <- gtfs$trips
-  warning_times <- gtfs$warning_times
-  calendar <- gtfs$calendar
-  calendar_dates <- gtfs$calendar_dates
+  # agency <- gtfs$agency
+  # warnings <- gtfs$warnings
+  # routes <- gtfs$routes
+  # trips <- gtfs$trips
+  # warning_times <- gtfs$warning_times
+  # calendar <- gtfs$calendar
+  # calendar_dates <- gtfs$calendar_dates
 
   # Basic checks
   # Rows
-  if (nrow(agency) < 1) {
+  if (nrow(gtfs$agency) < 1) {
     warning("No rows in agency")
   }
-  if (nrow(warnings) < 1) {
-    warning("No rows in warnings")
+  if (nrow(gtfs$stops) < 1) {
+    warning("No rows in stops")
   }
-  if (nrow(routes) < 1) {
+  if (nrow(gtfs$routes) < 1) {
     warning("No rows in routes")
   }
-  if (nrow(trips) < 1) {
+  if (nrow(gtfs$trips) < 1) {
     warning("No rows in trips")
   }
-  if (nrow(warning_times) < 1) {
+  if (nrow(gtfs$stop_times) < 1) {
     warning("No rows in warning_times")
   }
-  if (nrow(calendar) < 1) {
+  if (nrow(gtfs$calendar) < 1) {
     warning("No rows in calendar")
   }
 
   # Columns
-  if (ncol(agency) != 5) {
+  if (ncol(gtfs$agency) != 5) {
     warning("Wrong number of columns in agency")
   }
-  if (ncol(warnings) != 5) {
-    warning("Wrong number of columns in warnings")
+  if (ncol(gtfs$stops) != 5) {
+    warning("Wrong number of columns in stops")
   }
-  if (ncol(routes) != 6) {
+  if (ncol(gtfs$routes) != 6) {
     warning("Wrong number of columns in routes")
   }
-  if (ncol(trips) != 3) {
+  if (ncol(gtfs$trips) != 3) {
     warning("Wrong number of columns in trips")
   }
-  if (ncol(warning_times) != 6) {
-    warning("Wrong number of columns in warning_times")
+  if (ncol(gtfs$stop_times) != 6) {
+    warning("Wrong number of columns in stop_times")
   }
-  if (ncol(calendar) != 10) {
+  if (ncol(gtfs$calendar) != 10) {
     warning("Wrong number of columns in calendar")
   }
-  if (ncol(calendar_dates) != 3) {
+  if (ncol(gtfs$calendar_dates) != 3) {
     warning("Wrong number of columns in calendar_dates")
   }
 
   # check for NAs
-  if(anyNA(agency)){
+  if(anyNA(gtfs$agency)){
     warning("NA values in agency")
   }
 
-  if(anyNA(warnings)){
-    warning("NA values in warnings")
+  if(anyNA(gtfs$stops)){
+    warning("NA values in stops")
   }
 
-  if(anyNA(routes)){
+  if(anyNA(gtfs$routes)){
     warning("NA values in routes")
   }
 
-  if(anyNA(trips)){
+  if(anyNA(gtfs$trips)){
     warning("NA values in trips")
   }
 
-  if(anyNA(warning_times)){
+  if(anyNA(gtfs$stop_times)){
     warning("NA values in warning_times")
   }
 
-  if(anyNA(calendar)){
+  if(anyNA(gtfs$calendar)){
     warning("NA values in calendar")
   }
 
-  if(anyNA(calendar_dates)){
+  if(anyNA(gtfs$calendar_dates)){
     warning("NA values in calendar_dates")
   }
 
