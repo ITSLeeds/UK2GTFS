@@ -94,7 +94,7 @@ transxchange2gtfs <- function(path_in,
 
   if (ncores == 1) {
     message(paste0(Sys.time(), " Importing TransXchange files, single core"))
-    res_all <- pbapply::pblapply(files[1000:1380], transxchange_import_try, run_debug = TRUE, full_import = FALSE)
+    res_all <- pbapply::pblapply(files, transxchange_import_try, run_debug = TRUE, full_import = FALSE)
     res_all_message <- res_all[sapply(res_all, class) == "character"]
     res_all <- res_all[sapply(res_all, class) == "list"]
     if(length(res_all_message) > 0){

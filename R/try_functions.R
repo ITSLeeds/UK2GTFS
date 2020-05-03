@@ -6,7 +6,7 @@
 #' @param run_debug logical, if TRUE extra checks are performed, default FALSE
 #' @param full_import logical, if false data no needed for GTFS is excluded
 #' @noRd
-transxchange_import_try <- function(file, run_debug, full_import){
+transxchange_import_try <- function(file, run_debug = TRUE, full_import = FALSE){
   res <- try(transxchange_import(file, run_debug = run_debug, full_import = full_import))
 
   if("try-error" %in% class(res)){
