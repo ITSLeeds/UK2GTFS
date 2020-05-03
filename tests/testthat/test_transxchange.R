@@ -56,10 +56,7 @@ test_that("Can clean GTFS", {
 })
 
 
-# test_that("Can find fast GTFS", {
-#   gtfs3 <- gtfs_fast_trips(gtfs, maxspeed = 30)
-#   expect_true(class(gtfs3) == "list")
-# })
+
 
 
 test_that("Can subset GTFS", {
@@ -91,3 +88,11 @@ test_that("Can split GTFS", {
   expect_true(length(gtfs6) == 2)
 })
 
+
+test_that("Can find fast GTFS", {
+  tripids <- gtfs_fast_trips(gtfs, maxspeed = 15)
+  expect_true(length(trips) > 1)
+  gtfs7 <- gtfs_split_ids(gtfs, tripids)
+  expect_true(class(gtfs7) == "list")
+  expect_true(length(gtfs7) == 2)
+})
