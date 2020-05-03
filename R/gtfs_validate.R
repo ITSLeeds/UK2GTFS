@@ -5,68 +5,96 @@
 
 gtfs_validate_internal <- function(gtfs) {
   agency <- gtfs$agency
-  stops <- gtfs$stops
+  warnings <- gtfs$warnings
   routes <- gtfs$routes
   trips <- gtfs$trips
-  stop_times <- gtfs$stop_times
+  warning_times <- gtfs$warning_times
   calendar <- gtfs$calendar
   calendar_dates <- gtfs$calendar_dates
 
   # Basic checks
   # Rows
   if (nrow(agency) < 1) {
-    stop("No rows in agency")
+    warning("No rows in agency")
   }
-  if (nrow(stops) < 1) {
-    stop("No rows in stops")
+  if (nrow(warnings) < 1) {
+    warning("No rows in warnings")
   }
   if (nrow(routes) < 1) {
-    stop("No rows in routes")
+    warning("No rows in routes")
   }
   if (nrow(trips) < 1) {
-    stop("No rows in trips")
+    warning("No rows in trips")
   }
-  if (nrow(stop_times) < 1) {
-    stop("No rows in stop_times")
+  if (nrow(warning_times) < 1) {
+    warning("No rows in warning_times")
   }
   if (nrow(calendar) < 1) {
-    stop("No rows in calendar")
+    warning("No rows in calendar")
   }
 
   # Columns
   if (ncol(agency) != 5) {
-    stop("Wrong number of columns in agency")
+    warning("Wrong number of columns in agency")
   }
-  if (ncol(stops) != 5) {
-    stop("Wrong number of columns in stops")
+  if (ncol(warnings) != 5) {
+    warning("Wrong number of columns in warnings")
   }
   if (ncol(routes) != 6) {
-    stop("Wrong number of columns in routes")
+    warning("Wrong number of columns in routes")
   }
   if (ncol(trips) != 3) {
-    stop("Wrong number of columns in trips")
+    warning("Wrong number of columns in trips")
   }
-  if (ncol(stop_times) != 6) {
-    stop("Wrong number of columns in stop_times")
+  if (ncol(warning_times) != 6) {
+    warning("Wrong number of columns in warning_times")
   }
   if (ncol(calendar) != 10) {
-    stop("Wrong number of columns in calendar")
+    warning("Wrong number of columns in calendar")
   }
   if (ncol(calendar_dates) != 3) {
-    stop("Wrong number of columns in calendar_dates")
+    warning("Wrong number of columns in calendar_dates")
   }
 
+  # check for NAs
+  if(anyNA(agency)){
+    warning("NA values in agency")
+  }
 
+  if(anyNA(warnings)){
+    warning("NA values in warnings")
+  }
 
+  if(anyNA(routes)){
+    warning("NA values in routes")
+  }
+
+  if(anyNA(trips)){
+    warning("NA values in trips")
+  }
+
+  if(anyNA(warning_times)){
+    warning("NA values in warning_times")
+  }
+
+  if(anyNA(calendar)){
+    warning("NA values in calendar")
+  }
+
+  if(anyNA(calendar_dates)){
+    warning("NA values in calendar_dates")
+  }
+
+  # Check for missing values
   if (!all(routes$agency_id %in% agency$agency_id)) {
-    stop("Unknown agency_id in routes")
+    warning("Unknown agency_id in routes")
   }
 }
 
 #' Validate GTFS with Google Validator
 #' @param path_gtfs path to gtfs.zip file
 #' @param path_validator path to google validator
-#' @export
+#' @noRd
 gtfs_validate_external <- function(path_gtfs, path_validator) {
 
 }
