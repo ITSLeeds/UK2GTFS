@@ -86,7 +86,7 @@ gtfs_validate_internal <- function(gtfs) {
   }
 
   # Check for missing values
-  if (!all(routes$agency_id %in% agency$agency_id)) {
+  if (!all(gtfs$routes$agency_id %in% gtfs$agency$agency_id)) {
     warning("Unknown agency_id in routes")
   }
 }
