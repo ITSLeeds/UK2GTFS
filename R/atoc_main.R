@@ -28,6 +28,7 @@ schedule2routes <- function(stop_times, schedule, silent = TRUE, ncores = 1) {
   stop_times$departure_time[is.na(stop_times$departure_time)] <- stop_times$arrival_time[is.na(stop_times$departure_time)]
   stop_times <- stop_times[, c("arrival_time", "departure_time", "stop_id", "stop_sequence", "pickup_type", "drop_off_type", "rowID", "schedule")]
 
+  stop_times <- stop_times[!(stop_times$pickup_type == 1 & stop_times$drop_off_type == 1), ]
 
   ### SECTION 2: ###############################################################################
   # make make the calendar.txt and calendar_dates.txt file from the schedule
