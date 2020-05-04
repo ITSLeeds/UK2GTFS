@@ -46,6 +46,9 @@ There are a number of pre-existing options for converting data to GTFS. This pac
 1. Data polishing
     + Support of journeys past midnight
     + Routing of train journeys along tracks rather than straight lines between stops (work in progress)
+1. GTFS tools, functions for working with GTFS data
+    + `gtfs_write()`
+    + `gtfs_read()`
 
 
 ## Installation

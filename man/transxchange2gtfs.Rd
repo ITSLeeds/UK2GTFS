@@ -42,7 +42,7 @@ TransXchange to GTFS
 Convert transxchange files to GTFS
 
 This is a meta fucntion which aids TransXchange to GTFS conversion. It simple runs
-transxchange_import(), transxchange_export(), gtfs_merge(), write_gtfs()
+transxchange_import(), transxchange_export(), gtfs_merge(), gtfs_write()
 
 Progress Bars
 

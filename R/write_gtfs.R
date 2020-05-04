@@ -10,7 +10,7 @@
 #' @param quote logical, should strings be quoted, default = FALSE
 #' @export
 #'
-write_gtfs <- function(gtfs, folder = getwd(), name = "gtfs", stripComma = TRUE, quote = FALSE) {
+gtfs_write <- function(gtfs, folder = getwd(), name = "gtfs", stripComma = TRUE, quote = FALSE) {
   if (stripComma) {
     for (i in seq_len(length(gtfs))) {
       gtfs[[i]] <- stripCommas(gtfs[[i]])

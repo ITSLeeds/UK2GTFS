@@ -64,7 +64,7 @@ gtfs_fast_trips <- function(gtfs, maxspeed = 30) {
   times$stop_sequence <- as.integer(times$stop_sequence)
   times <- dplyr::group_by(times, trip_id)
   times <- dplyr::summarise(times,
-    nstops = n(),
+    nstops = dplyr::n(),
     time_start = arrival_time[stop_sequence == min(stop_sequence)],
     time_end = if (nstops == 2) {
       arrival_time[stop_sequence == max(stop_sequence)]

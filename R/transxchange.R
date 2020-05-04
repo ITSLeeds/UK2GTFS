@@ -18,7 +18,7 @@
 #' @details
 #'
 #' This is a meta fucntion which aids TransXchange to GTFS conversion. It simple runs
-#' transxchange_import(), transxchange_export(), gtfs_merge(), write_gtfs()
+#' transxchange_import(), transxchange_export(), gtfs_merge(), gtfs_write()
 #'
 #' Progress Bars
 #'
@@ -159,6 +159,6 @@ transxchange2gtfs <- function(path_in,
   }
 
   message(paste0(Sys.time(), " Writing GTFS file"))
-  write_gtfs(gtfs = gtfs_merged, folder = path_out, name = name)
+  gtfs_write(gtfs = gtfs_merged, folder = path_out, name = name)
   unlink(file.path(tempdir(), "txc"), recursive = TRUE)
 }

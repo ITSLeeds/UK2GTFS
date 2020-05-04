@@ -180,5 +180,5 @@ atoc2gtfs <- function(path_in,
 
   gtfs_validate_internal(timetables)
 
-  write_gtfs(timetables, folder = path_out, name = name)
+  gtfs_write(timetables, folder = path_out, name = name)
 }
