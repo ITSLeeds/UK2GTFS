@@ -8,7 +8,7 @@
 #'
 
 gtfs_read <- function(path, stringsAsFactors = FALSE){
-  checkmate::test_file_exists(path)
+  checkmate::assert_file_exists(path)
   checkmate::check_logical(stringsAsFactors, len = 1)
 
   tmp_folder <- file.path(tempdir(),"gtfsread")
