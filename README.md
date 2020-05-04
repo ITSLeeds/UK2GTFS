@@ -18,7 +18,7 @@ The goal of UK2GTFS is to convert train, tram, bus, and metro timetable
 data from the unfriendly and difficult to use formats used in the UK to
 the easy to use [GTFS](https://developers.google.com/transit/gtfs/)
 format. The main purpose of developing the package is to support using
-[OpenTripPlanner](https://github.com/ITSLeeds/opentripplanner) in the
+[OpenTripPlanner](https://github.com/ropensci/opentripplanner) in the
 UK.
 
 **Example results are published as [GitHub
@@ -36,7 +36,7 @@ and both formats are old and difficult to use. Many countries have
 adopted the [GTFS](https://developers.google.com/transit/gtfs/) format
 which was developed by Google as a simple standard for publishing
 timetable data. Due to the wide-spread adoption of GTFS many useful
-tools have been develope that accept GTFS files as inputs. This package
+tools have been developed that accept GTFS files as inputs. This package
 is intended to make the conversion of UK data to the GTFS format simple
 and easy.
 
@@ -49,17 +49,27 @@ additional functionality:
 1.  Data conversion
       - Conversion of TransXchange to GTFS
       - Conversion of ATOC CIF files to GTFS
+      - reading of TransXchange and CIF files is also supported,
+        although some parts which are not required for GTFS conversion
+        are only partially supported.
 2.  Data cleaning, the raw data often contains clear errors, the package
     does not blindly convert but also corrects some known errors
-      - Improved locations of tiplocs
+      - Improved locations of tiplocs - used to locate feature on the
+        heavy rail network
       - Add bus stops missing in the NAPTAN
-      - Correction of misspelt organisations
+      - Correction of spelling errors
       - Removal of on-demand bus services (GTFS does not support
         services that are on-demand)
 3.  Data polishing
       - Support of journeys past midnight
       - Routing of train journeys along tracks rather than straight
         lines between stops (work in progress)
+4.  GTFS tools, functions for working with GTFS data
+      - Reading / Writing
+      - Cleaning
+      - Compression
+      - Validation
+      - Subsetting
 
 ## Installation
 
@@ -76,3 +86,5 @@ library(UK2GTFS)
 This package a work in progress and comes with no guarantees. As of
 September 2019, it can convert most train and bus timetables to GTFS but
 occasionally fails on specific files.
+
+Please report failed conversions as GitHub Issues
