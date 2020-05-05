@@ -154,10 +154,11 @@ transxchange_export <- function(obj, run_debug = TRUE,
   if (run_debug) {
     chk <- gsub("[0-9]", "", JourneyPatternSections$RunTime)
     chk <- unique(chk)
-    if (!all(chk %in% c("PTM", "PTS", "PTMS", "PTHM", "PTH", "PTHMS"))) {
-      stop(paste0("Unknown time formats: ", chk[!chk %in% c("PTM", "PTS", "PTMS", "PTHM", "PTH", "PTHMS")]))
+    chk_valid <- c("PTM", "PTS", "PTMS", "PTHM", "PTH", "PTHMS","PTHS")
+    if (!all(chk %in% chk_valid)) {
+      stop(paste0("Unknown time formats: ", chk[!chk %in% chk_valid]))
     }
-    rm(chk)
+    rm(chk, chk_valid)
   }
 
   JourneyPatternSections$RunTime <- clean_times(JourneyPatternSections$RunTime)
