@@ -2,9 +2,7 @@
 % Please edit documentation in R/get_cal.R
 \name{get_bank_holidays}
 \alias{get_bank_holidays}
-\title{Get Bank Holiday Calendar
-TODO: Get scottosh holidays
-Downloads and formats the bank holiday calendar for use with TransXchange data.}
+\title{Get Bank Holiday Calendar}
 \usage{
 get_bank_holidays(
   url_ew = "https://www.gov.uk/bank-holidays/england-and-wales.ics",
@@ -16,8 +14,16 @@ get_bank_holidays(
 
 \item{url_scot}{url to ics file for Scotland}
 }
+\value{
+data frame
+}
 \description{
-Get Bank Holiday Calendar
-TODO: Get scottosh holidays
-Downloads and formats the bank holiday calendar for use with TransXchange data.
+Downloads and formats the bank holiday calendar for use with TransXchange
+data.
+}
+\details{
+TransXchange records bank holidays by name (e.g. Christmas Day),
+  some UK bank holidays move around, so this function downloads the official
+  bank holiday calendar. The offical feed only covers a short period of time
+  so this may not be suitable for converting files from the past / future.
 }

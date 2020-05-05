@@ -1,6 +1,13 @@
 #' Reduce file size of a GTFS object
 #'
-#' @param gtfs agtfs objects
+#' @param gtfs a gtfs object
+#' @return a gtfs object
+#' @details by default UK2GTFS trys to preserve id numbers during the conversion
+#'   process to allow back comparions to the original files, e.g.
+#'   `transxchange2gtfs()` retains stop ids from the NAPTAN. However this means
+#'   files sizes are increased. This fucntion replaces ids with intergers and
+#'   thus reduces the size of the gtfs file.
+#'
 #' @export
 gtfs_compress <- function(gtfs) {
   agency <- gtfs$agency

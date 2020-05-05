@@ -3,7 +3,7 @@
 #' @param x sequency of numbers
 #' @param y sequence of ids showing when to start a new sequency
 #' @param displace if TRUE start at 2 rather than 2
-#'
+#' @noRd
 
 clean_sequence2 <- function(x, y, displace = FALSE) {
   if (anyNA(x)) {

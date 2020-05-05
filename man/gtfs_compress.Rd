@@ -7,8 +7,18 @@
 gtfs_compress(gtfs)
 }
 \arguments{
-\item{gtfs}{agtfs objects}
+\item{gtfs}{a gtfs object}
+}
+\value{
+a gtfs object
 }
 \description{
 Reduce file size of a GTFS object
+}
+\details{
+by default UK2GTFS trys to preserve id numbers during the conversion
+  process to allow back comparions to the original files, e.g.
+  `transxchange2gtfs()` retains stop ids from the NAPTAN. However this means
+  files sizes are increased. This fucntion replaces ids with intergers and
+  thus reduces the size of the gtfs file.
 }

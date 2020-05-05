@@ -2,7 +2,7 @@
 % Please edit documentation in R/get_naptan.R
 \name{get_naptan}
 \alias{get_naptan}
-\title{get naptan}
+\title{Get naptan}
 \usage{
 get_naptan(
   url = "http://naptan.app.dft.gov.uk/datarequest/GTFS.ashx",
@@ -10,10 +10,19 @@ get_naptan(
 )
 }
 \arguments{
-\item{url}{url to naptan in csv format}
+\item{url}{character, url to the GTFS format NaPTAN}
 
 \item{naptan_extra}{data frame of missing stops}
 }
+\value{
+data frame of stop locations
+}
 \description{
-download the naptan stop locations
+Download the NaPTAN stop locations for more information on NaPTAN see
+https://data.gov.uk/dataset/ff93ffc1-6656-47d8-9155-85ea0b8f2251/national-public-transport-access-nodes-naptan
+}
+\details{
+TransXchange does not store the location of bus stops, so this
+  functions downloads them from the offical DfT source. NaPTAN has some
+  missing bus stops which are added by UK2GTFS.
 }

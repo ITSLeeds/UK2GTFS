@@ -1,8 +1,14 @@
 #' Get Bank Holiday Calendar
-#' TODO: Get scottosh holidays
-#' Downloads and formats the bank holiday calendar for use with TransXchange data.
+#'
+#' Downloads and formats the bank holiday calendar for use with TransXchange
+#' data.
 #' @param url_ew url to ics file for England and Wales
 #' @param url_scot url to ics file for Scotland
+#' @return data frame
+#' @details TransXchange records bank holidays by name (e.g. Christmas Day),
+#'   some UK bank holidays move around, so this function downloads the official
+#'   bank holiday calendar. The offical feed only covers a short period of time
+#'   so this may not be suitable for converting files from the past / future.
 #' @export
 #'
 get_bank_holidays <- function(url_ew = "https://www.gov.uk/bank-holidays/england-and-wales.ics",
