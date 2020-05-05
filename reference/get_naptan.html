@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>get naptan — get_naptan • UK2GTFS</title>
+<title>Get naptan — get_naptan • UK2GTFS</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,8 +46,9 @@
 
 
 
-<meta property="og:title" content="get naptan — get_naptan" />
-<meta property="og:description" content="download the naptan stop locations" />
+<meta property="og:title" content="Get naptan — get_naptan" />
+<meta property="og:description" content="Download the NaPTAN stop locations for more information on NaPTAN see
+https://data.gov.uk/dataset/ff93ffc1-6656-47d8-9155-85ea0b8f2251/national-public-transport-access-nodes-naptan" />
 <meta property="og:image" content="/logo.png" />
 
 
@@ -131,13 +132,14 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>get naptan</h1>
+    <h1>Get naptan</h1>
     <small class="dont-index">Source: <a href='https://github.com/itsleeds/uk2gtfs/blob/master/R/get_naptan.R'><code>R/get_naptan.R</code></a></small>
     <div class="hidden name"><code>get_naptan.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>download the naptan stop locations</p>
+    <p>Download the NaPTAN stop locations for more information on NaPTAN see
+https://data.gov.uk/dataset/ff93ffc1-6656-47d8-9155-85ea0b8f2251/national-public-transport-access-nodes-naptan</p>
     </div>
 
     <pre class="usage"><span class='fu'>get_naptan</span>(
@@ -150,7 +152,7 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>url</th>
-      <td><p>url to naptan in csv format</p></td>
+      <td><p>character, url to the GTFS format NaPTAN</p></td>
     </tr>
     <tr>
       <th>naptan_extra</th>
@@ -158,6 +160,14 @@
     </tr>
     </table>
 
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p>data frame of stop locations</p>
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>TransXchange does not store the location of bus stops, so this
+  functions downloads them from the offical DfT source. NaPTAN has some
+  missing bus stops which are added by UK2GTFS.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

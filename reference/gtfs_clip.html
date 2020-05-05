@@ -47,7 +47,9 @@
 
 
 <meta property="og:title" content="Clip a GTFS object to a geographical area — gtfs_clip" />
-<meta property="og:description" content="Clips the GTFS file to only include routes that stop at least once within the bounds object" />
+<meta property="og:description" content="Clips the GTFS file to only include stops within the bounds object, trips
+that cross the bouundary of the the object are truncated. Any trips that stop
+only once in the bounds are removed completly." />
 <meta property="og:image" content="/logo.png" />
 
 
@@ -137,7 +139,9 @@
     </div>
 
     <div class="ref-description">
-    <p>Clips the GTFS file to only include routes that stop at least once within the bounds object</p>
+    <p>Clips the GTFS file to only include stops within the bounds object, trips
+that cross the bouundary of the the object are truncated. Any trips that stop
+only once in the bounds are removed completly.</p>
     </div>
 
     <pre class="usage"><span class='fu'>gtfs_clip</span>(<span class='no'>gtfs</span>, <span class='no'>bounds</span>)</pre>

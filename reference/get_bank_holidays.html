@@ -6,9 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Get Bank Holiday Calendar
-TODO: Get scottosh holidays
-Downloads and formats the bank holiday calendar for use with TransXchange data. — get_bank_holidays • UK2GTFS</title>
+<title>Get Bank Holiday Calendar — get_bank_holidays • UK2GTFS</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -48,12 +46,9 @@ Downloads and formats the bank holiday calendar for use with TransXchange data. 
 
 
 
-<meta property="og:title" content="Get Bank Holiday Calendar
-TODO: Get scottosh holidays
-Downloads and formats the bank holiday calendar for use with TransXchange data. — get_bank_holidays" />
-<meta property="og:description" content="Get Bank Holiday Calendar
-TODO: Get scottosh holidays
-Downloads and formats the bank holiday calendar for use with TransXchange data." />
+<meta property="og:title" content="Get Bank Holiday Calendar — get_bank_holidays" />
+<meta property="og:description" content="Downloads and formats the bank holiday calendar for use with TransXchange
+data." />
 <meta property="og:image" content="/logo.png" />
 
 
@@ -137,17 +132,14 @@ Downloads and formats the bank holiday calendar for use with TransXchange data."
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Get Bank Holiday Calendar
-TODO: Get scottosh holidays
-Downloads and formats the bank holiday calendar for use with TransXchange data.</h1>
+    <h1>Get Bank Holiday Calendar</h1>
     <small class="dont-index">Source: <a href='https://github.com/itsleeds/uk2gtfs/blob/master/R/get_cal.R'><code>R/get_cal.R</code></a></small>
     <div class="hidden name"><code>get_bank_holidays.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Get Bank Holiday Calendar
-TODO: Get scottosh holidays
-Downloads and formats the bank holiday calendar for use with TransXchange data.</p>
+    <p>Downloads and formats the bank holiday calendar for use with TransXchange
+data.</p>
     </div>
 
     <pre class="usage"><span class='fu'>get_bank_holidays</span>(
@@ -168,6 +160,15 @@ Downloads and formats the bank holiday calendar for use with TransXchange data.<
     </tr>
     </table>
 
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p>data frame</p>
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>TransXchange records bank holidays by name (e.g. Christmas Day),
+  some UK bank holidays move around, so this function downloads the official
+  bank holiday calendar. The offical feed only covers a short period of time
+  so this may not be suitable for converting files from the past / future.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
