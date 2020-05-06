@@ -7,7 +7,9 @@
 #' @return data frame of stop locations
 #' @details TransXchange does not store the location of bus stops, so this
 #'   functions downloads them from the offical DfT source. NaPTAN has some
-#'   missing bus stops which are added by UK2GTFS.
+#'   missing bus stops which are added by UK2GTFS. See `naptan_missing`
+#'
+#'
 #'
 #' @export
 
@@ -27,7 +29,7 @@ get_naptan <- function(url = "http://naptan.app.dft.gov.uk/DataRequest/Naptan.as
   naptan$stop_lat <- format(round(naptan$stop_lat, 6), scientific = FALSE)
 
   # Append alterative tags
-  naptan_missing <- naptan_missing[!naptan_missing$stop_id %in% naptan$stop_id,]
+  naptan_extra <- naptan_extra[!naptan_extra$stop_id %in% naptan$stop_id,]
   naptan <- rbind(naptan, naptan_extra)
 
   return(naptan)
