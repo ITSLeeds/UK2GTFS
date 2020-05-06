@@ -5,12 +5,12 @@
 \title{Get naptan}
 \usage{
 get_naptan(
-  url = "http://naptan.app.dft.gov.uk/datarequest/GTFS.ashx",
+  url = "http://naptan.app.dft.gov.uk/DataRequest/Naptan.ashx?format=csv",
   naptan_extra = naptan_missing
 )
 }
 \arguments{
-\item{url}{character, url to the GTFS format NaPTAN}
+\item{url}{character, url to the csv format NaPTAN}
 
 \item{naptan_extra}{data frame of missing stops}
 }

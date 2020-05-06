@@ -29,7 +29,8 @@ Imports:
   lubridate,
   zip,
   pbapply,
-  xml2
+  xml2,
+  readr
 Suggests: 
     covr,
     knitr,
