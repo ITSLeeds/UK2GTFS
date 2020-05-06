@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Split a gtfs file — gtfs_split • UK2GTFS</title>
+<title>Split a GTFS object — gtfs_split • UK2GTFS</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,8 +46,11 @@
 
 
 
-<meta property="og:title" content="Split a gtfs file — gtfs_split" />
-<meta property="og:description" content="Split a gtfs file" />
+<meta property="og:title" content="Split a GTFS object — gtfs_split" />
+<meta property="og:description" content="For large regions GTFS fiels can get very big. THis fucntion splits a GTFS
+object into a list of GTFS objects. It tries to balance the sizes of the
+objects. Splits are made by agency_id so maximumd number of splits equalts
+the number of unique agency_ids." />
 <meta property="og:image" content="/logo.png" />
 
 
@@ -131,13 +134,16 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Split a gtfs file</h1>
+    <h1>Split a GTFS object</h1>
     <small class="dont-index">Source: <a href='https://github.com/itsleeds/uk2gtfs/blob/master/R/gtfs_split.R'><code>R/gtfs_split.R</code></a></small>
     <div class="hidden name"><code>gtfs_split.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Split a gtfs file</p>
+    <p>For large regions GTFS fiels can get very big. THis fucntion splits a GTFS
+object into a list of GTFS objects. It tries to balance the sizes of the
+objects. Splits are made by agency_id so maximumd number of splits equalts
+the number of unique agency_ids.</p>
     </div>
 
     <pre class="usage"><span class='fu'>gtfs_split</span>(<span class='no'>gtfs</span>, <span class='kw'>n_split</span> <span class='kw'>=</span> <span class='fl'>2</span>)</pre>
@@ -155,6 +161,9 @@
     </tr>
     </table>
 
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p>a list of GTFS objects</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
