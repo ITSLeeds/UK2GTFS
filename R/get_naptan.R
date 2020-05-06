@@ -3,7 +3,7 @@
 #' Download the NaPTAN stop locations for more information on NaPTAN see
 #' https://data.gov.uk/dataset/ff93ffc1-6656-47d8-9155-85ea0b8f2251/national-public-transport-access-nodes-naptan
 #' @param url character, url to the csv format NaPTAN
-#' @param naptan_extra data frame of missing stops
+#' @param naptan_extra data frame of missing stops default uses `naptan_missing`
 #' @return data frame of stop locations
 #' @details TransXchange does not store the location of bus stops, so this
 #'   functions downloads them from the offical DfT source. NaPTAN has some

@@ -12,7 +12,7 @@ get_naptan(
 \arguments{
 \item{url}{character, url to the csv format NaPTAN}
 
-\item{naptan_extra}{data frame of missing stops}
+\item{naptan_extra}{data frame of missing stops default uses `naptan_missing`}
 }
 \value{
 data frame of stop locations
@@ -24,5 +24,5 @@ https://data.gov.uk/dataset/ff93ffc1-6656-47d8-9155-85ea0b8f2251/national-public
 \details{
 TransXchange does not store the location of bus stops, so this
   functions downloads them from the offical DfT source. NaPTAN has some
-  missing bus stops which are added by UK2GTFS.
+  missing bus stops which are added by UK2GTFS. See `naptan_missing`
 }
