@@ -53,7 +53,7 @@ library(UK2GTFS)
 path_in <- "C:/Users/malco/OneDrive - University of Leeds/Data/UK2GTFS/TransXChange/data_20201102/"
 files <- list.files(path_in, full.names = FALSE, pattern = "zip")
 
-for(i in 5:length(files)){
+for(i in 12:length(files)){
   message(files[i])
   file_in <-  file.path(path_in,files[i])
   path_out = "C:/Users/malco/OneDrive - University of Leeds/Data/UK2GTFS/GTFS/gtfs_20201102/"

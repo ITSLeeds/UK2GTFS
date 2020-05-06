@@ -231,16 +231,30 @@ transxchange_export <- function(obj, run_debug = TRUE,
     stringsAsFactors = FALSE
   )
 
+  name2id <- function(nm){
+    aid <- strsplit(as.character(nm), " ")[[1]]
+    aid <- lapply(aid, function(x){
+      xchar <- nchar(x)
+      if(xchar >= 4){
+        x <- paste0(substr(x,1,3), substr(x,xchar,xchar))
+      }
+      return(x)
+    })
+    aid <- unlist(aid)
+    aid <- paste0(aid, collapse = "")
+    return(aid)
+  }
+
 
   for (j in seq(1, nrow(agency))) {
     if (agency$agency_id[j] == "O1") {
-      aid <- strsplit(as.character(agency$agency_name[j]), " ")[[1]]
-      aid <- paste(substr(aid, 1, 2), collapse = "")
+      aid <- name2id(agency$agency_name[j])
       agency$agency_id[j] <- aid
       routes$agency_id[routes$agency_id == "O1"] <- aid
       warning(paste0("Agency ID is O1 changing to ", aid))
     }
   }
+
 
 
 
