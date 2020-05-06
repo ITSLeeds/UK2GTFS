@@ -2,7 +2,7 @@
 % Please edit documentation in R/gtfs_split.R
 \name{gtfs_split}
 \alias{gtfs_split}
-\title{Split a gtfs file}
+\title{Split a GTFS object}
 \usage{
 gtfs_split(gtfs, n_split = 2)
 }
@@ -11,6 +11,12 @@ gtfs_split(gtfs, n_split = 2)
 
 \item{n_split}{how many to split into default 2}
 }
+\value{
+a list of GTFS objects
+}
 \description{
-Split a gtfs file
+For large regions GTFS fiels can get very big. THis fucntion splits a GTFS
+object into a list of GTFS objects. It tries to balance the sizes of the
+objects. Splits are made by agency_id so maximumd number of splits equalts
+the number of unique agency_ids.
 }
