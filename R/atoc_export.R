@@ -673,7 +673,8 @@ clean_activities2 <- function(x) {
   x <- data.frame(activity = x, stringsAsFactors = FALSE)
   x <- dplyr::left_join(x, activity_codes, by = c("activity"))
   if (anyNA(x$pickup_type)) {
-    message("Unknown Activity codes '", paste(unique(x$activity), collapse = "' '"), "' please report these codes as a GitHub Issue")
+    mss <- unique(x$activity[is.na(x$pickup_type)])
+    message("Unknown Activity codes '", paste(unique(mss), collapse = "' '"), "' please report these codes as a GitHub Issue")
     x$pickup_type[is.na(x$pickup_type)] <- 0
     x$drop_off_type[is.na(x$drop_off_type)] <- 0
   }
