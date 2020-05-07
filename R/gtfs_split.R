@@ -25,7 +25,11 @@ gtfs_split <- function(gtfs, n_split = 2) {
                                    as.data.frame(table(trips$route_id),
                                                  stringsAsFactors = FALSE),
                                    by = c("route_id" = "Var1"))
+  routes_table <- dplyr::group_by(routes_table, agency_id)
+  routes_table <- dplyr::summarise(routes_table, Freq = sum(Freq))
+
   routes_table <- routes_table[order(routes_table$Freq, decreasing = TRUE),]
+
   routes_table$cumsum <- cumsum(routes_table$Freq)
   routes_table$bucket <- as.integer(cut(routes_table$cumsum, n_split))
   #aggregate(Freq~bucket,FUN=sum, data=routes_table)
