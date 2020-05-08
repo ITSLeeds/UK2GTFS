@@ -385,9 +385,9 @@ expand_stop_times2 <- function(i, jps, trips) {
 #'
 clean_timepoints <- function(tp) {
   if (tp == "OTH") {
-    return(1L)
-  } else if (tp %in% c("PTP", "TIP", "PPT")) {
     return(0L)
+  } else if (tp %in% c("PTP", "TIP", "PPT")) {
+    return(1L)
   } else {
     stop(paste0("Unknown timepoint type: ", tp))
   }
