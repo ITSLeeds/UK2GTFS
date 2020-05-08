@@ -270,6 +270,9 @@ transxchange_export <- function(obj, run_debug = TRUE,
   # trips$service_id_temp <- seq(1,nrow(trips))
   trips$trip_id <- as.character(trips$trip_id)
 
+  # If DaysOfWeek unspecidied for vehicle jounrey inherit from Services_main
+  trips$DaysOfWeek[is.na(trips$DaysOfWeek)] <- Services_main$DaysOfWeek
+
 
   # Step 1: Do we Have any exclusions
   if (class(VehicleJourneys_exclude) == "data.frame") {
