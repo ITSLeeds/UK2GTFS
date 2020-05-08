@@ -189,6 +189,7 @@ gtfs_merge <- function(gtfs_list) {
 
   stop_times$file_id <- NULL
   routes$file_id <- NULL
+  calendar$file_id <- NULL
 
   res_final <- list(agency, stops, routes, trips, stop_times, calendar, calendar_dates)
   names(res_final) <- c("agency", "stops", "routes", "trips", "stop_times", "calendar", "calendar_dates")
