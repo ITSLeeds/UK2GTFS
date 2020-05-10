@@ -3,7 +3,7 @@
 \docType{data}
 \name{naptan_missing}
 \alias{naptan_missing}
-\title{Bus Stop Locations}
+\title{Bus Stop Locations missing from NapTAN}
 \format{
 A data frame of 5 columns
 }
