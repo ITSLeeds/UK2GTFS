@@ -60,44 +60,62 @@ gtfs_split_ids <- function(gtfs, trip_ids) {
 #' @export
 
 gtfs_fast_trips <- function(gtfs, maxspeed = 30) {
-  times <- gtfs$stop_times
-  times$stop_sequence <- as.integer(times$stop_sequence)
-  times <- dplyr::group_by(times, trip_id)
+  trips <- gtfs$stop_times
+  #times$stop_sequence <- as.integer(times$stop_sequence)
+  trips <- dplyr::left_join(trips, gtfs$stops, by = "stop_id")
+  trips$distance <- geodist::geodist(as.matrix(trips[,c("stop_lon","stop_lat")]), sequential = TRUE, pad = TRUE)
+  trips$distance[trips$stop_sequence == 1] <- NA
+  trips$arrival_time <- as.POSIXct(trips$arrival_time, format="%H:%M:%S")
+  trips$time <- c(NA, difftime(trips$arrival_time[2:nrow(trips)], trips$arrival_time[1:(nrow(trips)-1)]))
+  trips$speed <- trips$distance / trips$time
+  trips$speed[trips$speed == Inf] <- NA
+
+  times <- dplyr::group_by(trips, trip_id)
   times <- dplyr::summarise(times,
-    nstops = dplyr::n(),
-    time_start = arrival_time[stop_sequence == min(stop_sequence)],
-    time_end = if (nstops == 2) {
-      arrival_time[stop_sequence == max(stop_sequence)]
-    } else {
-      arrival_time[stop_sequence == stop_sequence[floor(stats::median(1:nstops))]]
-    },
-    stop_start = stop_id[stop_sequence == min(stop_sequence)],
-    stop_end = if (nstops == 2) {
-      stop_id[stop_sequence == max(stop_sequence)]
-    } else {
-      stop_id[stop_sequence == stop_sequence[floor(stats::median(1:nstops))]]
-    }
+                            max_speed = max(speed, na.rm = TRUE)
   )
-
-  stops <- gtfs$stops
-  stops <- stops[, c("stop_id", "stop_lon", "stop_lat")]
-  names(stops) <- c("stop_id", "from_lon", "from_lat")
-  times <- dplyr::left_join(times, stops, by = c("stop_start" = "stop_id"))
-  names(stops) <- c("stop_id", "to_lon", "to_lat")
-  times <- dplyr::left_join(times, stops, by = c("stop_end" = "stop_id"))
-  times$time_start <- lubridate::hms(times$time_start)
-  times$time_end <- lubridate::hms(times$time_end)
-  times$duration <- as.numeric(times$time_end - times$time_start)
-  times$distance <- geodist::geodist(
-    x = as.matrix(times[, c("from_lon", "from_lat")]),
-    y = as.matrix(times[, c("to_lon", "to_lat")]),
-    paired = TRUE
-  )
-  times$speed <- times$distance / times$duration
-
-  fast_trips <- times$trip_id[times$speed > maxspeed]
-  return(fast_trips)
+  times <- times[times$max_speed > maxspeed,]
+  return(times$trip_id)
 }
+# gtfs_fast_trips <- function(gtfs, maxspeed = 30) {
+#   times <- gtfs$stop_times
+#   times$stop_sequence <- as.integer(times$stop_sequence)
+#   times <- dplyr::group_by(times, trip_id)
+#   times <- dplyr::summarise(times,
+#     nstops = dplyr::n(),
+#     time_start = arrival_time[stop_sequence == min(stop_sequence)],
+#     time_end = if (nstops == 2) {
+#       arrival_time[stop_sequence == max(stop_sequence)]
+#     } else {
+#       arrival_time[stop_sequence == stop_sequence[floor(stats::median(1:nstops))]]
+#     },
+#     stop_start = stop_id[stop_sequence == min(stop_sequence)],
+#     stop_end = if (nstops == 2) {
+#       stop_id[stop_sequence == max(stop_sequence)]
+#     } else {
+#       stop_id[stop_sequence == stop_sequence[floor(stats::median(1:nstops))]]
+#     }
+#   )
+#
+#   stops <- gtfs$stops
+#   stops <- stops[, c("stop_id", "stop_lon", "stop_lat")]
+#   names(stops) <- c("stop_id", "from_lon", "from_lat")
+#   times <- dplyr::left_join(times, stops, by = c("stop_start" = "stop_id"))
+#   names(stops) <- c("stop_id", "to_lon", "to_lat")
+#   times <- dplyr::left_join(times, stops, by = c("stop_end" = "stop_id"))
+#   times$time_start <- lubridate::hms(times$time_start)
+#   times$time_end <- lubridate::hms(times$time_end)
+#   times$duration <- as.numeric(times$time_end - times$time_start)
+#   times$distance <- geodist::geodist(
+#     x = as.matrix(times[, c("from_lon", "from_lat")]),
+#     y = as.matrix(times[, c("to_lon", "to_lat")]),
+#     paired = TRUE
+#   )
+#   times$speed <- times$distance / times$duration
+#
+#   fast_trips <- times$trip_id[times$speed > maxspeed]
+#   return(fast_trips)
+# }
 
 
 #' Clean simple errors from GTFS files

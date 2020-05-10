@@ -34,13 +34,13 @@ A simple example is shown below:
 
 ```{r atoc_example, eval=FALSE}
 library(UK2GTFS)
-path_in <- "E:/OneDrive - University of Leeds/Data/UK2GTFS/ATOC/timetable"
-path_in <-  file.path(path_in,"ttis898.zip")
-path_out = "E:/GTFS"
+path_in <- "C:/Users/malco/OneDrive - University of Leeds/Data/UK2GTFS/ATOC/timetable/2020-05-02"
+path_in <-  file.path(path_in,"ttis627.zip")
+path_out = "C:/Users/malco/OneDrive - University of Leeds/Data/UK2GTFS/GTFS/gtfs_20200502"
 atoc2gtfs(path_in = path_in, 
           path_out = path_out,
-          name = "ttis898_gtfs",
-          ncores = 5)
+          name = "gtfs_ttis627",
+          ncores = 3)
 
 ```
 

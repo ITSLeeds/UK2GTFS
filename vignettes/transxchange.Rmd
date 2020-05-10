@@ -50,9 +50,9 @@ transxchange2gtfs(path_in = path_in,
 
 ```{r test, eval =  FALSE, echo=FALSE}
 # Setup
-#onedrive <- "C:/Users/malco/OneDrive - University of Leeds/"
-onedrive <- "E:/OneDrive - University of Leeds/"
-ncores <- 5
+onedrive <- "C:/Users/malco/OneDrive - University of Leeds/"
+#onedrive <- "E:/OneDrive - University of Leeds/"
+ncores <- 3
 
 
 library(UK2GTFS)

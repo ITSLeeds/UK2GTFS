@@ -28,7 +28,7 @@
 #' @format A data frame code 3 columns
 "activity_codes"
 
-#' Bus Stop Locations
+#' Bus Stop Locations missing from NapTAN
 #'
 #' A database of bus stops that are missing from the NAPTAN but are known to
 #' have been used. For some reason the offical NAPTAN file is missing a small
@@ -40,6 +40,17 @@
 #'
 #' @format A data frame of 5 columns
 "naptan_missing"
+
+#' Bus Stop Locations wrong in the NaPTAN
+#'
+#' A database of bus stops that are wrong in the NAPTAN. These have been
+#' corrected with a mix of manual and automatic techniques. Contributions are
+#' welcome of improved locations.
+#'
+#'
+#' @format A data frame of 5 columns
+"naptan_replace"
+
 
 #' Rail Network
 #'
