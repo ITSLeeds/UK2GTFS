@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>ATOC to GTFS — atoc2gtfs • UK2GTFS</title>
+<title>ATOC to GTFS (Network Rail Version) — nr2gtfs • UK2GTFS</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,8 +46,8 @@
 
 
 
-<meta property="og:title" content="ATOC to GTFS — atoc2gtfs" />
-<meta property="og:description" content="Convert ATOC CIF files to GTFS" />
+<meta property="og:title" content="ATOC to GTFS (Network Rail Version) — nr2gtfs" />
+<meta property="og:description" content="Convert ATOC CIF files from Network Rail to GTFS" />
 <meta property="og:image" content="/logo.png" />
 
 
@@ -131,25 +131,22 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>ATOC to GTFS</h1>
-    <small class="dont-index">Source: <a href='https://github.com/itsleeds/uk2gtfs/blob/master/R/atoc.R'><code>R/atoc.R</code></a></small>
-    <div class="hidden name"><code>atoc2gtfs.Rd</code></div>
+    <h1>ATOC to GTFS (Network Rail Version)</h1>
+    <small class="dont-index">Source: <a href='https://github.com/itsleeds/uk2gtfs/blob/master/R/atoc_nr.R'><code>R/atoc_nr.R</code></a></small>
+    <div class="hidden name"><code>nr2gtfs.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Convert ATOC CIF files to GTFS</p>
+    <p>Convert ATOC CIF files from Network Rail to GTFS</p>
     </div>
 
-    <pre class="usage"><span class='fu'>atoc2gtfs</span>(
+    <pre class="usage"><span class='fu'>nr2gtfs</span>(
   <span class='no'>path_in</span>,
-  <span class='kw'>path_out</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>silent</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>ncores</span> <span class='kw'>=</span> <span class='fl'>1</span>,
   <span class='kw'>locations</span> <span class='kw'>=</span> <span class='no'>tiplocs</span>,
   <span class='kw'>agency</span> <span class='kw'>=</span> <span class='no'>atoc_agency</span>,
-  <span class='kw'>shapes</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>transfers</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
+  <span class='kw'>shapes</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -157,15 +154,7 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>path_in</th>
-      <td><p>Character, path to ATOC file e.g."C:/input/ttis123.zip"</p></td>
-    </tr>
-    <tr>
-      <th>path_out</th>
-      <td><p>Not used</p></td>
-    </tr>
-    <tr>
-      <th>name</th>
-      <td><p>Not used</p></td>
+      <td><p>Character, path to Network Rail ATOC file e.g."C:/input/toc-full.CIF.gz"</p></td>
     </tr>
     <tr>
       <th>silent</th>
@@ -188,12 +177,11 @@
       <th>shapes</th>
       <td><p>Logical, should shapes.txt be generated (default FALSE)</p></td>
     </tr>
-    <tr>
-      <th>transfers</th>
-      <td><p>Logical, should transfers.txt be generated (default TRUE)</p></td>
-    </tr>
     </table>
 
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p>A gtfs list</p>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>Locations</p>
@@ -211,7 +199,7 @@ also pass your own data frame of agency information.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
     <div class='dont-index'><p>Other main: 
-<code><a href='nr2gtfs.html'>nr2gtfs</a>()</code></p></div>
+<code><a href='atoc2gtfs.html'>atoc2gtfs</a>()</code></p></div>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

@@ -92,7 +92,7 @@
       <h1 data-toc-skip>TransXchange - Bus, Tram, and Tube Timetables</h1>
                         <h4 class="author">Malcolm Morgan</h4>
             
-            <h4 class="date">2020-05-08</h4>
+            <h4 class="date">2020-06-03</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/itsleeds/uk2gtfs/blob/master/vignettes/transxchange.Rmd"><code>vignettes/transxchange.Rmd</code></a></small>
       <div class="hidden name"><code>transxchange.Rmd</code></div>
@@ -132,6 +132,11 @@
                   <span class="kw">path_out</span> <span class="kw">=</span> <span class="no">path_out</span>,
                   <span class="kw">name</span> <span class="kw">=</span> <span class="st">"EA_gtfs"</span>,
                   <span class="kw">ncores</span> <span class="kw">=</span> <span class="fl">4</span>)</pre></body></html></div>
+</div>
+<div id="stop-locations---the-naptan" class="section level2">
+<h2 class="hasAnchor">
+<a href="#stop-locations---the-naptan" class="anchor"></a>Stop Locations - The NaPTAN</h2>
+<p>TransXchange files do not contain the location of stops, so we must look them up in the NaPATAN. The NaPTAN is updated regually so UK2GTFS will always download the latest copy using <code><a href="../reference/get_naptan.html">get_naptan()</a></code>. However the NaPTAN is not perfect, it misses some stops and has incorrect locations for others. UK2GTFS uses two internal files <code>naptan_missing</code> and <code>naptan_replace</code> to impove the NaPTAN.</p>
 </div>
   </div>
 

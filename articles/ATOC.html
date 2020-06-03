@@ -92,7 +92,7 @@
       <h1 data-toc-skip>ATOC - Train Timetables</h1>
                         <h4 class="author">Malcolm Morgan</h4>
             
-            <h4 class="date">2020-05-08</h4>
+            <h4 class="date">2020-06-03</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/itsleeds/uk2gtfs/blob/master/vignettes/ATOC.Rmd"><code>vignettes/ATOC.Rmd</code></a></small>
       <div class="hidden name"><code>ATOC.Rmd</code></div>
@@ -131,14 +131,18 @@ Download ATOC data
 </ul>
 <p>A simple example is shown below:</p>
 <div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">UK2GTFS</span>)
-<span class="no">path_in</span> <span class="kw">&lt;-</span> <span class="st">"E:/OneDrive - University of Leeds/Data/UK2GTFS/ATOC/timetable"</span>
-<span class="no">path_in</span> <span class="kw">&lt;-</span>  <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span>(<span class="no">path_in</span>,<span class="st">"ttis898.zip"</span>)
-<span class="no">path_out</span> <span class="kw">=</span> <span class="st">"E:/GTFS"</span>
-<span class="fu"><a href="../reference/atoc2gtfs.html">atoc2gtfs</a></span>(<span class="kw">path_in</span> <span class="kw">=</span> <span class="no">path_in</span>,
-          <span class="kw">path_out</span> <span class="kw">=</span> <span class="no">path_out</span>,
-          <span class="kw">name</span> <span class="kw">=</span> <span class="st">"ttis898_gtfs"</span>,
-          <span class="kw">ncores</span> <span class="kw">=</span> <span class="fl">5</span>)</pre></body></html></div>
+<span class="no">path_in</span> <span class="kw">&lt;-</span> <span class="st">"C:/Users/malco/OneDrive - University of Leeds/Data/UK2GTFS/ATOC/timetable/2020-05-02"</span>
+<span class="no">path_in</span> <span class="kw">&lt;-</span>  <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span>(<span class="no">path_in</span>,<span class="st">"ttis627.zip"</span>)
+<span class="no">path_out</span> <span class="kw">=</span> <span class="st">"C:/Users/malco/OneDrive - University of Leeds/Data/UK2GTFS/GTFS/gtfs_20200502"</span>
+<span class="no">gtfs</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/atoc2gtfs.html">atoc2gtfs</a></span>(<span class="kw">path_in</span> <span class="kw">=</span> <span class="no">path_in</span>,
+          <span class="kw">ncores</span> <span class="kw">=</span> <span class="fl">3</span>)
+<span class="fu"><a href="../reference/gtfs_write.html">gtfs_write</a></span>(<span class="no">gtfs</span>, <span class="kw">name</span> <span class="kw">=</span> <span class="st">"gtfs_ttis627"</span>)</pre></body></html></div>
 <p>This will save the GTFS file to <code>E:/GTFS/ttis381_gtfs.zip</code></p>
+</div>
+<div id="alternative-data-sources" class="section level2">
+<h2 class="hasAnchor">
+<a href="#alternative-data-sources" class="anchor"></a>Alternative Data Sources</h2>
+<p>CIF Files are available from Network Rail, the formatting is slightly differnt and so a separate function <code><a href="../reference/nr2gtfs.html">nr2gtfs()</a></code> is provided.</p>
 </div>
 <div id="advanced-features" class="section level2">
 <h2 class="hasAnchor">
