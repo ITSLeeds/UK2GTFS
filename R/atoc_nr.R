@@ -1,18 +1,16 @@
-#' ATOC to GTFS
+#' ATOC to GTFS (Network Rail Version)
 #'
-#' Convert ATOC CIF files to GTFS
+#' Convert ATOC CIF files from Network Rail to GTFS
 #'
-#' @param path_in Character, path to ATOC file e.g."C:/input/ttis123.zip"
-#' @param path_out Not used
-#' @param name Not used
+#' @param path_in Character, path to Network Rail ATOC file e.g."C:/input/toc-full.CIF.gz"
 #' @param silent Logical, should progress messages be surpressed (default TRUE)
 #' @param ncores Numeric, When parallel processing how many cores to use
 #'   (default 1)
 #' @param locations where to get tiploc locations (see details)
 #' @param agency where to get agency.txt (see details)
 #' @param shapes Logical, should shapes.txt be generated (default FALSE)
-#' @param transfers Logical, should transfers.txt be generated (default TRUE)
 #' @family main
+#' @return A gtfs list
 #'
 #' @details Locations
 #'
@@ -34,30 +32,18 @@
 #'
 #' @export
 
-atoc2gtfs <- function(path_in,
-                      path_out = NULL,
-                      name = NULL,
+nr2gtfs <- function(path_in,
                       silent = TRUE,
                       ncores = 1,
                       locations = tiplocs,
                       agency = atoc_agency,
-                      shapes = FALSE,
-                      transfers = TRUE) {
-  # Checkmates
+                      shapes = FALSE) {
+  # checkmate
   checkmate::assert_character(path_in, len = 1)
   checkmate::assert_file_exists(path_in)
   checkmate::assert_logical(silent)
   checkmate::assert_numeric(ncores, lower = 1)
   checkmate::assert_logical(shapes)
-
-  # Warn depreciated features
-  if(!is.null(path_out)){
-    stop("writing gtfs files is now depreciated, this function now returns a gtfs object")
-  }
-
-  if(!is.null(name)){
-    stop("writing gtfs files is now depreciated, this function now returns a gtfs object")
-  }
 
   if (ncores == 1) {
     message(paste0(
@@ -66,53 +52,16 @@ atoc2gtfs <- function(path_in,
     ))
   }
   # Is input a zip or a folder
-  if (grepl(".zip", path_in)) {
-    # Unzip
-    files <- utils::unzip(path_in, exdir = "tmp")
-    cleanup <- TRUE
-  } else {
-    # folder
-    cleanup <- FALSE
-    files <- list.files(path_in, full.names = TRUE)
-  }
-
-  # Are all the files we would expect there?
-  files.ext <- substr(files, nchar(files) - 3, nchar(files))
-  # ".alf", ".dat", ".set", ".ztr", ".tsi" Not used
-  files.ext.need <- c(".flf", ".mca", ".msn")
-
-  if (!all(files.ext.need %in% files.ext)) {
-    # Missing Some files
-    files.ext.missing <- files.ext.need[!files.ext.need %in% files.ext]
-    stop(paste0(
-      "Missing files with the extension(s) ",
-      paste(files.ext.missing, collapse = " ")
-    ))
+  if (!grepl(".gz", path_in)) {
+    stop("path_in is not a .gz file")
   }
 
   # Read In each File
-  # alf <- importALF(files[grepl(".alf", files)])
-  if(transfers){
-    flf <- importFLF(files[grepl(".flf", files)])
-  }
+  mca <- importMCA(
+      file = path_in,
+      silent = silent, ncores = 1
+  )
 
-  if ("sf" %in% class(locations)) {
-    mca <- importMCA(
-      file = files[grepl(".mca", files)],
-      silent = silent, ncores = 1
-    )
-  } else if (locations == "file") {
-    mca <- importMCA(
-      file = files[grepl(".mca", files)],
-      silent = silent, ncores = 1, full_import = TRUE
-    )
-  } else {
-    mca <- importMCA(
-      file = files[grepl(".mca", files)],
-      silent = silent, ncores = 1
-    )
-  }
-  # ztr = importMCA(files[grepl(".ztr",files)], silent = silent)
 
   # Get the Station Locations
   if ("sf" %in% class(locations)) {
@@ -130,13 +79,6 @@ atoc2gtfs <- function(path_in,
     stops$stop_lat <- round(stops$stop_lat, 5)
     stops$stop_lon <- round(stops$stop_lon, 5)
     stops$valid <- NULL
-  } else if (locations == "file") {
-    msn <- importMSN(files[grepl(".msn", files)], silent = silent)
-    station <- msn[[1]]
-    TI <- mca[["TI"]]
-    stops.list <- station2stops(station = station, TI = TI)
-    stops <- stops.list[["stops"]]
-    rm(msn,TI,stops.list)
   } else {
     stops <- utils::read.csv(locations, stringsAsFactors = FALSE)
   }
@@ -170,22 +112,11 @@ atoc2gtfs <- function(path_in,
     ncores = ncores
   )
   rm(schedule)
-  gc()
-  # load("data/atoc_agency.RData")
 
   # TODO: check for stop_times that are not valid stops
 
   timetables$agency <- agency
   timetables$stops <- stops
-
-  if (transfers) {
-    if(!exists("station")){
-      msn <- importMSN(files[grepl(".msn", files)], silent = silent)
-      station <- msn[[1]]
-    }
-    timetables$transfers <- station2transfers(station = station, flf = flf)
-  }
-
 
   # Build Shapes
   if (shapes) {
@@ -193,5 +124,4 @@ atoc2gtfs <- function(path_in,
   }
 
   return(timetables)
-
 }

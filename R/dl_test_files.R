@@ -13,10 +13,12 @@ dl_example_file <- function(path, type = "atoc"){
   url2 <- "https://github.com/ITSLeeds/UK2GTFS/releases/download/0.002/transxchange.zip"
   if(type == "atoc"){
     utils::download.file(url = url1,
-                         destfile = file.path(path,"atoc.zip"))
+                         destfile = file.path(path,"atoc.zip"),
+                         quiet = TRUE)
   } else {
     utils::download.file(url = url2,
-                         destfile = file.path(path,"transxchange.zip"))
+                         destfile = file.path(path,"transxchange.zip"),
+                         quiet = TRUE)
   }
   return(TRUE)
 }

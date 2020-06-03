@@ -14,10 +14,9 @@ context("Test the main atoc function")
 
 test_that("test atoc2gtfs singlecore", {
   gtfs <- atoc2gtfs(path_in = file.path(data_path,"atoc.zip"),
-            path_out = file_path,
-            name = "gtfs_atoc",
             ncores = 1)
-  expect_true(file.exists(file.path(file_path,"gtfs_atoc.zip")))
+
+  expect_true(class(gtfs) == "list")
 })
 
 
@@ -25,11 +24,9 @@ context("Test the main atoc function, with different settings")
 
 test_that("test atoc2gtfs singlecore", {
   gtfs <- atoc2gtfs(path_in = file.path(data_path,"atoc.zip"),
-                    path_out = file_path,
-                    name = "gtfs_atoc2",
                     ncores = 1,
                     locations = "file")
-  expect_true(file.exists(file.path(file_path,"gtfs_atoc2.zip")))
+  expect_true(class(gtfs) == "list")
 })
 
 

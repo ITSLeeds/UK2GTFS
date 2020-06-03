@@ -1,4 +1,4 @@
-# Fix for no vivible bindings when using dplyr
+# Fix for no variaible bindings when using dplyr
 utils::globalVariables(c(
   "trip_id", "dept", "stop_sequence",
   "arvfinal", "tiplocs", "atoc_agency", "calendar_dates",

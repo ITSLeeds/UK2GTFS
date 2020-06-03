@@ -47,6 +47,9 @@ transxchange2gtfs(path_in = path_in,
 
 ```
 
+## Stop Locations - The NaPTAN
+
+TransXchange files do not contain the location of stops, so we must look them up in the NaPATAN. The NaPTAN is updated regually so UK2GTFS will always download the latest copy using `get_naptan()`. However the NaPTAN is not perfect, it misses some stops and has incorrect locations for others. UK2GTFS uses two internal files `naptan_missing` and `naptan_replace` to impove the NaPTAN. 
 
 ```{r test, eval =  FALSE, echo=FALSE}
 # Setup

@@ -37,14 +37,17 @@ library(UK2GTFS)
 path_in <- "C:/Users/malco/OneDrive - University of Leeds/Data/UK2GTFS/ATOC/timetable/2020-05-02"
 path_in <-  file.path(path_in,"ttis627.zip")
 path_out = "C:/Users/malco/OneDrive - University of Leeds/Data/UK2GTFS/GTFS/gtfs_20200502"
-atoc2gtfs(path_in = path_in, 
-          path_out = path_out,
-          name = "gtfs_ttis627",
+gtfs <- atoc2gtfs(path_in = path_in,
           ncores = 3)
+gtfs_write(gtfs, name = "gtfs_ttis627")
 
 ```
 
 This will save the GTFS file to `E:/GTFS/ttis381_gtfs.zip`
+
+## Alternative Data Sources
+
+CIF Files are available from Network Rail, the formatting is slightly differnt and so a separate function `nr2gtfs()` is provided.
 
 ## Advanced features
 
