@@ -1,7 +1,6 @@
 #' TransXchange to GTFS
 #'
-#' @details
-#' Convert transxchange files to GTFS
+#' @details Convert transxchange files to GTFS
 #'
 #' @param path_in Path to zipped transxchange files
 #' @param path_out Depreciated
@@ -10,16 +9,18 @@
 #' @param ncores Numeric, When parallel processing how many cores to use
 #' @param cal Calendar object from get_bank_holidays()
 #' @param naptan Naptan stop locations from get_naptan()
-#' @param scotland character, should Scottish bank holidays be used?
-#'     Can be "auto" (defualt), "yes", "no". If "auto" and path_in ends with "S.zip"
-#'     Scottish bank holidays will be used, otherwise England and Wales bank holidays
-#'     are used.
-#' @return
-#' A GTFS named list
+#' @param scotland character, should Scottish bank holidays be used? Can be
+#'   "auto" (defualt), "yes", "no". If "auto" and path_in ends with "S.zip"
+#'   Scottish bank holidays will be used, otherwise England and Wales bank
+#'   holidays are used.
+#' @param try_mode Logical, if TRUE import and conversion are wrapped in try
+#'   calls thus a failure on a single file will not cause the whole process to
+#'   fail. Warning this could result in a GTFS file with missing routes.
+#' @return A GTFS named list
 #' @details
 #'
-#' This is a meta fucntion which aids TransXchange to GTFS conversion. It simple runs
-#' transxchange_import(), transxchange_export(), gtfs_merge(), gtfs_write()
+#' This is a meta fucntion which aids TransXchange to GTFS conversion. It simple
+#' runs transxchange_import(), transxchange_export(), gtfs_merge(), gtfs_write()
 #'
 #' Progress Bars
 #'
@@ -38,12 +39,14 @@ transxchange2gtfs <- function(path_in,
                               ncores = 1,
                               cal = get_bank_holidays(),
                               naptan = get_naptan(),
-                              scotland = "auto") {
+                              scotland = "auto",
+                              try_mode = FALSE) {
   # Check inputs
   checkmate::assert_numeric(ncores)
   checkmate::assert_logical(silent)
   checkmate::assert_character(scotland)
   checkmate::assert_file_exists(path_in)
+  checkmate::assert_logical(try_mode)
 
   if (ncores == 1) {
     message(paste0(Sys.time(), " This will take some time, make sure you use 'ncores' to enable multi-core processing"))
@@ -103,7 +106,11 @@ transxchange2gtfs <- function(path_in,
 
   if (ncores == 1) {
     message(paste0(Sys.time(), " Importing TransXchange files, single core"))
-    res_all <- pbapply::pblapply(files, transxchange_import_try, run_debug = TRUE, full_import = FALSE)
+    res_all <- pbapply::pblapply(files,
+                                 transxchange_import_try,
+                                 run_debug = TRUE,
+                                 full_import = FALSE,
+                                 try_mode = try_mode)
     res_all_message <- res_all[sapply(res_all, class) == "character"]
     res_all <- res_all[sapply(res_all, class) == "list"]
     if(length(res_all_message) > 0){
@@ -113,9 +120,13 @@ transxchange2gtfs <- function(path_in,
       message(paste(res_all_message, collapse = ",  "))
     }
     message(paste0(Sys.time(), " Converting to GTFS, single core"))
-    gtfs_all <- pbapply::pblapply(res_all, transxchange_export,
-      run_debug = TRUE,
-      cal = cal, naptan = naptan, scotland = scotland
+    gtfs_all <- pbapply::pblapply(res_all,
+                                  transxchange_export_try,
+                                  run_debug = TRUE,
+                                  cal = cal,
+                                  naptan = naptan,
+                                  scotland = scotland,
+                                  try_mode = try_mode
     )
   } else {
     message(paste0(Sys.time(), " Importing TransXchange files, multicore"))
@@ -125,8 +136,11 @@ transxchange2gtfs <- function(path_in,
     opts <- list(progress = progress)
     cl <- parallel::makeCluster(ncores)
     doSNOW::registerDoSNOW(cl)
-    boot <- foreach::foreach(i = files, .options.snow = opts)
-    res_all <- foreach::`%dopar%`(boot, transxchange_import_try(i))
+    boot <- foreach::foreach(i = seq_len(length(files)), .options.snow = opts)
+    res_all <- foreach::`%dopar%`(boot, {
+      transxchange_import_try(files[i],
+                              try_mode = try_mode)
+    })
     parallel::stopCluster(cl)
     rm(cl, boot, opts, pb, progress)
 
@@ -149,7 +163,11 @@ transxchange2gtfs <- function(path_in,
     doSNOW::registerDoSNOW(cl)
     boot <- foreach::foreach(i = seq_len(length(res_all)), .options.snow = opts)
     gtfs_all <- foreach::`%dopar%`(boot, {
-      transxchange_export(res_all[[i]], cal = cal, naptan = naptan, scotland = scotland)
+      transxchange_export_try(res_all[[i]],
+                          cal = cal,
+                          naptan = naptan,
+                          scotland = scotland,
+                          try_mode = try_mode)
       # setTxtProgressBar(pb, i)
     })
 
@@ -158,6 +176,16 @@ transxchange2gtfs <- function(path_in,
   }
 
   unlink(file.path(tempdir(), "txc"), recursive = TRUE)
+
+  gtfs_all_message <- gtfs_all[sapply(gtfs_all, class) == "character"]
+  gtfs_all <- gtfs_all[sapply(gtfs_all, class) == "list"]
+  if(length(gtfs_all_message) > 0){
+    message(" ")
+    message("Failed to convert files: ")
+    gtfs_all_message <- unlist(gtfs_all_message)
+    message(paste(gtfs_all_message, collapse = ",  "))
+  }
+
 
   message(" ")
   message(paste0(Sys.time(), " Merging GTFS objects"))

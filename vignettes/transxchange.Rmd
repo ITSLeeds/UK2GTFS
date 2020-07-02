@@ -30,6 +30,7 @@ To do a simple conversion to GTFS, load the package, and use the `transxchange2g
 
 * `path_in` is the file path to either a single zip folder or many XML files
 * `ncores` If > 1 then multicore processing is used to speed up the processing. Alwasy leave one spare core for your OS.
+* `try_mode` if TRUE file that can't be converted are skipped
 
 A simple example is shown below:
 

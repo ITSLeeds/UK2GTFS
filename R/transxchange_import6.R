@@ -118,15 +118,15 @@ transxchange_import <- function(file, run_debug = TRUE, full_import = FALSE) {
   VehicleJourneysTimingLinks <- NULL
 
 
-  ## Final Steps ##########################################
-
+  ## Final Steps #########################################
   finalres <- list(
     JourneyPatternSections, Operators, Routes,
     RouteSections, Services_main, StandardService,
     SpecialDaysOperation, StopPoints, VehicleJourneys,
     DaysOfOperation, DaysOfNonOperation,
     VehicleJourneysTimingLinks, VehicleJourneys_notes,
-    ServicedOrganisations
+    ServicedOrganisations,
+    basename(file)
   )
   names(finalres) <- c(
     "JourneyPatternSections", "Operators", "Routes",
@@ -134,7 +134,8 @@ transxchange_import <- function(file, run_debug = TRUE, full_import = FALSE) {
     "SpecialDaysOperation", "StopPoints", "VehicleJourneys",
     "DaysOfOperation", "DaysOfNonOperation",
     "VehicleJourneysTimingLinks", "VehicleJourneys_notes",
-    "ServicedOrganisations"
+    "ServicedOrganisations",
+    "filename"
   )
 
   return(finalres)

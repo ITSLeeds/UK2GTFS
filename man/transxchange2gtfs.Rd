@@ -12,7 +12,8 @@ transxchange2gtfs(
   ncores = 1,
   cal = get_bank_holidays(),
   naptan = get_naptan(),
-  scotland = "auto"
+  scotland = "auto",
+  try_mode = FALSE
 )
 }
 \arguments{
@@ -30,10 +31,14 @@ transxchange2gtfs(
 
 \item{naptan}{Naptan stop locations from get_naptan()}
 
-\item{scotland}{character, should Scottish bank holidays be used?
-Can be "auto" (defualt), "yes", "no". If "auto" and path_in ends with "S.zip"
-Scottish bank holidays will be used, otherwise England and Wales bank holidays
-are used.}
+\item{scotland}{character, should Scottish bank holidays be used? Can be
+"auto" (defualt), "yes", "no". If "auto" and path_in ends with "S.zip"
+Scottish bank holidays will be used, otherwise England and Wales bank
+holidays are used.}
+
+\item{try_mode}{Logical, if TRUE import and conversion are wrapped in try
+calls thus a failure on a single file will not cause the whole process to
+fail. Warning this could result in a GTFS file with missing routes.}
 }
 \value{
 A GTFS named list
@@ -44,8 +49,8 @@ TransXchange to GTFS
 \details{
 Convert transxchange files to GTFS
 
-This is a meta fucntion which aids TransXchange to GTFS conversion. It simple runs
-transxchange_import(), transxchange_export(), gtfs_merge(), gtfs_write()
+This is a meta fucntion which aids TransXchange to GTFS conversion. It simple
+runs transxchange_import(), transxchange_export(), gtfs_merge(), gtfs_write()
 
 Progress Bars
 
