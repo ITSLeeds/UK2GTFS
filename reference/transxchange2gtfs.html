@@ -106,6 +106,9 @@
       <a href="../articles/ATOC.html">ATOC - Train Timetables</a>
     </li>
     <li>
+      <a href="../articles/GTFS.html">GTFS Functions</a>
+    </li>
+    <li>
       <a href="../articles/transxchange.html">TransXchange - Bus, Tram, and Tube Timetables</a>
     </li>
   </ul>
@@ -142,8 +145,8 @@
 
     <pre class="usage"><span class='fu'>transxchange2gtfs</span>(
   <span class='no'>path_in</span>,
-  <span class='no'>path_out</span>,
-  <span class='kw'>name</span> <span class='kw'>=</span> <span class='st'>"gtfs"</span>,
+  <span class='kw'>path_out</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>silent</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>ncores</span> <span class='kw'>=</span> <span class='fl'>1</span>,
   <span class='kw'>cal</span> <span class='kw'>=</span> <span class='fu'><a href='get_bank_holidays.html'>get_bank_holidays</a></span>(),
@@ -160,11 +163,11 @@
     </tr>
     <tr>
       <th>path_out</th>
-      <td><p>Path to where GTFS files should be saved</p></td>
+      <td><p>Depreciated</p></td>
     </tr>
     <tr>
       <th>name</th>
-      <td><p>name that should be given to the gtfs file, without the .zip extension</p></td>
+      <td><p>Depreciated</p></td>
     </tr>
     <tr>
       <th>silent</th>
@@ -191,6 +194,9 @@ are used.</p></td>
     </tr>
     </table>
 
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p>A GTFS named list</p>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>Convert transxchange files to GTFS</p>
