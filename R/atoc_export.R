@@ -462,7 +462,8 @@ makeCalendar.inner <- function(calendar.sub) { # i, UIDs, calendar){
       # check for identical day pattern
       if (length(unique(calendar.sub$Days)) == 1 &
         sum(typ.all == "P") == 1) {
-        calendar.new <- UK2GTFS:::splitDates(calendar.sub)
+        calendar.new <- splitDates(calendar.sub)
+        #calendar.new <- UK2GTFS:::splitDates(calendar.sub)
         return(list(calendar.new, NA))
       } else {
         # split by day pattern
@@ -478,7 +479,8 @@ makeCalendar.inner <- function(calendar.sub) { # i, UIDs, calendar){
             # ignore cases of only cancleds
             splits[[k]] <- NULL
           } else {
-            calendar.new.day <- UK2GTFS:::splitDates(calendar.sub.day)
+            calendar.new.day <- splitDates(calendar.sub.day)
+            #calendar.new.day <- UK2GTFS:::splitDates(calendar.sub.day)
             # rejects nas
             if (class(calendar.new.day) == "data.frame") {
               calendar.new.day$UID <- paste0(calendar.new.day$UID, k)

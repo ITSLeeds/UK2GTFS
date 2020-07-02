@@ -4,8 +4,8 @@
 #' Convert transxchange files to GTFS
 #'
 #' @param path_in Path to zipped transxchange files
-#' @param path_out Path to where GTFS files should be saved
-#' @param name name that should be given to the gtfs file, without the .zip extension
+#' @param path_out Depreciated
+#' @param name Depreciated
 #' @param silent Logical, should progress be shown
 #' @param ncores Numeric, When parallel processing how many cores to use
 #' @param cal Calendar object from get_bank_holidays()
@@ -14,7 +14,8 @@
 #'     Can be "auto" (defualt), "yes", "no". If "auto" and path_in ends with "S.zip"
 #'     Scottish bank holidays will be used, otherwise England and Wales bank holidays
 #'     are used.
-#'
+#' @return
+#' A GTFS named list
 #' @details
 #'
 #' This is a meta fucntion which aids TransXchange to GTFS conversion. It simple runs
@@ -31,8 +32,8 @@
 
 
 transxchange2gtfs <- function(path_in,
-                              path_out,
-                              name = "gtfs",
+                              path_out = NULL,
+                              name = NULL,
                               silent = TRUE,
                               ncores = 1,
                               cal = get_bank_holidays(),
@@ -41,11 +42,19 @@ transxchange2gtfs <- function(path_in,
   # Check inputs
   checkmate::assert_numeric(ncores)
   checkmate::assert_logical(silent)
-  checkmate::assert_character(name)
   checkmate::assert_character(scotland)
+  checkmate::assert_file_exists(path_in)
 
   if (ncores == 1) {
     message(paste0(Sys.time(), " This will take some time, make sure you use 'ncores' to enable multi-core processing"))
+  }
+
+  # back compatibility
+  if(!is.null(path_out)){
+    stop("path_out is no longer supported, use gtfs_write()")
+  }
+  if(!is.null(name)){
+    stop("name is no longer supported, use gtfs_write()")
   }
 
 
@@ -147,6 +156,9 @@ transxchange2gtfs <- function(path_in,
     parallel::stopCluster(cl)
     rm(cl, boot, opts, pb, progress)
   }
+
+  unlink(file.path(tempdir(), "txc"), recursive = TRUE)
+
   message(" ")
   message(paste0(Sys.time(), " Merging GTFS objects"))
 
@@ -157,8 +169,5 @@ transxchange2gtfs <- function(path_in,
     message("Merging failed, returing unmerged GFTS object for analysis")
     return(gtfs_all)
   }
-
-  message(paste0(Sys.time(), " Writing GTFS file"))
-  gtfs_write(gtfs = gtfs_merged, folder = path_out, name = name)
-  unlink(file.path(tempdir(), "txc"), recursive = TRUE)
+  return(gtfs_merged)
 }

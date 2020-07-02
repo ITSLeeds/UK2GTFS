@@ -22,23 +22,21 @@ test_that("test file downloads", {
 
 
 test_that("test transxchange2gtfs multicore", {
-  transxchange2gtfs(path_in = file.path(data_path,"transxchange.zip"),
-                    path_out = file_path,
+  gtfs <- transxchange2gtfs(path_in = file.path(data_path,"transxchange.zip"),
                     cal = cal,
-                    name = "txc_gtfs",
                     naptan = naptan,
                     ncores = 2)
+  gtfs_write(gtfs,folder = file_path, name = "txc_gtfs")
   expect_true(file.exists(file.path(file_path,"txc_gtfs.zip")))
 
 })
 
 test_that("test transxchange2gtfs singlecore", {
-  transxchange2gtfs(path_in = file.path(data_path,"transxchange.zip"),
-                    path_out = file_path,
-                    cal = cal,
-                    name = "txc_gtfs2",
-                    naptan = naptan,
-                    ncores = 1)
+  gtfs <- transxchange2gtfs(path_in = file.path(data_path,"transxchange.zip"),
+                            cal = cal,
+                            naptan = naptan,
+                            ncores = 1)
+  gtfs_write(gtfs,folder = file_path, name = "txc_gtfs2")
   expect_true(file.exists(file.path(file_path,"txc_gtfs2.zip")))
 
 })

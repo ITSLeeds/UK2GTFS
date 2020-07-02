@@ -1,0 +1,46 @@
+---
+title: "GTFS Functions"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{GTFS}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+As well as converting to GTFS `UK2GTFS` has functions for manipulating GTFS files.
+
+## Reading and Writing
+
+`gtfs_read`
+
+`gtfs_write`
+
+
+## Cleaning and Validating GFTS
+
+`gtfs_clean()` Clean simple errors from GTFS files
+
+`gtfs_compress()` Reduce file size of a GTFS object
+
+`gtfs_fast_trips()` Find fast trips
+
+
+
+`gtfs_validate_internal()` Validate a GTFS object (in R)
+
+## Manupulating GTFS
+
+`gtfs_merge()` merge a list of gtfs files
+
+`gtfs_split()` Split a GTFS object
+
+`gtfs_split_ids()` Split a GTFS object based on trip_ids
+
+`gtfs_clip()` Clip a GTFS object to a geographical area

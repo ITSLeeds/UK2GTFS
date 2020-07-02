@@ -29,8 +29,6 @@ The data comes as zipped folders for different regions of the UK.
 To do a simple conversion to GTFS, load the package, and use the `transxchange2gtfs()` function. The function requires the following arguments.
 
 * `path_in` is the file path to either a single zip folder or many XML files
-* `path_out` is the path to a folder where the results will be saved
-* `name` is the file name of the result by default `gtfs.zip`
 * `ncores` If > 1 then multicore processing is used to speed up the processing. Alwasy leave one spare core for your OS.
 
 A simple example is shown below:
@@ -40,11 +38,8 @@ library(UK2GTFS)
 path_in <- "E:/OneDrive - University of Leeds/Data/UK2GTFS/TransXchange/timetable"
 path_in <-  file.path(path_in,"EA.zip")
 path_out = "E:/GTFS"
-transxchange2gtfs(path_in = path_in,
-                  path_out = path_out,
-                  name = "EA_gtfs",
-                  ncores = 4)
-
+gtfs <- transxchange2gtfs(path_in = path_in,  ncores = 4)
+gtfs_write(gtfs, path_out, "gtfs")
 ```
 
 ## Stop Locations - The NaPTAN

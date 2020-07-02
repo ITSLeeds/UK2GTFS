@@ -6,8 +6,8 @@
 \usage{
 transxchange2gtfs(
   path_in,
-  path_out,
-  name = "gtfs",
+  path_out = NULL,
+  name = NULL,
   silent = TRUE,
   ncores = 1,
   cal = get_bank_holidays(),
@@ -18,9 +18,9 @@ transxchange2gtfs(
 \arguments{
 \item{path_in}{Path to zipped transxchange files}
 
-\item{path_out}{Path to where GTFS files should be saved}
+\item{path_out}{Depreciated}
 
-\item{name}{name that should be given to the gtfs file, without the .zip extension}
+\item{name}{Depreciated}
 
 \item{silent}{Logical, should progress be shown}
 
@@ -34,6 +34,9 @@ transxchange2gtfs(
 Can be "auto" (defualt), "yes", "no". If "auto" and path_in ends with "S.zip"
 Scottish bank holidays will be used, otherwise England and Wales bank holidays
 are used.}
+}
+\value{
+A GTFS named list
 }
 \description{
 TransXchange to GTFS
