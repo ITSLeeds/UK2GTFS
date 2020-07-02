@@ -151,7 +151,8 @@
   <span class='kw'>ncores</span> <span class='kw'>=</span> <span class='fl'>1</span>,
   <span class='kw'>cal</span> <span class='kw'>=</span> <span class='fu'><a href='get_bank_holidays.html'>get_bank_holidays</a></span>(),
   <span class='kw'>naptan</span> <span class='kw'>=</span> <span class='fu'><a href='get_naptan.html'>get_naptan</a></span>(),
-  <span class='kw'>scotland</span> <span class='kw'>=</span> <span class='st'>"auto"</span>
+  <span class='kw'>scotland</span> <span class='kw'>=</span> <span class='st'>"auto"</span>,
+  <span class='kw'>try_mode</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -187,10 +188,16 @@
     </tr>
     <tr>
       <th>scotland</th>
-      <td><p>character, should Scottish bank holidays be used?
-Can be "auto" (defualt), "yes", "no". If "auto" and path_in ends with "S.zip"
-Scottish bank holidays will be used, otherwise England and Wales bank holidays
-are used.</p></td>
+      <td><p>character, should Scottish bank holidays be used? Can be
+"auto" (defualt), "yes", "no". If "auto" and path_in ends with "S.zip"
+Scottish bank holidays will be used, otherwise England and Wales bank
+holidays are used.</p></td>
+    </tr>
+    <tr>
+      <th>try_mode</th>
+      <td><p>Logical, if TRUE import and conversion are wrapped in try
+calls thus a failure on a single file will not cause the whole process to
+fail. Warning this could result in a GTFS file with missing routes.</p></td>
     </tr>
     </table>
 
@@ -200,8 +207,8 @@ are used.</p></td>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>Convert transxchange files to GTFS</p>
-<p>This is a meta fucntion which aids TransXchange to GTFS conversion. It simple runs
-transxchange_import(), transxchange_export(), gtfs_merge(), gtfs_write()</p>
+<p>This is a meta fucntion which aids TransXchange to GTFS conversion. It simple
+runs transxchange_import(), transxchange_export(), gtfs_merge(), gtfs_write()</p>
 <p>Progress Bars</p>
 <p>To minimise overall processing when using mulitple cores the fucntion works
 from largest to smallest file.This can mean the progress bar sits a 0<!-- % for -->
