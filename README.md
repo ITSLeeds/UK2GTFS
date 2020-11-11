@@ -40,6 +40,12 @@ tools have been developed that accept GTFS files as inputs. This package
 is intended to make the conversion of UK data to the GTFS format simple
 and easy.
 
+**Update November 2020**
+
+The [Open Bus Data Service](https://data.bus-data.dft.gov.uk/downloads/)
+Now offers a national GTFS download option based on [ITO
+World’s](https://www.itoworld.com) TransXchange to GTFS converter.
+
 ## Capabilities - why we need another package
 
 There are a number of pre-existing options for converting data to GTFS.
