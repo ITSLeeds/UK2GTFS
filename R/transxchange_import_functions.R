@@ -137,7 +137,14 @@ import_journeypatternsections <- function(journeypatternsections) {
 #' @param operators operators object
 #' @noRd
 import_operators <- function(operators) {
-  operators <- xml2::xml_find_all(operators, "./d1:Operator")
+
+  # Test for Issue 23
+  operators_check <- xml2::xml_find_all(operators, "./d1:Operator")
+  if(length(operators_check) == 0){
+    # Don't do the find all
+  } else {
+    operators <- operators_check
+  }
 
   NationalOperatorCode <- import_simple_xml(operators, ".//d1:NationalOperatorCode")
   OperatorCode <- import_simple_xml(operators, ".//d1:OperatorCode")
