@@ -40,7 +40,7 @@ transxchange2gtfs <- function(path_in,
                               cal = get_bank_holidays(),
                               naptan = get_naptan(),
                               scotland = "auto",
-                              try_mode = FALSE) {
+                              try_mode = TRUE) {
   # Check inputs
   checkmate::assert_numeric(ncores)
   checkmate::assert_logical(silent)
@@ -133,7 +133,7 @@ transxchange2gtfs <- function(path_in,
 
     pb <- utils::txtProgressBar(max = length(files), style = 3)
     progress <- function(n) utils::setTxtProgressBar(pb, n)
-    opts <- list(progress = progress)
+    opts <- list(progress = progress, preschedule = FALSE)
     cl <- parallel::makeCluster(ncores)
     doSNOW::registerDoSNOW(cl)
     boot <- foreach::foreach(i = seq_len(length(files)), .options.snow = opts)
@@ -158,7 +158,7 @@ transxchange2gtfs <- function(path_in,
 
     pb <- utils::txtProgressBar(min = 0, max = length(res_all), style = 3)
     progress <- function(n) utils::setTxtProgressBar(pb, n)
-    opts <- list(progress = progress)
+    opts <- list(progress = progress, preschedule = FALSE)
     cl <- parallel::makeCluster(ncores)
     doSNOW::registerDoSNOW(cl)
     boot <- foreach::foreach(i = seq_len(length(res_all)), .options.snow = opts)

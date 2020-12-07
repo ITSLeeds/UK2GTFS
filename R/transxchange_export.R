@@ -377,7 +377,7 @@ transxchange_export <- function(obj, run_debug = TRUE,
     calendar_summary <- dplyr::group_by(calendar, start_date, end_date, DaysOfWeek)
     calendar_dates_summary <- dplyr::group_by(calendar_dates, trip_id)
     calendar_dates_summary <- dplyr::summarise(calendar_dates_summary,
-      pattern = paste(c(date, exception_type), collapse = "")
+      pattern = paste(c(as.character(date), exception_type), collapse = "")
     )
     calendar_summary$trip_id <- as.character(calendar_summary$trip_id)
     calendar_summary <- dplyr::left_join(calendar, calendar_dates_summary, by = "trip_id")
