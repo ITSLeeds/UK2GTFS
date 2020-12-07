@@ -1,8 +1,11 @@
 #' merge a list of gtfs files
 #'
 #' @param gtfs_list a list of gtfs objects to be merged
+#' @param force logical, if TRUE duplicated values are merged taking the fist
+#'   instance to be the correct instance, in most cases this is ok, but may
+#'   cause some errors
 #' @export
-gtfs_merge <- function(gtfs_list) {
+gtfs_merge <- function(gtfs_list, force = FALSE) {
 
   # remove any NULLS
   gtfs_list <- gtfs_list[lengths(gtfs_list) != 0]
@@ -77,7 +80,22 @@ gtfs_merge <- function(gtfs_list) {
     agency.check$agency_name <- tolower(agency.check$agency_name)
     agency.check <- unique(agency.check)
     if (any(duplicated(agency.check$agency_id))) {
-      stop(paste0("Duplicated Agency IDs ", paste(agency.check$agency_id[duplicated(agency.check$agency_id)], collapse = " ")))
+      if(force){
+        warning(paste0("Duplicated Agency IDs ",
+                       paste(unique(agency.check$agency_id[duplicated(agency.check$agency_id)]), collapse = " "),
+                       " will be merged"))
+        # Assume 1st Name is correct name
+        agency <- dplyr::group_by(agency, agency_id)
+        agency <- dplyr::summarise(agency,
+                                   agency_name = agency_name[1],
+                                   agency_url = agency_url[1],
+                                   agency_timezone = agency_timezone[1],
+                                   agency_lang = agency_lang[1]
+                                   )
+      } else {
+        stop(paste0("Duplicated Agency IDs ",
+                    paste(unique(agency.check$agency_id[duplicated(agency.check$agency_id)]), collapse = " ")))
+      }
     } else {
       agency <- agency[!duplicated(agency$agency_id), ]
     }
@@ -95,8 +113,13 @@ gtfs_merge <- function(gtfs_list) {
     message("De-duplicating route_id")
     route_id <- routes[, c("file_id", "route_id")]
     if (any(duplicated(route_id))) {
-      stop("Duplicated route_id within the same GTFS file")
+      if(force){
+        routes <- routes[!duplicated(route_id), ]
+      } else {
+        stop("Duplicated route_id within the same GTFS file, try using force = TRUE")
+      }
     }
+
     route_id$route_id_new <- seq(1, nrow(route_id))
     routes <- dplyr::left_join(routes, route_id, by = c("file_id", "route_id"))
     routes <- routes[, c("route_id_new", "agency_id", "route_short_name", "route_long_name", "route_desc", "route_type")]

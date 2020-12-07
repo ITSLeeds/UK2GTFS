@@ -9,8 +9,8 @@
 #' @export
 gtfs_clip <- function(gtfs, bounds) {
 
-  crs <- sf::st_crs(bounds)
-  if(crs$input != "EPSG:4326"){
+
+  if(!sf::st_is_longlat(bounds)){
     stop("The CRS of bounds is not EPSG:4326, please reproject with sf::st_transform(bounds, 4326)")
   }
 
