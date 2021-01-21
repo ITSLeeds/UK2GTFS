@@ -229,13 +229,26 @@ clean_days <- function(days) {
   } else if (days %in% c("", "MondayToSunday",
                          "MondayToFridaySaturdaySundayHolidaysOnly")) {
     res <- c(1, 1, 1, 1, 1, 1, 1)
+  } else if (days == "NotMonday") {
+    res <- c(0, 1, 1, 1, 1, 1, 1)
+  } else if (days == "NotTuesday") {
+    res <- c(1, 0, 1, 1, 1, 1, 1)
+  } else if (days == "NotWednesday") {
+    res <- c(1, 1, 0, 1, 1, 1, 1)
+  } else if (days == "NotThursday") {
+    res <- c(1, 1, 1, 1, 1, 1, 1)
+  } else if (days == "NotFriday") {
+    res <- c(1, 1, 1, 1, 0, 1, 1)
+  } else if (days == "NotSaturday") {
+    res <- c(1, 1, 1, 1, 1, 0, 1)
+  } else if (days == "NotSunday") {
+    res <- c(1, 1, 1, 1, 1, 1, 0)
   } else {
     stop(paste0("Unknown day pattern: ", days))
   }
   names(res) <- NULL
   res
 }
-
 
 
 #' break up holidays2
