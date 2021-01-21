@@ -182,9 +182,16 @@ gtfs_merge <- function(gtfs_list, force = FALSE) {
   if (nrow(calendar_dates) > 0) {
     message("Condensing duplicated service patterns")
     calendar_dates_summary <- dplyr::group_by(calendar_dates, service_id)
-    calendar_dates_summary <- dplyr::summarise(calendar_dates_summary,
-      pattern = paste(c(date, exception_type), collapse = "")
-    )
+    if(class(calendar_dates_summary$date) == "Date"){
+      calendar_dates_summary <- dplyr::summarise(calendar_dates_summary,
+                                                 pattern = paste(c(as.character(date), exception_type), collapse = "")
+      )
+    } else {
+      calendar_dates_summary <- dplyr::summarise(calendar_dates_summary,
+                                                 pattern = paste(c(date, exception_type), collapse = "")
+      )
+    }
+
     calendar_summary <- dplyr::left_join(calendar, calendar_dates_summary, by = "service_id")
     calendar_summary <- dplyr::group_by(
       calendar_summary,

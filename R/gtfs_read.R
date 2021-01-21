@@ -34,30 +34,37 @@ gtfs_read <- function(path, stringsAsFactors = FALSE){
 
   if(checkmate::test_file_exists(file.path(tmp_folder,"routes.txt"))){
     gtfs$routes <- utils::read.csv(file.path(tmp_folder,"routes.txt"), stringsAsFactors = stringsAsFactors)
+    gtfs$routes$route_id <- as.character(gtfs$routes$route_id)
   } else {
     warning("Unable to find required file: routes.txt")
   }
 
   if(checkmate::test_file_exists(file.path(tmp_folder,"trips.txt"))){
     gtfs$trips <- utils::read.csv(file.path(tmp_folder,"trips.txt"), stringsAsFactors = stringsAsFactors)
+    gtfs$trips$route_id <- as.character(gtfs$trips$route_id)
+    gtfs$trips$trip_id <- as.character(gtfs$trips$trip_id)
   } else {
     warning("Unable to find required file: trips.txt")
   }
 
   if(checkmate::test_file_exists(file.path(tmp_folder,"stop_times.txt"))){
     gtfs$stop_times <- utils::read.csv(file.path(tmp_folder,"stop_times.txt"), stringsAsFactors = stringsAsFactors)
+    gtfs$stop_times$trip_id <- as.character(gtfs$stop_times$trip_id)
   } else {
     warning("Unable to find required file: stop_times.txt")
   }
 
   if(checkmate::test_file_exists(file.path(tmp_folder,"calendar.txt"))){
     gtfs$calendar <- utils::read.csv(file.path(tmp_folder,"calendar.txt"), stringsAsFactors = stringsAsFactors)
+    gtfs$calendar$start_date <- lubridate::ymd(gtfs$calendar$start_date)
+    gtfs$calendar$end_date <- lubridate::ymd(gtfs$calendar$end_date)
   } else {
     message("Unable to find conditionally required file: calendar.txt")
   }
 
   if(checkmate::test_file_exists(file.path(tmp_folder,"calendar_dates.txt"))){
     gtfs$calendar_dates <- utils::read.csv(file.path(tmp_folder,"calendar_dates.txt"), stringsAsFactors = stringsAsFactors)
+    gtfs$calendar_dates$date <- lubridate::ymd(gtfs$calendar_dates$date)
   } else {
     message("Unable to find conditionally required file: calendar_dates.txt")
   }
