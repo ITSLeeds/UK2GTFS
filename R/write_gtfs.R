@@ -47,6 +47,10 @@ gtfs_write <- function(gtfs, folder = getwd(), name = "gtfs", stripComma = TRUE,
 stripCommas <- function(df) {
   df[] <- lapply(df, function(x) {
     if (class(x) == "character") {
+      if(!all(validUTF8(x))){
+        Encoding(x) <- "latin1"
+        x <- enc2utf8(x)
+      }
       x <- gsub(",", " ", x, fixed = TRUE)
     }
     return(x)
