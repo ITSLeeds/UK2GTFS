@@ -90,6 +90,8 @@ import_ServicedOrganisations <- function(ServicedOrganisations, full_import = FA
     }
     result[[i]] <- res
   }
+
+  result <- result[vapply(result, function(x){nrow(x) > 0}, FUN.VALUE = TRUE)] #Remove any empty rows
   result <- dplyr::bind_rows(result)
 
 

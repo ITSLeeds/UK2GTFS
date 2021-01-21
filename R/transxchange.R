@@ -151,6 +151,8 @@ transxchange2gtfs <- function(path_in,
       message("Failed to import files: ")
       res_all_message <- unlist(res_all_message)
       message(paste(res_all_message, collapse = ",  "))
+    } else {
+      message("All files imported")
     }
 
     message(" ")
@@ -184,6 +186,8 @@ transxchange2gtfs <- function(path_in,
     message("Failed to convert files: ")
     gtfs_all_message <- unlist(gtfs_all_message)
     message(paste(gtfs_all_message, collapse = ",  "))
+  } else {
+    message("All files converted")
   }
 
 
