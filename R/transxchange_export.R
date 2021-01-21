@@ -281,6 +281,9 @@ transxchange_export <- function(obj, run_debug = TRUE,
     trip_exc <- split(VehicleJourneys_exclude, VehicleJourneys_exclude$VehicleJourneyCode)
     trip_split <- split(trips, trips$trip_id)
     trip_split <- lapply(trip_split, exclude_trips, trip_exc = trip_exc)
+    trip_split <- trip_split[vapply(trip_split,
+                                    function(x){nrow(x) > 0},
+                                    FUN.VALUE = TRUE, USE.NAMES = FALSE)]
     trips <- dplyr::bind_rows(trip_split)
     trips_exclude <- trips[, c("trip_id", "exclude_days")]
     trips_exclude <- trips_exclude[lengths(trips_exclude$exclude_days) > 0, ] # For lists
