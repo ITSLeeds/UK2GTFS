@@ -1,5 +1,6 @@
 #' Validate a GTFS object (in R)
 #'
+#' Does some basic checks on the validity of the GTFS object
 #' @param gtfs a gtfs object
 #' @export
 
@@ -97,4 +98,23 @@ gtfs_validate_internal <- function(gtfs) {
 #' @noRd
 gtfs_validate_external <- function(path_gtfs, path_validator) {
 
+}
+
+
+#' Force a GTFS to be valid bu removing problems
+#' @param gtfs gtfs object
+#' @export
+gtfs_force_valid <- function(gtfs) {
+  message("This function does not fix problems it just removes them")
+
+  # Stops with missing lat/lon
+  gtfs$stops <- gtfs$stops[!is.na(gtfs$stops$stop_lon) & !is.na(gtfs$stops$stop_lat),]
+
+  # Stop Times that are not in stops
+  gtfs$stop_times <- gtfs$stop_times[gtfs$stop_times$stop_id %in%  gtfs$stops$stop_id,]
+
+  #Trips that are not in trips
+  gtfs$stop_times <- gtfs$stop_times[gtfs$stop_times$trip_id %in% gtfs$trips$trip_id,]
+
+  return(gtfs)
 }
