@@ -17,6 +17,19 @@ gtfs_write <- function(gtfs, folder = getwd(), name = "gtfs", stripComma = TRUE,
     }
   }
 
+  #Format Dates
+
+  if(class(gtfs$calendar$start_date) == "Date"){
+    gtfs$calendar$start_date <- format(gtfs$calendar$start_date, "%Y%m%d")
+  }
+
+  if(class(gtfs$calendar$end_date) == "Date"){
+    gtfs$calendar$end_date <- format(gtfs$calendar$end_date, "%Y%m%d")
+  }
+
+  if(class(gtfs$calendar_dates$date) == "Date"){
+    gtfs$calendar_dates$date <- format(gtfs$calendar_dates$date, "%Y%m%d")
+  }
 
   dir.create(paste0(folder, "/gtfs_temp"))
   utils::write.csv(gtfs$calendar, paste0(folder, "/gtfs_temp/calendar.txt"), row.names = FALSE, quote = quote)
