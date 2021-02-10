@@ -7,5 +7,8 @@ utils::globalVariables(c(
   "stop_id", "exception_type", "start_date", "end_date",
   "monday", "tuesday", "wednesday", "thursday", "friday",
   "saturday", "sunday", "pattern", "schedule", "ATOC Code",
-  "route_long_name", "Train Status", "i", "DaysOfWeek"
+  "route_long_name", "Train Status", "i", "DaysOfWeek",
+  'speed','agency_id','agency_name',
+  'agency_url','agency_timezone',
+  'agency_lang','agency_id',   'Freq'
 ))

@@ -13,7 +13,7 @@ transxchange2gtfs(
   cal = get_bank_holidays(),
   naptan = get_naptan(),
   scotland = "auto",
-  try_mode = FALSE
+  try_mode = TRUE
 )
 }
 \arguments{

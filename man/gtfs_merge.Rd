@@ -4,10 +4,14 @@
 \alias{gtfs_merge}
 \title{merge a list of gtfs files}
 \usage{
-gtfs_merge(gtfs_list)
+gtfs_merge(gtfs_list, force = FALSE)
 }
 \arguments{
 \item{gtfs_list}{a list of gtfs objects to be merged}
+
+\item{force}{logical, if TRUE duplicated values are merged taking the fist
+instance to be the correct instance, in most cases this is ok, but may
+cause some errors}
 }
 \description{
 merge a list of gtfs files

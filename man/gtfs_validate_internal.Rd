@@ -10,5 +10,5 @@ gtfs_validate_internal(gtfs)
 \item{gtfs}{a gtfs object}
 }
 \description{
-Validate a GTFS object (in R)
+Does some basic checks on the validity of the GTFS object
 }
