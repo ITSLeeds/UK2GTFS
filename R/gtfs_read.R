@@ -51,6 +51,8 @@ gtfs_read <- function(path){
                                        col_types = readr::cols(trip_id = readr::col_character(),
                                                                departure_time = readr::col_character(),
                                                                arrival_time = readr::col_character()))
+    gtfs$stop_times$arrival_time <- lubridate::hms(gtfs$stop_times$arrival_time)
+    gtfs$stop_times$departure_time <- lubridate::hms(gtfs$stop_times$departure_time)
 
   } else {
     warning("Unable to find required file: stop_times.txt")

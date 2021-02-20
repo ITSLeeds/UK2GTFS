@@ -31,6 +31,16 @@ gtfs_write <- function(gtfs, folder = getwd(), name = "gtfs", stripComma = TRUE,
     gtfs$calendar_dates$date <- format(gtfs$calendar_dates$date, "%Y%m%d")
   }
 
+  #Format times
+  if(class(gtfs$stop_times$arrival_time) == "Period"){
+    gtfs$stop_times$arrival_time <- period2gtfs(gtfs$stop_times$arrival_time)
+  }
+
+  if(class(gtfs$stop_times$departure_time) == "Period"){
+    gtfs$stop_times$departure_time <- period2gtfs(gtfs$stop_times$departure_time)
+  }
+
+
   dir.create(paste0(folder, "/gtfs_temp"))
   utils::write.csv(gtfs$calendar, paste0(folder, "/gtfs_temp/calendar.txt"), row.names = FALSE, quote = quote)
   if (nrow(gtfs$calendar_dates) > 0) {
@@ -70,3 +80,50 @@ stripCommas <- function(df) {
   })
   return(df)
 }
+
+#' Convert Period to GTFS timestamps
+#'
+#'
+#' @param x peridos
+#' @noRd
+#'
+period2gtfs <- function(x) {
+  x <- as.character(x)
+  x <- strsplit(x," ")
+  message("Converting Period to GTFS timestamps")
+  x <- pbapply::pblapply(x, function(y){
+    hours <- y[grep("H",y)]
+    if(length(hours) == 0){
+      hours <- "00"
+    } else {
+      hours <- gsub("H","",hours)
+      if(nchar(hours) == 1){
+        hours <- paste0("0",hours)
+      }
+    }
+
+    mins <- y[grep("M",y)]
+    if(length(mins) == 0){
+      mins <- "00"
+    } else {
+      mins <- gsub("M","",mins)
+      if(nchar(mins) == 1){
+        mins <- paste0("0",mins)
+      }
+    }
+
+    secs <- y[grep("S",y)]
+    if(length(secs) == 0){
+      secs <- "00"
+    } else {
+      secs <- gsub("S","",secs)
+      if(nchar(secs) == 1){
+        secs <- paste0("0",secs)
+      }
+    }
+
+    return(paste0(hours,":",mins,":",secs))
+  })
+  return(unlist(x))
+}
+
