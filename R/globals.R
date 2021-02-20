@@ -12,3 +12,4 @@ utils::globalVariables(c(
   'agency_url','agency_timezone',
   'agency_lang','agency_id',   'Freq'
 ))
+
