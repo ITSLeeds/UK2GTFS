@@ -5,6 +5,12 @@
 #' interpolates the stop times so that each bust stop is given a unique arrival
 #' and departure time.
 #'
+#' Note this is not possible if the final arrival time is a duplicated time, in
+#' which case the times are unmodified. Interpolation is based on arrival time
+#' only. If after interpolation departure time is less than arrival time then
+#' departure time is set to arrival time.
+#'
+#'
 #'
 #' @param gtfs named list of data.frames
 #' @param ncores number of cores to use
@@ -59,14 +65,19 @@ stops_interpolate <- function(x){
     for(i in 1:nrow(btchs)){
       frq <- btchs$Freq[i]
       if(frq != 1){
-        btch <- btchs$Var1[i]
-        tstart <- x$arrival_time[x$batch == btch]
-        tstart <- tstart[1]
-        tend <- x$arrival_time[x$batch == (btch + 1)]
-        tend <- tend[1]
-        interval <- (seconds(tend - tstart) / (frq)) * c(0:(frq-1))
-        newtimes <- tstart + interval
-        x$arrival_time[x$batch == btch] <- newtimes
+        if(i != nrow(btchs)){
+          # Can't interpolate if last time is a duplicate, so skip
+          btch <- btchs$Var1[i]
+          tstart <- x$arrival_time[x$batch == btch]
+          tstart <- tstart[1]
+
+          tend <- x$arrival_time[x$batch == (btch + 1)]
+          tend <- tend[1]
+          interval <- (lubridate::seconds(tend - tstart) / (frq)) * c(0:(frq-1))
+          newtimes <- tstart + interval
+          x$arrival_time[x$batch == btch] <- newtimes
+        }
+
       }
     }
     chk <- x$departure_time < x$arrival_time
