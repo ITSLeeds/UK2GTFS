@@ -88,42 +88,15 @@ stripCommas <- function(df) {
 #' @noRd
 #'
 period2gtfs <- function(x) {
-  x <- as.character(x)
-  x <- strsplit(x," ")
-  message("Converting Period to GTFS timestamps")
-  x <- pbapply::pblapply(x, function(y){
-    hours <- y[grep("H",y)]
-    if(length(hours) == 0){
-      hours <- "00"
-    } else {
-      hours <- gsub("H","",hours)
-      if(nchar(hours) == 1){
-        hours <- paste0("0",hours)
-      }
-    }
 
-    mins <- y[grep("M",y)]
-    if(length(mins) == 0){
-      mins <- "00"
-    } else {
-      mins <- gsub("M","",mins)
-      if(nchar(mins) == 1){
-        mins <- paste0("0",mins)
-      }
-    }
+  hrs <- as.character(hour(x))
+  min <- as.character(minute(x))
+  sec <- as.character(second(x))
 
-    secs <- y[grep("S",y)]
-    if(length(secs) == 0){
-      secs <- "00"
-    } else {
-      secs <- gsub("S","",secs)
-      if(nchar(secs) == 1){
-        secs <- paste0("0",secs)
-      }
-    }
+  hrs <- ifelse(nchar(hrs) == 1,paste0("0",hrs), hrs)
+  min <- ifelse(nchar(min) == 1,paste0("0",min), min)
+  sec <- ifelse(nchar(sec) == 1,paste0("0",sec), sec)
 
-    return(paste0(hours,":",mins,":",secs))
-  })
-  return(unlist(x))
+  return(paste0(hrs,":",min,":",sec))
 }
 
