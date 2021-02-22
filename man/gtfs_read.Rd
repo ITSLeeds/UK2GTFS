@@ -4,12 +4,10 @@
 \alias{gtfs_read}
 \title{Read GTFS}
 \usage{
-gtfs_read(path, stringsAsFactors = FALSE)
+gtfs_read(path)
 }
 \arguments{
 \item{path}{character, path to GTFS zip folder}
-
-\item{stringsAsFactors}{logical, should character be converted to factors, default FALSE}
 }
 \description{
 Read in a GTFS zip  file

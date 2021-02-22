@@ -1,12 +1,13 @@
 #' Interpolate stop times
 #'
-#' Somtimes bus timetables do not give unique stop times to every stop. Instead
+#' Sometimes bus timetables do not give unique stop times to every stop. Instead
 #' several stops in an row are given the same stop time. This function
-#' interpolates the stop times so that each bust stop is givien a unique arrial
+#' interpolates the stop times so that each bust stop is given a unique arrival
 #' and departure time.
 #'
 #'
 #' @param gtfs named list of data.frames
+#' @param ncores number of cores to use
 #' @export
 #'
 
