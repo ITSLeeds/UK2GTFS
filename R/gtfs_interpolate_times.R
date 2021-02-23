@@ -42,7 +42,8 @@ gtfs_interpolate_times <- function(gtfs, ncores = 1){
     parallel::stopCluster(cl)
     rm(cl)
   }
-  stop_times <- dplyr::bind_rows(stop_times)
+  #stop_times <- dplyr::bind_rows(stop_times)
+  stop_times <- data.table::rbindlist(stop_times)
 
   gtfs$stop_times <- stop_times
   return(gtfs)
