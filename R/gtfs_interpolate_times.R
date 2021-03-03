@@ -42,8 +42,10 @@ gtfs_interpolate_times <- function(gtfs, ncores = 1){
     parallel::stopCluster(cl)
     rm(cl)
   }
-  #stop_times <- dplyr::bind_rows(stop_times)
+
   stop_times <- data.table::rbindlist(stop_times)
+  stop_times$arrival_time <- lubridate::hms(stop_times$arrival_time)
+  stop_times$departure_time <- lubridate::hms(stop_times$departure_time)
 
   gtfs$stop_times <- stop_times
   return(gtfs)
@@ -75,6 +77,8 @@ stops_interpolate <- function(x){
           tend <- x$arrival_time[x$batch == (btch + 1)]
           tend <- tend[1]
           interval <- (lubridate::seconds(tend - tstart) / (frq)) * c(0:(frq-1))
+          interval <- lubridate::period_to_seconds(interval)
+          interval <- lubridate::as.period(lubridate::as.duration(interval))
           newtimes <- tstart + interval
           x$arrival_time[x$batch == btch] <- newtimes
         }
@@ -87,5 +91,9 @@ stops_interpolate <- function(x){
   x$dup_arr <- NULL
   x$batch <- NULL
   x$arr_char <- NULL
+
+  # Needed becuase rbindlist doesn't work with periods for some reason
+  x$arrival_time <- period2gtfs(x$arrival_time)
+  x$departure_time <- period2gtfs(x$departure_time)
   return(x)
 }
