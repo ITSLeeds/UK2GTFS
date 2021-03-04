@@ -77,6 +77,7 @@ stops_interpolate <- function(x){
           tend <- x$arrival_time[x$batch == (btch + 1)]
           tend <- tend[1]
           interval <- (lubridate::seconds(tend - tstart) / (frq)) * c(0:(frq-1))
+          interval <- round(interval)
           interval <- lubridate::period_to_seconds(interval)
           interval <- lubridate::as.period(lubridate::as.duration(interval))
           newtimes <- tstart + interval

@@ -89,9 +89,9 @@ stripCommas <- function(df) {
 #'
 period2gtfs <- function(x) {
 
-  hrs <- as.character(hour(x))
-  min <- as.character(minute(x))
-  sec <- as.character(second(x))
+  hrs <- as.character(lubridate::hour(x))
+  min <- as.character(lubridate::minute(x))
+  sec <- as.character(lubridate::second(x))
 
   hrs <- ifelse(nchar(hrs) == 1,paste0("0",hrs), hrs)
   min <- ifelse(nchar(min) == 1,paste0("0",min), min)
