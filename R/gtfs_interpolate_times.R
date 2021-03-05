@@ -79,8 +79,22 @@ stops_interpolate <- function(x){
           interval <- (lubridate::seconds(tend - tstart) / (frq)) * c(0:(frq-1))
           interval <- round(interval)
           interval <- lubridate::period_to_seconds(interval)
-          interval <- lubridate::as.period(lubridate::as.duration(interval))
-          newtimes <- tstart + interval
+          interval <- lubridate::as.duration(interval)
+          newtimes <- lubridate::as.duration(tstart) + interval
+          newtimes <- lubridate::as.period(newtimes)
+
+
+          # Convert day:hours:min:sec to hours:min:sec
+          for(j in seq_along(newtimes)){
+            sub <- newtimes[j]
+            if(sub > lubridate::hm("24:00")){
+              ndys <- lubridate::hours(lubridate::day(sub) * 24)
+              sub <- sub - lubridate::days(1)
+              sub <- sub + ndys
+              newtimes[j] <- sub
+            }
+          }
+
           x$arrival_time[x$batch == btch] <- newtimes
         }
 

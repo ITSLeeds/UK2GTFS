@@ -89,6 +89,12 @@ stripCommas <- function(df) {
 #'
 period2gtfs <- function(x) {
 
+  # Check for days
+  dys <- lubridate::day(x)
+  if(sum(dys) > 0){
+    stop("Days detected in period objects, incorectly formatted period object")
+  }
+
   hrs <- as.character(lubridate::hour(x))
   min <- as.character(lubridate::minute(x))
   sec <- as.character(lubridate::second(x))
