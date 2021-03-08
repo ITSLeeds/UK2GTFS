@@ -87,7 +87,7 @@ stops_interpolate <- function(x){
           # Convert day:hours:min:sec to hours:min:sec
           for(j in seq_along(newtimes)){
             sub <- newtimes[j]
-            if(sub > lubridate::hm("24:00")){
+            if(sub >= lubridate::hm("24:00")){
               ndys <- lubridate::hours(lubridate::day(sub) * 24)
               sub <- sub - lubridate::days(1)
               sub <- sub + ndys
@@ -109,7 +109,7 @@ stops_interpolate <- function(x){
 
   # Needed becuase rbindlist doesn't work with periods for some reason
   arrival_time <- try(period2gtfs(x$arrival_time), silent = TRUE)
-  if("try-error" %in% arrival_time){
+  if("try-error" %in% class(arrival_time)){
     stop("conversion of times failed for tripID: ",unique(x$trip_id))
   }
   x$arrival_time <- arrival_time
