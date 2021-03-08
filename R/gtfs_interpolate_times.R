@@ -108,7 +108,11 @@ stops_interpolate <- function(x){
   x$arr_char <- NULL
 
   # Needed becuase rbindlist doesn't work with periods for some reason
-  x$arrival_time <- period2gtfs(x$arrival_time)
+  arrival_time <- try(period2gtfs(x$arrival_time), silent = TRUE)
+  if("try-error" %in% arrival_time){
+    stop("conversion of times failed for tripID: ",unique(x$trip_id))
+  }
+  x$arrival_time <- arrival_time
   x$departure_time <- period2gtfs(x$departure_time)
   return(x)
 }
