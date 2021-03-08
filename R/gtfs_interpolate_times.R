@@ -113,6 +113,10 @@ stops_interpolate <- function(x){
     stop("conversion of times failed for tripID: ",unique(x$trip_id))
   }
   x$arrival_time <- arrival_time
-  x$departure_time <- period2gtfs(x$departure_time)
+  departure_time <- try(period2gtfs(x$departure_time), silent = TRUE)
+  if("try-error" %in% class(departure_time)){
+    stop("conversion of times failed for tripID: ",unique(x$trip_id))
+  }
+  x$departure_time <- departure_time
   return(x)
 }
