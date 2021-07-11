@@ -74,7 +74,7 @@ transxchange_import <- function(file, run_debug = TRUE, full_import = FALSE) {
   # Sometime end date is missing in which case assume service runs for one year
   Services_main$EndDate <- dplyr::if_else(
     is.na(Services_main$EndDate),
-    as.character(lubridate::ymd(Services_main$StartDate) + 365),
+    as.character(max(lubridate::ymd(Services_main$StartDate), lubridate::today()) + lubridate::days(365)),
     as.character(Services_main$EndDate)
   )
 
