@@ -91,8 +91,8 @@ nr2gtfs <- function(path_in,
   # rm(alf, flf, mca, msn)
 
   stop_times <- stop_times[, c(
-    "Scheduled Arrival Time",
-    "Scheduled Departure Time",
+    "Arrival Time",
+    "Departure Time",
     "Location", "stop_sequence",
     "Activity", "rowID", "schedule"
   )]
