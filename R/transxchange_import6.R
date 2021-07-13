@@ -70,11 +70,17 @@ transxchange_import <- function(file, run_debug = TRUE, full_import = FALSE) {
   SpecialDaysOperation <- Services$SpecialDaysOperation
   rm(Services)
 
-  # Handel NA in service date
-  # Sometime end date is missing in which case assume service runs for one year
+  # Handle NA in service date
+  # Sometimes end date is missing in which case assume service runs for one year
+
+  CreationDate <- as.Date(lubridate::ymd_hms(xml2::xml_attr(xml, "CreationDateTime")))
+  ModifiedDate <- as.Date(lubridate::ymd_hms(xml2::xml_attr(xml, "ModificationDateTime")))
+
   Services_main$EndDate <- dplyr::if_else(
     is.na(Services_main$EndDate),
-    as.character(max(lubridate::ymd(Services_main$StartDate), lubridate::today()) + lubridate::days(365)),
+    as.character(
+      max(lubridate::ymd(Services_main$StartDate), CreationDate, ModifiedDate, na.rm=TRUE) + 
+       lubridate::days(365)),
     as.character(Services_main$EndDate)
   )
 
