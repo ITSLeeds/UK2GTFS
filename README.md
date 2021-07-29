@@ -3,17 +3,6 @@
 
 # UK2GTFS <a href='https://itsleeds.github.io/'><img src='man/figures/logo.png' align="right" height=215/></a>
 
-<!-- badges: start -->
-
-[![Travis build
-status](https://travis-ci.org/ITSLeeds/UK2GTFS.svg?branch=master)](https://travis-ci.org/itsleeds/UK2GTFS)
-[![CRAN
-status](https://www.r-pkg.org/badges/version/UK2GTFS)](https://cran.r-project.org/package=UK2GTFS)
-[![codecov](https://codecov.io/gh/itsleeds/UK2GTFS/branch/master/graph/badge.svg)](https://codecov.io/gh/itsleeds/UK2GTFS)
-[![AppVeyor Build
-Status](https://ci.appveyor.com/api/projects/status/github/itsleeds/UK2GTFS?branch=master&svg=true)](https://ci.appveyor.com/project/mem48/UK2GTFS)
-<!-- badges: end -->
-
 UK2GTFS is an R package to convert train, tram, bus, and metro timetable
 data from the unfriendly and difficult to use formats used in the UK to
 the easy to use [GTFS](https://developers.google.com/transit/gtfs/)

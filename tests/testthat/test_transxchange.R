@@ -53,10 +53,6 @@ test_that("Can clean GTFS", {
   expect_true(class(gtfs2) == "list")
 })
 
-
-
-
-
 test_that("Can subset GTFS", {
   bounds <- sf::st_polygon(list(rbind(c(-0.148989, 52.123243),
                                   c(-0.148989,52.617931),
