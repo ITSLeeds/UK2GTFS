@@ -214,9 +214,14 @@ import_OperatingProfile <- function(OperatingProfile) {
   result <- dplyr::bind_rows(result)
   result_special <- dplyr::bind_rows(result_special)
 
+  # Check for HolidaysOnly services with NA Days of the week
+  result$DaysOfWeek <- ifelse(result$DaysOfWeek == "NA",
+                              NA_character_, result$DaysOfWeek)
+  result$DaysOfWeek <- ifelse(is.na(result$DaysOfWeek) &
+           result$HolidaysOnly == "HolidaysOnly",
+         "HolidaysOnly", result$DaysOfWeek)
+
   result_final <- list(result, result_special)
   names(result_final) <- c("OperatingProfile", "SpecialDays")
   return(result_final)
 }
-
-# profvis::profvis(import_OperatingProfile(OperatingProfile))

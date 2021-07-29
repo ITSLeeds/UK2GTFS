@@ -252,17 +252,18 @@ clean_days <- function(days) {
 
 
 #' break up holidays2
-#' ????
-#' @param cal_data desc
-#' @param cl desc
-#' @param cal desc
+#' Break up bank holiday data into GTFS style calendar_dates file
+#' @param cal_data the bank_holidays object extracted from vehicle journeys
+#' @param cl column name to use "BankHolidaysOperate" or "BankHolidaysNoOperate"
+#' @param cal the bank holiday calendar
 #' @noRd
 break_up_holidays2 <- function(cal_dat, cl, cal) {
+  cal_dat <- cal_dat[!is.na(cal_dat[[cl]]), ]
   cal_dat <- cal_dat[cal_dat[[cl]] != "", ]
   if (nrow(cal_dat) == 0) {
     return(NULL)
   } else {
-    cal_dat_holidays <- lapply(strsplit(cal_dat[[cl]], " "), function(x) {
+    cal_dat_holidays <- lapply(strsplit(cal_dat[[cl]], ", "), function(x) {
       x[x != ""]
     })
     cal_dat <- cal_dat[rep(1:nrow(cal_dat),
@@ -279,7 +280,7 @@ break_up_holidays2 <- function(cal_dat, cl, cal) {
 }
 
 
-# to do, need to repete stops times for each departure time
+# to do, need to repeat stops times for each departure time
 #' clean activities
 #' ????
 #' @param x desc
