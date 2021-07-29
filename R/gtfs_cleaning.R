@@ -65,7 +65,7 @@ gtfs_fast_trips <- function(gtfs, maxspeed = 30) {
   trips <- dplyr::left_join(trips, gtfs$stops, by = "stop_id")
   trips$distance <- geodist::geodist(as.matrix(trips[,c("stop_lon","stop_lat")]), sequential = TRUE, pad = TRUE)
   trips$distance[trips$stop_sequence == 1] <- NA
-  trips$arrival_time <- as.POSIXct(trips$arrival_time, format="%H:%M:%S")
+  trips$arrival_time <- as.POSIXct(trips$arrival_time, format="%H:%M:%S", origin = "1970-01-01")
   trips$time <- c(NA, difftime(trips$arrival_time[2:nrow(trips)], trips$arrival_time[1:(nrow(trips)-1)]))
   trips$speed <- trips$distance / trips$time
   trips$speed[trips$speed == Inf] <- NA
