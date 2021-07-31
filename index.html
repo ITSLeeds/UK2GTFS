@@ -46,7 +46,7 @@
       <ul class="nav navbar-nav">
 <li>
   <a href="index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -75,7 +75,7 @@
 <ul class="nav navbar-nav navbar-right">
 <li>
   <a href="https://github.com/itsleeds/uk2gtfs/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -91,18 +91,18 @@
 
       </header><div class="row">
   <div class="contents col-md-9">
-<div id="uk2gtfs" class="section level1">
+<div id="uk2gtfs-" class="section level1">
 <div class="page-header"><h1 class="hasAnchor">
-<a href="#uk2gtfs" class="anchor"></a>UK2GTFS <a href="https://itsleeds.github.io/"><img src="reference/figures/logo.png" align="right" height="215/"></a>
+<a href="#uk2gtfs-" class="anchor"></a>UK2GTFS <a href="https://itsleeds.github.io/"><img src="reference/figures/logo.png" align="right" height="215/"></a>
 </h1></div>
-<!-- badges: start -->
-
 <p>UK2GTFS is an R package to convert train, tram, bus, and metro timetable data from the unfriendly and difficult to use formats used in the UK to the easy to use <a href="https://developers.google.com/transit/gtfs/">GTFS</a> format. The main purpose of developing the package is to support using <a href="https://github.com/ropensci/opentripplanner">OpenTripPlanner</a> in the UK.</p>
 <p><strong>Example results are published as <a href="https://github.com/ITSLeeds/UK2GTFS/releases">GitHub releases</a> these come with no guarantee of quality.</strong></p>
 <div id="introduction" class="section level2">
 <h2 class="hasAnchor">
 <a href="#introduction" class="anchor"></a>Introduction</h2>
 <p>The UK has two main sources of public transport timetable data <a href="https://www.travelinedata.org.uk/"><strong>traveline</strong></a> publishes data on buses and light rail and <a href="http://data.atoc.org/rail-industry-data"><strong>ATOC</strong></a> publishes data on heavy rail. Each uses a data format that is unique to that organisation and both formats are old and difficult to use. Many countries have adopted the <a href="https://developers.google.com/transit/gtfs/">GTFS</a> format which was developed by Google as a simple standard for publishing timetable data. Due to the wide-spread adoption of GTFS many useful tools have been developed that accept GTFS files as inputs. This package is intended to make the conversion of UK data to the GTFS format simple and easy.</p>
+<p><strong>Update November 2020</strong></p>
+<p>The <a href="https://data.bus-data.dft.gov.uk/downloads/">Open Bus Data Service</a> Now offers a national GTFS download option based on <a href="https://www.itoworld.com">ITO World’s</a> TransXchange to GTFS converter.</p>
 </div>
 <div id="capabilities---why-we-need-another-package" class="section level2">
 <h2 class="hasAnchor">
@@ -145,9 +145,10 @@
 <h2 class="hasAnchor">
 <a href="#installation" class="anchor"></a>Installation</h2>
 <p>Install the package with <strong>remotes</strong> as follows:</p>
-<div class="sourceCode" id="cb1"><pre class="r"><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">"remotes"</span>) <span class="co"># If you do not already have the remotes package</span>
-<span class="kw pkg">remotes</span><span class="kw ns">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html">install_github</a></span>(<span class="st">"ITSleeds/UK2GTFS"</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">UK2GTFS</span>)</pre></div>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span> <span class="co"># If you do not already have the remotes package</span>
+<span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html">install_github</a></span><span class="op">(</span><span class="st">"ITSleeds/UK2GTFS"</span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/itsleeds/uk2gtfs">UK2GTFS</a></span><span class="op">)</span></code></pre></div>
 </div>
 <div id="use" class="section level2">
 <h2 class="hasAnchor">
@@ -186,16 +187,7 @@
 </ul>
 </div>
 
-  <div class="dev-status">
-<h2>Dev status</h2>
-<ul class="list-unstyled">
-<li><a href="https://travis-ci.org/itsleeds/UK2GTFS"><img src="https://travis-ci.org/ITSLeeds/UK2GTFS.svg?branch=master" alt="Travis build status"></a></li>
-<li><a href="https://cran.r-project.org/package=UK2GTFS"><img src="https://www.r-pkg.org/badges/version/UK2GTFS" alt="CRAN status"></a></li>
-<li><a href="https://codecov.io/gh/itsleeds/UK2GTFS"><img src="https://codecov.io/gh/itsleeds/UK2GTFS/branch/master/graph/badge.svg" alt="codecov"></a></li>
-<li><a href="https://ci.appveyor.com/project/mem48/UK2GTFS"><img src="https://ci.appveyor.com/api/projects/status/github/itsleeds/UK2GTFS?branch=master&amp;svg=true" alt="AppVeyor Build Status"></a></li>
-</ul>
-</div>
-</div>
+  </div>
 </div>
 
 
@@ -204,7 +196,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Bus Stop Locations missing from NapTAN — naptan_missing • UK2GTFS</title>
+<title>Force a GTFS to be valid bu removing problems — gtfs_force_valid • UK2GTFS</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,12 +46,8 @@
 
 
 
-<meta property="og:title" content="Bus Stop Locations missing from NapTAN — naptan_missing" />
-<meta property="og:description" content="A database of bus stops that are missing from the NAPTAN but are known to
-have been used. For some reason the offical NAPTAN file is missing a small
-number of bus stops. This file contains a selection of bus stops that have
-appears in TransXchange files, but are missing in the NAPTAN. The have been
-assembled from a range of sources and may be of varying quality." />
+<meta property="og:title" content="Force a GTFS to be valid bu removing problems — gtfs_force_valid" />
+<meta property="og:description" content="Force a GTFS to be valid bu removing problems" />
 <meta property="og:image" content="/logo.png" />
 
 
@@ -138,28 +134,26 @@ assembled from a range of sources and may be of varying quality." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Bus Stop Locations missing from NapTAN</h1>
-    <small class="dont-index">Source: <a href='https://github.com/itsleeds/uk2gtfs/blob/master/R/data.R'><code>R/data.R</code></a></small>
-    <div class="hidden name"><code>naptan_missing.Rd</code></div>
+    <h1>Force a GTFS to be valid bu removing problems</h1>
+    <small class="dont-index">Source: <a href='https://github.com/itsleeds/uk2gtfs/blob/master/R/gtfs_validate.R'><code>R/gtfs_validate.R</code></a></small>
+    <div class="hidden name"><code>gtfs_force_valid.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>A database of bus stops that are missing from the NAPTAN but are known to
-have been used. For some reason the offical NAPTAN file is missing a small
-number of bus stops. This file contains a selection of bus stops that have
-appears in TransXchange files, but are missing in the NAPTAN. The have been
-assembled from a range of sources and may be of varying quality.</p>
+    <p>Force a GTFS to be valid bu removing problems</p>
     </div>
 
-    <pre class="usage"><span class='va'>naptan_missing</span></pre>
+    <pre class="usage"><span class='fu'>gtfs_force_valid</span><span class='op'>(</span><span class='va'>gtfs</span><span class='op'>)</span></pre>
 
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>gtfs</th>
+      <td><p>gtfs object</p></td>
+    </tr>
+    </table>
 
-    <h2 class="hasAnchor" id="format"><a class="anchor" href="#format"></a>Format</h2>
-
-    <p>A data frame of 5 columns</p>
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
-
-    <p>In some cases the name of the Bus Stop has been ideitifed but not the location.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
