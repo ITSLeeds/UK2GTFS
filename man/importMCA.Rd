@@ -4,7 +4,13 @@
 \alias{importMCA}
 \title{Import the .mca file}
 \usage{
-importMCA(file, silent = TRUE, ncores = 1, full_import = FALSE)
+importMCA(
+  file,
+  silent = TRUE,
+  ncores = 1,
+  full_import = FALSE,
+  working_timetable = FALSE
+)
 }
 \arguments{
 \item{file}{Path to .mca file}
@@ -14,6 +20,8 @@ importMCA(file, silent = TRUE, ncores = 1, full_import = FALSE)
 \item{ncores}{number of cores to use when paralell processing}
 
 \item{full_import}{import all data, default FALSE}
+
+\item{working_timetable}{use rail industry scheduling times instead of public times}
 }
 \description{
 Import the .mca file
