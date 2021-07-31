@@ -83,10 +83,10 @@ test_that("Can split GTFS", {
 })
 
 
-test_that("Can find fast GTFS", {
-  tripids <- gtfs_fast_trips(gtfs, maxspeed = 15)
-  expect_true(length(tripids) > 1)
-  gtfs7 <- gtfs_split_ids(gtfs, tripids)
-  expect_true(class(gtfs7) == "list")
-  expect_true(length(gtfs7) == 2)
-})
+# test_that("Can find fast GTFS", {
+#   tripids <- gtfs_fast_trips(gtfs, maxspeed = 15)
+#   expect_true(length(tripids) > 1)
+#   gtfs7 <- gtfs_split_ids(gtfs, tripids)
+#   expect_true(class(gtfs7) == "list")
+#   expect_true(length(gtfs7) == 2)
+# })
