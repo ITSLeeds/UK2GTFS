@@ -104,11 +104,12 @@
 
     
     
-<p>This vigneete outlines how to produce GTFS timetables for busses and light rail network using TransXchange files.</p>
+<p>This vignette outlines how to produce GTFS timetables for buses and light rail network using TransXchange files.</p>
+<p>Note that GTFS data is now published for buses in Great Britain at <a href="https://data.bus-data.dft.gov.uk/timetable/download/">Open Bus Data</a>. UK2GTFS benefits from additional data checks and also including non-bus modes such as tram, underground, and boats.</p>
 <div id="transxchange-data---for-bus-tram-and-metro" class="section level2">
 <h2 class="hasAnchor">
 <a href="#transxchange-data---for-bus-tram-and-metro" class="anchor"></a>TransXchange Data - for bus, tram, and metro</h2>
-<p>Data for other modes can be downloaded from <a href="https://www.travelinedata.org.uk/traveline-open-data/data-reporting/" class="uri">https://www.travelinedata.org.uk/traveline-open-data/data-reporting/</a> you will need to apply for access to the FTP sever to download the data.</p>
+<p>TransXchange data can be downloaded from <a href="https://www.travelinedata.org.uk/traveline-open-data/data-reporting/">Traveline</a> you will need to apply for free access to the FTP sever to download the data.</p>
 <p>The data comes as zipped folders for different regions of the UK.</p>
 </div>
 <div id="converting-transxchange-to-gtfs" class="section level2">
@@ -119,23 +120,34 @@
 <li>
 <code>path_in</code> is the file path to either a single zip folder or many XML files</li>
 <li>
-<code>ncores</code> If &gt; 1 then multicore processing is used to speed up the processing. Alwasy leave one spare core for your OS.</li>
+<code>ncores</code> If &gt; 1 then multicore processing is used to speed up the processing. Always leave one spare core for your OS.</li>
 <li>
 <code>try_mode</code> if TRUE file that can’t be converted are skipped</li>
 </ul>
 <p>A simple example is shown below:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/itsleeds/uk2gtfs">UK2GTFS</a></span><span class="op">)</span>
+<span class="va">path_in</span> <span class="op">&lt;-</span> <span class="st">"EA.zip"</span>
+<span class="va">gtfs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/atoc2gtfs.html">atoc2gtfs</a></span><span class="op">(</span>path_in <span class="op">=</span> <span class="va">path_in</span>,
+          ncores <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></code></pre></div>
+<p>Once the conversion has been completed, you can save the GTFS file.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="../reference/gtfs_write.html">gtfs_write</a></span><span class="op">(</span><span class="va">gtfs</span>, 
+           folder <span class="op">=</span> <span class="st">"C:/GTFS"</span>,
+           name <span class="op">=</span> <span class="st">"gtfs_EA"</span><span class="op">)</span></code></pre></div>
+<p>This will save the GTFS file to <code>C:/GTFS/gtfs_EA.zip</code></p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/itsleeds/uk2gtfs">UK2GTFS</a></span><span class="op">)</span>
 <span class="va">path_in</span> <span class="op">&lt;-</span> <span class="st">"E:/OneDrive - University of Leeds/Data/UK2GTFS/TransXchange/timetable"</span>
 <span class="va">path_in</span> <span class="op">&lt;-</span>  <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">path_in</span>,<span class="st">"EA.zip"</span><span class="op">)</span>
 <span class="va">path_out</span> <span class="op">=</span> <span class="st">"E:/GTFS"</span>
 <span class="va">gtfs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/transxchange2gtfs.html">transxchange2gtfs</a></span><span class="op">(</span>path_in <span class="op">=</span> <span class="va">path_in</span>,  ncores <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>
-<span class="fu"><a href="../reference/gtfs_write.html">gtfs_write</a></span><span class="op">(</span><span class="va">gtfs</span>, <span class="va">path_out</span>, <span class="st">"gtfs"</span><span class="op">)</span></code></pre></div>
+<span class="fu"><a href="../reference/gtfs_write.html">gtfs_write</a></span><span class="op">(</span><span class="va">gtfs</span>, <span class="va">path_out</span>, <span class="st">"EA_gtfs"</span><span class="op">)</span></code></pre></div>
 </div>
 <div id="stop-locations---the-naptan" class="section level2">
 <h2 class="hasAnchor">
 <a href="#stop-locations---the-naptan" class="anchor"></a>Stop Locations - The NaPTAN</h2>
-<p>TransXchange files do not contain the location of stops, so we must look them up in the NaPATAN. The NaPTAN is updated regually so UK2GTFS will always download the latest copy using <code><a href="../reference/get_naptan.html">get_naptan()</a></code>. However the NaPTAN is not perfect, it misses some stops and has incorrect locations for others. UK2GTFS uses two internal files <code>naptan_missing</code> and <code>naptan_replace</code> to impove the NaPTAN.</p>
+<p>TransXchange files do not contain the location of stops, so we must look them up in the NaPATAN. The NaPTAN is updated regularly so UK2GTFS will always download the latest copy using <code><a href="../reference/get_naptan.html">get_naptan()</a></code>. However the NaPTAN is not perfect, it misses some stops and has incorrect locations for others. UK2GTFS uses two internal files <code>naptan_missing</code> and <code>naptan_replace</code> to improve the NaPTAN.</p>
 </div>
   </div>
 
