@@ -666,11 +666,11 @@ afterMidnight <- function(stop_times, safe = TRUE) {
 #'
 clean_activities2 <- function(x) {
 
-  x <- strsplit(x," ")
-  x <- lapply(x, function(y){
-    y <- paste(y[order(y, decreasing = TRUE)], collapse = " ")
-  })
-  x <- unlist(x)
+  #x <- strsplit(x," ")
+  #x <- lapply(x, function(y){
+  #  y <- paste(y[order(y, decreasing = TRUE)], collapse = " ")
+  #})
+  #x <- unlist(x)
 
   x <- data.frame(activity = x, stringsAsFactors = FALSE)
   x <- dplyr::left_join(x, activity_codes, by = c("activity"))

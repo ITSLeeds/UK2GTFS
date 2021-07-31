@@ -19,7 +19,7 @@ schedule2routes <- function(stop_times, schedule, silent = TRUE, ncores = 1) {
   }
 
   # Convert Activity to pickup_type and drop_off_type
-  stop_times$Activity[is.na(stop_times$Activity) & stop_times$stop_sequence == 1] <- "U" # No activity specified at start
+  stop_times$Activity[is.na(stop_times$Activity) & stop_times$stop_sequence == 1] <- "TB" # No activity specified at start
 
   upoffs <- clean_activities2(stop_times$Activity)
   stop_times <- cbind(stop_times, upoffs)
@@ -121,7 +121,7 @@ schedule2routes <- function(stop_times, schedule, silent = TRUE, ncores = 1) {
   # Fix Times
   stop_times <- afterMidnight(stop_times)
 
-  # Ditch unneded columns
+  # Ditch unneeded columns
   routes <- routes[, c("route_id", "agency_id", "route_short_name", "route_long_name", "route_type")]
   trips <- trips[, c("trip_id", "route_id", "service_id")]
   stop_times <- stop_times[, c("trip_id", "arrival_time", "departure_time", "stop_id", "stop_sequence", "pickup_type", "drop_off_type")]

@@ -414,21 +414,38 @@ importMCA <- function(file,
   )
   LI$Spare <- NULL
   LI$`Record Identity` <- NULL
+
+  # Process Activity Codes
+  activity <- strsplit(LI$Activity, "(?<=.{2})", perl=TRUE)
+
+  clean_activity3 <- function(x){
+    # Filter to stops for passengers
+    acts <- c(
+      "TB", # Train Starts
+      "T ", # Stops to take up and set down passengers
+      "D ", # Stops to set down passengers
+      "U ", # Stops to take up passengers
+      "R ", # Request stop
+      "TF"  # Train Finishes
+    )
+    x <- x[x %in% acts]
+    x <- gsub(" ","",x)
+    if(length(x) > 0){
+      x <- paste(x, collapse = ",")
+      return(x)
+    } else {
+      return("Other")
+    }
+  }
+
+  LI$Activity <- unlist(lapply(activity, clean_activity3))
+
   LI <- strip_whitespace(LI)
 
   # Add the rowid
   LI$rowID <- seq(from = 1, to = length(types))[types == "LI"]
 
-  # Filter to stops for passengers
-  acts <- c(
-    "T", # Stops to take up and set down passengers
-    "D", # Stops to set down passengers
-    "U" # Stops to take up passengers
-  )
-
-  LI <- LI[sapply(strsplit(LI$Activity, " "), function(x) {
-    any(acts %in% x)
-  }), ]
+  LI <- LI[LI$Activity != "Other",]
   # Check for errors in the times
 
 
@@ -467,10 +484,16 @@ importMCA <- function(file,
   )
   LT$Spare <- NULL
   LT$`Record Identity` <- NULL
+
+  # Process Activity Codes
+  activity <- strsplit(LT$Activity, "(?<=.{2})", perl=TRUE)
+  LT$Activity <- unlist(lapply(activity, clean_activity3))
+
   LT <- strip_whitespace(LT)
+  LT$`Scheduled Arrival Time` <- gsub("H", "", LT$`Scheduled Arrival Time`)
 
   if(working_timetable){
-    LT$`Arrival Time` <- gsub("H", "", LT$`Scheduled Arrival Time`)  
+    LT$`Arrival Time` <- gsub("H", "", LT$`Scheduled Arrival Time`)
   }else{
     LT$`Arrival Time` <- gsub("H", "", LT$`Public Arrival Time`)
   }
