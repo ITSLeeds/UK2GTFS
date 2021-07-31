@@ -9,6 +9,7 @@ gtfs_write(
   folder = getwd(),
   name = "gtfs",
   stripComma = TRUE,
+  stripTab = TRUE,
   quote = FALSE
 )
 }
@@ -20,6 +21,8 @@ gtfs_write(
 \item{name}{the name of the zip file without the .zip extension, default "gtfs"}
 
 \item{stripComma}{logical, should commas be stripped from text, default = TRUE}
+
+\item{stripTab}{logical, should tab be stripped from text, default = TRUE}
 
 \item{quote}{logical, should strings be quoted, default = FALSE}
 }
