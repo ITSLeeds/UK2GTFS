@@ -20,17 +20,6 @@ test_that("test file downloads", {
   expect_true("data.frame" %in% class(naptan))
 })
 
-
-test_that("test transxchange2gtfs multicore", {
-  gtfs <- transxchange2gtfs(path_in = file.path(data_path,"transxchange.zip"),
-                    cal = cal,
-                    naptan = naptan,
-                    ncores = 2)
-  gtfs_write(gtfs,folder = file_path, name = "txc_gtfs")
-  expect_true(file.exists(file.path(file_path,"txc_gtfs.zip")))
-
-})
-
 test_that("test transxchange2gtfs singlecore", {
   gtfs <- transxchange2gtfs(path_in = file.path(data_path,"transxchange.zip"),
                             cal = cal,
@@ -41,8 +30,19 @@ test_that("test transxchange2gtfs singlecore", {
 
 })
 
+test_that("test transxchange2gtfs multicore", {
+  gtfs <- transxchange2gtfs(path_in = file.path(data_path,"transxchange.zip"),
+                            cal = cal,
+                            naptan = naptan,
+                            ncores = 2)
+  gtfs_write(gtfs,folder = file_path, name = "txc_gtfs")
+  expect_true(file.exists(file.path(file_path,"txc_gtfs.zip")))
+
+})
+
+
 context("Test GTFS manipulation")
-gtfs <- gtfs_read(file.path(file_path, "txc_gtfs.zip"))
+gtfs <- gtfs_read(file.path(file_path, "txc_gtfs2.zip"))
 
 test_that("Can read GTFS", {
   expect_true(class(gtfs) == "list")
