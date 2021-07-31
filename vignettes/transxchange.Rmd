@@ -16,11 +16,13 @@ knitr::opts_chunk$set(
 )
 ```
 
-This vigneete outlines how to produce GTFS timetables for busses and light rail network using TransXchange files.
+This vignette outlines how to produce GTFS timetables for buses and light rail network using TransXchange files.
+
+Note that GTFS data is now published for buses in Great Britain at [Open Bus Data](https://data.bus-data.dft.gov.uk/timetable/download/). UK2GTFS benefits from additional data checks and also including non-bus modes such as tram, underground, and boats.
 
 ## TransXchange Data - for bus, tram, and metro
 
-Data for other modes can be downloaded from https://www.travelinedata.org.uk/traveline-open-data/data-reporting/ you will need to apply for access to the FTP sever to download the data.
+TransXchange data can be downloaded from [Traveline](https://www.travelinedata.org.uk/traveline-open-data/data-reporting/) you will need to apply for free access to the FTP sever to download the data.
 
 The data comes as zipped folders for different regions of the UK.
 
@@ -29,7 +31,7 @@ The data comes as zipped folders for different regions of the UK.
 To do a simple conversion to GTFS, load the package, and use the `transxchange2gtfs()` function. The function requires the following arguments.
 
 * `path_in` is the file path to either a single zip folder or many XML files
-* `ncores` If > 1 then multicore processing is used to speed up the processing. Alwasy leave one spare core for your OS.
+* `ncores` If > 1 then multicore processing is used to speed up the processing. Always leave one spare core for your OS.
 * `try_mode` if TRUE file that can't be converted are skipped
 
 A simple example is shown below:
@@ -40,12 +42,12 @@ path_in <- "E:/OneDrive - University of Leeds/Data/UK2GTFS/TransXchange/timetabl
 path_in <-  file.path(path_in,"EA.zip")
 path_out = "E:/GTFS"
 gtfs <- transxchange2gtfs(path_in = path_in,  ncores = 4)
-gtfs_write(gtfs, path_out, "gtfs")
+gtfs_write(gtfs, path_out, "EA_gtfs")
 ```
 
 ## Stop Locations - The NaPTAN
 
-TransXchange files do not contain the location of stops, so we must look them up in the NaPATAN. The NaPTAN is updated regually so UK2GTFS will always download the latest copy using `get_naptan()`. However the NaPTAN is not perfect, it misses some stops and has incorrect locations for others. UK2GTFS uses two internal files `naptan_missing` and `naptan_replace` to impove the NaPTAN. 
+TransXchange files do not contain the location of stops, so we must look them up in the NaPATAN. The NaPTAN is updated regularly so UK2GTFS will always download the latest copy using `get_naptan()`. However the NaPTAN is not perfect, it misses some stops and has incorrect locations for others. UK2GTFS uses two internal files `naptan_missing` and `naptan_replace` to improve the NaPTAN. 
 
 ```{r test, eval =  FALSE, echo=FALSE}
 # Setup
