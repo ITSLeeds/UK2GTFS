@@ -275,12 +275,14 @@ strip_whitespace <- function(df) {
 #' @param silent logical, should messages be displayed
 #' @param ncores number of cores to use when paralell processing
 #' @param full_import import all data, default FALSE
+#' @param working_timetable use rail industry scheduling times instead of public times
 #' @export
 #'
 importMCA <- function(file,
                       silent = TRUE,
                       ncores = 1,
-                      full_import = FALSE) {
+                      full_import = FALSE,
+                      working_timetable = FALSE) {
 
   # see https://wiki.openraildata.com/index.php/CIF_File_Format
   if (!silent) {
@@ -379,10 +381,16 @@ importMCA <- function(file,
   LO$Spare <- NULL
   LO$`Record Identity` <- NULL
   LO <- strip_whitespace(LO)
-  LO$`Scheduled Departure Time` <- gsub("H", "",
-                                        LO$`Scheduled Departure Time`)
 
-  LO <- LO[, c("Location", "Scheduled Departure Time")]
+  if(working_timetable){
+    LO$`Departure Time` <- gsub("H", "",
+                              LO$`Scheduled Departure Time`)
+  }else{
+    LO$`Departure Time` <- gsub("H", "",
+                              LO$`Public Departure Time`)
+  }
+
+  LO <- LO[, c("Location", "Departure Time")]
 
   # Add the rowid
   LO$rowID <- seq(from = 1, to = length(types))[types == "LO"]
@@ -422,14 +430,23 @@ importMCA <- function(file,
     any(acts %in% x)
   }), ]
   # Check for errors in the times
-  LI$`Scheduled Arrival Time` <- gsub("H", "",
-                                      LI$`Scheduled Arrival Time`)
-  LI$`Scheduled Departure Time` <- gsub("H", "",
-                                        LI$`Scheduled Departure Time`)
+
+
+  if(working_timetable){
+    LI$`Arrival Time` <- gsub("H", "",
+                                LI$`Scheduled Arrival Time`)
+    LI$`Departure Time` <- gsub("H", "",
+                                LI$`Scheduled Departure Time`)
+  }else{
+    LI$`Arrival Time` <- gsub("H", "",
+                                LI$`Public Arrival Time`)
+    LI$`Departure Time` <- gsub("H", "",
+                                LI$`Public Departure Time`)
+  }
 
   LI <- LI[, c(
-    "Location", "Scheduled Arrival Time",
-    "Scheduled Departure Time", "Activity", "rowID"
+    "Location", "Arrival Time",
+    "Departure Time", "Activity", "rowID"
   )]
 
 
@@ -451,9 +468,14 @@ importMCA <- function(file,
   LT$Spare <- NULL
   LT$`Record Identity` <- NULL
   LT <- strip_whitespace(LT)
-  LT$`Scheduled Arrival Time` <- gsub("H", "", LT$`Scheduled Arrival Time`)
 
-  LT <- LT[, c("Location", "Scheduled Arrival Time", "Activity")]
+  if(working_timetable){
+    LT$`Arrival Time` <- gsub("H", "", LT$`Scheduled Arrival Time`)  
+  }else{
+    LT$`Arrival Time` <- gsub("H", "", LT$`Public Arrival Time`)
+  }
+
+  LT <- LT[, c("Location", "Arrival Time", "Activity")]
 
   # Add the rowid
   LT$rowID <- seq(from = 1, to = length(types))[types == "LT"]
