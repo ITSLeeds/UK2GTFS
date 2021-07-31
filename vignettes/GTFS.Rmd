@@ -2,7 +2,7 @@
 title: "GTFS Functions"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{GTFS}
+  %\VignetteIndexEntry{GTFS Functions}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

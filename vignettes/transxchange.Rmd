@@ -36,6 +36,24 @@ To do a simple conversion to GTFS, load the package, and use the `transxchange2g
 
 A simple example is shown below:
 
+```{r trans_example, eval=FALSE}
+library(UK2GTFS)
+path_in <- "EA.zip"
+gtfs <- atoc2gtfs(path_in = path_in,
+          ncores = 3)
+```
+
+Once the conversion has been completed, you can save the GTFS file.
+
+```{r trans_example2, eval=FALSE}
+gtfs_write(gtfs, 
+           folder = "C:/GTFS",
+           name = "gtfs_EA")
+
+```
+
+This will save the GTFS file to `C:/GTFS/gtfs_EA.zip`
+
 ```{r setup, eval =  FALSE}
 library(UK2GTFS)
 path_in <- "E:/OneDrive - University of Leeds/Data/UK2GTFS/TransXchange/timetable"

@@ -4,7 +4,7 @@ author: "Malcolm Morgan"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{ATOC}
+  %\VignetteIndexEntry{ATOC - Train Timetables}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -39,8 +39,7 @@ gtfs <- atoc2gtfs(path_in = path_in,
 
 Once the conversion has been completed, you can save the GTFS file.
 
-
-```{r atoc_example, eval=FALSE}
+```{r atoc_example2, eval=FALSE}
 gtfs_write(gtfs, 
            folder = "C:/GTFS",
            name = "gtfs_ttis627")
