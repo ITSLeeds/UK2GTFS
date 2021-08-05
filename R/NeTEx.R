@@ -61,7 +61,7 @@ import_netex <- function(path){
   fareZones$fareID <- fareID
 
 
-  # TODO: Tarrifs
+  # TODO: Tariffs
   tariffs <- list()
   for(i in seq_len(length(fare_network_tariffs))){
     tr <- fare_network_tariffs[1]
