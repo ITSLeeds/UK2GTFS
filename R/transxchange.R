@@ -152,6 +152,7 @@ transxchange2gtfs <- function(path_in,
       res_all_message <- unlist(res_all_message)
       message(paste(res_all_message, collapse = ",  "))
     } else {
+      message(" ")
       message("All files imported")
     }
 
@@ -187,6 +188,7 @@ transxchange2gtfs <- function(path_in,
     gtfs_all_message <- unlist(gtfs_all_message)
     message(paste(gtfs_all_message, collapse = ",  "))
   } else {
+    message(" ")
     message("All files converted")
   }
 

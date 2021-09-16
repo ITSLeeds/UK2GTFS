@@ -39,7 +39,7 @@ A simple example is shown below:
 ```{r trans_example, eval=FALSE}
 library(UK2GTFS)
 path_in <- "EA.zip"
-gtfs <- atoc2gtfs(path_in = path_in,
+gtfs <- transxchange2gtfs(path_in = path_in,
           ncores = 3)
 ```
 
@@ -53,6 +53,11 @@ gtfs_write(gtfs,
 ```
 
 This will save the GTFS file to `C:/GTFS/gtfs_EA.zip`
+
+## Mergin problems
+
+`transxchange2gtfs` converts each transXchange file into its own GTFS file. Then uses `gtfs_merge` to combine these into a single GTFS file. When this is done checks are perfored to make sure the merged GTFS is valid. However this can fail. Often due to small differences between files such as the Bus operator having two spellings of their company name (e.g. 	
+"Yorkshire Coastliner Ltd" or "Yorkshire Coastliner" ). If the merge fails you can manually merge using `gtfs_merge` and `force = TRUE` this is almost always fine to do.
 
 ## Stop Locations - The NaPTAN
 

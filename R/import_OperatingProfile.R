@@ -67,15 +67,27 @@ import_OperatingProfile <- function(OperatingProfile) {
       # ServicedDaysOfNonOperation <- xml2::xml_child(ServicedOrganisationDayType, "d1:DaysOfNonOperation")
 
       if (!is.null(ServicedDaysOfOperation)) {
-        ServicedDaysOfOperation <- xml2::xml_find_all(ServicedDaysOfOperation, ".//d1:ServicedOrganisationRef")
-        ServicedDaysOfOperation <- xml2::xml_text(ServicedDaysOfOperation)
+        ##ServicedDaysOfOperation <- xml2::xml_find_all(ServicedDaysOfOperation, ".//d1:ServicedOrganisationRef")
+        #ServicedDaysOfOperation <- xml2::xml_text(ServicedDaysOfOperation)
+        ServicedDaysOfOperationType <- xml2::xml_name(xml2::xml_child(ServicedDaysOfOperation))
+        ServicedDaysOfOperationRef <- xml2::xml_find_all(ServicedDaysOfOperation, ".//d1:ServicedOrganisationRef")
+        ServicedDaysOfOperationRef <- xml2::xml_text(ServicedDaysOfOperationRef)
+        ServicedDaysOfOperation <- data.frame(ServicedDaysOfOperation = ServicedDaysOfOperationRef,
+                                              ServicedDaysOfOperationType = ServicedDaysOfOperationType,
+                                              stringsAsFactors = FALSE)
       } else {
         ServicedDaysOfOperation <- NA
       }
 
       if (!is.null(ServicedDaysOfNonOperation)) {
-        ServicedDaysOfNonOperation <- xml2::xml_find_all(ServicedDaysOfNonOperation, ".//d1:ServicedOrganisationRef")
-        ServicedDaysOfNonOperation <- xml2::xml_text(ServicedDaysOfNonOperation)
+        # ServicedDaysOfNonOperation <- xml2::xml_find_all(ServicedDaysOfNonOperation, ".//d1:ServicedOrganisationRef")
+        # ServicedDaysOfNonOperation <- xml2::xml_text(ServicedDaysOfNonOperation)
+        ServicedDaysOfNonOperationType <- xml2::xml_name(xml2::xml_child(ServicedDaysOfNonOperation))
+        ServicedDaysOfNonOperationRef <- xml2::xml_find_all(ServicedDaysOfNonOperation, ".//d1:ServicedOrganisationRef")
+        ServicedDaysOfNonOperationRef <- xml2::xml_text(ServicedDaysOfNonOperationRef)
+        ServicedDaysOfNonOperation <- data.frame(ServicedDaysOfNonOperation = ServicedDaysOfNonOperationRef,
+                                              ServicedDaysOfNonOperationType = ServicedDaysOfNonOperationType,
+                                              stringsAsFactors = FALSE)
       } else {
         ServicedDaysOfNonOperation <- NA
       }
@@ -201,10 +213,25 @@ import_OperatingProfile <- function(OperatingProfile) {
       HolidaysOnly = paste(HolidaysOnly, collapse = " "),
       BHDaysOfOperation = paste(BHDaysOfOperation, collapse = " "),
       BHDaysOfNonOperation = paste(BHDaysOfNonOperation, collapse = " "),
-      ServicedDaysOfOperation = ServicedDaysOfOperation,
-      ServicedDaysOfNonOperation = ServicedDaysOfNonOperation,
+      #ServicedDaysOfOperation = ServicedDaysOfOperation,
+      #ServicedDaysOfNonOperation = ServicedDaysOfNonOperation,
       stringsAsFactors = FALSE
     )
+
+    if(class(ServicedDaysOfOperation) == "data.frame"){
+      res <- cbind(res, ServicedDaysOfOperation)
+    } else {
+      res$ServicedDaysOfOperation <- NA
+      res$ServicedDaysOfOperationType <- NA
+    }
+
+    if(class(ServicedDaysOfNonOperation) == "data.frame"){
+      res <- cbind(res, ServicedDaysOfNonOperation)
+    } else {
+      res$ServicedDaysOfNonOperation <- NA
+      res$ServicedDaysOfNonOperationType <- NA
+    }
+
     result[[i]] <- res
     rm(
       DaysOfWeek, HolidaysOnly,
