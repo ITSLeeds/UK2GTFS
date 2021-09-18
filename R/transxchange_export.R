@@ -116,6 +116,7 @@ transxchange_export <- function(obj,
                                    by = c("ServicedDaysOfOperation" = "OrganisationCode",
                                           "ServicedDaysOfOperationType" = "Type"))
       vj_so_do <- vj_so_do[,c("VehicleJourneyCode", "StartDate", "EndDate")]
+      vj_so_do <- vj_so_do[!is.na(vj_so_do$StartDate),]
     } else {
       vj_so_do <- NULL
     }
@@ -125,9 +126,12 @@ transxchange_export <- function(obj,
                                    by = c("ServicedDaysOfNonOperation" = "OrganisationCode",
                                           "ServicedDaysOfNonOperationType" = "Type"))
       vj_so_no <- vj_so_no[,c("VehicleJourneyCode", "StartDate", "EndDate")]
+      vj_so_no <- vj_so_no[!is.na(vj_so_no$StartDate),]
     } else {
       vj_so_no <- NULL
     }
+
+
 
 
   #   # Get holidays and workdays
