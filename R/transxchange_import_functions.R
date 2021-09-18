@@ -77,7 +77,7 @@ import_journeypatternsections <- function(journeypatternsections) {
   RunTime <- import_simple(JourneyPatternTimingLink, "d1:RunTime")
   From <- xml2::xml_find_all(JourneyPatternTimingLink, "d1:From")
   From.StopPointRef <- import_simple(From, "d1:StopPointRef")
-  From.Activity <- import_simple(From, "d1:Activity")
+  From.Activity <- import_simple_xml(From, "d1:Activity")
   if (length(From.Activity) == 0) {
     From.Activity <- rep(NA, length(From.StopPointRef))
   }
@@ -85,7 +85,7 @@ import_journeypatternsections <- function(journeypatternsections) {
   if (length(RouteLinkRef) == 0) {
     RouteLinkRef <- rep(NA, length(From.StopPointRef))
   }
-  From.TimingStatus <- import_simple(From, "d1:TimingStatus")
+  From.TimingStatus <- import_simple_xml(From, "d1:TimingStatus")
   # From.SequenceNumber <- import_FromTo(From, "@SequenceNumber")
   From.SequenceNumber <- xml2::xml_attr(From, "SequenceNumber")
 
@@ -95,7 +95,7 @@ import_journeypatternsections <- function(journeypatternsections) {
   To <- xml2::xml_find_all(JourneyPatternTimingLink, "d1:To")
   To.StopPointRef <- import_simple(To, "d1:StopPointRef")
   To.WaitTime <- xml2::xml_text(xml2::xml_find_first(To, "d1:WaitTime"))
-  To.Activity <- import_simple(To, "d1:Activity")
+  To.Activity <- import_simple_xml(To, "d1:Activity")
   if (length(To.Activity) == 0) {
     To.Activity <- rep(NA, length(To.StopPointRef))
   }
