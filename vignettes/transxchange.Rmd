@@ -54,10 +54,12 @@ gtfs_write(gtfs,
 
 This will save the GTFS file to `C:/GTFS/gtfs_EA.zip`
 
-## Mergin problems
+## Merging problems
 
-`transxchange2gtfs` converts each transXchange file into its own GTFS file. Then uses `gtfs_merge` to combine these into a single GTFS file. When this is done checks are perfored to make sure the merged GTFS is valid. However this can fail. Often due to small differences between files such as the Bus operator having two spellings of their company name (e.g. 	
-"Yorkshire Coastliner Ltd" or "Yorkshire Coastliner" ). If the merge fails you can manually merge using `gtfs_merge` and `force = TRUE` this is almost always fine to do.
+`transxchange2gtfs` converts each transXchange file into its own GTFS file. Then uses `gtfs_merge` to combine these into a single GTFS file. When this is done checks are performed to make sure the merged GTFS is valid. However this can fail. Often due to small differences between files such as the Bus operator having two spellings of their company name (e.g. 	
+"Yorkshire Coastliner Ltd" or "Yorkshire Coastliner" ). 
+
+If `transxchange2gtfs` is unable to merge it will return a list of GTFS objects. You can then manually merge using `gtfs_merge` and `force = TRUE` this is almost always ok.
 
 ## Stop Locations - The NaPTAN
 
