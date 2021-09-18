@@ -3,8 +3,6 @@
 #' Convert ATOC CIF files to GTFS
 #'
 #' @param path_in Character, path to ATOC file e.g."C:/input/ttis123.zip"
-#' @param path_out Not used
-#' @param name Not used
 #' @param silent Logical, should progress messages be surpressed (default TRUE)
 #' @param ncores Numeric, When parallel processing how many cores to use
 #'   (default 1)
@@ -35,8 +33,6 @@
 #' @export
 
 atoc2gtfs <- function(path_in,
-                      path_out = NULL,
-                      name = NULL,
                       silent = TRUE,
                       ncores = 1,
                       locations = tiplocs,
@@ -49,15 +45,6 @@ atoc2gtfs <- function(path_in,
   checkmate::assert_logical(silent)
   checkmate::assert_numeric(ncores, lower = 1)
   checkmate::assert_logical(shapes)
-
-  # Warn depreciated features
-  if(!is.null(path_out)){
-    stop("writing gtfs files is now depreciated, this function now returns a gtfs object")
-  }
-
-  if(!is.null(name)){
-    stop("writing gtfs files is now depreciated, this function now returns a gtfs object")
-  }
 
   if (ncores == 1) {
     message(paste0(

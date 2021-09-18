@@ -3,8 +3,6 @@
 #' @details Convert transxchange files to GTFS
 #'
 #' @param path_in Path to zipped transxchange files
-#' @param path_out Depreciated
-#' @param name Depreciated
 #' @param silent Logical, should progress be shown
 #' @param ncores Numeric, When parallel processing how many cores to use
 #' @param cal Calendar object from get_bank_holidays()
@@ -33,8 +31,6 @@
 
 
 transxchange2gtfs <- function(path_in,
-                              path_out = NULL,
-                              name = NULL,
                               silent = TRUE,
                               ncores = 1,
                               cal = get_bank_holidays(),
@@ -52,14 +48,14 @@ transxchange2gtfs <- function(path_in,
     message(paste0(Sys.time(), " This will take some time, make sure you use 'ncores' to enable multi-core processing"))
   }
 
-  # back compatibility
-  if(!is.null(path_out)){
-    stop("path_out is no longer supported, use gtfs_write()")
-  }
-  if(!is.null(name)){
-    stop("name is no longer supported, use gtfs_write()")
+  # Check calendar and naptan
+  if(!nrow(cal) > 0){
+    stop("Calendar is missing")
   }
 
+  if(!nrow(naptan) > 0){
+    stop("Naptan is missing")
+  }
 
   # Are we in Scotland?
   if (scotland == "yes") {
