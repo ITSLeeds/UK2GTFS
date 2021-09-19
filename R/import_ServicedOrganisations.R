@@ -6,7 +6,8 @@
 #'
 import_ServicedOrganisations <- function(ServicedOrganisations, full_import = FALSE) {
   nmchk <- unique(xml2::xml_name(xml2::xml_children(xml2::xml_children(ServicedOrganisations))))
-  if (!all(nmchk %in% c("OrganisationCode", "Name", "WorkingDays", "Holidays"))) {
+  if (!all(nmchk %in% c("OrganisationCode", "Name", "WorkingDays", "Holidays",
+                        "ParentServicedOrganisationRef"))) {
     stop("Unknown Structure in ServicedOrganisations")
   }
   result <- list()
