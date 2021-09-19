@@ -24,7 +24,7 @@ Note that GTFS data is now published for buses in Great Britain at [Open Bus Dat
 
 TransXchange data can be downloaded from [Traveline](https://www.travelinedata.org.uk/traveline-open-data/data-reporting/) you will need to apply for free access to the FTP sever to download the data.
 
-The data comes as zipped folders for different regions of the UK.
+The data comes as zipped folders for different regions of Great Britain.
 
 ## Converting TransXchange to GTFS
 
