@@ -6,8 +6,6 @@
 \usage{
 transxchange2gtfs(
   path_in,
-  path_out = NULL,
-  name = NULL,
   silent = TRUE,
   ncores = 1,
   cal = get_bank_holidays(),
@@ -18,10 +16,6 @@ transxchange2gtfs(
 }
 \arguments{
 \item{path_in}{Path to zipped transxchange files}
-
-\item{path_out}{Depreciated}
-
-\item{name}{Depreciated}
 
 \item{silent}{Logical, should progress be shown}
 

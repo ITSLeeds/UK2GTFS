@@ -6,8 +6,6 @@
 \usage{
 atoc2gtfs(
   path_in,
-  path_out = NULL,
-  name = NULL,
   silent = TRUE,
   ncores = 1,
   locations = tiplocs,
@@ -18,10 +16,6 @@ atoc2gtfs(
 }
 \arguments{
 \item{path_in}{Character, path to ATOC file e.g."C:/input/ttis123.zip"}
-
-\item{path_out}{Not used}
-
-\item{name}{Not used}
 
 \item{silent}{Logical, should progress messages be surpressed (default TRUE)}
 
