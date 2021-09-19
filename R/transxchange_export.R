@@ -432,8 +432,10 @@ transxchange_export <- function(obj,
   # Step 3: Merge Exclusions and bank_holidays, then summarise the exclusions
   if (exists("trips_exclude")) {
     calendar_dates <- trips_exclude
-    if (nrow(bank_holidays) > 0) {
-      calendar_dates <- rbind(calendar_dates, bank_holidays)
+    if(!is.null(bank_holidays)){
+      if (nrow(bank_holidays) > 0) {
+        calendar_dates <- rbind(calendar_dates, bank_holidays)
+      }
     }
   } else {
     calendar_dates <- bank_holidays
