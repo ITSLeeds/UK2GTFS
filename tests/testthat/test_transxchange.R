@@ -26,6 +26,7 @@ test_that("test transxchange2gtfs singlecore", {
                             naptan = naptan,
                             ncores = 1,
                             try_mode = FALSE)
+  gtfs <- gtfs_merge(gtfs, force = TRUE)
   gtfs_write(gtfs,folder = file_path, name = "txc_gtfs2")
   expect_true(file.exists(file.path(file_path,"txc_gtfs2.zip")))
 
@@ -39,6 +40,7 @@ if(.Platform$OS.type == "unix") {
                               naptan = naptan,
                               ncores = 2,
                               try_mode = FALSE)
+    gtfs <- gtfs_merge(gtfs, force = TRUE)
     gtfs_write(gtfs,folder = file_path, name = "txc_gtfs")
     expect_true(file.exists(file.path(file_path,"txc_gtfs.zip")))
 
