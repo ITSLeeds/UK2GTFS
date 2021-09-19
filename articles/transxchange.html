@@ -95,7 +95,7 @@
       <h1 data-toc-skip>TransXchange - Bus, Tram, and Tube Timetables</h1>
                         <h4 class="author">Malcolm Morgan</h4>
             
-            <h4 class="date">2021-09-18</h4>
+            <h4 class="date">2021-09-19</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/itsleeds/uk2gtfs/blob/master/vignettes/transxchange.Rmd"><code>vignettes/transxchange.Rmd</code></a></small>
       <div class="hidden name"><code>transxchange.Rmd</code></div>
@@ -137,11 +137,12 @@
            name <span class="op">=</span> <span class="st">"gtfs_EA"</span><span class="op">)</span></code></pre></div>
 <p>This will save the GTFS file to <code>C:/GTFS/gtfs_EA.zip</code></p>
 </div>
-<div id="mergin-problems" class="section level2">
+<div id="merging-problems" class="section level2">
 <h2 class="hasAnchor">
-<a href="#mergin-problems" class="anchor"></a>Mergin problems</h2>
-<p><code>transxchange2gtfs</code> converts each transXchange file into its own GTFS file. Then uses <code>gtfs_merge</code> to combine these into a single GTFS file. When this is done checks are perfored to make sure the merged GTFS is valid. However this can fail. Often due to small differences between files such as the Bus operator having two spellings of their company name (e.g.<br>
-“Yorkshire Coastliner Ltd” or “Yorkshire Coastliner” ). If the merge fails you can manually merge using <code>gtfs_merge</code> and <code>force = TRUE</code> this is almost always fine to do.</p>
+<a href="#merging-problems" class="anchor"></a>Merging problems</h2>
+<p><code>transxchange2gtfs</code> converts each transXchange file into its own GTFS file. Then uses <code>gtfs_merge</code> to combine these into a single GTFS file. When this is done checks are performed to make sure the merged GTFS is valid. However this can fail. Often due to small differences between files such as the Bus operator having two spellings of their company name (e.g.<br>
+“Yorkshire Coastliner Ltd” or “Yorkshire Coastliner” ).</p>
+<p>If <code>transxchange2gtfs</code> is unable to merge it will return a list of GTFS objects. You can then manually merge using <code>gtfs_merge</code> and <code>force = TRUE</code> this is almost always ok.</p>
 </div>
 <div id="stop-locations---the-naptan" class="section level2">
 <h2 class="hasAnchor">
