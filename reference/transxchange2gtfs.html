@@ -150,7 +150,8 @@
   cal <span class='op'>=</span> <span class='fu'><a href='get_bank_holidays.html'>get_bank_holidays</a></span><span class='op'>(</span><span class='op'>)</span>,
   naptan <span class='op'>=</span> <span class='fu'><a href='get_naptan.html'>get_naptan</a></span><span class='op'>(</span><span class='op'>)</span>,
   scotland <span class='op'>=</span> <span class='st'>"auto"</span>,
-  try_mode <span class='op'>=</span> <span class='cn'>TRUE</span>
+  try_mode <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  force_merge <span class='op'>=</span> <span class='cn'>FALSE</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -188,6 +189,10 @@ holidays are used.</p></td>
       <td><p>Logical, if TRUE import and conversion are wrapped in try
 calls thus a failure on a single file will not cause the whole process to
 fail. Warning this could result in a GTFS file with missing routes.</p></td>
+    </tr>
+    <tr>
+      <th>force_merge</th>
+      <td><p>Logical, passed to gtfs_merge(force), default FALSE</p></td>
     </tr>
     </table>
 
