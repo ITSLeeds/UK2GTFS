@@ -212,6 +212,30 @@ clean_days <- function(days) {
     if ("Sunday" %in% days_ul) {
       res[7] <- 1
     }
+  } else if (all(days_ul %in% c("NotMonday", "NotTuesday", "NotWednesday", "NotThursday",
+                                "NotFriday", "NotSaturday", "NotSunday"))){
+    res <- c(1, 1, 1, 1, 1, 1, 1)
+    if ("NotMonday" %in% days_ul) {
+      res[1] <- 0
+    }
+    if ("NotTuesday" %in% days_ul) {
+      res[2] <- 0
+    }
+    if ("NotWednesday" %in% days_ul) {
+      res[3] <- 0
+    }
+    if ("NotThursday" %in% days_ul) {
+      res[4] <- 0
+    }
+    if ("NotFriday" %in% days_ul) {
+      res[5] <- 0
+    }
+    if ("NotSaturday" %in% days_ul) {
+      res[6] <- 0
+    }
+    if ("NotSunday" %in% days_ul) {
+      res[7] <- 0
+    }
   } else if (is.na(days) | days == "NA") {
     res <- c(1, 1, 1, 1, 1, 1, 1)
   } else if (days == "MondayToFriday") {
@@ -229,20 +253,6 @@ clean_days <- function(days) {
   } else if (days %in% c("", "MondayToSunday",
                          "MondayToFridaySaturdaySundayHolidaysOnly")) {
     res <- c(1, 1, 1, 1, 1, 1, 1)
-  } else if (days == "NotMonday") {
-    res <- c(0, 1, 1, 1, 1, 1, 1)
-  } else if (days == "NotTuesday") {
-    res <- c(1, 0, 1, 1, 1, 1, 1)
-  } else if (days == "NotWednesday") {
-    res <- c(1, 1, 0, 1, 1, 1, 1)
-  } else if (days == "NotThursday") {
-    res <- c(1, 1, 1, 1, 1, 1, 1)
-  } else if (days == "NotFriday") {
-    res <- c(1, 1, 1, 1, 0, 1, 1)
-  } else if (days == "NotSaturday") {
-    res <- c(1, 1, 1, 1, 1, 0, 1)
-  } else if (days == "NotSunday") {
-    res <- c(1, 1, 1, 1, 1, 1, 0)
   } else {
     stop(paste0("Unknown day pattern: ", days))
   }
