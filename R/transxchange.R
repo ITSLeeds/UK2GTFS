@@ -14,6 +14,7 @@
 #' @param try_mode Logical, if TRUE import and conversion are wrapped in try
 #'   calls thus a failure on a single file will not cause the whole process to
 #'   fail. Warning this could result in a GTFS file with missing routes.
+#' @param force_merge Logical, passed to gtfs_merge(force), default FALSE
 #' @return A GTFS named list
 #' @details
 #'
@@ -36,7 +37,8 @@ transxchange2gtfs <- function(path_in,
                               cal = get_bank_holidays(),
                               naptan = get_naptan(),
                               scotland = "auto",
-                              try_mode = TRUE) {
+                              try_mode = TRUE,
+                              force_merge = FALSE) {
   # Check inputs
   checkmate::assert_numeric(ncores)
   checkmate::assert_logical(silent)
@@ -193,7 +195,7 @@ transxchange2gtfs <- function(path_in,
   message(paste0(Sys.time(), " Merging GTFS objects"))
 
 
-  gtfs_merged <- try(gtfs_merge(gtfs_all))
+  gtfs_merged <- try(gtfs_merge(gtfs_all, force = force_merge))
 
   if (class(gtfs_merged) == "try-error") {
     message("Merging failed, returing unmerged GFTS object for analysis")

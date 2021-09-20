@@ -11,7 +11,8 @@ transxchange2gtfs(
   cal = get_bank_holidays(),
   naptan = get_naptan(),
   scotland = "auto",
-  try_mode = TRUE
+  try_mode = TRUE,
+  force_merge = FALSE
 )
 }
 \arguments{
@@ -33,6 +34,8 @@ holidays are used.}
 \item{try_mode}{Logical, if TRUE import and conversion are wrapped in try
 calls thus a failure on a single file will not cause the whole process to
 fail. Warning this could result in a GTFS file with missing routes.}
+
+\item{force_merge}{Logical, passed to gtfs_merge(force), default FALSE}
 }
 \value{
 A GTFS named list
