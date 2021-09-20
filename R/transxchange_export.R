@@ -310,7 +310,7 @@ transxchange_export <- function(obj,
       aid <- name2id(agency$agency_name[j])
       agency$agency_id[j] <- aid
       routes$agency_id[routes$agency_id == "O1"] <- aid
-      warning(paste0("Agency ID is O1 changing to ", aid))
+      message(paste0("Agency ID is O1 changing to ", aid))
     }
   }
 
