@@ -343,9 +343,10 @@ expand_stop_times2 <- function(i, jps, trips) {
 
   st_sub <- jps_sub[, c("To.StopPointRef", "To.Activity", "To.SequenceNumber",
                         "JourneyPatternID", "To.WaitTime", "To.TimingStatus",
-                        "RunTime")]
+                        "RunTime","From.WaitTime")]
   names(st_sub) <- c("stop_id", "To.Activity", "stop_sequence",
-                     "JourneyPatternRef", "To.WaitTime", "timepoint", "RunTime")
+                     "JourneyPatternRef", "To.WaitTime", "timepoint", "RunTime",
+                     "From.WaitTime")
   st_top <- data.frame(
     stop_id = jps_sub$From.StopPointRef[1],
     To.Activity = jps_sub$From.Activity[1],
@@ -354,6 +355,7 @@ expand_stop_times2 <- function(i, jps, trips) {
     To.WaitTime = 0,
     timepoint = jps_sub$From.TimingStatus[1],
     RunTime = 0,
+    From.WaitTime = 0,
     stringsAsFactors = FALSE
   )
   if (is.na(st_top$To.Activity)) {
@@ -365,8 +367,15 @@ expand_stop_times2 <- function(i, jps, trips) {
   st_sub <- rbind(st_top, st_sub)
   # st_sub$RunTime <- as.integer(st_sub$RunTime)
   st_sub$To.WaitTime <- as.integer(st_sub$To.WaitTime)
-  st_sub$departure_time <- cumsum(st_sub$RunTime + st_sub$To.WaitTime)
-  st_sub$arrival_time <- st_sub$departure_time - st_sub$To.WaitTime
+
+  st_sub$From.WaitTime <- as.integer(st_sub$From.WaitTime)
+  st_sub$From.WaitTime <- c(st_sub$From.WaitTime[seq(2, length(st_sub$From.WaitTime))],0)
+  st_sub$total_wait_time <- st_sub$To.WaitTime + st_sub$From.WaitTime
+  st_sub$departure_time <- cumsum(st_sub$RunTime + st_sub$total_wait_time)
+  st_sub$arrival_time <- st_sub$departure_time - st_sub$total_wait_time
+
+  #st_sub$departure_time <- cumsum(st_sub$RunTime + st_sub$To.WaitTime)
+  #st_sub$arrival_time <- st_sub$departure_time - st_sub$To.WaitTime
   st_sub$pickup_type <- sapply(st_sub$To.Activity, clean_activity,
                                type = "pickup")
   st_sub$drop_off_type <- sapply(st_sub$To.Activity, clean_activity,
@@ -397,7 +406,7 @@ expand_stop_times2 <- function(i, jps, trips) {
 
   st_sub <- st_sub[, c("trip_id", "arrival_time", "departure_time", "stop_id",
                        "stop_sequence", "timepoint")]
-
+  #st_sub = dplyr::left_join(st_sub, stops, by = "stop_id")
   return(st_sub)
 }
 
@@ -425,7 +434,7 @@ clean_timepoints <- function(tp) {
 #' @noRd
 #'
 make_stop_times <- function(jps, trips, ss) {
-  jps <- jps[, c("JPS_id", "From.Activity", "From.StopPointRef",
+  jps <- jps[, c("JPS_id", "From.Activity", "From.StopPointRef", "From.WaitTime",
                  "From.TimingStatus", "To.WaitTime", "To.Activity",
                  "To.StopPointRef", "To.TimingStatus", "RunTime",
                  "From.SequenceNumber", "To.SequenceNumber")]

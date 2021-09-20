@@ -77,6 +77,7 @@ import_journeypatternsections <- function(journeypatternsections) {
   RunTime <- import_simple(JourneyPatternTimingLink, "d1:RunTime")
   From <- xml2::xml_find_all(JourneyPatternTimingLink, "d1:From")
   From.StopPointRef <- import_simple(From, "d1:StopPointRef")
+  From.WaitTime <- import_simple_xml(From, "d1:WaitTime")
   From.Activity <- import_simple_xml(From, "d1:Activity")
   if (length(From.Activity) == 0) {
     From.Activity <- rep(NA, length(From.StopPointRef))
@@ -118,6 +119,7 @@ import_journeypatternsections <- function(journeypatternsections) {
     JPTL_ID = JPTL_ID,
     From.Activity = From.Activity,
     From.StopPointRef = From.StopPointRef,
+    From.WaitTime = From.WaitTime,
     From.TimingStatus = From.TimingStatus,
     To.WaitTime = To.WaitTime,
     To.Activity = To.Activity,
