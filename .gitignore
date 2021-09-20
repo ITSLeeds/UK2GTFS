@@ -43,3 +43,15 @@ Meta
 docs/
 temp_naptan/Stops.csv
 inst/extdata/transxchange.zip
+inst/extdata/transxchange/Bangor-Aberystwyth_TCAT002.xml
+inst/extdata/transxchange/CardiffBus618,619-CardiffBay-Cathays1_TXC_2021914-0740_CBAO618.xml
+inst/extdata/transxchange/CardiffBus618,619-CardiffBay-Cathays1_TXC_2021914-0740_CBAO619.xml
+inst/extdata/transxchange/ea_20-6-_-y08-1.xml
+inst/extdata/transxchange/ea_20-B-A-y08-1.xml
+inst/extdata/transxchange/NE_076_PA0638_20.xml
+inst/extdata/transxchange/NW_06_2266_C45_1.xml
+inst/extdata/transxchange/PhilAnslow63-Cwmbran-Chepstow8_TXC_2021914-0745_PAAO063.xml
+inst/extdata/transxchange/suf_1-88-_-y08-17.xml
+inst/extdata/transxchange/suf_2-10-_-y08-10.xml
+inst/extdata/transxchange/suf_2-8-_-y08-15.xml
+inst/extdata/transxchange/suf_22-348-_-y08-3.xml
