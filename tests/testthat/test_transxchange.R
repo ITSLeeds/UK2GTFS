@@ -41,7 +41,6 @@ if(.Platform$OS.type == "unix") {
                               ncores = 2,
                               try_mode = FALSE,
                               force_merge = TRUE)
-    gtfs <- gtfs_merge(gtfs, force = TRUE)
     gtfs_write(gtfs,folder = file_path, name = "txc_gtfs")
     expect_true(file.exists(file.path(file_path,"txc_gtfs.zip")))
 
