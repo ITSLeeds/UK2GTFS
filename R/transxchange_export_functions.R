@@ -345,7 +345,11 @@ expand_stop_times2 <- function(i, jps, trips) {
       rwnumbs <- seq_len(nrow(jps_sub))
       for(j in rwnumbs){
         if(j == 1){
-          res_order[[j]] <- rwnumbs[jps_sub$From.Activity == "pickUp"]
+          if("pickUp" %in% jps_sub$From.Activity){
+            res_order[[j]] <- rwnumbs[jps_sub$From.Activity == "pickUp"]
+          } else {
+            res_order[[j]] <- 1
+          }
         } else {
           res_order[[j]] <- rwnumbs[jps_sub$From.StopPointRef == jps_sub$To.StopPointRef[res_order[[j-1]]]]
         }
