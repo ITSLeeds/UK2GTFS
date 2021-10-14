@@ -337,60 +337,22 @@ expand_stop_times2 <- function(i, jps, trips) {
   jps_sub$To.Activity[is.na(jps_sub$To.Activity)] <- "pickUpAndSetDown"
 
   # Check if in order, for not fix
-  if(nrow(jps_sub) > 1){
+  nrow_jps <- nrow(jps_sub)
+  if(nrow_jps > 1){
     spfm = jps_sub$From.StopPointRef[2:(nrow(jps_sub))]
     spto = jps_sub$To.StopPointRef[1:(nrow(jps_sub)-1)]
     if(!all(spfm == spto)){
-      res_order <- list()
-      rwnumbs <- seq_len(nrow(jps_sub))
-      loopflag <- NA_integer_
-      for(j in rwnumbs){
-        if(j == 1){
-          if("pickUp" %in% jps_sub$From.Activity){
-            fnmb1 <- rwnumbs[jps_sub$From.Activity == "pickUp"]
-            if(length(fnmb1) == 1){
-              res_order[[j]] <- fnmb1
-            } else {
-              res_order[[j]] <- min(fnmb1)
-            }
-
-          } else {
-            res_order[[j]] <- 1
-          }
-        } else {
-          fnmb <- rwnumbs[jps_sub$From.StopPointRef == jps_sub$To.StopPointRef[res_order[[j-1]]]]
-          if(length(fnmb) == 1){
-            res_order[[j]] <- fnmb
-          } else {
-            #message("Double trouble ",fnmb)
-            diffs <- abs(fnmb - res_order[[j-1]])
-            fsel <- fnmb[diffs == min(diffs)]
-            if(length(fsel) == 1){
-              res_order[[j]] <- fsel
-            } else {
-              for(k in seq_len(length(fsel))){
-                #message("Loop trouble ")
-                if(!min(fsel) %in% unlist(res_order)){
-                  res_order[[j]] <- min(fsel)
-                } else {
-                  fsel <- fsel[fsel != min(fsel)]
-                }
-              }
-              if(length(fsel) == 0){
-                stop("Multiloop error")
-              }
-            }
-          }
-
-        }
-        #message(res_order[[j]])
+      jps_sub_new <- try(reorder_jps(jps_sub), silent = TRUE)
+      if(class(jps_sub_new) == "try-error"){
+        jps_sub_new <- try(reorder_jps(jps_sub, func = max), silent = TRUE)
       }
-      res_order <- unlist(res_order)
-      if(length(res_order) != nrow(jps_sub)){
-        stop("Attemped to reorder stops and failed")
+      if(class(jps_sub_new) == "try-error"){
+        stop("Multiple fails to get the order of stops")
       }
-      jps_sub <- jps_sub[res_order,]
+
+      jps_sub <- jps_sub_new
     }
+
   }
 
 
@@ -462,6 +424,65 @@ expand_stop_times2 <- function(i, jps, trips) {
                        "stop_sequence", "timepoint")]
   #st_sub = dplyr::left_join(st_sub, stops, by = "stop_id")
   return(st_sub)
+}
+
+#' reorder_jps
+#' CHange the order of JPS_sub as the file order is wrong
+#' @param jps_sub jps_sub from expand_stop_times2
+#' @noRd
+#'
+reorder_jps <- function(jps_sub, func = min){
+
+  res_order <- list()
+  rwnumbs <- seq_len(nrow(jps_sub))
+  loopflag <- NA_integer_
+  for(j in rwnumbs){
+    if(j == 1){
+      if("pickUp" %in% jps_sub$From.Activity){
+        fnmb1 <- rwnumbs[jps_sub$From.Activity == "pickUp"]
+        if(length(fnmb1) == 1){
+          res_order[[j]] <- fnmb1
+        } else {
+          res_order[[j]] <- min(fnmb1)
+        }
+
+      } else {
+        res_order[[j]] <- 1
+      }
+    } else {
+      fnmb <- rwnumbs[jps_sub$From.StopPointRef == jps_sub$To.StopPointRef[res_order[[j-1]]]]
+      if(length(fnmb) == 1){
+        res_order[[j]] <- fnmb
+      } else {
+        #message("Double trouble ",fnmb)
+        diffs <- abs(fnmb - res_order[[j-1]])
+        fsel <- fnmb[diffs == func(diffs)]
+        if(length(fsel) == 1){
+          res_order[[j]] <- fsel
+        } else {
+          for(k in seq_len(length(fsel))){
+            #message("Loop trouble ")
+            if(!func(fsel) %in% unlist(res_order)){
+              res_order[[j]] <- func(fsel)
+            } else {
+              fsel <- fsel[fsel != func(fsel)]
+            }
+          }
+          if(length(fsel) == 0){
+            stop("Multiloop error:",paste(res_order[[j-1]], collapse = ","))
+          }
+        }
+      }
+
+    }
+    #message(res_order[[j]])
+  }
+  res_order <- unlist(res_order)
+  if(length(res_order) != nrow(jps_sub)){
+    stop("Attemped to reorder stops and failed")
+  }
+  jps_sub <- jps_sub[res_order,]
+
 }
 
 
