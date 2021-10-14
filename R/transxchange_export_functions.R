@@ -351,8 +351,18 @@ expand_stop_times2 <- function(i, jps, trips) {
             res_order[[j]] <- 1
           }
         } else {
-          res_order[[j]] <- rwnumbs[jps_sub$From.StopPointRef == jps_sub$To.StopPointRef[res_order[[j-1]]]]
+          fnmb <- rwnumbs[jps_sub$From.StopPointRef == jps_sub$To.StopPointRef[res_order[[j-1]]]]
+          if(length(fnmb) == 1){
+            res_order[[j]] <- fnmb
+          } else {
+            #message("Double trouble ",fnmb)
+            diffs <- abs(fnmb - res_order[[j-1]])
+
+            res_order[[j]] <- fnmb[diffs == min(diffs)]
+          }
+
         }
+        #message(res_order[[j]])
       }
       res_order <- unlist(res_order)
       if(length(res_order) != nrow(jps_sub)){
