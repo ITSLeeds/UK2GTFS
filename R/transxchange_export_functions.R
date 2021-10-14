@@ -343,6 +343,7 @@ expand_stop_times2 <- function(i, jps, trips) {
     if(!all(spfm == spto)){
       res_order <- list()
       rwnumbs <- seq_len(nrow(jps_sub))
+      loopflag <- NA_integer_
       for(j in rwnumbs){
         if(j == 1){
           if("pickUp" %in% jps_sub$From.Activity){
@@ -357,8 +358,22 @@ expand_stop_times2 <- function(i, jps, trips) {
           } else {
             #message("Double trouble ",fnmb)
             diffs <- abs(fnmb - res_order[[j-1]])
-
-            res_order[[j]] <- fnmb[diffs == min(diffs)]
+            fsel <- fnmb[diffs == min(diffs)]
+            if(length(fsel) == 1){
+              res_order[[j]] <- fsel
+            } else {
+              for(k in seq_len(length(fsel))){
+                #message("Loop trouble ")
+                if(!min(fsel) %in% unlist(res_order)){
+                  res_order[[j]] <- min(fsel)
+                } else {
+                  fsel <- fsel[fsel != min(fsel)]
+                }
+              }
+              if(length(fsel) == 0){
+                stop("Multiloop error")
+              }
+            }
           }
 
         }
