@@ -21,11 +21,17 @@ gtfs_interpolate_times <- function(gtfs, ncores = 1){
   stop_times <- gtfs$stop_times
 
   if(class(stop_times$arrival_time) != "Period"){
-    stop("arrival_time is not class Period")
+    message("arrival_time is not class Period")
+    stop_times$arrival_time <- lubridate::hms(stop_times$arrival_time)
   }
 
   if(class(stop_times$departure_time) != "Period"){
-    stop("arrival_time is not class Period")
+    message("departure_time is not class Period")
+    stop_times$departure_time <- lubridate::hms(stop_times$departure_time)
+  }
+
+  if(class(stop_times$stop_sequence) == "character"){
+    stop_times$stop_sequence <- as.integer(stop_times$stop_sequence)
   }
 
   stop_times <- dplyr::group_by(stop_times, trip_id)
@@ -35,6 +41,7 @@ gtfs_interpolate_times <- function(gtfs, ncores = 1){
     stop_times <- pbapply::pblapply(stop_times, stops_interpolate)
   } else {
     cl <- parallel::makeCluster(ncores)
+    parallel::clusterEvalQ(cl, library("UK2GTFS"))
     stop_times <- pbapply::pblapply(stop_times,
                                     stops_interpolate,
                                     cl = cl
