@@ -21,12 +21,10 @@ gtfs_interpolate_times <- function(gtfs, ncores = 1){
   stop_times <- gtfs$stop_times
 
   if(class(stop_times$arrival_time) != "Period"){
-    message("arrival_time is not class Period")
     stop_times$arrival_time <- lubridate::hms(stop_times$arrival_time)
   }
 
   if(class(stop_times$departure_time) != "Period"){
-    message("departure_time is not class Period")
     stop_times$departure_time <- lubridate::hms(stop_times$departure_time)
   }
 
