@@ -355,6 +355,9 @@ expand_stop_times2 <- function(i, jps, trips) {
         }
       }
       res_order <- unlist(res_order)
+      if(length(res_order) != nrow(res_order)){
+        stop("Attemped to reorder stops and failed")
+      }
       jps_sub <- jps_sub[res_order,]
     }
   }
