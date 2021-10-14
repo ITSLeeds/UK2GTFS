@@ -336,6 +336,7 @@ expand_stop_times2 <- function(i, jps, trips) {
   trips_sub <- trips[trips$JourneyPatternRef == jps_sub$JourneyPatternID[1], ]
   jps_sub$To.Activity[is.na(jps_sub$To.Activity)] <- "pickUpAndSetDown"
 
+  jps_sub <- jps_sub[order(jps_sub$ss_order),]
   # Check if in order, for not fix
   nrow_jps <- nrow(jps_sub)
   if(nrow_jps > 1){
@@ -519,6 +520,7 @@ make_stop_times <- function(jps, trips, ss) {
   # rts <- unique(vj$JourneyPatternRef)
   ss_join <- ss[, c("JourneyPatternSectionRefs", "JourneyPatternID")]
   ss_join[] <- lapply(ss_join, as.character)
+  ss_join$ss_order <- seq_len(nrow(ss_join))
   jps$JPS_id <- as.character(jps$JPS_id)
   jps <- dplyr::left_join(jps, ss_join,
                           by = c("JPS_id" = "JourneyPatternSectionRefs"))
