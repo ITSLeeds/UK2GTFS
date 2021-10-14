@@ -335,12 +335,25 @@ expand_stop_times2 <- function(i, jps, trips) {
   jps_sub <- jps[[i]]
   trips_sub <- trips[trips$JourneyPatternRef == jps_sub$JourneyPatternID[1], ]
   jps_sub$To.Activity[is.na(jps_sub$To.Activity)] <- "pickUpAndSetDown"
-  # To.SequenceNumber are often buggy, so overwiriting and relying on file order
-  # if (all(is.na(jps_sub$To.SequenceNumber))) {
+
+  # Check if in order, for not fix
+  spfm = jps_sub$From.StopPointRef[2:(nrow(jps_sub))]
+  spto = jps_sub$To.StopPointRef[1:(nrow(jps_sub)-1)]
+  if(!all(spfm == spto)){
+    res_order <- list()
+    rwnumbs <- seq_len(nrow(jps_sub))
+    for(j in rwnumbs){
+      if(j == 1){
+        res_order[[j]] <- rwnumbs[jps_sub$From.Activity == "pickUp"]
+      } else {
+        res_order[[j]] <- rwnumbs[jps_sub$From.StopPointRef == jps_sub$To.StopPointRef[res_order[[j-1]]]]
+      }
+    }
+    res_order <- unlist(res_order)
+    jps_sub <- jps_sub[res_order,]
+  }
+
   jps_sub$To.SequenceNumber <- seq(2, nrow(jps_sub) + 1)
-  # }
-
-
   st_sub <- jps_sub[, c("To.StopPointRef", "To.Activity", "To.SequenceNumber",
                         "JourneyPatternID", "To.WaitTime", "To.TimingStatus",
                         "RunTime","From.WaitTime")]
