@@ -152,7 +152,14 @@ gtfs_merge <- function(gtfs_list, force = FALSE) {
     message("De-duplicating trip_id")
     trip_id <- trips[, c("file_id", "trip_id")]
     if (any(duplicated(trip_id))) {
-      stop("Duplicated trip_id within the same GTFS file")
+      if(force){
+        trips <- unique(trips)
+        stop_times <- unique(stop_times)
+      } else{
+        stop("Duplicated trip_id within the same GTFS file")
+      }
+
+
     }
     trip_id$trip_id_new <- seq(1, nrow(trip_id))
     trips <- dplyr::left_join(trips, trip_id, by = c("file_id", "trip_id"))
