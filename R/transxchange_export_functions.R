@@ -347,7 +347,13 @@ expand_stop_times2 <- function(i, jps, trips) {
       for(j in rwnumbs){
         if(j == 1){
           if("pickUp" %in% jps_sub$From.Activity){
-            res_order[[j]] <- rwnumbs[jps_sub$From.Activity == "pickUp"]
+            fnmb1 <- rwnumbs[jps_sub$From.Activity == "pickUp"]
+            if(length(fnmb1) == 1){
+              res_order[[j]] <- fnmb1
+            } else {
+              res_order[[j]] <- min(fnmb1)
+            }
+
           } else {
             res_order[[j]] <- 1
           }
