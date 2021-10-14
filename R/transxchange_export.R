@@ -551,6 +551,14 @@ transxchange_export <- function(obj,
   # remove unused stops
   stops <- stops[stops$stop_id %in% unique(stop_times$stop_id), ]
 
+
+  # Check for missing stops
+  stops_missing <- stop_times$stop_id[!stop_times$stop_id %in% stops$stop_id]
+  if(length(stops_missing) > 0){
+    stops_missing <- naptan[naptan$stop_id %in% stops_missing,]
+    stops <- rbind(stops, stops_missing)
+  }
+
   res_final <- list(agency, stops, routes, trips, stop_times, calendar, calendar_dates)
   names(res_final) <- c("agency", "stops", "routes", "trips", "stop_times", "calendar", "calendar_dates")
 
