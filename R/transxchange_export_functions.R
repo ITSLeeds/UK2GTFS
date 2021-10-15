@@ -496,7 +496,9 @@ reorder_jps <- function(jps_sub, func = min){
 clean_timepoints <- function(tp) {
   if (tp %in% c("OTH","otherPoint")) {
     return(0L)
-  } else if (tp %in% c("PTP", "TIP", "PPT", "principleTimingPoint")) {
+  } else if (tp %in% c("PTP", "TIP", "PPT",
+                       "principleTimingPoint",
+                       "principalTimingPoint")) {
     return(1L)
   } else {
     stop(paste0("Unknown timepoint type: ", tp))
