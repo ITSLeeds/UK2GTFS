@@ -333,6 +333,8 @@ transxchange_export <- function(obj,
   # Step 1: Do we Have any exclusions
   if (class(VehicleJourneys_exclude) == "data.frame") {
     # Yes - Build Exclusions
+
+    VehicleJourneys_exclude <- VehicleJourneys_exclude[VehicleJourneys_exclude$StartDate <= VehicleJourneys_exclude$EndDate,]
     # Split Exclusions by Vehicle Jounrey
     trip_exc <- split(VehicleJourneys_exclude, VehicleJourneys_exclude$VehicleJourneyCode)
     trip_split <- split(trips, trips$trip_id)
