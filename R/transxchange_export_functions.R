@@ -336,7 +336,9 @@ expand_stop_times2 <- function(i, jps, trips) {
   trips_sub <- trips[trips$JourneyPatternRef == jps_sub$JourneyPatternID[1], ]
   jps_sub$To.Activity[is.na(jps_sub$To.Activity)] <- "pickUpAndSetDown"
 
-  jps_sub <- jps_sub[order(jps_sub$ss_order),]
+  if(length(unique(jps_sub$ss_order))!=1){
+    jps_sub <- jps_sub[order(jps_sub$ss_order),]
+  }
   # Check if in order, for not fix
   nrow_jps <- nrow(jps_sub)
   if(nrow_jps > 1){
@@ -348,12 +350,11 @@ expand_stop_times2 <- function(i, jps, trips) {
         jps_sub_new <- try(reorder_jps(jps_sub, func = max), silent = TRUE)
       }
       if(class(jps_sub_new) == "try-error"){
-        stop("Multiple fails to get the order of stops")
+        warning("Cannnot find correct order of stops, defaulting to file order")
+      } else {
+        jps_sub <- jps_sub_new
       }
-
-      jps_sub <- jps_sub_new
     }
-
   }
 
 
