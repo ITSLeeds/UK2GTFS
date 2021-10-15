@@ -94,6 +94,10 @@ gtfs_validate_internal <- function(gtfs) {
                   collapse = ", ") ," are invalid columns in trips.txt")
   }
 
+  if (any(duplicated(trips$trip_id))) {
+    warning("Duplicated trip_id in trips")
+  }
+
   # stop_times
   nm_stop_times <- names(gtfs$stop_times)
   nm_stop_times_req <- c("trip_id","arrival_time","departure_time",
