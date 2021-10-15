@@ -208,6 +208,18 @@ transxchange_export <- function(obj,
   VehicleJourneys_exclude <- rbind(VehicleJourneys_exclude, vj_so_no)
   VehicleJourneys_include <- rbind(VehicleJourneys_include, vj_so_do)
 
+  if (!is.null(VehicleJourneys_exclude)) {
+    if (nrow(VehicleJourneys_exclude) == 0) {
+      VehicleJourneys_exclude <- NULL
+    }
+  }
+
+  if (!is.null(VehicleJourneys_include)) {
+    if (nrow(VehicleJourneys_include) == 0) {
+      VehicleJourneys_include <- NULL
+    }
+  }
+
 
 
   # Journey Pattern Sections ------------------------------------------------
