@@ -66,9 +66,17 @@ import_OperatingProfile <- function(OperatingProfile) {
       # ServicedDaysOfOperation <- xml2::xml_child(ServicedOrganisationDayType, "d1:DaysOfOperation")
       # ServicedDaysOfNonOperation <- xml2::xml_child(ServicedOrganisationDayType, "d1:DaysOfNonOperation")
 
+      # Check for children
+      sdo_check <- try(xml2::xml_child(ServicedDaysOfOperation), silent = TRUE)
+      if(class(sdo_check) == "try-error"){
+        ServicedDaysOfOperation <- NULL
+      }
+      sndo_check <- try(xml2::xml_child(ServicedDaysOfNonOperation), silent = TRUE)
+      if(class(sdo_check) == "try-error"){
+        ServicedDaysOfOperation <- NULL
+      }
+
       if (!is.null(ServicedDaysOfOperation)) {
-        ##ServicedDaysOfOperation <- xml2::xml_find_all(ServicedDaysOfOperation, ".//d1:ServicedOrganisationRef")
-        #ServicedDaysOfOperation <- xml2::xml_text(ServicedDaysOfOperation)
         ServicedDaysOfOperationType <- xml2::xml_name(xml2::xml_child(ServicedDaysOfOperation))
         ServicedDaysOfOperationRef <- xml2::xml_find_all(ServicedDaysOfOperation, ".//d1:ServicedOrganisationRef")
         ServicedDaysOfOperationRef <- xml2::xml_text(ServicedDaysOfOperationRef)
@@ -80,8 +88,6 @@ import_OperatingProfile <- function(OperatingProfile) {
       }
 
       if (!is.null(ServicedDaysOfNonOperation)) {
-        # ServicedDaysOfNonOperation <- xml2::xml_find_all(ServicedDaysOfNonOperation, ".//d1:ServicedOrganisationRef")
-        # ServicedDaysOfNonOperation <- xml2::xml_text(ServicedDaysOfNonOperation)
         ServicedDaysOfNonOperationType <- xml2::xml_name(xml2::xml_child(ServicedDaysOfNonOperation))
         ServicedDaysOfNonOperationRef <- xml2::xml_find_all(ServicedDaysOfNonOperation, ".//d1:ServicedOrganisationRef")
         ServicedDaysOfNonOperationRef <- xml2::xml_text(ServicedDaysOfNonOperationRef)
