@@ -115,6 +115,7 @@ gtfs_merge <- function(gtfs_list, force = FALSE) {
     if (any(duplicated(route_id))) {
       if(force){
         routes <- routes[!duplicated(route_id), ]
+        route_id <- routes[, c("file_id", "route_id")]
       } else {
         stop("Duplicated route_id within the same GTFS file, try using force = TRUE")
       }
@@ -155,6 +156,7 @@ gtfs_merge <- function(gtfs_list, force = FALSE) {
       if(force){
         trips <- unique(trips)
         stop_times <- unique(stop_times)
+        trip_id <- trips[, c("file_id", "trip_id")]
       } else{
         stop("Duplicated trip_id within the same GTFS file")
       }
