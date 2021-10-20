@@ -94,7 +94,7 @@ gtfs_validate_internal <- function(gtfs) {
                   collapse = ", ") ," are invalid columns in trips.txt")
   }
 
-  if (any(duplicated(trips$trip_id))) {
+  if (any(duplicated(gtfs$trips$trip_id))) {
     warning("Duplicated trip_id in trips")
   }
 
