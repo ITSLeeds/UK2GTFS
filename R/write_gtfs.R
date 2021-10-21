@@ -8,6 +8,7 @@
 #' @param name the name of the zip file without the .zip extension, default "gtfs"
 #' @param stripComma logical, should commas be stripped from text, default = TRUE
 #' @param stripTab logical, should tab be stripped from text, default = TRUE
+#' @param stripNewline logical, should newline tag be stripped from text, default = TRUE
 #' @param quote logical, should strings be quoted, default = FALSE
 #' @export
 #'
@@ -16,6 +17,7 @@ gtfs_write <- function(gtfs,
                        name = "gtfs",
                        stripComma = TRUE,
                        stripTab = TRUE,
+                       stripNewline = TRUE,
                        quote = FALSE) {
   if (stripComma) {
     for (i in seq_len(length(gtfs))) {
@@ -25,9 +27,10 @@ gtfs_write <- function(gtfs,
 
   if (stripTab) {
     for (i in seq_len(length(gtfs))) {
-      gtfs[[i]] <- stripTabs(gtfs[[i]])
+      gtfs[[i]] <- stripTabs(gtfs[[i]], stripNewline)
     }
   }
+
 
   #Format Dates
 
@@ -98,16 +101,21 @@ stripCommas <- function(df) {
 #' Remove tabs from data frame
 #'
 #' @param df data frame
+#' @param stripNewline logical
 #' @noRd
 #'
-stripTabs <- function(df) {
+stripTabs <- function(df, stripNewline) {
   df[] <- lapply(df, function(x) {
     if (class(x) == "character") {
       if(!all(validUTF8(x))){
         Encoding(x) <- "latin1"
         x <- enc2utf8(x)
       }
-      x <- gsub("\t", " ", x, fixed = TRUE)
+      if(stripNewline){
+        x <- gsub("[\r\n\t]", " ", x, fixed = TRUE)
+      } else {
+        x <- gsub("\t", " ", x, fixed = TRUE)
+      }
     }
     return(x)
   })

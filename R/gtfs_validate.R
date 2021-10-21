@@ -151,10 +151,6 @@ gtfs_validate_internal <- function(gtfs) {
     warning("NA values in agency")
   }
 
-  if(any(gtfs$agency$agency_id == "")){
-    warning("Blank agency_id")
-  }
-
   if(anyNA(gtfs$stops)){
     warning("NA values in stops")
   }
