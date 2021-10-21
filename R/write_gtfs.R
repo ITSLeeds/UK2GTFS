@@ -112,10 +112,9 @@ stripTabs <- function(df, stripNewline) {
         x <- enc2utf8(x)
       }
       if(stripNewline){
-        x <- gsub("[\r\n\t]", " ", x, fixed = TRUE)
-      } else {
-        x <- gsub("\t", " ", x, fixed = TRUE)
+        x <- gsub("[\r\n]", " ", x, fixed = FALSE)
       }
+      x <- gsub("\t", " ", x, fixed = TRUE)
     }
     return(x)
   })
