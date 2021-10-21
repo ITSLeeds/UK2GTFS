@@ -50,7 +50,7 @@ gtfs_merge <- function(gtfs_list, force = FALSE) {
   agency$agency_name[agency$agency_name == "Stagecoach in Lancaster."] <- "Stagecoach in Lancashire"
 
   # fix duplicated agency_ids - special cases
-  agency$agency_id[agency$agency_name == "Tanat Valley Coaches"] <- "TanVaCo"
+  #agency$agency_id[agency$agency_name == "Tanat Valley Coaches"] <- "TanVaCo"
 
   # if agency names are same as IDs but not always
   if (any(agency$agency_name == agency$agency_id)) {
