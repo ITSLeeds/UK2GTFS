@@ -9,7 +9,7 @@
 gtfs_read <- function(path){
   checkmate::assert_file_exists(path)
 
-  tmp_folder <- file.path(tempdir(),"gtfsread")
+  tmp_folder <- file.path(getwd(),"gtfsread")
   dir.create(tmp_folder)
   utils::unzip(path, exdir = tmp_folder)
 
