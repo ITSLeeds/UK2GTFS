@@ -96,7 +96,10 @@ gtfs_read <- function(path){
   } else {
     message_log <- c(message_log, "transfers.txt")
   }
-  unlink(tmp_folder, recursive = TRUE)
+
+
+  unlink(file.path(tmp_folder,files))
+  unlink(tmp_folder, recursive = TRUE, force = TRUE)
 
   if(length(message_log) > 0){
     message(paste(message_log, collapse = " "))
@@ -104,3 +107,4 @@ gtfs_read <- function(path){
 
   return(gtfs)
 }
+
