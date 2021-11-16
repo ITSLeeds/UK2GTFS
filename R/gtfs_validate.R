@@ -164,7 +164,7 @@ gtfs_validate_internal <- function(gtfs) {
   }
 
   if(anyNA(gtfs$stop_times)){
-    warning("NA values in warning_times")
+    warning("NA values in stop_times")
   }
 
   if(anyNA(gtfs$calendar)){
