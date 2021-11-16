@@ -90,7 +90,11 @@ transxchange2gtfs <- function(path_in,
     utils::unzip(path_in, exdir = file.path(tempdir(), "txc"))
     message(paste0(Sys.time(), " Unzipping complete"))
 
-    files <- list.files(file.path(tempdir(), "txc"), pattern = ".xml", full.names = TRUE)
+    files <- list.files(file.path(tempdir(), "txc"),
+                        pattern = ".xml",
+                        full.names = TRUE,
+                        recursive = TRUE)
+
   }
 
   if(length(files) == 0){
