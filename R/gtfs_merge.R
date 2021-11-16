@@ -48,6 +48,7 @@ gtfs_merge <- function(gtfs_list, force = FALSE) {
   agency$agency_name[agency$agency_name == "Edward Bros"] <- "Edwards Bros"
   agency$agency_name[agency$agency_name == "John`s Coaches"] <- "John's Coaches"
   agency$agency_name[agency$agency_name == "Stagecoach in Lancaster."] <- "Stagecoach in Lancashire"
+  agency$agency_name[agency$agency_name == "Stagecoach in South Wales"] <- "Stagecoach South Wales"
 
   # fix duplicated agency_ids - special cases
   #agency$agency_id[agency$agency_name == "Tanat Valley Coaches"] <- "TanVaCo"
