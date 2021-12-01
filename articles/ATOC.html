@@ -26,6 +26,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -38,18 +40,12 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">UK2GTFS</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.1</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-<li>
-  <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
 <li>
   <a href="../reference/index.html">Reference</a>
 </li>
@@ -74,7 +70,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/itsleeds/uk2gtfs/">
+  <a href="https://github.com/itsleeds/uk2gtfs/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -93,11 +89,11 @@
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>ATOC - Train Timetables</h1>
-                        <h4 class="author">Malcolm Morgan</h4>
+                        <h4 data-toc-skip class="author">Malcolm Morgan</h4>
             
-            <h4 class="date">2021-11-30</h4>
+            <h4 data-toc-skip class="date">2021-12-01</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/itsleeds/uk2gtfs/blob/master/vignettes/ATOC.Rmd"><code>vignettes/ATOC.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/itsleeds/uk2gtfs/blob/HEAD/vignettes/ATOC.Rmd" class="external-link"><code>vignettes/ATOC.Rmd</code></a></small>
       <div class="hidden name"><code>ATOC.Rmd</code></div>
 
     </div>
@@ -105,10 +101,10 @@
     
     
 <p>This vignette outlines how to produce GTFS timetables for the heavy rail network using ATOC CIF files.</p>
-<div id="getting-data" class="section level2">
-<h2 class="hasAnchor">
-<a href="#getting-data" class="anchor"></a>Getting Data</h2>
-<p>Data for train timetables can be downloaded from <a href="http://data.atoc.org/">ATOC</a> you will need to register for a free account and log in.</p>
+<div class="section level2">
+<h2 id="getting-data">Getting Data<a class="anchor" aria-label="anchor" href="#getting-data"></a>
+</h2>
+<p>Data for train timetables can be downloaded from <a href="http://data.atoc.org/" class="external-link">ATOC</a> you will need to register for a free account and log in.</p>
 <div class="figure" style="text-align: center">
 <img src="images/atoc_download.jpg" alt="\label{fig:atoc_download}Download ATOC data"><p class="caption">
 Download ATOC data
@@ -116,9 +112,9 @@ Download ATOC data
 </div>
 <p>You will get a zipped folder with a name like <code>ttis123.zip</code>.</p>
 </div>
-<div id="converting-atoc-data-to-gtfs" class="section level2">
-<h2 class="hasAnchor">
-<a href="#converting-atoc-data-to-gtfs" class="anchor"></a>Converting ATOC Data to GTFS</h2>
+<div class="section level2">
+<h2 id="converting-atoc-data-to-gtfs">Converting ATOC Data to GTFS<a class="anchor" aria-label="anchor" href="#converting-atoc-data-to-gtfs"></a>
+</h2>
 <p>To do a simple conversion to GTFS, load the package, and use the <code>atoc2gtfs</code> function. The function requires the following arguments.</p>
 <ul>
 <li>
@@ -129,7 +125,7 @@ Download ATOC data
 </ul>
 <p>A simple example is shown below:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/itsleeds/uk2gtfs">UK2GTFS</a></span><span class="op">)</span>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/itsleeds/uk2gtfs" class="external-link">UK2GTFS</a></span><span class="op">)</span>
 <span class="va">path_in</span> <span class="op">&lt;-</span> <span class="st">"ttis627.zip"</span>
 <span class="va">gtfs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/atoc2gtfs.html">atoc2gtfs</a></span><span class="op">(</span>path_in <span class="op">=</span> <span class="va">path_in</span>,
           ncores <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></code></pre></div>
@@ -140,18 +136,18 @@ Download ATOC data
            name <span class="op">=</span> <span class="st">"gtfs_ttis627"</span><span class="op">)</span></code></pre></div>
 <p>This will save the GTFS file to <code>C:/GTFS/gtfs_ttis627.zip</code></p>
 </div>
-<div id="alternative-data-sources" class="section level2">
-<h2 class="hasAnchor">
-<a href="#alternative-data-sources" class="anchor"></a>Alternative Data Sources</h2>
+<div class="section level2">
+<h2 id="alternative-data-sources">Alternative Data Sources<a class="anchor" aria-label="anchor" href="#alternative-data-sources"></a>
+</h2>
 <p>CIF Files are available from Network Rail, the formatting is slightly different and so a separate function <code><a href="../reference/nr2gtfs.html">nr2gtfs()</a></code> is provided.</p>
 </div>
-<div id="advanced-features" class="section level2">
-<h2 class="hasAnchor">
-<a href="#advanced-features" class="anchor"></a>Advanced features</h2>
+<div class="section level2">
+<h2 id="advanced-features">Advanced features<a class="anchor" aria-label="anchor" href="#advanced-features"></a>
+</h2>
 <p>The <code><a href="../reference/atoc2gtfs.html">atoc2gtfs()</a></code> function gives some customization options to how the GTFS file is built. It is also just a wrapper around other functions in the package. This section will explain the main steps.</p>
-<div id="importing-atoc-data" class="section level3">
-<h3 class="hasAnchor">
-<a href="#importing-atoc-data" class="anchor"></a>Importing ATOC Data</h3>
+<div class="section level3">
+<h3 id="importing-atoc-data">Importing ATOC Data<a class="anchor" aria-label="anchor" href="#importing-atoc-data"></a>
+</h3>
 <p>After unzipping the folder, the reading of the ATOC data is done with the following functions:</p>
 <ul>
 <li>
@@ -165,15 +161,15 @@ Download ATOC data
 </ul>
 <p>Other files are currently ignored.</p>
 </div>
-<div id="tiploc-locations" class="section level3">
-<h3 class="hasAnchor">
-<a href="#tiploc-locations" class="anchor"></a>TIPLOC Locations</h3>
+<div class="section level3">
+<h3 id="tiploc-locations">TIPLOC Locations<a class="anchor" aria-label="anchor" href="#tiploc-locations"></a>
+</h3>
 <p>The timetable data refers to locations such as stations, junctions, etc using a TIPLOC id. The locations of these are stored in the <code>.msn</code> file, but are not always accurate. Therefore the package comes with a <code>tiplocs</code> object which includes improved location data for TIPLOCS.</p>
 <p>IF you wanted to build using the locations included in the ATOC data, then you can use <code>locations = "file"</code> in <code><a href="../reference/atoc2gtfs.html">atoc2gtfs()</a></code> or manually build the stops using <code><a href="../reference/station2stops.html">station2stops()</a></code>.</p>
 </div>
-<div id="agency" class="section level3">
-<h3 class="hasAnchor">
-<a href="#agency" class="anchor"></a>Agency</h3>
+<div class="section level3">
+<h3 id="agency">Agency<a class="anchor" aria-label="anchor" href="#agency"></a>
+</h3>
 <p>The data required to create the GTFS <code>agency.txt</code> file is not present in the ATOC CIF files. Therefore the package contains an example file instead.</p>
 </div>
 </div>
@@ -190,11 +186,13 @@ Download ATOC data
 
 
       <footer><div class="copyright">
-  <p>Developed by Malcolm Morgan.</p>
+  <p></p>
+<p>Developed by Malcolm Morgan.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.0.</p>
 </div>
 
       </footer>
@@ -202,6 +200,8 @@ Download ATOC data
 
   
 
+
+  
 
   </body>
 </html>

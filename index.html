@@ -26,6 +26,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-home">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -38,18 +40,12 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">UK2GTFS</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.1</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-<li>
-  <a href="index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
 <li>
   <a href="reference/index.html">Reference</a>
 </li>
@@ -74,7 +70,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/itsleeds/uk2gtfs/">
+  <a href="https://github.com/itsleeds/uk2gtfs/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -91,24 +87,24 @@
 
       </header><div class="row">
   <div class="contents col-md-9">
-<div id="uk2gtfs-" class="section level1">
-<div class="page-header"><h1 class="hasAnchor">
-<a href="#uk2gtfs-" class="anchor"></a>UK2GTFS <a href="https://itsleeds.github.io/"><img src="reference/figures/logo.png" align="right" height="215/"></a>
+<div class="section level1">
+<div class="page-header"><h1 id="uk2gtfs-">UK2GTFS <a href="https://itsleeds.github.io/" class="external-link"><img src="reference/figures/logo.png" align="right" height="215/"></a>
+<a class="anchor" aria-label="anchor" href="#uk2gtfs-"></a>
 </h1></div>
-<p>UK2GTFS is an R package to convert train, tram, bus, and metro timetable data from the unfriendly and difficult to use formats used in the UK to the easy to use <a href="https://developers.google.com/transit/gtfs/">GTFS</a> format. The main purpose of developing the package is to support using <a href="https://github.com/ropensci/opentripplanner">OpenTripPlanner</a> in the UK.</p>
-<p><strong>Example results are published as <a href="https://github.com/ITSLeeds/UK2GTFS/releases">GitHub releases</a> these come with no guarantee of quality.</strong></p>
-<div id="introduction" class="section level2">
-<h2 class="hasAnchor">
-<a href="#introduction" class="anchor"></a>Introduction</h2>
-<p>The UK has two main sources of public transport timetable data <a href="https://www.travelinedata.org.uk/"><strong>traveline</strong></a> publishes data on buses and light rail and <a href="http://data.atoc.org/rail-industry-data"><strong>ATOC</strong></a> publishes data on heavy rail. Each uses a data format that is unique to that organisation and both formats are old and difficult to use. Many countries have adopted the <a href="https://developers.google.com/transit/gtfs/">GTFS</a> format which was developed by Google as a simple standard for publishing timetable data. Due to the wide-spread adoption of GTFS many useful tools have been developed that accept GTFS files as inputs. This package is intended to make the conversion of UK data to the GTFS format simple and easy.</p>
+<p>UK2GTFS is an R package to convert train, tram, bus, and metro timetable data from the unfriendly and difficult to use formats used in the UK to the easy to use <a href="https://developers.google.com/transit/gtfs/" class="external-link">GTFS</a> format. The main purpose of developing the package is to support using <a href="https://github.com/ropensci/opentripplanner" class="external-link">OpenTripPlanner</a> in the UK.</p>
+<p><strong>Example results are published as <a href="https://github.com/ITSLeeds/UK2GTFS/releases" class="external-link">GitHub releases</a> these come with no guarantee of quality.</strong></p>
+<div class="section level2">
+<h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
+</h2>
+<p>The UK has two main sources of public transport timetable data <a href="https://www.travelinedata.org.uk/" class="external-link"><strong>traveline</strong></a> publishes data on buses and light rail and <a href="http://data.atoc.org/rail-industry-data" class="external-link"><strong>ATOC</strong></a> publishes data on heavy rail. Each uses a data format that is unique to that organisation and both formats are old and difficult to use. Many countries have adopted the <a href="https://developers.google.com/transit/gtfs/" class="external-link">GTFS</a> format which was developed by Google as a simple standard for publishing timetable data. Due to the wide-spread adoption of GTFS many useful tools have been developed that accept GTFS files as inputs. This package is intended to make the conversion of UK data to the GTFS format simple and easy.</p>
 <p><strong>Update November 2020</strong></p>
-<p>The <a href="https://data.bus-data.dft.gov.uk/downloads/">Open Bus Data Service</a> Now offers a national GTFS download option based on <a href="https://www.itoworld.com">ITO World’s</a> TransXchange to GTFS converter.</p>
+<p>The <a href="https://data.bus-data.dft.gov.uk/downloads/" class="external-link">Open Bus Data Service</a> Now offers a national GTFS download option based on <a href="https://www.itoworld.com" class="external-link">ITO World’s</a> TransXchange to GTFS converter.</p>
 </div>
-<div id="capabilities---why-we-need-another-package" class="section level2">
-<h2 class="hasAnchor">
-<a href="#capabilities---why-we-need-another-package" class="anchor"></a>Capabilities - why we need another package</h2>
+<div class="section level2">
+<h2 id="capabilities---why-we-need-another-package">Capabilities - why we need another package<a class="anchor" aria-label="anchor" href="#capabilities---why-we-need-another-package"></a>
+</h2>
 <p>There are a number of pre-existing options for converting data to GTFS. This package aims to go beyond basic conversion by providing a range of additional functionality:</p>
-<ol>
+<ol style="list-style-type: decimal">
 <li>Data conversion
 <ul>
 <li>Conversion of TransXchange to GTFS</li>
@@ -141,62 +137,74 @@
 </li>
 </ol>
 </div>
-<div id="installation" class="section level2">
-<h2 class="hasAnchor">
-<a href="#installation" class="anchor"></a>Installation</h2>
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
 <p>Install the package with <strong>remotes</strong> as follows:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span> <span class="co"># If you do not already have the remotes package</span>
-<span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html">install_github</a></span><span class="op">(</span><span class="st">"ITSleeds/UK2GTFS"</span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/itsleeds/uk2gtfs">UK2GTFS</a></span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span> <span class="co"># If you do not already have the remotes package</span>
+<span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"ITSleeds/UK2GTFS"</span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/itsleeds/uk2gtfs" class="external-link">UK2GTFS</a></span><span class="op">)</span></code></pre></div>
 </div>
-<div id="use" class="section level2">
-<h2 class="hasAnchor">
-<a href="#use" class="anchor"></a>Use</h2>
-<p>You can find <a href="https://itsleeds.github.io/UK2GTFS/">full documentation for the package</a>, including a list of <a href="https://itsleeds.github.io/UK2GTFS/reference/index.html">functions</a> and more detail on converting <a href="https://itsleeds.github.io/UK2GTFS/articles/transxchange.html">TransXchange</a> and <a href="https://itsleeds.github.io/UK2GTFS/articles/ATOC.html">ATOC CIF</a>.</p>
+<div class="section level2">
+<h2 id="use">Use<a class="anchor" aria-label="anchor" href="#use"></a>
+</h2>
+<p>You can find <a href="https://itsleeds.github.io/UK2GTFS/" class="external-link">full documentation for the package</a>, including a list of <a href="https://itsleeds.github.io/UK2GTFS/reference/index.html" class="external-link">functions</a> and more detail on converting <a href="https://itsleeds.github.io/UK2GTFS/articles/transxchange.html" class="external-link">TransXchange</a> and <a href="https://itsleeds.github.io/UK2GTFS/articles/ATOC.html" class="external-link">ATOC CIF</a>.</p>
 </div>
-<div id="package-status" class="section level2">
-<h2 class="hasAnchor">
-<a href="#package-status" class="anchor"></a>Package Status</h2>
+<div class="section level2">
+<h2 id="package-status">Package Status<a class="anchor" aria-label="anchor" href="#package-status"></a>
+</h2>
 <p>This package a work in progress and comes with no guarantees. As of September 2019, it can convert most train and bus timetables to GTFS but occasionally fails on specific files.</p>
-<p>Please report failed conversions as GitHub <a href="https://github.com/itsleeds/uk2gtfs/issues">Issues</a></p>
+<p>Please report failed conversions as GitHub <a href="https://github.com/itsleeds/uk2gtfs/issues" class="external-link">Issues</a></p>
 </div>
 </div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <div class="links">
-<h2>Links</h2>
+<h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
-<li>Browse source code at <br><a href="https://github.com/itsleeds/uk2gtfs/">https://​github.com/​itsleeds/​uk2gtfs/​</a>
-</li>
-<li>Report a bug at <br><a href="https://github.com/itsleeds/uk2gtfs/issues">https://​github.com/​itsleeds/​uk2gtfs/​issues</a>
-</li>
+<li><a href="https://github.com/itsleeds/uk2gtfs/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/itsleeds/uk2gtfs/issues" class="external-link">Report a bug</a></li>
 </ul>
 </div>
+
 <div class="license">
-<h2>License</h2>
+<h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
-<li><a href="https://www.r-project.org/Licenses/GPL-3">GPL-3</a></li>
+<li><a href="https://www.r-project.org/Licenses/GPL-3" class="external-link">GPL-3</a></li>
 </ul>
 </div>
+
+
+<div class="citation">
+<h2 data-toc-skip>Citation</h2>
+<ul class="list-unstyled">
+<li><a href="authors.html#citation">Citing UK2GTFS</a></li>
+</ul>
+</div>
+
 <div class="developers">
-<h2>Developers</h2>
+<h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
-<li>Malcolm Morgan <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/0000-0002-9488-9183" target="orcid.widget" aria-label="ORCID"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
+<li>Malcolm Morgan <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/0000-0002-9488-9183" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
 </ul>
 </div>
+
+
 
   </div>
 </div>
 
 
       <footer><div class="copyright">
-  <p>Developed by Malcolm Morgan.</p>
+  <p></p>
+<p>Developed by Malcolm Morgan.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.0.</p>
 </div>
 
       </footer>
@@ -204,6 +212,8 @@
 
   
 
+
+  
 
   </body>
 </html>
