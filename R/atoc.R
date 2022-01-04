@@ -105,15 +105,14 @@ atoc2gtfs <- function(path_in,
     stops_sf <- as.data.frame(stops_sf)
     stops_sf <- stops_sf[, c(
       "stop_id", "stop_code", "stop_name",
-      "Y", "X", "valid"
+      "Y", "X"
     )]
     names(stops_sf) <- c(
       "stop_id", "stop_code", "stop_name",
-      "stop_lat", "stop_lon", "valid"
+      "stop_lat", "stop_lon"
     )
     stops_sf$stop_lat <- round(stops_sf$stop_lat, 5)
     stops_sf$stop_lon <- round(stops_sf$stop_lon, 5)
-    stops_sf$valid <- NULL
   }
 
   # Should the file be checked

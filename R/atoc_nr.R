@@ -70,15 +70,14 @@ nr2gtfs <- function(path_in,
     stops <- as.data.frame(stops)
     stops <- stops[, c(
       "stop_id", "stop_code", "stop_name",
-      "Y", "X", "valid"
+      "Y", "X"
     )]
     names(stops) <- c(
       "stop_id", "stop_code", "stop_name",
-      "stop_lat", "stop_lon", "valid"
+      "stop_lat", "stop_lon"
     )
     stops$stop_lat <- round(stops$stop_lat, 5)
     stops$stop_lon <- round(stops$stop_lon, 5)
-    stops$valid <- NULL
   } else {
     stops <- utils::read.csv(locations, stringsAsFactors = FALSE)
   }
