@@ -152,6 +152,8 @@ atoc2gtfs <- function(path_in,
       if(nrow(stops_missing) > 0){
         warning("Adding ",nrow(stops_missing)," missing tiplocs, these may have unreliable location data")
         stops <- rbind(stops_sf, stops_missing)
+      } else {
+        stops <- stops_sf
       }
 
     } else {
