@@ -73,7 +73,8 @@
   locations <span class="op">=</span> <span class="va">tiplocs</span>,
   agency <span class="op">=</span> <span class="va">atoc_agency</span>,
   shapes <span class="op">=</span> <span class="cn">FALSE</span>,
-  transfers <span class="op">=</span> <span class="cn">TRUE</span>
+  transfers <span class="op">=</span> <span class="cn">TRUE</span>,
+  missing_tiplocs <span class="op">=</span> <span class="cn">TRUE</span>
 <span class="op">)</span></code></pre></div>
     </div>
 
@@ -94,21 +95,26 @@
 <dd><p>Logical, should shapes.txt be generated (default FALSE)</p></dd>
 <dt>transfers</dt>
 <dd><p>Logical, should transfers.txt be generated (default TRUE)</p></dd>
+<dt>missing_tiplocs</dt>
+<dd><p>Logical, if locations = tiplocs, then will check for
+any missing tiplocs agains the main file and add them.(default TRUE)</p></dd>
 </dl></div>
     <div id="details">
     <h2>Details</h2>
     <p>Locations</p>
 <p>The .msn file contains the physical locations of stations and other TIPLOC
-codes (e.g. junctions). However, the quality of the locations is often poor
-only accurate to about 1km and occasionally very wrong. Therefore, the
-UK2GTFS package contains an internal dataset of the TIPLOC locations with
-better location accuracy, which are used by default.</p>
-<p>However you can also specify `locations = "file"` to use the TIPLOC locations
-in the ATOC data or provide an SF data frame of your own.</p>
+  codes (e.g. junctions). However, the quality of the locations is often poor
+  only accurate to about 1km and occasionally very wrong. Therefore, the
+  UK2GTFS package contains an internal dataset of the TIPLOC locations with
+  better location accuracy, which are used by default.</p>
+<p>However you can also specify `locations = "file"` to use the TIPLOC
+  locations in the ATOC data or provide an SF data frame of your own.</p>
+<p>Or you can provide your own sf data frame of points in the same format as
+  `tiplocs` or a path to a csv file formatted like a GTFS stops.txt</p>
 <p>Agency</p>
 <p>The ATOC files do not contain the necessary information to build the
-agency.txt file. Therfore this data is provided with the package. You can
-also pass your own data frame of agency information.</p>
+  agency.txt file. Therfore this data is provided with the package. You can
+  also pass your own data frame of agency information.</p>
     </div>
     <div id="see-also">
     <h2>See also</h2>
