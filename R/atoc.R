@@ -138,8 +138,10 @@ atoc2gtfs <- function(path_in,
 
   # Was a csv provided
   if ("character" %in% class(locations)) {
-    checkmate::check_file_exists(locations)
-    stops_csv <- utils::read.csv(locations, stringsAsFactors = FALSE)
+    if(locations != "file"){
+      checkmate::check_file_exists(locations)
+      stops_csv <- utils::read.csv(locations, stringsAsFactors = FALSE)
+    }
   }
 
   # Chose Correct stops
