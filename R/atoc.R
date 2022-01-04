@@ -10,24 +10,29 @@
 #' @param agency where to get agency.txt (see details)
 #' @param shapes Logical, should shapes.txt be generated (default FALSE)
 #' @param transfers Logical, should transfers.txt be generated (default TRUE)
+#' @param missing_tiplocs Logical, if locations = tiplocs, then will check for
+#'   any missing tiplocs agains the main file and add them.(default TRUE)
 #' @family main
 #'
 #' @details Locations
 #'
-#' The .msn file contains the physical locations of stations and other TIPLOC
-#' codes (e.g. junctions). However, the quality of the locations is often poor
-#' only accurate to about 1km and occasionally very wrong. Therefore, the
-#' UK2GTFS package contains an internal dataset of the TIPLOC locations with
-#' better location accuracy, which are used by default.
+#'   The .msn file contains the physical locations of stations and other TIPLOC
+#'   codes (e.g. junctions). However, the quality of the locations is often poor
+#'   only accurate to about 1km and occasionally very wrong. Therefore, the
+#'   UK2GTFS package contains an internal dataset of the TIPLOC locations with
+#'   better location accuracy, which are used by default.
 #'
-#' However you can also specify `locations = "file"` to use the TIPLOC locations
-#' in the ATOC data or provide an SF data frame of your own.
+#'   However you can also specify `locations = "file"` to use the TIPLOC
+#'   locations in the ATOC data or provide an SF data frame of your own.
 #'
-#' Agency
+#'   Or you can provide your own sf data frame of points in the same format as
+#'   `tiplocs` or a path to a csv file formatted like a GTFS stops.txt
 #'
-#' The ATOC files do not contain the necessary information to build the
-#' agency.txt file. Therfore this data is provided with the package. You can
-#' also pass your own data frame of agency information.
+#'   Agency
+#'
+#'   The ATOC files do not contain the necessary information to build the
+#'   agency.txt file. Therfore this data is provided with the package. You can
+#'   also pass your own data frame of agency information.
 #'
 #'
 #' @export
@@ -38,7 +43,8 @@ atoc2gtfs <- function(path_in,
                       locations = tiplocs,
                       agency = atoc_agency,
                       shapes = FALSE,
-                      transfers = TRUE) {
+                      transfers = TRUE,
+                      missing_tiplocs = TRUE) {
   # Checkmates
   checkmate::assert_character(path_in, len = 1)
   checkmate::assert_file_exists(path_in)
@@ -79,54 +85,83 @@ atoc2gtfs <- function(path_in,
 
   # Read In each File
   # alf <- importALF(files[grepl(".alf", files)])
+  # ztr = importMCA(files[grepl(".ztr",files)], silent = silent)
+
   if(transfers){
     flf <- importFLF(files[grepl(".flf", files)])
   }
 
-  if ("sf" %in% class(locations)) {
-    mca <- importMCA(
+  mca <- importMCA(
       file = files[grepl(".mca", files)],
-      silent = silent, ncores = 1
-    )
-  } else if (locations == "file") {
-    mca <- importMCA(
-      file = files[grepl(".mca", files)],
-      silent = silent, ncores = 1, full_import = TRUE
-    )
-  } else {
-    mca <- importMCA(
-      file = files[grepl(".mca", files)],
-      silent = silent, ncores = 1
-    )
-  }
-  # ztr = importMCA(files[grepl(".ztr",files)], silent = silent)
+      silent = silent,
+      ncores = 1,
+      full_import = TRUE
+  )
 
   # Get the Station Locations
+  # Are locations provided?
   if ("sf" %in% class(locations)) {
-    # load("data/tiplocs.RData")
-    stops <- cbind(locations, sf::st_coordinates(locations))
-    stops <- as.data.frame(stops)
-    stops <- stops[, c(
+    stops_sf <- cbind(locations, sf::st_coordinates(locations))
+    stops_sf <- as.data.frame(stops_sf)
+    stops_sf <- stops_sf[, c(
       "stop_id", "stop_code", "stop_name",
       "Y", "X", "valid"
     )]
-    names(stops) <- c(
+    names(stops_sf) <- c(
       "stop_id", "stop_code", "stop_name",
       "stop_lat", "stop_lon", "valid"
     )
-    stops$stop_lat <- round(stops$stop_lat, 5)
-    stops$stop_lon <- round(stops$stop_lon, 5)
-    stops$valid <- NULL
-  } else if (locations == "file") {
+    stops_sf$stop_lat <- round(stops_sf$stop_lat, 5)
+    stops_sf$stop_lon <- round(stops_sf$stop_lon, 5)
+    stops_sf$valid <- NULL
+  }
+
+  # Should the file be checked
+  check_file <- FALSE
+  if("sf" %in% class(locations) & missing_tiplocs){
+    check_file <- TRUE
+  }
+
+  if ("character" %in% class(locations)) {
+    if(locations == "file"){
+      check_file <- TRUE
+    }
+  }
+
+  if (check_file) {
     msn <- importMSN(files[grepl(".msn", files)], silent = silent)
     station <- msn[[1]]
     TI <- mca[["TI"]]
     stops.list <- station2stops(station = station, TI = TI)
-    stops <- stops.list[["stops"]]
+    stops_file <- stops.list[["stops"]]
     rm(msn,TI,stops.list)
-  } else {
-    stops <- utils::read.csv(locations, stringsAsFactors = FALSE)
   }
+
+  # Was a csv provided
+  if ("character" %in% class(locations)) {
+    checkmate::check_file_exists(locations)
+    stops_csv <- utils::read.csv(locations, stringsAsFactors = FALSE)
+  }
+
+  # Chose Correct stops
+  if(exists("stops_csv")){
+    stops <- stops_csv
+  } else if(exists("stops_sf")){
+    if(missing_tiplocs == TRUE){
+      # Combine
+      stops_missing <- stops_file[!stops_file$stop_id %in% stops_sf$stop_id,]
+      if(nrow(stops_missing) > 0){
+        warning("Adding ",nrow(stops_missing)," missing tiplocs, these may have unreliable location data")
+        stops <- rbind(stops_sf, stops_missing)
+      }
+
+    } else {
+      stops <- stops_sf
+    }
+  } else if(exists("stops_file")){
+    stops <- stops_file
+  }
+
 
   # Construct the GTFS
   stop_times <- mca[["stop_times"]]

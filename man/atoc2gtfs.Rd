@@ -11,7 +11,8 @@ atoc2gtfs(
   locations = tiplocs,
   agency = atoc_agency,
   shapes = FALSE,
-  transfers = TRUE
+  transfers = TRUE,
+  missing_tiplocs = TRUE
 )
 }
 \arguments{
@@ -29,6 +30,9 @@ atoc2gtfs(
 \item{shapes}{Logical, should shapes.txt be generated (default FALSE)}
 
 \item{transfers}{Logical, should transfers.txt be generated (default TRUE)}
+
+\item{missing_tiplocs}{Logical, if locations = tiplocs, then will check for
+any missing tiplocs agains the main file and add them.(default TRUE)}
 }
 \description{
 Convert ATOC CIF files to GTFS
@@ -36,20 +40,23 @@ Convert ATOC CIF files to GTFS
 \details{
 Locations
 
-The .msn file contains the physical locations of stations and other TIPLOC
-codes (e.g. junctions). However, the quality of the locations is often poor
-only accurate to about 1km and occasionally very wrong. Therefore, the
-UK2GTFS package contains an internal dataset of the TIPLOC locations with
-better location accuracy, which are used by default.
+  The .msn file contains the physical locations of stations and other TIPLOC
+  codes (e.g. junctions). However, the quality of the locations is often poor
+  only accurate to about 1km and occasionally very wrong. Therefore, the
+  UK2GTFS package contains an internal dataset of the TIPLOC locations with
+  better location accuracy, which are used by default.
 
-However you can also specify `locations = "file"` to use the TIPLOC locations
-in the ATOC data or provide an SF data frame of your own.
+  However you can also specify `locations = "file"` to use the TIPLOC
+  locations in the ATOC data or provide an SF data frame of your own.
 
-Agency
+  Or you can provide your own sf data frame of points in the same format as
+  `tiplocs` or a path to a csv file formatted like a GTFS stops.txt
 
-The ATOC files do not contain the necessary information to build the
-agency.txt file. Therfore this data is provided with the package. You can
-also pass your own data frame of agency information.
+  Agency
+
+  The ATOC files do not contain the necessary information to build the
+  agency.txt file. Therfore this data is provided with the package. You can
+  also pass your own data frame of agency information.
 }
 \seealso{
 Other main: 
