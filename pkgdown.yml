@@ -1,9 +1,9 @@
 pandoc: 2.7.3
-pkgdown: 2.0.1
+pkgdown: 2.0.2
 pkgdown_sha: ~
 articles:
   ATOC: ATOC.html
   GTFS: GTFS.html
   transxchange: transxchange.html
-last_built: 2022-01-13T04:25Z
+last_built: 2022-01-14T04:20Z
 
