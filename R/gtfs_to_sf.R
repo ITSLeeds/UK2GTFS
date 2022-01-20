@@ -8,6 +8,16 @@
 gtfs_stops_sf <- function(gtfs){
   stops <- gtfs$stops
 
+  if(class(stops$stop_lon) != "numeric"){
+    message("Converting stop_lon to numeric")
+    stops$stop_lon <- as.numeric(stops$stop_lon)
+  }
+
+  if(class(stops$stop_lat) != "numeric"){
+    message("Converting stop_lat to numeric")
+    stops$stop_lat <- as.numeric(stops$stop_lat)
+  }
+
   if(anyNA(stops$stop_lon) | anyNA(stops$stop_lon)){
     message("Stops with missing lat/lng removed")
     stops <- stops[!is.na(stops$stop_lon),]
