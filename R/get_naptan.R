@@ -13,17 +13,21 @@
 #'
 #' @export
 
-get_naptan <- function(url = "http://naptan.app.dft.gov.uk/DataRequest/Naptan.ashx?format=csv", naptan_extra = naptan_missing) {
+get_naptan <- function(url = "https://naptan.api.dft.gov.uk/v1/access-nodes?dataFormat=csv", naptan_extra = naptan_missing) {
 
   dir.create("temp_naptan")
   utils::download.file(url = url, destfile = "temp_naptan/Stops.csv", mode = "wb", quiet = TRUE)
-  #utils::unzip("naptan.zip", exdir = "temp_naptan", files = "Stops.csv")
   naptan <- readr::read_csv("temp_naptan/Stops.csv", progress = FALSE, show_col_types = FALSE)
   unlink("temp_naptan", recursive = TRUE)
   #file.remove("naptan.zip")
 
   # clean file
-  naptan <- naptan[, c("ATCOCode", "NaptanCode", "CommonName", "Longitude", "Latitude")]
+  naptan <- naptan[, c("ATCOCode", "NaptanCode", "CommonName", "Easting", "Northing")]
+  names(naptan) <- c("stop_id", "stop_code", "stop_name", "Easting", "Northing")
+
+  naptan <- sf::st_as_sf(naptan, coords = c("Easting", "Northing"), crs = 27700)
+  naptan <- sf::st_transform(naptan, 4326)
+  naptan <- cbind(sf::st_drop_geometry(naptan), sf::st_coordinates(naptan))
   names(naptan) <- c("stop_id", "stop_code", "stop_name", "stop_lon", "stop_lat")
 
   naptan$stop_lon <- format(round(naptan$stop_lon, 6), scientific = FALSE)
