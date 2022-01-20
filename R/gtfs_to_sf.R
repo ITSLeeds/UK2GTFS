@@ -1,5 +1,10 @@
-# Plotting help
-
+#' Make stops into an SF object
+#'
+#' Make stops.txt into a sf data frame for plotting
+#'
+#' @param gtfs a gtfs object
+#' @return sf data frame of points
+#' @export
 gtfs_stops_sf <- function(gtfs){
   stops <- gtfs$stops
 
@@ -15,7 +20,13 @@ gtfs_stops_sf <- function(gtfs){
 
 }
 
-
+#' Make trips into an SF object
+#'
+#' Make trips.txt into a sf data frame for plotting
+#'
+#' @param gtfs a gtfs object
+#' @return sf data frame of lines
+#' @export
 gtfs_trips_sf <- function(gtfs){
   stop_times <- gtfs$stop_times
   stops <- gtfs$stops
