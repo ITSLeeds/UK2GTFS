@@ -4,12 +4,13 @@
 #' Export ATOC schedule as GTFS
 #'
 #' @param stop_times stop-times
+#' @param stops stops data.frame
 #' @param schedule list of dataframes
 #' @param silent logical
 #' @param ncores number of cores to use
 #' @noRd
 #'
-schedule2routes <- function(stop_times, schedule, silent = TRUE, ncores = 1) {
+schedule2routes <- function(stop_times, stops, schedule, silent = TRUE, ncores = 1) {
 
 
   ### SECTION 1: ###############################################################################
@@ -93,7 +94,7 @@ schedule2routes <- function(stop_times, schedule, silent = TRUE, ncores = 1) {
   # make make the trips.txt  file by matching the calnedar to the stop_times
 
   trips <- calendar[, c("service_id", "trip_id", "rowID", "ATOC Code", "Train Status")]
-  trips <- longnames(routes = trips, stop_times = stop_times)
+  trips <- longnames(routes = trips, stop_times = stop_times, stops = stops)
 
   ### SECTION 4: ###############################################################################
   # make make the routes.txt

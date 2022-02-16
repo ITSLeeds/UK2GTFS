@@ -299,7 +299,6 @@ checkrows <- function(tmp) {
   }
 }
 
-# TODO: make mode affect name
 #' internal function for contructing longnames of routes
 #'
 #' @details
@@ -307,9 +306,10 @@ checkrows <- function(tmp) {
 #'
 #' @param routes routes data.frame
 #' @param stop_times stop_times data.frame
+#' @param stops stops data.frame
 #' @noRd
 #'
-longnames <- function(routes, stop_times) {
+longnames <- function(routes, stop_times, stops) {
   stop_times_sub <- dplyr::group_by(stop_times, trip_id)
   stop_times_sub <- dplyr::summarise(stop_times_sub,
     schedule = unique(schedule),
@@ -318,10 +318,13 @@ longnames <- function(routes, stop_times) {
     stop_b = stop_id[stop_sequence == max(stop_sequence)]
   )
 
-  stop_times_sub$route_long_name <- paste0("Train from ",
-                                           stop_times_sub$stop_a,
+  stop_times_sub$route_long_name <- paste0("From ",
+                                           stops[stop_id == stop_times_sub$stop_a]$stop_name,
                                            " to ",
-                                           stop_times_sub$stop_b)
+                                           stops[stop_id == stop_times_sub$stop_b]$stop_name)
+
+  stop_times_sub$route_long_name <- gsub(" Rail Station", "" , stop_times_sub$route_long_name)
+
   stop_times_sub <- stop_times_sub[!duplicated(stop_times_sub$schedule), ]
   stop_times_sub <- stop_times_sub[, c("schedule", "route_long_name")]
 
