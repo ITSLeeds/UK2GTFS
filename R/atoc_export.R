@@ -313,15 +313,24 @@ longnames <- function(routes, stop_times, stops) {
   stop_times_sub <- dplyr::group_by(stop_times, trip_id)
   stop_times_sub <- dplyr::summarise(stop_times_sub,
     schedule = unique(schedule),
-    stop_a = stop_id[stop_sequence == 1],
+    stop_id_a = stop_id[stop_sequence == 1],
     # seq = min(stop_sequence),
-    stop_b = stop_id[stop_sequence == max(stop_sequence)]
+    stop_id_b = stop_id[stop_sequence == max(stop_sequence)]
+  )
+
+  # Look-up the stop_names field from stop_id_a and stop_id_b
+  # in stops and put that into stop_name_a and stop_name_b
+  stop_times_sub <- dplyr::merge(
+    stop_times_sub,
+    stops[, c("stop_id", "stop_name")],
+    by = c("stop_id_a", "stop_id_b"),
+    all.x = TRUE
   )
 
   stop_times_sub$route_long_name <- paste0("From ",
-                                           stops[stops$stop_id == stop_times_sub$stop_a]$stop_name,
+                                           stop_times_sub$stop_name_a,
                                            " to ",
-                                           stops[stops$stop_id == stop_times_sub$stop_b]$stop_name)
+                                           stop_times_sub$stop_name_b)
 
   stop_times_sub$route_long_name <- gsub(" Rail Station", "" , stop_times_sub$route_long_name)
 
