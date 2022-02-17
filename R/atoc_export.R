@@ -302,7 +302,7 @@ checkrows <- function(tmp) {
 #' internal function for contructing longnames of routes
 #'
 #' @details
-#' creates the long name of a route from appopriate variaibles
+#' creates the long name of a route from appropriate variaibles
 #'
 #' @param routes routes data.frame
 #' @param stop_times stop_times data.frame
@@ -349,7 +349,7 @@ longnames <- function(routes, stop_times, stops) {
 #' @details
 #' split overlapping start and end dates
 #'
-#' @param schedule scheduel data.frame
+#' @param schedule schedule data.frame
 #' @param ncores number of processes for parallel processing (default = 1)
 #' @noRd
 #'
