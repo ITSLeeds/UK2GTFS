@@ -320,7 +320,7 @@ longnames <- function(routes, stop_times, stops) {
 
   # Look-up the stop_names field from stop_id_a and stop_id_b
   # in stops and put that into stop_name_a and stop_name_b
-  stop_times_sub <- dplyr::merge(
+  stop_times_sub <- dplyr::left_join(
     stop_times_sub,
     stops[, c("stop_id", "stop_name")],
     by = c("stop_id_a", "stop_id_b"),
