@@ -319,9 +319,9 @@ longnames <- function(routes, stop_times, stops) {
   )
 
   stop_times_sub$route_long_name <- paste0("From ",
-                                           stops[stop_id == stop_times_sub$stop_a]$stop_name,
+                                           stops[stops$stop_id == stop_times_sub$stop_a]$stop_name,
                                            " to ",
-                                           stops[stop_id == stop_times_sub$stop_b]$stop_name)
+                                           stops[stops$stop_id == stop_times_sub$stop_b]$stop_name)
 
   stop_times_sub$route_long_name <- gsub(" Rail Station", "" , stop_times_sub$route_long_name)
 
