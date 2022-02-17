@@ -318,13 +318,16 @@ longnames <- function(routes, stop_times, stops) {
     stop_id_b = stop_id[stop_sequence == max(stop_sequence)]
   )
 
-  # Look-up the stop_names field from stop_id_a and stop_id_b
-  # in stops and put that into stop_name_a and stop_name_b
+  # Add names for `stop_id_[a|b]` as `stop_name_[a|b]`
   stop_times_sub <- dplyr::left_join(
     stop_times_sub,
-    stops[, c("stop_id", "stop_name")],
-    by = c("stop_id_a", "stop_id_b"),
-    all.x = TRUE
+    rename(stops[, c("stop_id", "stop_name")], stop_name_a = stop_name),
+    by = c("stop_id_a" = "stop_id")
+  )
+  stop_times_sub <- dplyr::left_join(
+    stop_times_sub,
+    rename(stops[, c("stop_id", "stop_name")], stop_name_b = stop_name),
+    by = c("stop_id_b" = "stop_id")
   )
 
   stop_times_sub$route_long_name <- paste0("From ",
