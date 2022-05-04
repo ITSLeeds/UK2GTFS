@@ -2,7 +2,7 @@
 #'
 #' Clips the GTFS file to only include stops within the bounds object, trips
 #' that cross the bouundary of the the object are truncated. Any trips that stop
-#' only once in the bounds are removed completly.
+#' only once in the bounds are removed completely.
 #'
 #' @param gtfs a gtfs object
 #' @param bounds an sf data frame of polygons or multipolygons with CRS 4326
