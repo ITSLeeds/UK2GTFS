@@ -67,10 +67,19 @@
     <loc>/reference/gtfs_read.html</loc>
   </url>
   <url>
+    <loc>/reference/gtfs_routes_sf.html</loc>
+  </url>
+  <url>
     <loc>/reference/gtfs_split.html</loc>
   </url>
   <url>
     <loc>/reference/gtfs_split_ids.html</loc>
+  </url>
+  <url>
+    <loc>/reference/gtfs_stops_sf.html</loc>
+  </url>
+  <url>
+    <loc>/reference/gtfs_trips_sf.html</loc>
   </url>
   <url>
     <loc>/reference/gtfs_validate_internal.html</loc>
@@ -101,6 +110,9 @@
   </url>
   <url>
     <loc>/reference/naptan_replace.html</loc>
+  </url>
+  <url>
+    <loc>/reference/ni2gtfs.html</loc>
   </url>
   <url>
     <loc>/reference/nr2gtfs.html</loc>

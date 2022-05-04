@@ -50,7 +50,7 @@
   <a href="reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Articles
      
     <span class="caret"></span>
@@ -105,29 +105,25 @@
 </h2>
 <p>There are a number of pre-existing options for converting data to GTFS. This package aims to go beyond basic conversion by providing a range of additional functionality:</p>
 <ol style="list-style-type: decimal">
-<li>Data conversion
-<ul>
+<li>Data conversion<ul>
 <li>Conversion of TransXchange to GTFS</li>
 <li>Conversion of ATOC CIF files to GTFS</li>
 <li>reading of TransXchange and CIF files is also supported, although some parts which are not required for GTFS conversion are only partially supported.</li>
 </ul>
 </li>
-<li>Data cleaning, the raw data often contains clear errors, the package does not blindly convert but also corrects some known errors
-<ul>
+<li>Data cleaning, the raw data often contains clear errors, the package does not blindly convert but also corrects some known errors<ul>
 <li>Improved locations of tiplocs - used to locate feature on the heavy rail network</li>
 <li>Add bus stops missing in the NAPTAN</li>
 <li>Correction of spelling errors</li>
 <li>Removal of on-demand bus services (GTFS does not support services that are on-demand)</li>
 </ul>
 </li>
-<li>Data polishing
-<ul>
+<li>Data polishing<ul>
 <li>Support of journeys past midnight</li>
 <li>Routing of train journeys along tracks rather than straight lines between stops (work in progress)</li>
 </ul>
 </li>
-<li>GTFS tools, functions for working with GTFS data
-<ul>
+<li>GTFS tools, functions for working with GTFS data<ul>
 <li>Reading / Writing</li>
 <li>Cleaning</li>
 <li>Compression</li>
@@ -204,7 +200,7 @@
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
 </div>
 
       </footer>
