@@ -10,16 +10,6 @@ ni2gtfs(path_in, silent = FALSE)
 \item{path_in}{Path to CIF file}
 
 \item{silent}{Logical, should progress be shown}
-
-\item{ncores}{Numeric, When parallel processing how many cores to use}
-
-\item{cal}{Calendar object from get_bank_holidays()}
-
-\item{naptan}{Naptan stop locations from get_naptan()}
-
-\item{try_mode}{Logical, if TRUE import and conversion are wrapped in try
-calls thus a failure on a single file will not cause the whole process to
-fail. Warning this could result in a GTFS file with missing routes.}
 }
 \value{
 A GTFS named list
