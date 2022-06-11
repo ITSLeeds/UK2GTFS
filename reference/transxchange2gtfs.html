@@ -82,29 +82,46 @@
     <h2>Arguments</h2>
     <dl><dt>path_in</dt>
 <dd><p>Path to zipped transxchange files</p></dd>
+
+
 <dt>silent</dt>
 <dd><p>Logical, should progress be shown</p></dd>
+
+
 <dt>ncores</dt>
 <dd><p>Numeric, When parallel processing how many cores to use</p></dd>
+
+
 <dt>cal</dt>
 <dd><p>Calendar object from get_bank_holidays()</p></dd>
+
+
 <dt>naptan</dt>
 <dd><p>Naptan stop locations from get_naptan()</p></dd>
+
+
 <dt>scotland</dt>
 <dd><p>character, should Scottish bank holidays be used? Can be
 "auto" (defualt), "yes", "no". If "auto" and path_in ends with "S.zip"
 Scottish bank holidays will be used, otherwise England and Wales bank
 holidays are used.</p></dd>
+
+
 <dt>try_mode</dt>
 <dd><p>Logical, if TRUE import and conversion are wrapped in try
 calls thus a failure on a single file will not cause the whole process to
 fail. Warning this could result in a GTFS file with missing routes.</p></dd>
+
+
 <dt>force_merge</dt>
 <dd><p>Logical, passed to gtfs_merge(force), default FALSE</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>A GTFS named list</p>
+    
+
+<p>A GTFS named list</p>
     </div>
     <div id="details">
     <h2>Details</h2>
@@ -129,7 +146,7 @@ quite some time, before starting to move rapidly.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.4.</p>
 </div>
 
       </footer></div>
