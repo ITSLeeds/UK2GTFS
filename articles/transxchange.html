@@ -91,7 +91,7 @@
       <h1 data-toc-skip>TransXchange - Bus, Tram, and Tube Timetables</h1>
                         <h4 data-toc-skip class="author">Malcolm Morgan</h4>
             
-            <h4 data-toc-skip class="date">2022-06-24</h4>
+            <h4 data-toc-skip class="date">2022-06-25</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/itsleeds/uk2gtfs/blob/HEAD/vignettes/transxchange.Rmd" class="external-link"><code>vignettes/transxchange.Rmd</code></a></small>
       <div class="hidden name"><code>transxchange.Rmd</code></div>
@@ -122,15 +122,15 @@
 </ul>
 <p>A simple example is shown below:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/itsleeds/uk2gtfs" class="external-link">UK2GTFS</a></span><span class="op">)</span>
-<span class="va">path_in</span> <span class="op">&lt;-</span> <span class="st">"EA.zip"</span>
-<span class="va">gtfs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/transxchange2gtfs.html">transxchange2gtfs</a></span><span class="op">(</span>path_in <span class="op">=</span> <span class="va">path_in</span>,
-          ncores <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/itsleeds/uk2gtfs" class="external-link">UK2GTFS</a></span><span class="op">)</span></span>
+<span><span class="va">path_in</span> <span class="op">&lt;-</span> <span class="st">"EA.zip"</span></span>
+<span><span class="va">gtfs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/transxchange2gtfs.html">transxchange2gtfs</a></span><span class="op">(</span>path_in <span class="op">=</span> <span class="va">path_in</span>,</span>
+<span>          ncores <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
 <p>Once the conversion has been completed, you can save the GTFS file.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/gtfs_write.html">gtfs_write</a></span><span class="op">(</span><span class="va">gtfs</span>, 
-           folder <span class="op">=</span> <span class="st">"C:/GTFS"</span>,
-           name <span class="op">=</span> <span class="st">"gtfs_EA"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/gtfs_write.html">gtfs_write</a></span><span class="op">(</span><span class="va">gtfs</span>, </span>
+<span>           folder <span class="op">=</span> <span class="st">"C:/GTFS"</span>,</span>
+<span>           name <span class="op">=</span> <span class="st">"gtfs_EA"</span><span class="op">)</span></span></code></pre></div>
 <p>This will save the GTFS file to <code>C:/GTFS/gtfs_EA.zip</code></p>
 </div>
 <div class="section level2">
