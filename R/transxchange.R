@@ -38,13 +38,15 @@ transxchange2gtfs <- function(path_in,
                               naptan = get_naptan(),
                               scotland = "auto",
                               try_mode = TRUE,
-                              force_merge = FALSE) {
+                              force_merge = FALSE,
+                              extension = "xml") {
   # Check inputs
   checkmate::assert_numeric(ncores)
   checkmate::assert_logical(silent)
   checkmate::assert_character(scotland)
   checkmate::assert_file_exists(path_in)
   checkmate::assert_logical(try_mode)
+  checkmate::assert_choice(extension, c("xml","txc"))
 
   if (ncores == 1) {
     message(paste0(Sys.time(), " This will take some time, make sure you use 'ncores' to enable multi-core processing"))
@@ -82,8 +84,8 @@ transxchange2gtfs <- function(path_in,
   }
 
   if (length(path_in) > 1) {
-    message("Parsing provided xml files")
-    files <- path_in[substr(path_in, nchar(path_in) - 4 + 1, nchar(path_in)) == ".xml"]
+    message("Parsing provided ",extension," files")
+    files <- path_in[substr(path_in, nchar(path_in) - 4 + 1, nchar(path_in)) == paste0(".",extension)]
   } else {
     dir.create(file.path(tempdir(), "txc"))
     message(paste0(Sys.time(), " Unzipping data to temp folder"))
@@ -91,16 +93,16 @@ transxchange2gtfs <- function(path_in,
     message(paste0(Sys.time(), " Unzipping complete"))
 
     files <- list.files(file.path(tempdir(), "txc"),
-                        pattern = ".xml",
+                        pattern = paste0(".",extension),
                         full.names = TRUE,
                         recursive = TRUE)
 
   }
 
   if(length(files) == 0){
-    stop("No XML files found")
+    stop("No ",extension," files found")
   } else {
-    message(length(files), " xml files have been found")
+    message(length(files)," ",extension," files have been found")
   }
 
 

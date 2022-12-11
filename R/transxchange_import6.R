@@ -62,6 +62,25 @@ transxchange_import <- function(file, run_debug = TRUE, full_import = FALSE) {
   if (run_debug) {
     if (xml2::xml_length(Services) > 1) {
       stop("More than one service")
+      # Loop over services?
+      Services <- xml2::xml_children(Services)
+      Services_list <- list()
+      for(i in seq_len(length(Services))){
+        Services_list[[i]] <- import_services(Services[i], full_import = full_import)
+      }
+      StandardService <- lapply(Services_list, `[[`, "StandardService")
+      StandardService <- data.table::rbindlist(StandardService, fill = TRUE)
+      StandardService <- as.data.frame(StandardService)
+
+      Services_main <- lapply(Services_list, `[[`, "Services_main")
+      Services_main <- data.table::rbindlist(Services_main, fill = TRUE)
+      Services_main <- as.data.frame(Services_main)
+
+      SpecialDaysOperation <- lapply(Services_list, `[[`, "SpecialDaysOperation")
+      SpecialDaysOperation <- data.table::rbindlist(SpecialDaysOperation, fill = TRUE)
+      SpecialDaysOperation <- as.data.frame(SpecialDaysOperation)
+      rm(Services,Services_list)
+
     }
   }
   Services <- import_services(Services, full_import = full_import)
@@ -99,7 +118,11 @@ transxchange_import <- function(file, run_debug = TRUE, full_import = FALSE) {
         Operators <- Operators[1, ]
         Services_main$RegisteredOperatorRef <- Operators$OperatorCode
       } else {
-        stop("Can't force realtionship between Operators and Services")
+        if(all(Operators$OperatorCode %in% Services_main$RegisteredOperatorRef)){
+          warning("Proceding with muliple operators")
+        } else {
+          stop("Can't force realtionship between Operators and Services")
+        }
       }
     }
   }
