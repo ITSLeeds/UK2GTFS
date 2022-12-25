@@ -159,8 +159,9 @@ clean_times <- function(x) {
 #' clean route type
 #' Change rout types from charater to gtfs code
 #' @param rt character route type
+#' @param guess_bus if true guess bus otherwise fail
 #' @noRd
-clean_route_type <- function(rt) {
+clean_route_type <- function(rt, guess_bus = FALSE) {
   if (is.na(rt)) {
     return(3)
   } else if (rt == "bus") {
@@ -177,8 +178,19 @@ clean_route_type <- function(rt) {
     return(0)
   } else if (rt == "metro") {
     return(1)
+  } else if (rt == "TRAIN") {
+    return(2)
+  } else if (rt == "- B") {
+    return(2)
+  } else if (rt == "BUS") {
+    return(3)
   } else {
-    stop(paste0("Unknown route_type ", rt))
+    if(guess_bus){
+      return(3)
+    } else {
+      stop(paste0("Unknown route_type ", rt))
+    }
+
   }
 }
 

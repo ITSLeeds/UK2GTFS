@@ -1,6 +1,6 @@
 #' Agency.txt for ATOC data
 #'
-#' The ATOC data does not included sufficent infomration to build agency.txt
+#' The ATOC data does not included sufficient information to build agency.txt
 #' So this data is provided in the package.
 #'
 #' @format A data frame
@@ -8,7 +8,7 @@
 
 #' Tiploc Locations
 #'
-#' The ATOC data has innacuate locations for many tiplocs, this is an improved dataset
+#' The ATOC data has inaccurate locations for many tiplocs, this is an improved dataset
 #'
 #' @format A SF data frame for points
 "tiplocs"
@@ -20,8 +20,8 @@
 #' Within the CIF files an Activity code identifies what happens at each
 #' location. A full set of activity codes is listed at
 #' https://wiki.openraildata.com/index.php?title=Activity_codes. It is possible
-#' to have multiple acticities happening at the same location. This file
-#' contains a lookup table to match groups of acticity code with their
+#' to have multiple activities happening at the same location. This file
+#' contains a look up table to match groups of activity code with their
 #' corresponding form in the GTFS file.
 #'
 #'
@@ -67,3 +67,13 @@
 #'
 #' @format A SF data frame
 "rail_heavy"
+
+
+#' Historic Bank Holidays
+#'
+#' Bank holidays from 2001 to 2018 in the UK. Note Wales has the same holidays
+#' as England.
+#'
+#'
+#' @format A data frame with 4 columns
+"historic_bank_holidays"
