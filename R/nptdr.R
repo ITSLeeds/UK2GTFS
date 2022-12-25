@@ -10,7 +10,7 @@
 #' @export
 nptdr2gtfs <- function(path = "C:/Users/malco/OneDrive - University of Leeds/Data/UK2GTFS/NPTDR/October-2004.zip",
                        silent = FALSE,
-                       n_files = NA){
+                       n_files = NULL){
   checkmate::assert_file_exists(path, extension = "zip")
   dir.create(file.path(tempdir(),"nptdr_temp"))
 
@@ -63,10 +63,10 @@ nptdr2gtfs <- function(path = "C:/Users/malco/OneDrive - University of Leeds/Dat
   }
 
   # Import each CIF file
-  if(is.na(n_files)){
-    res <- purrr::map(fls_cif, importCIF, .progress = TRUE)
+  if(is.null(n_files)){
+    res <- purrr::map(fls_cif, importCIF, .progress = "Reading files ")
   } else {
-    res <- purrr::map(fls_cif[n_files], importCIF, .progress = TRUE)
+    res <- purrr::map(fls_cif[n_files], importCIF, .progress = "Reading files ")
   }
 
   unlink(file.path(tempdir(),"nptdr_temp"), recursive = TRUE)
@@ -77,8 +77,6 @@ nptdr2gtfs <- function(path = "C:/Users/malco/OneDrive - University of Leeds/Dat
   }
 
   # TODO: In order(stop_times$schedule, as.numeric(stop_times$departure_time))
-
-  stop_time
   res <- purrr::map(res, `[[`, "stop_times")
   location <- purrr::map(res, `[[`, "locations")
   schedule <- purrr::map(res, `[[`, "schedule")

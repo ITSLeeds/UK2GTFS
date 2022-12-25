@@ -27,7 +27,7 @@ Imports:
   geodist,
   iotools,
   jsonlite,
-  purrr,
+  purrr (>= 1.0),
   digest,
   lubridate,
   zip,
