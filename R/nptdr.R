@@ -14,7 +14,7 @@ nptdr2gtfs <- function(path = "C:/Users/malco/OneDrive - University of Leeds/Dat
   checkmate::assert_file_exists(path, extension = "zip")
   dir.create(file.path(tempdir(),"nptdr_temp"))
 
-  unzip(path, exdir = file.path(tempdir(),"nptdr_temp"))
+  utils::unzip(path, exdir = file.path(tempdir(),"nptdr_temp"))
 
   # List the files
 
@@ -42,7 +42,7 @@ nptdr2gtfs <- function(path = "C:/Users/malco/OneDrive - University of Leeds/Dat
   dir.create(file.path(tempdir(),"nptdr_temp","areas"))
 
   for(i in seq_len(length(fls_admin))){
-    unzip(fls_admin[i], exdir = file.path(tempdir(),"nptdr_temp","areas"))
+    utils::unzip(fls_admin[i], exdir = file.path(tempdir(),"nptdr_temp","areas"))
   }
 
   fls_cif <- list.files(file.path(tempdir(),"nptdr_temp","areas"),
@@ -137,9 +137,9 @@ nptdr_naptan_import <- function(path_naptan){
 
   dir.create(file.path(tempdir(),"nptdr_temp","naptan"))
 
-  unzip(path_naptan, exdir = file.path(tempdir(),"nptdr_temp","naptan"))
+  utils::unzip(path_naptan, exdir = file.path(tempdir(),"nptdr_temp","naptan"))
 
-  naptan_stops <- read.csv(file.path(tempdir(),"nptdr_temp","naptan","stops.csv"))
+  naptan_stops <- utils::read.csv(file.path(tempdir(),"nptdr_temp","naptan","stops.csv"))
   naptan_stops <- naptan_stops[,c("ATCOCode","Lon","Lat","CommonName")]
   names(naptan_stops) <- c("stop_id","stop_lon","stop_lat","stop_name")
 
@@ -489,7 +489,7 @@ nptdr_schedule2routes <- function(stop_times, schedule, exceptions, silent = TRU
                                       lubridate::ymd("2011-12-31"),
                                       schedule$end_date)
 
-  data(historic_bank_holidays)
+  utils::data(historic_bank_holidays)
 
   # build the calendar file
   res <- nptdr_makeCalendar(schedule = schedule, exceptions = exceptions,
