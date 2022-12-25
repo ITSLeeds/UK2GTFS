@@ -9,10 +9,12 @@
 #'
 #' @noRd
 #'
-transxchange_export <- function(obj, run_debug = TRUE,
+transxchange_export <- function(obj,
+                                run_debug = TRUE,
                                 cal = get_bank_holidays(),
                                 naptan = get_naptan(),
-                                quiet = TRUE, scotland = FALSE) {
+                                quiet = TRUE,
+                                scotland = FALSE) {
   JourneyPatternSections <- obj[["JourneyPatternSections"]]
   Operators <- obj[["Operators"]]
   Routes <- obj[["Routes"]]
@@ -49,11 +51,18 @@ transxchange_export <- function(obj, run_debug = TRUE,
     }
   }
 
+  if(class(ServicedOrganisations) == "data.frame"){
+    if(nrow(ServicedOrganisations) == 0){
+      ServicedOrganisations <- NULL
+    }
+  }
 
   # Early Subsets - move to import code
   VehicleJourneys <- VehicleJourneys[, c(
-    "VehicleJourneyCode", "ServiceRef", "JourneyPatternRef", "DepartureTime", "DaysOfWeek",
-    "BankHolidaysOperate", "BankHolidaysNoOperate", "ServicedDaysOfOperation", "ServicedDaysOfNonOperation",
+    "VehicleJourneyCode", "ServiceRef", "JourneyPatternRef", "DepartureTime",
+    "DaysOfWeek","BankHolidaysOperate", "BankHolidaysNoOperate",
+    "ServicedDaysOfOperation", "ServicedDaysOfOperationType",
+    "ServicedDaysOfNonOperation", "ServicedDaysOfNonOperationType",
     "BHDaysOfOperation", "BHDaysOfNonOperation"
   )]
   if (anyNA(VehicleJourneys$JourneyPatternRef)) {
@@ -73,58 +82,108 @@ transxchange_export <- function(obj, run_debug = TRUE,
     }
   }
 
-
-
   # Split Service Organisations
   if (class(ServicedOrganisations) == "data.frame") {
-    vj_so <- VehicleJourneys[, c("VehicleJourneyCode", "ServicedDaysOfOperation", "ServicedDaysOfNonOperation")]
+    vj_so <- VehicleJourneys[, c("VehicleJourneyCode",
+                                 "ServicedDaysOfOperation",
+                                 "ServicedDaysOfOperationType",
+                                 "ServicedDaysOfNonOperation",
+                                 "ServicedDaysOfNonOperationType")]
 
-    ServicedOrganisations_workdays <- ServicedOrganisations[, c("OrganisationCode", "WorkingDays.StartDate", "WorkingDays.EndDate")]
-    ServicedOrganisations_holidays <- ServicedOrganisations[, c("OrganisationCode", "Holidays.StartDate", "Holidays.EndDate", "Holidays.Description")]
-    ServicedOrganisations_workdays <- ServicedOrganisations_workdays[!is.na(ServicedOrganisations_workdays$WorkingDays.StartDate), ]
-    ServicedOrganisations_holidays <- ServicedOrganisations_holidays[!is.na(ServicedOrganisations_holidays$Holidays.StartDate), ]
-    if (nrow(ServicedOrganisations_workdays) == 0) {
-      ServicedOrganisations_workdays <- NULL
+    # CHeck for servide day of operation or non-operation
+    vj_so_do <- vj_so[, c("VehicleJourneyCode", "ServicedDaysOfOperation","ServicedDaysOfOperationType")]
+    vj_so_do <- vj_so_do[!is.na(vj_so_do$ServicedDaysOfOperation), ]
+    vj_so_no <- vj_so[, c("VehicleJourneyCode", "ServicedDaysOfNonOperation","ServicedDaysOfNonOperationType")]
+    vj_so_no <- vj_so_no[!is.na(vj_so_no$ServicedDaysOfNonOperation), ]
+
+    # Check that orgnisations don't have both holidays and wordays in the same row
+    ServicedOrganisations_work <- ServicedOrganisations[,c("OrganisationCode",
+                                                           "WorkingDays.StartDate",
+                                                           "WorkingDays.EndDate")]
+    names(ServicedOrganisations_work) <- c("OrganisationCode","StartDate","EndDate")
+    ServicedOrganisations_work$Type <- "WorkingDays"
+    ServicedOrganisations_hol <- ServicedOrganisations[,c("OrganisationCode",
+                                                           "Holidays.StartDate",
+                                                           "Holidays.EndDate")]
+    names(ServicedOrganisations_hol) <- c("OrganisationCode","StartDate","EndDate")
+    ServicedOrganisations_hol$Type <- "Holidays"
+
+    ServicedOrganisations <- rbind(ServicedOrganisations_work, ServicedOrganisations_hol)
+    ServicedOrganisations <- ServicedOrganisations[!is.na(ServicedOrganisations$StartDate),]
+
+    if(nrow(vj_so_do) > 0){
+      vj_so_do <- dplyr::left_join(vj_so_do, ServicedOrganisations,
+                                   by = c("ServicedDaysOfOperation" = "OrganisationCode",
+                                          "ServicedDaysOfOperationType" = "Type"))
+      vj_so_do <- vj_so_do[,c("VehicleJourneyCode", "StartDate", "EndDate")]
+      vj_so_do <- vj_so_do[!is.na(vj_so_do$StartDate),]
     } else {
-      vj_so_do <- vj_so[, c("VehicleJourneyCode", "ServicedDaysOfOperation")]
-      vj_so_do <- vj_so_do[!is.na(vj_so_do$ServicedDaysOfOperation), ]
-      if (nrow(vj_so_do) > 0) {
-        ServicedOrganisations_workdays <- dplyr::left_join(ServicedOrganisations_workdays,
-          vj_so_do,
-          by = c("OrganisationCode" = "ServicedDaysOfOperation")
-        )
-        ServicedOrganisations_workdays <- ServicedOrganisations_workdays[, c("VehicleJourneyCode", "WorkingDays.StartDate", "WorkingDays.EndDate")]
-        names(ServicedOrganisations_workdays) <- c("VehicleJourneyCode", "StartDate", "EndDate")
-      } else {
-        ServicedOrganisations_workdays <- NULL
-        # stop("check this, service that runs only during holidays?")
-      }
+      vj_so_do <- NULL
     }
 
-    if (nrow(ServicedOrganisations_holidays) == 0) {
-      ServicedOrganisations_holidays <- NULL
+    if(nrow(vj_so_no) > 0){
+      vj_so_no <- dplyr::left_join(vj_so_no, ServicedOrganisations,
+                                   by = c("ServicedDaysOfNonOperation" = "OrganisationCode",
+                                          "ServicedDaysOfNonOperationType" = "Type"))
+      vj_so_no <- vj_so_no[,c("VehicleJourneyCode", "StartDate", "EndDate")]
+      vj_so_no <- vj_so_no[!is.na(vj_so_no$StartDate),]
     } else {
-      vj_so_no <- vj_so[, c("VehicleJourneyCode", "ServicedDaysOfNonOperation")]
-      vj_so_no <- vj_so_no[!is.na(vj_so_no$ServicedDaysOfNonOperation), ]
-      if (nrow(vj_so_no) > 0) {
-        ServicedOrganisations_holidays <- dplyr::left_join(ServicedOrganisations_holidays,
-          vj_so_no,
-          by = c("OrganisationCode" = "ServicedDaysOfNonOperation")
-        )
-        ServicedOrganisations_holidays <- ServicedOrganisations_holidays[, c("VehicleJourneyCode", "Holidays.StartDate", "Holidays.EndDate")]
-        names(ServicedOrganisations_holidays) <- c("VehicleJourneyCode", "StartDate", "EndDate")
-        if (all(is.na(ServicedOrganisations_holidays$VehicleJourneyCode))) {
-          ServicedOrganisations_holidays <- NULL
-        }
-      } else {
-        ServicedOrganisations_holidays <- NULL
-        # stop("check this, service that runs only during holidays?")
-      }
+      vj_so_no <- NULL
     }
-  } else {
-    ServicedOrganisations_workdays <- NULL
-    ServicedOrganisations_holidays <- NULL
-  }
+
+
+
+
+  #   # Get holidays and workdays
+  #   ServicedOrganisations_workdays <- ServicedOrganisations[, c("OrganisationCode", "WorkingDays.StartDate", "WorkingDays.EndDate")]
+  #   ServicedOrganisations_holidays <- ServicedOrganisations[, c("OrganisationCode", "Holidays.StartDate", "Holidays.EndDate", "Holidays.Description")]
+  #   ServicedOrganisations_workdays <- ServicedOrganisations_workdays[!is.na(ServicedOrganisations_workdays$WorkingDays.StartDate), ]
+  #   ServicedOrganisations_holidays <- ServicedOrganisations_holidays[!is.na(ServicedOrganisations_holidays$Holidays.StartDate), ]
+  #
+  #
+  #   if (nrow(ServicedOrganisations_workdays) == 0) {
+  #     ServicedOrganisations_workdays <- NULL
+  #   } else {
+  #
+  #     if (nrow(vj_so_do) > 0) {
+  #       ServicedOrganisations_workdays <- dplyr::left_join(ServicedOrganisations_workdays,
+  #         vj_so_do,
+  #         by = c("OrganisationCode" = "ServicedDaysOfOperation")
+  #       )
+  #       ServicedOrganisations_workdays <- ServicedOrganisations_workdays[, c("VehicleJourneyCode", "WorkingDays.StartDate", "WorkingDays.EndDate")]
+  #       names(ServicedOrganisations_workdays) <- c("VehicleJourneyCode", "StartDate", "EndDate")
+  #     } else {
+  #       ServicedOrganisations_workdays <- NULL
+  #       # stop("check this, service that runs only during holidays?")
+  #     }
+  #   }
+  #
+  #
+  #   if (nrow(ServicedOrganisations_holidays) == 0) {
+  #     ServicedOrganisations_holidays <- NULL
+  #   } else {
+  #
+  #     if (nrow(vj_so_no) > 0) {
+  #       ServicedOrganisations_holidays <- dplyr::left_join(ServicedOrganisations_holidays,
+  #         vj_so_no,
+  #         by = c("OrganisationCode" = "ServicedDaysOfNonOperation")
+  #       )
+  #       ServicedOrganisations_holidays <- ServicedOrganisations_holidays[, c("VehicleJourneyCode", "Holidays.StartDate", "Holidays.EndDate")]
+  #       names(ServicedOrganisations_holidays) <- c("VehicleJourneyCode", "StartDate", "EndDate")
+  #       if (all(is.na(ServicedOrganisations_holidays$VehicleJourneyCode))) {
+  #         ServicedOrganisations_holidays <- NULL
+  #       }
+  #     } else {
+  #       ServicedOrganisations_holidays <- NULL
+  #       # stop("check this, service that runs only during holidays?")
+  #     }
+  #   }
+    } else {
+     # ServicedOrganisations_workdays <- NULL
+     # ServicedOrganisations_holidays <- NULL
+      vj_so_no <- NULL
+      vj_so_do <- NULL
+   }
 
 
 
@@ -138,15 +197,28 @@ transxchange_export <- function(obj, run_debug = TRUE,
 
   if (!is.null(VehicleJourneys_include)) {
     if (!all(names(VehicleJourneys_include) %in% c("VehicleJourneyCode", "StartDate", "EndDate"))) {
-      stop(stop("need to rebuild this case for new ServicedOrganisations"))
+      stop("need to rebuild this case for new ServicedOrganisations")
     }
   }
 
 
   # Import ServicedOrganisations in to VehicleJourneys
-  VehicleJourneys_exclude <- rbind(VehicleJourneys_exclude, ServicedOrganisations_holidays)
-  VehicleJourneys_include <- rbind(VehicleJourneys_include, ServicedOrganisations_workdays)
+  # VehicleJourneys_exclude <- rbind(VehicleJourneys_exclude, ServicedOrganisations_holidays)
+  # VehicleJourneys_include <- rbind(VehicleJourneys_include, ServicedOrganisations_workdays)
+  VehicleJourneys_exclude <- rbind(VehicleJourneys_exclude, vj_so_no)
+  VehicleJourneys_include <- rbind(VehicleJourneys_include, vj_so_do)
 
+  if (!is.null(VehicleJourneys_exclude)) {
+    if (nrow(VehicleJourneys_exclude) == 0) {
+      VehicleJourneys_exclude <- NULL
+    }
+  }
+
+  if (!is.null(VehicleJourneys_include)) {
+    if (nrow(VehicleJourneys_include) == 0) {
+      VehicleJourneys_include <- NULL
+    }
+  }
 
 
 
@@ -163,7 +235,7 @@ transxchange_export <- function(obj, run_debug = TRUE,
 
   JourneyPatternSections$RunTime <- clean_times(JourneyPatternSections$RunTime)
   JourneyPatternSections$To.WaitTime <- clean_times(JourneyPatternSections$To.WaitTime)
-
+  JourneyPatternSections$From.WaitTime <- clean_times(JourneyPatternSections$From.WaitTime)
 
   # stops -------------------------------------------------------------------
 
@@ -250,7 +322,7 @@ transxchange_export <- function(obj, run_debug = TRUE,
       aid <- name2id(agency$agency_name[j])
       agency$agency_id[j] <- aid
       routes$agency_id[routes$agency_id == "O1"] <- aid
-      warning(paste0("Agency ID is O1 changing to ", aid))
+      message(paste0("Agency ID is O1 changing to ", aid))
     }
   }
 
@@ -273,6 +345,8 @@ transxchange_export <- function(obj, run_debug = TRUE,
   # Step 1: Do we Have any exclusions
   if (class(VehicleJourneys_exclude) == "data.frame") {
     # Yes - Build Exclusions
+
+    VehicleJourneys_exclude <- VehicleJourneys_exclude[VehicleJourneys_exclude$StartDate <= VehicleJourneys_exclude$EndDate,]
     # Split Exclusions by Vehicle Jounrey
     trip_exc <- split(VehicleJourneys_exclude, VehicleJourneys_exclude$VehicleJourneyCode)
     trip_split <- split(trips, trips$trip_id)
@@ -311,64 +385,71 @@ transxchange_export <- function(obj, run_debug = TRUE,
 
   # Step 2: Prep the Bank Holidays
   cal <- cal[cal$date >= Services_main$StartDate & cal$date <= Services_main$EndDate, ]
-  bank_holidays <- VehicleJourneys[, c("VehicleJourneyCode", "BankHolidaysOperate", "BankHolidaysNoOperate","BHDaysOfOperation","BHDaysOfNonOperation")]
-  bank_holidays[] <- lapply(bank_holidays, as.character)
-  bank_holidays <- unique(bank_holidays)
+  if(nrow(cal) > 0){
+    bank_holidays <- VehicleJourneys[, c("VehicleJourneyCode", "BankHolidaysOperate", "BankHolidaysNoOperate","BHDaysOfOperation","BHDaysOfNonOperation")]
+    bank_holidays[] <- lapply(bank_holidays, as.character)
+    bank_holidays <- unique(bank_holidays)
 
-  if(run_debug){
-    # Check for duplication
-    if(any(dplyr::if_else(!is.na(bank_holidays$BankHolidaysOperate) & !is.na(bank_holidays$BHDaysOfOperation),
-           TRUE, FALSE))){
-      stop("Bank holidays operation specified in both BankHolidaysOperate and BHDaysOfOperation")
+    if(run_debug){
+      # Check for duplication
+      if(any(dplyr::if_else(!is.na(bank_holidays$BankHolidaysOperate) & !is.na(bank_holidays$BHDaysOfOperation),
+                            TRUE, FALSE))){
+        stop("Bank holidays operation specified in both BankHolidaysOperate and BHDaysOfOperation")
+      }
+
+      if(any(dplyr::if_else(!is.na(bank_holidays$BankHolidaysNoOperate) & !is.na(bank_holidays$BHDaysOfOperation),
+                            TRUE, FALSE))){
+        stop("Bank holidays operation specified in both BankHolidaysNoOperate and BHDaysOfNonOperation")
+      }
+
     }
 
-    if(any(dplyr::if_else(!is.na(bank_holidays$BankHolidaysNoOperate) & !is.na(bank_holidays$BHDaysOfOperation),
-                  TRUE, FALSE))){
-      stop("Bank holidays operation specified in both BankHolidaysNoOperate and BHDaysOfNonOperation")
+    # Merge Duplicated columns
+    bank_holidays$BHDaysOfOperation  <- dplyr::if_else(bank_holidays$BHDaysOfOperation  == "NA",
+                                                       NA_character_, bank_holidays$BHDaysOfOperation)
+    bank_holidays$BHDaysOfNonOperation  <- dplyr::if_else(bank_holidays$BHDaysOfNonOperation  == "NA",
+                                                          NA_character_, bank_holidays$BHDaysOfNonOperation)
+    bank_holidays$BankHolidaysOperate <- dplyr::if_else(is.na(bank_holidays$BankHolidaysOperate),
+                                                        bank_holidays$BHDaysOfOperation,
+                                                        bank_holidays$BankHolidaysOperate)
+    bank_holidays$BankHolidaysNoOperate <- dplyr::if_else(is.na(bank_holidays$BankHolidaysNoOperate),
+                                                          bank_holidays$BHDaysOfNonOperation,
+                                                          bank_holidays$BankHolidaysNoOperate)
+    bank_holidays$BHDaysOfOperation <- NULL
+    bank_holidays$BHDaysOfNonOperation <- NULL
+    names(bank_holidays) <- c("trip_id", "BankHolidaysOperate", "BankHolidaysNoOperate")
+
+    bank_holidays$BankHolidaysOperate[bank_holidays$BankHolidaysOperate == "AllBankHolidays"] <- paste(cal$name, collapse = ", ")
+    bank_holidays$BankHolidaysNoOperate[bank_holidays$BankHolidaysNoOperate == "AllBankHolidays"] <- paste(cal$name, collapse = ", ")
+
+    bank_holidays$BankHolidaysOperate[bank_holidays$BankHolidaysOperate == "HolidayMondays"] <- paste(cal$name[lubridate::wday(cal$date, week_start = 1) == 1], collapse = ", ")
+    bank_holidays$BankHolidaysNoOperate[bank_holidays$BankHolidaysNoOperate == "HolidayMondays"] <- paste(cal$name[lubridate::wday(cal$date, week_start = 1) == 1], collapse = ", ")
+
+    bank_holidays_inc <- break_up_holidays2(bank_holidays, "BankHolidaysOperate", cal = cal)
+    bank_holidays_exc <- break_up_holidays2(bank_holidays, "BankHolidaysNoOperate", cal = cal)
+    if (!is.null(bank_holidays_inc)) {
+      bank_holidays_inc <- dplyr::left_join(bank_holidays_inc, cal, by = c("hols" = "name"))
     }
+    if (!is.null(bank_holidays_exc)) {
+      bank_holidays_exc <- dplyr::left_join(bank_holidays_exc, cal, by = c("hols" = "name"))
+    }
+    bank_holidays <- rbind(bank_holidays_inc, bank_holidays_exc)
+    bank_holidays <- bank_holidays[, c("trip_id", "date", "exception_type")]
 
+    bank_holidays <- bank_holidays[!is.na(bank_holidays$date), ]
+  } else {
+    bank_holidays <- cal
   }
 
-  # Merge Duplicated columns
-  bank_holidays$BHDaysOfOperation  <- dplyr::if_else(bank_holidays$BHDaysOfOperation  == "NA",
-                                                     NA_character_, bank_holidays$BHDaysOfOperation)
-  bank_holidays$BHDaysOfNonOperation  <- dplyr::if_else(bank_holidays$BHDaysOfNonOperation  == "NA",
-                                                     NA_character_, bank_holidays$BHDaysOfNonOperation)
-  bank_holidays$BankHolidaysOperate <- dplyr::if_else(is.na(bank_holidays$BankHolidaysOperate),
-                                                      bank_holidays$BHDaysOfOperation,
-                                                      bank_holidays$BankHolidaysOperate)
-  bank_holidays$BankHolidaysNoOperate <- dplyr::if_else(is.na(bank_holidays$BankHolidaysNoOperate),
-                                                      bank_holidays$BHDaysOfNonOperation,
-                                                      bank_holidays$BankHolidaysNoOperate)
-  bank_holidays$BHDaysOfOperation <- NULL
-  bank_holidays$BHDaysOfNonOperation <- NULL
-  names(bank_holidays) <- c("trip_id", "BankHolidaysOperate", "BankHolidaysNoOperate")
-
-  bank_holidays$BankHolidaysOperate[bank_holidays$BankHolidaysOperate == "AllBankHolidays"] <- paste(cal$name, collapse = ", ")
-  bank_holidays$BankHolidaysNoOperate[bank_holidays$BankHolidaysNoOperate == "AllBankHolidays"] <- paste(cal$name, collapse = ", ")
-
-  bank_holidays$BankHolidaysOperate[bank_holidays$BankHolidaysOperate == "HolidayMondays"] <- paste(cal$name[lubridate::wday(cal$date, week_start = 1) == 1], collapse = ", ")
-  bank_holidays$BankHolidaysNoOperate[bank_holidays$BankHolidaysNoOperate == "HolidayMondays"] <- paste(cal$name[lubridate::wday(cal$date, week_start = 1) == 1], collapse = ", ")
-
-  bank_holidays_inc <- break_up_holidays2(bank_holidays, "BankHolidaysOperate", cal = cal)
-  bank_holidays_exc <- break_up_holidays2(bank_holidays, "BankHolidaysNoOperate", cal = cal)
-  if (!is.null(bank_holidays_inc)) {
-    bank_holidays_inc <- dplyr::left_join(bank_holidays_inc, cal, by = c("hols" = "name"))
-  }
-  if (!is.null(bank_holidays_exc)) {
-    bank_holidays_exc <- dplyr::left_join(bank_holidays_exc, cal, by = c("hols" = "name"))
-  }
-  bank_holidays <- rbind(bank_holidays_inc, bank_holidays_exc)
-  bank_holidays <- bank_holidays[, c("trip_id", "date", "exception_type")]
-
-  bank_holidays <- bank_holidays[!is.na(bank_holidays$date), ]
 
 
   # Step 3: Merge Exclusions and bank_holidays, then summarise the exclusions
   if (exists("trips_exclude")) {
     calendar_dates <- trips_exclude
-    if (nrow(bank_holidays) > 0) {
-      calendar_dates <- rbind(calendar_dates, bank_holidays)
+    if(!is.null(bank_holidays)){
+      if (nrow(bank_holidays) > 0) {
+        calendar_dates <- rbind(calendar_dates, bank_holidays)
+      }
     }
   } else {
     calendar_dates <- bank_holidays
@@ -378,9 +459,12 @@ transxchange_export <- function(obj, run_debug = TRUE,
     calendar_dates <- rbind(calendar_dates, trips_include)
   }
 
-  if (nrow(calendar_dates) == 0) {
-    calendar_dates <- NULL
+  if(!is.null(calendar_dates)){
+    if (nrow(calendar_dates) == 0) {
+      calendar_dates <- NULL
+    }
   }
+
 
   # Step 4: Make the calendar
   calendar <- trips[, c("trip_id", "StartDate", "EndDate", "DaysOfWeek")]
@@ -480,6 +564,14 @@ transxchange_export <- function(obj, run_debug = TRUE,
 
   # remove unused stops
   stops <- stops[stops$stop_id %in% unique(stop_times$stop_id), ]
+
+
+  # Check for missing stops
+  stops_missing <- stop_times$stop_id[!stop_times$stop_id %in% stops$stop_id]
+  if(length(stops_missing) > 0){
+    stops_missing <- naptan[naptan$stop_id %in% stops_missing,]
+    stops <- rbind(stops, stops_missing)
+  }
 
   res_final <- list(agency, stops, routes, trips, stop_times, calendar, calendar_dates)
   names(res_final) <- c("agency", "stops", "routes", "trips", "stop_times", "calendar", "calendar_dates")

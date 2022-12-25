@@ -21,6 +21,14 @@ schedule2routes <- function(stop_times, schedule, silent = TRUE, ncores = 1) {
   # Convert Activity to pickup_type and drop_off_type
   stop_times$Activity[is.na(stop_times$Activity) & stop_times$stop_sequence == 1] <- "TB" # No activity specified at start
 
+  # Fix arrival_time / departure_time being 0000 for pick up only or drop off only trains
+  stop_times$departure_time <- dplyr::if_else(stop_times$departure_time == "0000" & stop_times$Activity == "D",
+                                              stop_times$arrival_time,
+                                              stop_times$departure_time)
+  stop_times$arrival_time <- dplyr::if_else(stop_times$arrival_time == "0000" & stop_times$Activity == "U",
+                                            stop_times$departure_time,
+                                            stop_times$arrival_time)
+
   upoffs <- clean_activities2(stop_times$Activity)
   stop_times <- cbind(stop_times, upoffs)
 
@@ -29,6 +37,9 @@ schedule2routes <- function(stop_times, schedule, silent = TRUE, ncores = 1) {
   stop_times <- stop_times[, c("arrival_time", "departure_time", "stop_id", "stop_sequence", "pickup_type", "drop_off_type", "rowID", "schedule")]
 
   stop_times <- stop_times[!(stop_times$pickup_type == 1 & stop_times$drop_off_type == 1), ]
+
+
+
 
   ### SECTION 2: ###############################################################################
   # make make the calendar.txt and calendar_dates.txt file from the schedule

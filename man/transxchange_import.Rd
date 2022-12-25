@@ -9,7 +9,7 @@ transxchange_import(file, run_debug = TRUE, full_import = FALSE)
 \arguments{
 \item{file}{character, path to an XML file e.g. "C:/data/file.xml"}
 
-\item{run_debug}{logical, if TRUE extra checks are performed, default FALSE}
+\item{run_debug}{logical, if TRUE extra checks are performed, default TRUE}
 
 \item{full_import}{logical, if false data no needed for GTFS is excluded}
 }
@@ -17,6 +17,6 @@ transxchange_import(file, run_debug = TRUE, full_import = FALSE)
 Import a TransXchange XML file
 }
 \details{
-This function imports the raw transXchange XML files and converts them to a R readable format.
- If export is NULL returns a list of data.frames else saves results to the `export` folder as a RDS file
+This function imports the raw transXchange XML files and converts
+them to a R readable format.
 }

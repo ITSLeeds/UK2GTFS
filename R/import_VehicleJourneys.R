@@ -89,7 +89,9 @@ import_vehiclejourneys2 <- function(vehiclejourneys) {
     vj_simple$BHDaysOfOperation <- NA
     vj_simple$BHDaysOfNonOperation <- NA
     vj_simple$ServicedDaysOfOperation <- NA
+    vj_simple$ServicedDaysOfOperationType <- NA
     vj_simple$ServicedDaysOfNonOperation <- NA
+    vj_simple$ServicedDaysOfNonOperationType <- NA
   }
 
 

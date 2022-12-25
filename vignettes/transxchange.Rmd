@@ -24,7 +24,7 @@ Note that GTFS data is now published for buses in Great Britain at [Open Bus Dat
 
 TransXchange data can be downloaded from [Traveline](https://www.travelinedata.org.uk/traveline-open-data/data-reporting/) you will need to apply for free access to the FTP sever to download the data.
 
-The data comes as zipped folders for different regions of the UK.
+The data comes as zipped folders for different regions of Great Britain.
 
 ## Converting TransXchange to GTFS
 
@@ -39,7 +39,7 @@ A simple example is shown below:
 ```{r trans_example, eval=FALSE}
 library(UK2GTFS)
 path_in <- "EA.zip"
-gtfs <- atoc2gtfs(path_in = path_in,
+gtfs <- transxchange2gtfs(path_in = path_in,
           ncores = 3)
 ```
 
@@ -53,6 +53,13 @@ gtfs_write(gtfs,
 ```
 
 This will save the GTFS file to `C:/GTFS/gtfs_EA.zip`
+
+## Merging problems
+
+`transxchange2gtfs` converts each transXchange file into its own GTFS file. Then uses `gtfs_merge` to combine these into a single GTFS file. When this is done checks are performed to make sure the merged GTFS is valid. However this can fail. Often due to small differences between files such as the Bus operator having two spellings of their company name (e.g. 	
+"Yorkshire Coastliner Ltd" or "Yorkshire Coastliner" ). 
+
+If `transxchange2gtfs` is unable to merge it will return a list of GTFS objects. You can then manually merge using `gtfs_merge` and `force = TRUE` this is almost always ok.
 
 ## Stop Locations - The NaPTAN
 

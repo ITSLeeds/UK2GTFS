@@ -10,6 +10,7 @@ gtfs_write(
   name = "gtfs",
   stripComma = TRUE,
   stripTab = TRUE,
+  stripNewline = TRUE,
   quote = FALSE
 )
 }
@@ -23,6 +24,8 @@ gtfs_write(
 \item{stripComma}{logical, should commas be stripped from text, default = TRUE}
 
 \item{stripTab}{logical, should tab be stripped from text, default = TRUE}
+
+\item{stripNewline}{logical, should newline tag be stripped from text, default = TRUE}
 
 \item{quote}{logical, should strings be quoted, default = FALSE}
 }

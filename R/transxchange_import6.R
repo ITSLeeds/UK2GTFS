@@ -1,12 +1,12 @@
 #' Import a TransXchange XML file
 #'
 #' @param file character, path to an XML file e.g. "C:/data/file.xml"
-#' @param run_debug logical, if TRUE extra checks are performed, default FALSE
+#' @param run_debug logical, if TRUE extra checks are performed, default TRUE
 #' @param full_import logical, if false data no needed for GTFS is excluded
 #'
-#' @details
-#' This function imports the raw transXchange XML files and converts them to a R readable format.
-#'  If export is NULL returns a list of data.frames else saves results to the `export` folder as a RDS file
+#' @details This function imports the raw transXchange XML files and converts
+#' them to a R readable format.
+
 #' @export
 
 transxchange_import <- function(file, run_debug = TRUE, full_import = FALSE) {
@@ -79,7 +79,7 @@ transxchange_import <- function(file, run_debug = TRUE, full_import = FALSE) {
   Services_main$EndDate <- dplyr::if_else(
     is.na(Services_main$EndDate),
     as.character(
-      max(lubridate::ymd(Services_main$StartDate), CreationDate, ModifiedDate, na.rm=TRUE) + 
+      max(lubridate::ymd(Services_main$StartDate), CreationDate, ModifiedDate, na.rm=TRUE) +
        lubridate::days(365)),
     as.character(Services_main$EndDate)
   )

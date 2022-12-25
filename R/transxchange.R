@@ -3,8 +3,6 @@
 #' @details Convert transxchange files to GTFS
 #'
 #' @param path_in Path to zipped transxchange files
-#' @param path_out Depreciated
-#' @param name Depreciated
 #' @param silent Logical, should progress be shown
 #' @param ncores Numeric, When parallel processing how many cores to use
 #' @param cal Calendar object from get_bank_holidays()
@@ -16,6 +14,7 @@
 #' @param try_mode Logical, if TRUE import and conversion are wrapped in try
 #'   calls thus a failure on a single file will not cause the whole process to
 #'   fail. Warning this could result in a GTFS file with missing routes.
+#' @param force_merge Logical, passed to gtfs_merge(force), default FALSE
 #' @return A GTFS named list
 #' @details
 #'
@@ -33,14 +32,13 @@
 
 
 transxchange2gtfs <- function(path_in,
-                              path_out = NULL,
-                              name = NULL,
                               silent = TRUE,
                               ncores = 1,
                               cal = get_bank_holidays(),
                               naptan = get_naptan(),
                               scotland = "auto",
-                              try_mode = TRUE) {
+                              try_mode = TRUE,
+                              force_merge = FALSE) {
   # Check inputs
   checkmate::assert_numeric(ncores)
   checkmate::assert_logical(silent)
@@ -52,14 +50,14 @@ transxchange2gtfs <- function(path_in,
     message(paste0(Sys.time(), " This will take some time, make sure you use 'ncores' to enable multi-core processing"))
   }
 
-  # back compatibility
-  if(!is.null(path_out)){
-    stop("path_out is no longer supported, use gtfs_write()")
-  }
-  if(!is.null(name)){
-    stop("name is no longer supported, use gtfs_write()")
+  # Check calendar and naptan
+  if(!nrow(cal) > 0){
+    stop("Calendar is missing")
   }
 
+  if(!nrow(naptan) > 0){
+    stop("Naptan is missing")
+  }
 
   # Are we in Scotland?
   if (scotland == "yes") {
@@ -72,7 +70,7 @@ transxchange2gtfs <- function(path_in,
       loc <- substr(path_in, nchar(path_in) - 5, nchar(path_in))
       if (loc == "/S.zip") {
         scotland <- TRUE
-        warning("Using Scottish Bank Holidays")
+        message("Using Scottish Bank Holidays")
       } else {
         scotland <- TRUE
       }
@@ -92,7 +90,11 @@ transxchange2gtfs <- function(path_in,
     utils::unzip(path_in, exdir = file.path(tempdir(), "txc"))
     message(paste0(Sys.time(), " Unzipping complete"))
 
-    files <- list.files(file.path(tempdir(), "txc"), pattern = ".xml", full.names = TRUE)
+    files <- list.files(file.path(tempdir(), "txc"),
+                        pattern = ".xml",
+                        full.names = TRUE,
+                        recursive = TRUE)
+
   }
 
   if(length(files) == 0){
@@ -152,6 +154,7 @@ transxchange2gtfs <- function(path_in,
       res_all_message <- unlist(res_all_message)
       message(paste(res_all_message, collapse = ",  "))
     } else {
+      message(" ")
       message("All files imported")
     }
 
@@ -187,6 +190,7 @@ transxchange2gtfs <- function(path_in,
     gtfs_all_message <- unlist(gtfs_all_message)
     message(paste(gtfs_all_message, collapse = ",  "))
   } else {
+    message(" ")
     message("All files converted")
   }
 
@@ -195,7 +199,7 @@ transxchange2gtfs <- function(path_in,
   message(paste0(Sys.time(), " Merging GTFS objects"))
 
 
-  gtfs_merged <- try(gtfs_merge(gtfs_all))
+  gtfs_merged <- try(gtfs_merge(gtfs_all, force = force_merge))
 
   if (class(gtfs_merged) == "try-error") {
     message("Merging failed, returing unmerged GFTS object for analysis")

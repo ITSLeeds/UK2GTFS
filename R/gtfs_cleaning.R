@@ -129,5 +129,10 @@ gtfs_clean <- function(gtfs) {
   # 2 Remove stops that are never used
   gtfs$stops <- gtfs$stops[gtfs$stops$stop_id %in% unique(gtfs$stop_times$stop_id), ]
 
+  # Replace "" agency_id with dummy name
+  gtfs$agency$agency_id[gtfs$agency$agency_id == ""] <- "MISSINGAGENCY"
+  gtfs$routes$agency_id[gtfs$routes$agency_id == ""] <- "MISSINGAGENCY"
+  gtfs$agency$agency_name[gtfs$agency$agency_name == ""] <- "MISSINGAGENCY"
+
   return(gtfs)
 }

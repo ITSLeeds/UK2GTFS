@@ -5,7 +5,7 @@
 \title{Get naptan}
 \usage{
 get_naptan(
-  url = "http://naptan.app.dft.gov.uk/DataRequest/Naptan.ashx?format=csv",
+  url = "https://naptan.api.dft.gov.uk/v1/access-nodes?dataFormat=csv",
   naptan_extra = naptan_missing
 )
 }

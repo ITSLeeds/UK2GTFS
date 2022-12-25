@@ -77,7 +77,8 @@ import_journeypatternsections <- function(journeypatternsections) {
   RunTime <- import_simple(JourneyPatternTimingLink, "d1:RunTime")
   From <- xml2::xml_find_all(JourneyPatternTimingLink, "d1:From")
   From.StopPointRef <- import_simple(From, "d1:StopPointRef")
-  From.Activity <- import_simple(From, "d1:Activity")
+  From.WaitTime <- import_simple_xml(From, "d1:WaitTime")
+  From.Activity <- import_simple_xml(From, "d1:Activity")
   if (length(From.Activity) == 0) {
     From.Activity <- rep(NA, length(From.StopPointRef))
   }
@@ -85,7 +86,7 @@ import_journeypatternsections <- function(journeypatternsections) {
   if (length(RouteLinkRef) == 0) {
     RouteLinkRef <- rep(NA, length(From.StopPointRef))
   }
-  From.TimingStatus <- import_simple(From, "d1:TimingStatus")
+  From.TimingStatus <- import_simple_xml(From, "d1:TimingStatus")
   # From.SequenceNumber <- import_FromTo(From, "@SequenceNumber")
   From.SequenceNumber <- xml2::xml_attr(From, "SequenceNumber")
 
@@ -95,7 +96,7 @@ import_journeypatternsections <- function(journeypatternsections) {
   To <- xml2::xml_find_all(JourneyPatternTimingLink, "d1:To")
   To.StopPointRef <- import_simple(To, "d1:StopPointRef")
   To.WaitTime <- xml2::xml_text(xml2::xml_find_first(To, "d1:WaitTime"))
-  To.Activity <- import_simple(To, "d1:Activity")
+  To.Activity <- import_simple_xml(To, "d1:Activity")
   if (length(To.Activity) == 0) {
     To.Activity <- rep(NA, length(To.StopPointRef))
   }
@@ -118,6 +119,7 @@ import_journeypatternsections <- function(journeypatternsections) {
     JPTL_ID = JPTL_ID,
     From.Activity = From.Activity,
     From.StopPointRef = From.StopPointRef,
+    From.WaitTime = From.WaitTime,
     From.TimingStatus = From.TimingStatus,
     To.WaitTime = To.WaitTime,
     To.Activity = To.Activity,
@@ -239,11 +241,15 @@ import_services <- function(service, full_import = TRUE) {
   SpecialDaysOperation <- xml2::xml_find_all(service, ".//d1:SpecialDaysOperation")
   DaysOperation <- xml2::xml_find_all(SpecialDaysOperation, ".//d1:DaysOfOperation")
   DaysNonOperation <- xml2::xml_find_all(SpecialDaysOperation, ".//d1:DaysOfNonOperation")
+  # test fix ######
+  DaysOperation <- xml2::xml_children(DaysOperation)
+  DaysNonOperation <- xml2::xml_children(DaysNonOperation)
+  #################
 
   if (xml2::xml_length(DaysOperation) > 0) {
     DaysOperation_StartDate <- import_simple(DaysOperation, ".//d1:StartDate")
     DaysOperation_EndDate <- import_simple(DaysOperation, ".//d1:EndDate")
-    DaysOperation_Note <- import_simple(DaysOperation, ".//d1:Note")
+    DaysOperation_Note <- import_simple_xml(DaysOperation, ".//d1:Note")
     DaysOperation <- data.frame(
       type = "DaysOperation",
       StartDate = DaysOperation_StartDate,
@@ -258,7 +264,7 @@ import_services <- function(service, full_import = TRUE) {
   if (xml2::xml_length(DaysNonOperation) > 0) {
     DaysNonOperation_StartDate <- import_simple(DaysNonOperation, ".//d1:StartDate")
     DaysNonOperation_EndDate <- import_simple(DaysNonOperation, ".//d1:EndDate")
-    DaysNonOperation_Note <- import_simple(DaysNonOperation, ".//d1:Note")
+    DaysNonOperation_Note <- import_simple_xml(DaysNonOperation, ".//d1:Note")
     if (length(DaysNonOperation_Note) == 0) {
       DaysNonOperation_Note <- rep(NA, length(DaysNonOperation_StartDate))
     }

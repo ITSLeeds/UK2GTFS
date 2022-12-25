@@ -224,6 +224,30 @@ clean_days <- function(days) {
     if ("Sunday" %in% days_ul) {
       res[7] <- 1
     }
+  } else if (all(days_ul %in% c("NotMonday", "NotTuesday", "NotWednesday", "NotThursday",
+                                "NotFriday", "NotSaturday", "NotSunday"))){
+    res <- c(1, 1, 1, 1, 1, 1, 1)
+    if ("NotMonday" %in% days_ul) {
+      res[1] <- 0
+    }
+    if ("NotTuesday" %in% days_ul) {
+      res[2] <- 0
+    }
+    if ("NotWednesday" %in% days_ul) {
+      res[3] <- 0
+    }
+    if ("NotThursday" %in% days_ul) {
+      res[4] <- 0
+    }
+    if ("NotFriday" %in% days_ul) {
+      res[5] <- 0
+    }
+    if ("NotSaturday" %in% days_ul) {
+      res[6] <- 0
+    }
+    if ("NotSunday" %in% days_ul) {
+      res[7] <- 0
+    }
   } else if (is.na(days) | days == "NA") {
     res <- c(1, 1, 1, 1, 1, 1, 1)
   } else if (days == "MondayToFriday") {
@@ -241,20 +265,6 @@ clean_days <- function(days) {
   } else if (days %in% c("", "MondayToSunday",
                          "MondayToFridaySaturdaySundayHolidaysOnly")) {
     res <- c(1, 1, 1, 1, 1, 1, 1)
-  } else if (days == "NotMonday") {
-    res <- c(0, 1, 1, 1, 1, 1, 1)
-  } else if (days == "NotTuesday") {
-    res <- c(1, 0, 1, 1, 1, 1, 1)
-  } else if (days == "NotWednesday") {
-    res <- c(1, 1, 0, 1, 1, 1, 1)
-  } else if (days == "NotThursday") {
-    res <- c(1, 1, 1, 1, 1, 1, 1)
-  } else if (days == "NotFriday") {
-    res <- c(1, 1, 1, 1, 0, 1, 1)
-  } else if (days == "NotSaturday") {
-    res <- c(1, 1, 1, 1, 1, 0, 1)
-  } else if (days == "NotSunday") {
-    res <- c(1, 1, 1, 1, 1, 1, 0)
   } else {
     stop(paste0("Unknown day pattern: ", days))
   }
@@ -337,17 +347,36 @@ expand_stop_times2 <- function(i, jps, trips) {
   jps_sub <- jps[[i]]
   trips_sub <- trips[trips$JourneyPatternRef == jps_sub$JourneyPatternID[1], ]
   jps_sub$To.Activity[is.na(jps_sub$To.Activity)] <- "pickUpAndSetDown"
-  # To.SequenceNumber are often buggy, so overwiriting and relying on file order
-  # if (all(is.na(jps_sub$To.SequenceNumber))) {
+
+  if(length(unique(jps_sub$ss_order))!=1){
+    jps_sub <- jps_sub[order(jps_sub$ss_order),]
+  }
+  # Check if in order, for not fix
+  nrow_jps <- nrow(jps_sub)
+  if(nrow_jps > 1){
+    spfm = jps_sub$From.StopPointRef[2:(nrow(jps_sub))]
+    spto = jps_sub$To.StopPointRef[1:(nrow(jps_sub)-1)]
+    if(!all(spfm == spto)){
+      jps_sub_new <- try(reorder_jps(jps_sub), silent = TRUE)
+      if(class(jps_sub_new) == "try-error"){
+        jps_sub_new <- try(reorder_jps(jps_sub, func = max), silent = TRUE)
+      }
+      if(class(jps_sub_new) == "try-error"){
+        warning("Cannnot find correct order of stops, defaulting to file order")
+      } else {
+        jps_sub <- jps_sub_new
+      }
+    }
+  }
+
+
   jps_sub$To.SequenceNumber <- seq(2, nrow(jps_sub) + 1)
-  # }
-
-
   st_sub <- jps_sub[, c("To.StopPointRef", "To.Activity", "To.SequenceNumber",
                         "JourneyPatternID", "To.WaitTime", "To.TimingStatus",
-                        "RunTime")]
+                        "RunTime","From.WaitTime")]
   names(st_sub) <- c("stop_id", "To.Activity", "stop_sequence",
-                     "JourneyPatternRef", "To.WaitTime", "timepoint", "RunTime")
+                     "JourneyPatternRef", "To.WaitTime", "timepoint", "RunTime",
+                     "From.WaitTime")
   st_top <- data.frame(
     stop_id = jps_sub$From.StopPointRef[1],
     To.Activity = jps_sub$From.Activity[1],
@@ -356,6 +385,7 @@ expand_stop_times2 <- function(i, jps, trips) {
     To.WaitTime = 0,
     timepoint = jps_sub$From.TimingStatus[1],
     RunTime = 0,
+    From.WaitTime = 0,
     stringsAsFactors = FALSE
   )
   if (is.na(st_top$To.Activity)) {
@@ -367,8 +397,15 @@ expand_stop_times2 <- function(i, jps, trips) {
   st_sub <- rbind(st_top, st_sub)
   # st_sub$RunTime <- as.integer(st_sub$RunTime)
   st_sub$To.WaitTime <- as.integer(st_sub$To.WaitTime)
-  st_sub$departure_time <- cumsum(st_sub$RunTime + st_sub$To.WaitTime)
-  st_sub$arrival_time <- st_sub$departure_time - st_sub$To.WaitTime
+
+  st_sub$From.WaitTime <- as.integer(st_sub$From.WaitTime)
+  st_sub$From.WaitTime <- c(st_sub$From.WaitTime[seq(2, length(st_sub$From.WaitTime))],0)
+  st_sub$total_wait_time <- st_sub$To.WaitTime + st_sub$From.WaitTime
+  st_sub$departure_time <- cumsum(st_sub$RunTime + st_sub$total_wait_time)
+  st_sub$arrival_time <- st_sub$departure_time - st_sub$total_wait_time
+
+  #st_sub$departure_time <- cumsum(st_sub$RunTime + st_sub$To.WaitTime)
+  #st_sub$arrival_time <- st_sub$departure_time - st_sub$To.WaitTime
   st_sub$pickup_type <- sapply(st_sub$To.Activity, clean_activity,
                                type = "pickup")
   st_sub$drop_off_type <- sapply(st_sub$To.Activity, clean_activity,
@@ -399,8 +436,67 @@ expand_stop_times2 <- function(i, jps, trips) {
 
   st_sub <- st_sub[, c("trip_id", "arrival_time", "departure_time", "stop_id",
                        "stop_sequence", "timepoint")]
-
+  #st_sub = dplyr::left_join(st_sub, stops, by = "stop_id")
   return(st_sub)
+}
+
+#' reorder_jps
+#' CHange the order of JPS_sub as the file order is wrong
+#' @param jps_sub jps_sub from expand_stop_times2
+#' @noRd
+#'
+reorder_jps <- function(jps_sub, func = min){
+
+  res_order <- list()
+  rwnumbs <- seq_len(nrow(jps_sub))
+  loopflag <- NA_integer_
+  for(j in rwnumbs){
+    if(j == 1){
+      if("pickUp" %in% jps_sub$From.Activity){
+        fnmb1 <- rwnumbs[jps_sub$From.Activity == "pickUp"]
+        if(length(fnmb1) == 1){
+          res_order[[j]] <- fnmb1
+        } else {
+          res_order[[j]] <- min(fnmb1)
+        }
+
+      } else {
+        res_order[[j]] <- 1
+      }
+    } else {
+      fnmb <- rwnumbs[jps_sub$From.StopPointRef == jps_sub$To.StopPointRef[res_order[[j-1]]]]
+      if(length(fnmb) == 1){
+        res_order[[j]] <- fnmb
+      } else {
+        #message("Double trouble ",fnmb)
+        diffs <- abs(fnmb - res_order[[j-1]])
+        fsel <- fnmb[diffs == func(diffs)]
+        if(length(fsel) == 1){
+          res_order[[j]] <- fsel
+        } else {
+          for(k in seq_len(length(fsel))){
+            #message("Loop trouble ")
+            if(!func(fsel) %in% unlist(res_order)){
+              res_order[[j]] <- func(fsel)
+            } else {
+              fsel <- fsel[fsel != func(fsel)]
+            }
+          }
+          if(length(fsel) == 0){
+            stop("Multiloop error:",paste(res_order[[j-1]], collapse = ","))
+          }
+        }
+      }
+
+    }
+    #message(res_order[[j]])
+  }
+  res_order <- unlist(res_order)
+  if(length(res_order) != nrow(jps_sub)){
+    stop("Attemped to reorder stops and failed")
+  }
+  jps_sub <- jps_sub[res_order,]
+
 }
 
 
@@ -412,7 +508,9 @@ expand_stop_times2 <- function(i, jps, trips) {
 clean_timepoints <- function(tp) {
   if (tp %in% c("OTH","otherPoint")) {
     return(0L)
-  } else if (tp %in% c("PTP", "TIP", "PPT", "principleTimingPoint")) {
+  } else if (tp %in% c("PTP", "TIP", "PPT",
+                       "principleTimingPoint",
+                       "principalTimingPoint")) {
     return(1L)
   } else {
     stop(paste0("Unknown timepoint type: ", tp))
@@ -427,7 +525,7 @@ clean_timepoints <- function(tp) {
 #' @noRd
 #'
 make_stop_times <- function(jps, trips, ss) {
-  jps <- jps[, c("JPS_id", "From.Activity", "From.StopPointRef",
+  jps <- jps[, c("JPS_id", "From.Activity", "From.StopPointRef", "From.WaitTime",
                  "From.TimingStatus", "To.WaitTime", "To.Activity",
                  "To.StopPointRef", "To.TimingStatus", "RunTime",
                  "From.SequenceNumber", "To.SequenceNumber")]
@@ -437,6 +535,7 @@ make_stop_times <- function(jps, trips, ss) {
   # rts <- unique(vj$JourneyPatternRef)
   ss_join <- ss[, c("JourneyPatternSectionRefs", "JourneyPatternID")]
   ss_join[] <- lapply(ss_join, as.character)
+  ss_join$ss_order <- seq_len(nrow(ss_join))
   jps$JPS_id <- as.character(jps$JPS_id)
   jps <- dplyr::left_join(jps, ss_join,
                           by = c("JPS_id" = "JourneyPatternSectionRefs"))

@@ -11,3 +11,6 @@
 ^tic\.R$
 ^\.ccache$
 ^\.github$
+inst/exdata/failingexamples
+temp_naptan
+tmp

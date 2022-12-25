@@ -13,6 +13,7 @@
 #'
 get_bank_holidays <- function(url_ew = "https://www.gov.uk/bank-holidays/england-and-wales.ics",
                               url_scot = "https://www.gov.uk/bank-holidays/scotland.ics") {
+  message(" ")
   message("Scottish holidays are downloaded but not properly supported")
   dir.create(file.path(tempdir(), "UK2GTFS"))
   utils::download.file(
