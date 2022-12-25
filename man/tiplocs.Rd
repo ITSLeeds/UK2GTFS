@@ -11,6 +11,6 @@ A SF data frame for points
 tiplocs
 }
 \description{
-The ATOC data has innacuate locations for many tiplocs, this is an improved dataset
+The ATOC data has inaccurate locations for many tiplocs, this is an improved dataset
 }
 \keyword{datasets}

@@ -11,7 +11,7 @@ A data frame
 atoc_agency
 }
 \description{
-The ATOC data does not included sufficent infomration to build agency.txt
+The ATOC data does not included sufficient information to build agency.txt
 So this data is provided in the package.
 }
 \keyword{datasets}
