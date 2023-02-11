@@ -1,5 +1,5 @@
-fls <- list.files("R", full.names = TRUE)
-for(fl in fls){source(fl)}
+# fls <- list.files("R", full.names = TRUE)
+# for(fl in fls){source(fl)}
 #' Import the .CIF file
 #'
 #' @details
