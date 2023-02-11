@@ -184,6 +184,14 @@ clean_route_type <- function(rt, guess_bus = FALSE) {
     return(2)
   } else if (rt == "BUS") {
     return(3)
+  } else if (rt == "COACH") {
+    return(3)
+  } else if (rt == "FERRY") {
+    return(4)
+  } else if (rt == "TRAM") {
+    return(0)
+  } else if (rt == "METRO") {
+    return(1)
   } else {
     if(guess_bus){
       return(3)

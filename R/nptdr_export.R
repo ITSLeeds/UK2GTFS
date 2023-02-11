@@ -27,7 +27,7 @@ nptdr_makeCalendar <- function(schedule, exceptions, historic_bank_holidays = hi
   cal_exc <- calendar[calendar$schedule %in% exceptions$schedule,]
   cal_exc <- dplyr::group_by(cal_exc, UID)
   cal_exc <- dplyr::group_split(cal_exc)
-  cal_exc <- purrr::map(cal_exc, .f = exclude_trips_nptdr, trip_exc = exceptions)
+  cal_exc <- purrr::map(cal_exc, .f = exclude_trips_nptdr, trip_exc = exceptions, .progress = "Excluding Trips")
   cal_exc <- dplyr::bind_rows(cal_exc)
 
   cal_dates <- data.frame(UID = rep(cal_exc$UID, times = lengths(cal_exc$exclude_days)),
@@ -85,8 +85,14 @@ exclude_trips_nptdr <- function(trip_sub, trip_exc) {
     trip_exc_sub$duration <- as.integer(trip_exc_sub$end_date - trip_exc_sub$start_date + 1)
     if(any(trip_exc_sub$duration > 3650)){
       # Sometimes extremely long exclusions e.g. 2004 to 2900 then exclude after 2005.
-      message("Trip ",trip_sub$UID," trunkated from ",trip_sub$end_date," to 2020-12-31")
-      trip_sub$end_date <- lubridate::ymd("2020-12-31")
+      trip_sub$end_date <- dplyr::if_else(trip_sub$end_date > lubridate::ymd("2020-12-31"),
+                                  max(c(lubridate::ymd("2020-12-31"),trip_sub$start_date + 365 )),
+                                  trip_sub$end_date)
+      trip_sub$start_date <- dplyr::if_else(trip_sub$start_date < lubridate::ymd("2000-01-01"),
+                                  min(c(lubridate::ymd("2000-01-01"), trip_sub$end_date - 365)),
+                                  trip_sub$start_date)
+
+      #message("Trip ",trip_sub$UID," trunkated within 2000-01-01 to 2020-12-31")
     }
 
     # Exclusions

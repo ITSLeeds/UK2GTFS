@@ -606,7 +606,7 @@ afterMidnight <- function(stop_times, safe = TRUE) {
 
   stop_times.summary <- dplyr::group_by(stop_times2, trip_id)
   stop_times.summary <- dplyr::summarise(stop_times.summary,
-    dept_first = dept[stop_sequence == 1]
+    dept_first = dept[stop_sequence == min(stop_sequence)]
   )
 
   stop_times2 <- dplyr::left_join(stop_times2, stop_times.summary, by = "trip_id")

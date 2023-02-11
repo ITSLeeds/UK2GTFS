@@ -1,3 +1,5 @@
+fls <- list.files("R", full.names = TRUE)
+for(fl in fls){source(fl)}
 #' Import the .CIF file
 #'
 #' @details
@@ -8,7 +10,7 @@
 #' @param n_files debug option numerical vector for files to be passed e.g. 1:10
 #'
 #' @export
-nptdr2gtfs <- function(path = "C:/Users/malco/OneDrive - University of Leeds/Data/UK2GTFS/NPTDR/October-2004.zip",
+nptdr2gtfs <- function(path = "D:/OneDrive - University of Leeds/Data/UK2GTFS/NPTDR/October-2004.zip",
                        silent = FALSE,
                        n_files = NULL){
   checkmate::assert_file_exists(path, extension = "zip")
@@ -76,8 +78,7 @@ nptdr2gtfs <- function(path = "C:/Users/malco/OneDrive - University of Leeds/Dat
     message(Sys.time()," Processing results")
   }
 
-  # TODO: In order(stop_times$schedule, as.numeric(stop_times$departure_time))
-  res <- purrr::map(res, `[[`, "stop_times")
+  stop_times <- purrr::map(res, `[[`, "stop_times")
   location <- purrr::map(res, `[[`, "locations")
   schedule <- purrr::map(res, `[[`, "schedule")
   exceptions <- purrr::map(res, `[[`, "Exceptions")
@@ -96,6 +97,31 @@ nptdr2gtfs <- function(path = "C:/Users/malco/OneDrive - University of Leeds/Dat
   exceptions <- dplyr::bind_rows(exceptions, .id = "file_id")
   exceptions$schedule <- paste0(exceptions$file_id,"_",exceptions$schedule)
 
+  # TODO Unknown Activity codes 'B' 'NA' '-' 'A' 'N' 'C' 'S' 'O' 'K' 'P' please report these codes as a GitHub Issue
+  # TODO stop_times$trip_id gaining NA values at some point and this is causing bugs
+  # Unique Scotland and NI bank holidays not correctly handeled
+  # School term dates not supported
+  # `summarise()` has grouped output by 'schedule'. You can override using the `.groups` argument.
+  # `summarise()` has grouped output by 'trip_id'. You can override using the `.groups` argument.
+  # Error: cannot allocate vector of size 4979.6 Gb
+  # In addition: Warning messages:
+  #   1: In afterMidnight(stop_times) : NAs introduced by coercion
+  # 2: In afterMidnight(stop_times) :
+  #   Error: cannot allocate vector of size 4979.6 Gb
+  # 6.
+  # join_rows(x_key, y_key, type = type, na_equal = na_equal, error_call = error_call)
+  # 5.
+  # join_mutate(x, y, by = by, type = "left", suffix = suffix, na_matches = na_matches,
+  #             keep = keep)
+  # 4.
+  # left_join.data.frame(stop_times2, stop_times.summary, by = "trip_id")
+  # 3.
+  # dplyr::left_join(stop_times2, stop_times.summary, by = "trip_id") at atoc_export.R#612
+  # 2.
+  # afterMidnight(stop_times) at nptdr.R#608
+  # 1.
+  # nptdr_schedule2routes(stop_times = stop_times, schedule = schedule,
+  #                       exceptions = exceptions)
 
   timetables <- nptdr_schedule2routes(
     stop_times = stop_times,
@@ -177,6 +203,13 @@ importCIF <- function(file) {
     stop("Unknown types in types ",paste(types_have[!types_have %in% known_types], collapse = ", "))
   }
 
+  # Mode information from file name
+  file_mode = strsplit(file,"/", fixed = TRUE)[[1]]
+  file_mode = file_mode[length(file_mode)]
+  file_mode = strsplit(file,"_", fixed = TRUE)[[1]]
+  file_mode = file_mode[length(file_mode)]
+  file_mode = gsub(".CIF","",file_mode, fixed = TRUE)
+
   # QS - Service Header
   # QO - Origin
   # QT - Terminating
@@ -203,8 +236,20 @@ importCIF <- function(file) {
   QR <- raw[types == "QR"] # Bus Repetitions
 
 
-  hd <- raw[1] # Some info not sure what
+  HD <- raw[1] # Some info not sure what
   tl <- raw[length(raw)]
+
+  # Header
+  HD <- iotools::dstrfw(
+    x = HD,
+    col_types = rep("character", 7),
+    widths = c(
+      8,2,2,32,16,8,6
+    )
+  )
+  names(HD) <- c(
+    "file_type","major_version","minor_version",
+    "originator","source","date","time")
 
 
   # Journey Header, Service
@@ -232,9 +277,12 @@ importCIF <- function(file) {
   QS$rowID <- seq(from = 1, to = length(types))[types == "QS"]
 
   # Add vehicle type if missing
-  vt <- substr(hd, 41, 46)
-  vt <- trimws(vt)
-  QS$vehicle_type[is.na(QS$vehicle_type)] <- vt
+  # vt <- substr(hd, 41, 46)
+  # vt <- trimws(vt)
+  # if(nchar(vt) == 0){
+  #   vt <- file_mode
+  # }
+  QS$vehicle_type[is.na(QS$vehicle_type)] <- file_mode
 
 
   # Origin Stop
@@ -353,17 +401,6 @@ importCIF <- function(file) {
   }
 
 
-  # Header
-  hd <- iotools::dstrfw(
-    x = hd,
-    col_types = rep("character", 7),
-    widths = c(8,2,2,32,16,8,6)
-  )
-  names(hd) <- c("file_type", "version_major", "version_minor",
-                 "originator","source","production_date","production_time")
-  hd <- strip_whitespace(hd)
-
-
   stop_times <- dplyr::bind_rows(list(QO, QI, QT))
   stop_times <- stop_times[order(stop_times$rowID), ]
   stop_times$schedule <- as.integer(as.character(cut(stop_times$rowID,
@@ -384,6 +421,19 @@ importCIF <- function(file) {
                                             stop_times$departure_time,
                                             stop_times$arrival_time)
 
+
+  #Occasional bugs with times e.g 00-1 @ $
+  suppressWarnings(chk <- is.na(as.numeric(stop_times$departure_time)))
+  if(any(chk)){
+    warning("Invalid departure_time (e.g '@   ') replaced with 0000")
+  }
+  stop_times$departure_time[chk] <- "0000"
+
+  suppressWarnings(chk <- is.na(as.numeric(stop_times$arrival_time)))
+  if(any(chk)){
+    warning("Invalid arrival_time (e.g '@   ') replaced with 0000")
+  }
+  stop_times$arrival_time[chk] <- "0000"
 
   stop_times <- stop_times[order(stop_times$schedule,as.numeric(stop_times$departure_time)), ]
   stop_times$stop_sequence <- sequence(rle(stop_times$schedule)$lengths)
@@ -414,9 +464,10 @@ importCIF <- function(file) {
       st_sub$arrival_time <- sprintf("%02d%02d", st_sub$arrival_time@day *
                                        24 + st_sub$arrival_time@hour,
                                      lubridate::minute(st_sub$arrival_time))
-      st_sub$schedule <- qr_sub$schedule
+      #st_sub$schedule <- qr_sub$schedule
+      st_sub$schedule <- as.integer(qr_sub$rowID)
       qs_sub$rowID <- as.integer(qr_sub$rowID)
-      qs_sub$uid <- qr_sub$uid
+      qs_sub$uid <- paste0(qr_sub$uid,"_",i)
       qs_sub$running_board  <- ifelse(is.na(qr_sub$running_board),qs_sub$running_board,qr_sub$running_board)
       qs_sub$vehicle_type   <- ifelse(is.na(qr_sub$vehicle_type),qs_sub$vehicle_type,qr_sub$vehicle_type)
 
@@ -437,7 +488,7 @@ importCIF <- function(file) {
   locs <- dplyr::left_join(QL, QB, by = "stop_id")
 
 
-  results <- list(stop_times, locs, QS, hd, tl, QE)
+  results <- list(stop_times, locs, QS, HD, tl, QE)
   names(results) <- c("stop_times", "locations","schedule","Header", "Footer", "Exceptions")
 
   return(results)
@@ -467,6 +518,7 @@ nptdr_schedule2routes <- function(stop_times, schedule, exceptions, silent = TRU
   # Convert Activity to pickup_type and drop_off_type
   stop_times$activity[is.na(stop_times$activity) & stop_times$stop_sequence == 1] <- "TB" # No activity specified at start
 
+  utils::data("activity_codes")
   upoffs <- clean_activities2(stop_times$activity)
   stop_times <- cbind(stop_times, upoffs)
 
@@ -490,7 +542,8 @@ nptdr_schedule2routes <- function(stop_times, schedule, exceptions, silent = TRU
   utils::data(historic_bank_holidays)
 
   # build the calendar file
-  res <- nptdr_makeCalendar(schedule = schedule, exceptions = exceptions,
+  res <- nptdr_makeCalendar(schedule = schedule,
+                            exceptions = exceptions,
                             historic_bank_holidays = historic_bank_holidays)
   calendar <- res[[1]]
   calendar_dates <- res[[2]]
@@ -533,6 +586,9 @@ nptdr_schedule2routes <- function(stop_times, schedule, exceptions, silent = TRU
   trips <- calendar
   trips <- trips[,c("trip_id","service_id","schedule","route_direction")]
 
+  # Remove stop times for completely excluded trips
+  stop_times <- stop_times[stop_times$schedule %in% trips$schedule,]
+
   calendar_dates_hash <- calendar[,c("trip_id","service_id")]
   calendar_dates <- dplyr::left_join(calendar_dates, calendar_dates_hash, by = c("UID" = "trip_id"))
   calendar_dates <- calendar_dates[,c("service_id","date","exception_type")]
@@ -572,6 +628,7 @@ nptdr_schedule2routes <- function(stop_times, schedule, exceptions, silent = TRU
   ))) + 1
 
   routes_join <- routes[,c("uid","route_id")]
+  routes_join <- routes_join[!duplicated(routes_join$uid),]
   routes <- dplyr::group_by(routes, route_id)
   routes <- dplyr::summarise(routes,
                              agency_id = unique(operator_code),
@@ -582,6 +639,7 @@ nptdr_schedule2routes <- function(stop_times, schedule, exceptions, silent = TRU
 
 
   routes$route_type[routes$route_type == ""] <- NA
+
   routes$route_type <- sapply(routes$route_type, clean_route_type, guess_bus = TRUE)
 
 
@@ -594,8 +652,6 @@ nptdr_schedule2routes <- function(stop_times, schedule, exceptions, silent = TRU
   agency$agency_name <- agency$agency_id
   agency$agency_url <- "http://www.unknownsite.com"
   agency$agency_timezone <- "Europe/London"
-
-
 
   # Ditch unneeded columns
   routes <- routes[, c("route_id", "agency_id", "route_short_name", "route_long_name", "route_type")]
