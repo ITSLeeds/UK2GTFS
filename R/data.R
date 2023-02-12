@@ -68,6 +68,16 @@
 #' @format A SF data frame
 "rail_heavy"
 
+#' ATOC Admin Areas
+#'
+#' Boundaries of the ATOC Admin Areas. Note there are 4 national areas
+#' represented by a box around the UK.
+#'
+#'
+#' @format A SF data frame
+"atoc_areas"
+
+
 
 #' Historic Bank Holidays
 #'
