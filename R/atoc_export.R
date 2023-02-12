@@ -598,25 +598,23 @@ duplicate.stop_times_alt <- function(calendar, stop_times, ncores = 1) {
 #' @noRd
 #'
 afterMidnight <- function(stop_times, safe = TRUE) {
-  stop_times2 <- stop_times
-  # stop_times2$arv = as.integer(paste0(substr(stop_times2$arrival_time,1,2),substr(stop_times2$arrival_time,4,5)))
-  # stop_times2$dept = as.integer(paste0(substr(stop_times2$departure_time,1,2),substr(stop_times2$departure_time,4,5)))
-  stop_times2$arv <- as.integer(stop_times2$arrival_time)
-  stop_times2$dept <- as.integer(stop_times2$departure_time)
 
-  stop_times.summary <- dplyr::group_by(stop_times2, trip_id)
+  stop_times$arv <- as.integer(stop_times$arrival_time)
+  stop_times$dept <- as.integer(stop_times$departure_time)
+
+  stop_times.summary <- dplyr::group_by(stop_times, trip_id)
   stop_times.summary <- dplyr::summarise(stop_times.summary,
     dept_first = dept[stop_sequence == min(stop_sequence)]
   )
 
-  stop_times2 <- dplyr::left_join(stop_times2, stop_times.summary, by = "trip_id")
-  stop_times2$arvfinal <- ifelse(stop_times2$arv < stop_times2$dept_first, stop_times2$arv + 2400, stop_times2$arv)
-  stop_times2$depfinal <- ifelse(stop_times2$dept < stop_times2$dept_first, stop_times2$dept + 2400, stop_times2$dept)
+  stop_times <- dplyr::left_join(stop_times, stop_times.summary, by = "trip_id")
+  stop_times$arvfinal <- ifelse(stop_times$arv < stop_times$dept_first, stop_times$arv + 2400, stop_times$arv)
+  stop_times$depfinal <- ifelse(stop_times$dept < stop_times$dept_first, stop_times$dept + 2400, stop_times$dept)
 
 
   if (safe) {
     # check if any train more than 24 hours
-    stop_times.summary2 <- dplyr::group_by(stop_times2, trip_id)
+    stop_times.summary2 <- dplyr::group_by(stop_times, trip_id)
     stop_times.summary2 <- dplyr::summarise(stop_times.summary2,
       arv_last = arvfinal[stop_sequence == max(stop_sequence)],
       arv_max = max(arvfinal, na.rm = TRUE)
@@ -628,30 +626,19 @@ afterMidnight <- function(stop_times, safe = TRUE) {
     }
   }
 
-  numb2time <- function(numb) {
-    numb <- as.character(numb)
-    cnt <- nchar(numb)
-    if (cnt == 4) {
-      numb <- paste0(substr(numb, 1, 2), ":", substr(numb, 3, 4), ":00")
-    } else if (cnt == 3) {
-      numb <- paste0("0", substr(numb, 1, 1), ":", substr(numb, 2, 3), ":00")
-    } else if (cnt == 2) {
-      numb <- paste0("00:", numb, ":00")
-    } else if (cnt == 1) {
-      numb <- paste0("00:0", numb, ":00")
-    } else {
-      stop("Unknown Time Format")
-    }
-    return(numb)
+  numb2time2 <- function(numb){
+    numb <- stringr::str_pad(as.character(numb), 4, pad = "0")
+    numb <- paste0(substr(numb,1,2),":",substr(numb,3,4),":00")
+    numb
   }
 
+  stop_times$arrival_time <- numb2time2(stop_times$arvfinal)
+  stop_times$departure_time <- numb2time2(stop_times$depfinal)
 
-  stop_times2$arrival_time <- pbapply::pbsapply(stop_times2$arvfinal, numb2time)
-  stop_times2$departure_time <- pbapply::pbsapply(stop_times2$depfinal, numb2time)
-
-
-  stop_times2 <- stop_times2[, c("trip_id", "arrival_time", "departure_time", "stop_id", "stop_sequence", "pickup_type", "drop_off_type")]
-  return(stop_times2)
+  stop_times <- stop_times[, c("trip_id", "arrival_time", "departure_time",
+                               "stop_id", "stop_sequence", "pickup_type",
+                               "drop_off_type")]
+  return(stop_times)
 }
 
 
