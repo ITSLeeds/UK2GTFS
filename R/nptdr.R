@@ -8,11 +8,14 @@
 #' @param path Path to zipped folder for NPTDR data
 #' @param silent Logical, should messages be returned
 #' @param n_files debug option numerical vector for files to be passed e.g. 1:10
+#' @param enhance_stops Logical, if TRUE will download current NaPTAN to add in any missing stops
 #'
 #' @export
 nptdr2gtfs <- function(path = "D:/OneDrive - University of Leeds/Data/UK2GTFS/NPTDR/October-2004.zip",
                        silent = FALSE,
-                       n_files = NULL){
+                       n_files = NULL,
+                       enhance_stops = TRUE){
+
   checkmate::assert_file_exists(path, extension = "zip")
   dir.create(file.path(tempdir(),"nptdr_temp"))
 
@@ -33,11 +36,11 @@ nptdr2gtfs <- function(path = "D:/OneDrive - University of Leeds/Data/UK2GTFS/NP
   }
 
   if(length(fls_ng) != 1){
-    stop(length(fls_ng)," NG files found")
+    warning(length(fls_ng)," NG files found")
   }
 
   if(!length(fls_admin) > 1){
-    stop(length(fls_ng)," Admin Area files found")
+    stop(length(fls_admin)," Admin Area files found")
   }
 
   # Unzip the Admin Area files
@@ -97,32 +100,6 @@ nptdr2gtfs <- function(path = "D:/OneDrive - University of Leeds/Data/UK2GTFS/NP
   exceptions <- dplyr::bind_rows(exceptions, .id = "file_id")
   exceptions$schedule <- paste0(exceptions$file_id,"_",exceptions$schedule)
 
-  # TODO Unknown Activity codes 'B' 'NA' '-' 'A' 'N' 'C' 'S' 'O' 'K' 'P' please report these codes as a GitHub Issue
-  # TODO stop_times$trip_id gaining NA values at some point and this is causing bugs
-  # Unique Scotland and NI bank holidays not correctly handeled
-  # School term dates not supported
-  # `summarise()` has grouped output by 'schedule'. You can override using the `.groups` argument.
-  # `summarise()` has grouped output by 'trip_id'. You can override using the `.groups` argument.
-  # Error: cannot allocate vector of size 4979.6 Gb
-  # In addition: Warning messages:
-  #   1: In afterMidnight(stop_times) : NAs introduced by coercion
-  # 2: In afterMidnight(stop_times) :
-  #   Error: cannot allocate vector of size 4979.6 Gb
-  # 6.
-  # join_rows(x_key, y_key, type = type, na_equal = na_equal, error_call = error_call)
-  # 5.
-  # join_mutate(x, y, by = by, type = "left", suffix = suffix, na_matches = na_matches,
-  #             keep = keep)
-  # 4.
-  # left_join.data.frame(stop_times2, stop_times.summary, by = "trip_id")
-  # 3.
-  # dplyr::left_join(stop_times2, stop_times.summary, by = "trip_id") at atoc_export.R#612
-  # 2.
-  # afterMidnight(stop_times) at nptdr.R#608
-  # 1.
-  # nptdr_schedule2routes(stop_times = stop_times, schedule = schedule,
-  #                       exceptions = exceptions)
-
   timetables <- nptdr_schedule2routes(
     stop_times = stop_times,
     schedule = schedule,
@@ -132,16 +109,45 @@ nptdr2gtfs <- function(path = "D:/OneDrive - University of Leeds/Data/UK2GTFS/NP
   stops <- stops[stops$stop_id %in% unique(timetables$stop_times$stop_id),]
   location <- dplyr::bind_rows(location, .id = "file_id")
   location <- location[,c("stop_id","stop_name","easting","northing")]
-  location <- sf::st_as_sf(location, coords = c("easting","northing"), crs = 27700)
 
-  summary(location$stop_id %in% timetables$stop_times$stop_id)
-  summary(timetables$stop_times$stop_id %in% location$stop_id)
-  summary(location$stop_id %in% stops$stop_id)
 
+  # Add in any missing stops
+  location_extra = location[!location$stop_id %in% stops$stop_id,]
+  if(nrow(location_extra) > 0){
+    location_extra <- sf::st_as_sf(location_extra, coords = c("easting","northing"), crs = 27700)
+    location_extra <- sf::st_transform(location_extra, 4326)
+    location_extra <- cbind(sf::st_drop_geometry(location_extra), sf::st_coordinates(location_extra))
+    names(location_extra) <- c("stop_id","stop_name","stop_lon","stop_lat")
+    location_extra <- location_extra[,names(stops)]
+    stops <- rbind(stops, location_extra)
+  }
+
+  if(enhance_stops){
+    stops_missing <- unique(timetables$stop_times$stop_id[!timetables$stop_times$stop_id %in% stops$stop_id])
+
+    if(length(stops_missing) > 0){
+      utils::data("naptan_missing")
+      naptan <- get_naptan( naptan_extra = naptan_missing)
+      naptan <- naptan[naptan$stop_id %in% stops_missing,]
+      naptan$stop_code <- NULL
+      naptan <- naptan[,names(stops)]
+      if(nrow(naptan) > 0){
+        stops <- rbind(stops, naptan)
+      }
+
+    }
+  }
+
+  stops_missing <- unique(timetables$stop_times$stop_id[!timetables$stop_times$stop_id %in% stops$stop_id])
+  if(length(stops_missing) > 0){
+    warning(length(stops_missing)," stops (",round(length(stops_missing)/nrow(stops)*100,1),
+            "%) in stop_times.txt are missing from stops.txt\n",
+            "These are likley to be temporary or moveable stops\n",
+            "Use gtfs_clean to remove them")
+    warning()
+  }
   timetables$stops <- stops
 
-  # foo = timetables$stop_times[!timetables$stop_times$stop_id %in% stops$stop_id,]
-  # foo = foo[!duplicated(foo$stop_id),]
 
   return(timetables)
 
@@ -190,9 +196,10 @@ importCIF <- function(file) {
   )
   types <- substr(raw, 1, 2)
 
-  # break out each part of the file
-  # Header Record
-  # Not Needed
+  # Sometime the file is empty
+  if(length(raw) < 3){
+    return(NULL)
+  }
 
   # AT     QB     QI     QL     QO     QS     QT     VS
   # 1   4410 478789   4410  11692  11692  11692      1
@@ -202,6 +209,10 @@ importCIF <- function(file) {
   if(any(!types_have %in% known_types)){
     stop("Unknown types in types ",paste(types_have[!types_have %in% known_types], collapse = ", "))
   }
+
+  # if(any(!known_types %in% types_have)){
+  #   stop("Missing types in types ",paste(known_types[!known_types %in% types_have], collapse = ", "))
+  # }
 
   # Mode information from file name
   file_mode = strsplit(file,"/", fixed = TRUE)[[1]]
@@ -658,6 +669,11 @@ nptdr_schedule2routes <- function(stop_times, schedule, exceptions, silent = TRU
   trips <- trips[, c("trip_id", "route_id", "service_id","direction_id")]
   stop_times <- stop_times[, c("trip_id", "arrival_time", "departure_time", "stop_id", "stop_sequence", "pickup_type", "drop_off_type")]
   calendar <- calendar[, c("service_id", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "start_date", "end_date")]
+
+  # Fill in missing routes longname
+  routes$route_long_name <- dplyr::if_else(is.na(routes$route_long_name),
+                                           "",
+                                           routes$route_long_name)
 
 
   # Fix Times
