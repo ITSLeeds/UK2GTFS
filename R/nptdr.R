@@ -498,6 +498,13 @@ importCIF <- function(file) {
 
   locs <- dplyr::left_join(QL, QB, by = "stop_id")
 
+  # Check for missing stops
+  chk <- unique(stop_times$stop_id)
+  chk <- chk[!chk %in% locs$stop_id]
+  if(length(chk) > 0){
+    warning("In ",substr(file,nchar(file) - 15,nchar(file))," there ",length(chk)," are stops without locations")
+  }
+
 
   results <- list(stop_times, locs, QS, HD, tl, QE)
   names(results) <- c("stop_times", "locations","schedule","Header", "Footer", "Exceptions")
