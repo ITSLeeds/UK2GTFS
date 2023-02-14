@@ -30,6 +30,10 @@ nptdr2gtfs <- function(path = "D:/OneDrive - University of Leeds/Data/UK2GTFS/NP
   fls_naptan <- fls[grepl("naptan",fls, ignore.case = TRUE)]
   fls_ng <- fls[grepl("ng",fls, ignore.case = TRUE)]
 
+  #2007 Fix
+  fls_naptan <- fls_naptan[!grepl("Stops Data",fls_naptan)]
+  fls_naptan <- fls_naptan[!grepl("xml",fls_naptan)]
+
   # Check all present
   if(length(fls_naptan) != 1){
     stop(length(fls_naptan)," NaPTAN files found")
@@ -109,6 +113,7 @@ nptdr2gtfs <- function(path = "D:/OneDrive - University of Leeds/Data/UK2GTFS/NP
   stops <- stops[stops$stop_id %in% unique(timetables$stop_times$stop_id),]
   location <- dplyr::bind_rows(location, .id = "file_id")
   location <- location[,c("stop_id","stop_name","easting","northing")]
+  location$stop_code <- NA_character_
 
 
   # Add in any missing stops
@@ -117,7 +122,7 @@ nptdr2gtfs <- function(path = "D:/OneDrive - University of Leeds/Data/UK2GTFS/NP
     location_extra <- sf::st_as_sf(location_extra, coords = c("easting","northing"), crs = 27700)
     location_extra <- sf::st_transform(location_extra, 4326)
     location_extra <- cbind(sf::st_drop_geometry(location_extra), sf::st_coordinates(location_extra))
-    names(location_extra) <- c("stop_id","stop_name","stop_lon","stop_lat")
+    names(location_extra) <- c("stop_id","stop_name","stop_code","stop_lon","stop_lat")
     location_extra <- location_extra[,names(stops)]
     stops <- rbind(stops, location_extra)
   }
@@ -129,7 +134,6 @@ nptdr2gtfs <- function(path = "D:/OneDrive - University of Leeds/Data/UK2GTFS/NP
       utils::data("naptan_missing")
       naptan <- get_naptan( naptan_extra = naptan_missing)
       naptan <- naptan[naptan$stop_id %in% stops_missing,]
-      naptan$stop_code <- NULL
       naptan <- naptan[,names(stops)]
       if(nrow(naptan) > 0){
         stops <- rbind(stops, naptan)
@@ -169,9 +173,12 @@ nptdr_naptan_import <- function(path_naptan){
 
   utils::unzip(path_naptan, exdir = file.path(tempdir(),"nptdr_temp","naptan"))
 
-  naptan_stops <- utils::read.csv(file.path(tempdir(),"nptdr_temp","naptan","stops.csv"))
-  naptan_stops <- naptan_stops[,c("ATCOCode","Lon","Lat","CommonName")]
-  names(naptan_stops) <- c("stop_id","stop_lon","stop_lat","stop_name")
+  flnap <- list.files(file.path(tempdir(),"nptdr_temp","naptan"), recursive = TRUE, full.names = TRUE)
+  flnap <- flnap[grepl("stops.csv", flnap, ignore.case = TRUE)]
+
+  naptan_stops <- utils::read.csv(flnap)
+  naptan_stops <- naptan_stops[,c("ATCOCode","Lon","Lat","CommonName","SMSNumber")]
+  names(naptan_stops) <- c("stop_id","stop_lon","stop_lat","stop_name","stop_code")
 
   unlink(file.path(tempdir(),"nptdr_temp","naptan"), recursive = TRUE)
 
@@ -495,7 +502,7 @@ importCIF <- function(file) {
 
   }
 
-
+  QB <- QB[!duplicated(QB$stop_id),] # Handle occasional duplicates
   locs <- dplyr::left_join(QL, QB, by = "stop_id")
 
   # Check for missing stops
