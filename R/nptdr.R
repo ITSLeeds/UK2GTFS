@@ -148,7 +148,6 @@ nptdr2gtfs <- function(path = "D:/OneDrive - University of Leeds/Data/UK2GTFS/NP
             "%) in stop_times.txt are missing from stops.txt\n",
             "These are likley to be temporary or moveable stops\n",
             "Use gtfs_clean to remove them")
-    warning()
   }
   timetables$stops <- stops
 

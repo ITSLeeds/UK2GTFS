@@ -17,28 +17,84 @@ nptdr_makeCalendar <- function(schedule, exceptions, historic_bank_holidays = hi
 
   message(paste0(Sys.time(), " Constructing calendar and calendar_dates"))
 
+  # exception_type
+  # In CIF    0 = exclude, 1 = include
+  # In GTFS   2 = exclude, 1 = include
+
+  exceptions$exception_type[exceptions$exception_type == 0] <- 2
   # Process exclusions
-  if(!all(exceptions$exception_type == 0)){
+  if(!all(exceptions$exception_type %in% c(1,2))){
     stop("Other types of exception")
   }
 
-
+  # Split exclusions and inclusions
   cal_noexc <- calendar[!calendar$schedule %in% exceptions$schedule,]
-  cal_exc <- calendar[calendar$schedule %in% exceptions$schedule,]
+  exceptions_exc <- exceptions[exceptions$exception_type == 2,]
+  exceptions_inc <- exceptions[exceptions$exception_type == 1,]
+
+  cal_exc <- calendar[calendar$schedule %in% exceptions_exc$schedule,]
   cal_exc <- dplyr::group_by(cal_exc, UID)
   cal_exc <- dplyr::group_split(cal_exc)
-  cal_exc <- purrr::map(cal_exc, .f = exclude_trips_nptdr, trip_exc = exceptions, .progress = "Excluding Trips")
+
+  # Trim Exceptions
+  # Sometime exclusion run out to 2900 etc
+  exceptions_exc$end_date <- dplyr::if_else(exceptions_exc$end_date > lubridate::ymd("2012-12-31"),
+                                            max(c(lubridate::ymd("2012-12-31"),exceptions_exc$end_date + 365 )),
+                                            exceptions_exc$end_date)
+  exceptions_exc$start_date <- dplyr::if_else(exceptions_exc$start_date < lubridate::ymd("2003-01-01"),
+                                            min(c(lubridate::ymd("2003-01-01"),exceptions_exc$end_date - 365 )),
+                                            exceptions_exc$start_date)
+
+  cal_exc <- purrr::map(cal_exc,
+                         .f = exclude_trips_nptdr,
+                         trip_exc = exceptions_exc[,c("schedule","start_date","end_date")], .progress = TRUE)
+  # Multicore doesn't seem to help
+  # out_func <- function(cal_exc, exceptions_exc, ncores){
+  #   message("Excluding Trips: ",ncores," cores")
+  #   p <- progressr::progressor(length(cal_exc))
+  #   if(ncores == 1){
+  #     cal_exc <- purrr::map(cal_exc,
+  #                          .f = exclude_trips_nptdr,
+  #                          trip_exc = exceptions_exc,
+  #                          p = p)
+  #   } else {
+  #     future::plan(future::multisession, workers = ncores)
+  #
+  #     cal_exc <- furrr::future_map(cal_exc,
+  #                                   .f = exclude_trips_nptdr,
+  #                                   trip_exc = exceptions_exc,
+  #                                   p = p)
+  #     future::plan(future::sequential)
+  #   }
+  #   return(cal_exc)
+  # }
+  # progressr::handlers("cli")
+  # cal_exc <- progressr::with_progress(out_func(cal_exc[1:100], exceptions_exc, ncores))
+  #
+  # bench::mark(f1 = progressr::with_progress(out_func(cal_exc[1:1000], exceptions_exc, 1)),
+  #             f2 = progressr::with_progress(out_func(cal_exc[1:1000], exceptions_exc, 10)))
+
+
   cal_exc <- dplyr::bind_rows(cal_exc)
 
-  cal_dates <- data.frame(UID = rep(cal_exc$UID, times = lengths(cal_exc$exclude_days)),
+  cal_dates_exc <- data.frame(UID = rep(cal_exc$UID, times = lengths(cal_exc$exclude_days)),
                           date = unlist(cal_exc$exclude_days))
-  cal_dates$date <- as.Date(cal_dates$date, origin = "1970-01-01")
-  cal_dates$exception_type <- 2
-    cal_exc$exclude_days <- NULL
+  cal_dates_exc$date <- as.Date(cal_dates_exc$date, origin = "1970-01-01")
+  cal_dates_exc$exception_type <- 2
+  cal_exc$exclude_days <- NULL
+
+  cal_dates_inc <- list_include_days_nptdr(exceptions_inc)
+  cal_dates_inc <- dplyr::left_join(cal_dates_inc, calendar[,c("UID","schedule")], by = "schedule")
+  cal_dates_inc <- cal_dates_inc[,c("UID","date")]
+  cal_dates_inc$exception_type <- 1
 
   calendar <- rbind(cal_noexc, cal_exc)
 
   calendar_dates <- calendar[,c("UID","start_date","end_date","school_term_time","bank_holiday")]
+
+  # TODO: bank_holiday = B as may need to exclude all other dates
+  # I think it is fine to have a schedule only in calendar_dates
+  calendar <- calendar[na2logical(calendar$bank_holiday != "B"),]
   calendar$school_term_time <- NULL
   calendar$bank_holiday <- NULL
 
@@ -51,9 +107,9 @@ nptdr_makeCalendar <- function(schedule, exceptions, historic_bank_holidays = hi
   bh <- bh[bh$date <= min(calendar$end_date, na.rm = TRUE), ]
   bh <- bh[bh$England,]
 
-  # TODO: Check how to handle bank_holiday = B as may need to exclude all other dates
+
   calendar_dates <- nptdr_parse_bank_holidays(calendar_dates, bh)
-  calendar_dates <- rbind(calendar_dates, cal_dates)
+  calendar_dates <- rbind(calendar_dates, cal_dates_exc, cal_dates_inc)
 
   days <- lapply(calendar$Days, function(x) {
     as.integer(substring(x, 1:7, 1:7))
@@ -71,6 +127,10 @@ nptdr_makeCalendar <- function(schedule, exceptions, historic_bank_holidays = hi
   return(list(calendar, calendar_dates))
 }
 
+na2logical <- function(x, logical = FALSE){
+  x[is.na(x)] <- logical
+  x
+}
 
 
 #' exclude trips
@@ -79,21 +139,25 @@ nptdr_makeCalendar <- function(schedule, exceptions, historic_bank_holidays = hi
 #' @param trip_exc desc
 #' @noRd
 #'
-exclude_trips_nptdr <- function(trip_sub, trip_exc) {
+exclude_trips_nptdr <- function(trip_sub, trip_exc
+                                #p
+                                ) {
+  #p()
   trip_exc_sub <- trip_exc[trip_exc$schedule == trip_sub$schedule,]
   if (!is.null(trip_exc_sub)) {
-    trip_exc_sub$duration <- as.integer(trip_exc_sub$end_date - trip_exc_sub$start_date + 1)
-    if(any(trip_exc_sub$duration > 3650)){
-      # Sometimes extremely long exclusions e.g. 2004 to 2900 then exclude after 2005.
-      trip_sub$end_date <- dplyr::if_else(trip_sub$end_date > lubridate::ymd("2020-12-31"),
-                                  max(c(lubridate::ymd("2020-12-31"),trip_sub$start_date + 365 )),
-                                  trip_sub$end_date)
-      trip_sub$start_date <- dplyr::if_else(trip_sub$start_date < lubridate::ymd("2000-01-01"),
-                                  min(c(lubridate::ymd("2000-01-01"), trip_sub$end_date - 365)),
-                                  trip_sub$start_date)
 
-      #message("Trip ",trip_sub$UID," trunkated within 2000-01-01 to 2020-12-31")
-    }
+    # trip_exc_sub$duration <- as.integer(trip_exc_sub$end_date - trip_exc_sub$start_date + 1)
+    # if(any(trip_exc_sub$duration > 3650)){
+    #   # Sometimes extremely long exclusions e.g. 2004 to 2900 then exclude after 2020.
+    #   trip_sub$end_date <- dplyr::if_else(trip_sub$end_date > lubridate::ymd("2020-12-31"),
+    #                               max(c(lubridate::ymd("2020-12-31"),trip_sub$start_date + 365 )),
+    #                               trip_sub$end_date)
+    #   trip_sub$start_date <- dplyr::if_else(trip_sub$start_date < lubridate::ymd("2000-01-01"),
+    #                               min(c(lubridate::ymd("2000-01-01"), trip_sub$end_date - 365)),
+    #                               trip_sub$start_date)
+    #
+    #   #message("Trip ",trip_sub$UID," trunkated within 2000-01-01 to 2020-12-31")
+    # }
 
     # Exclusions
     # Classify Exclusions
@@ -129,6 +193,27 @@ exclude_trips_nptdr <- function(trip_sub, trip_exc) {
     trip_sub$exclude_days <- NA
   }
   return(trip_sub)
+}
+
+
+#' list exclude days
+#' ????
+#' @param exclude_days desc
+#' @noRd
+list_include_days_nptdr <- function(include_days) {
+  res <- mapply(
+    function(ExStartTime, ExEndTime) {
+      seq(ExStartTime, ExEndTime, by = "days")
+    },
+    include_days$start_date,
+    include_days$end_date,
+    SIMPLIFY = FALSE
+  )
+  res2 <- as.Date(unlist(res, use.names = FALSE), origin = "1970-01-01")
+  res2 <- data.frame(date = res2, schedule = rep(include_days$schedule, lengths(res)))
+  res2 <- unique(res2)
+  res2 <- res2[,c("schedule","date")]
+  return(res2)
 }
 
 

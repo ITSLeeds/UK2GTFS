@@ -28,6 +28,8 @@ Imports:
   iotools,
   jsonlite,
   purrr (>= 1.0),
+  furrr,
+  future,
   digest,
   lubridate,
   zip,
@@ -35,6 +37,7 @@ Imports:
   xml2,
   readr (>= 2.0)
 Suggests: 
+    cli,
     covr,
     knitr,
     rmarkdown,
