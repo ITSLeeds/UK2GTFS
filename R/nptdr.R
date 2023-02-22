@@ -113,17 +113,34 @@ nptdr2gtfs <- function(path = "D:/OneDrive - University of Leeds/Data/UK2GTFS/NP
   stops <- stops[stops$stop_id %in% unique(timetables$stop_times$stop_id),]
   location <- dplyr::bind_rows(location, .id = "file_id")
   location <- location[,c("stop_id","stop_name","easting","northing")]
+  location <- location[!duplicated(location$stop_id),]
   location$stop_code <- NA_character_
 
-
   # Add in any missing stops
-  location_extra = location[!location$stop_id %in% stops$stop_id,]
+  location_extra <- location[!location$stop_id %in% stops$stop_id,]
+
+  if(nrow(location_extra) > 0){
+    # Most location have 5/6 digit coordinates by some have 8
+    location_extra <- location_extra[!is.na(location_extra$easting),]
+    location_extra$easting <- trimws(location_extra$easting)
+    location_extra$northing <- trimws(location_extra$northing)
+    location_extra$nchar <- nchar(location_extra$easting)
+    location_extra <- location_extra[location_extra$nchar > 4,]
+    suppressWarnings(location_extra$easting <- as.numeric(location_extra$easting))
+    suppressWarnings(location_extra$northing <- as.numeric(location_extra$northing))
+    location_extra <- location_extra[!is.na(location_extra$northing) & !is.na(location_extra$easting), ]
+    location_extra$easting <- dplyr::if_else(location_extra$nchar == 8, location_extra$easting/100, location_extra$easting)
+    location_extra$northing <- dplyr::if_else(location_extra$nchar == 8, location_extra$northing/100, location_extra$northing)
+  }
+
+
   if(nrow(location_extra) > 0){
     location_extra <- sf::st_as_sf(location_extra, coords = c("easting","northing"), crs = 27700)
     location_extra <- sf::st_transform(location_extra, 4326)
     location_extra <- cbind(sf::st_drop_geometry(location_extra), sf::st_coordinates(location_extra))
     names(location_extra) <- c("stop_id","stop_name","stop_code","stop_lon","stop_lat")
     location_extra <- location_extra[,names(stops)]
+    location_extra <- location_extra[!is.na(location_extra$stop_lon),]
     stops <- rbind(stops, location_extra)
   }
 

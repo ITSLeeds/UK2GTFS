@@ -47,7 +47,8 @@ nptdr_makeCalendar <- function(schedule, exceptions, historic_bank_holidays = hi
 
   cal_exc <- purrr::map(cal_exc,
                          .f = exclude_trips_nptdr,
-                         trip_exc = exceptions_exc[,c("schedule","start_date","end_date")], .progress = TRUE)
+                         trip_exc = exceptions_exc[,c("schedule","start_date","end_date")],
+                        .progress = "Checking for Exclusions")
   # Multicore doesn't seem to help
   # out_func <- function(cal_exc, exceptions_exc, ncores){
   #   message("Excluding Trips: ",ncores," cores")
@@ -218,13 +219,18 @@ list_include_days_nptdr <- function(include_days) {
 
 
 #' list exclude days
+#' SOmetime the dates are in the wrong order
 #' ????
 #' @param exclude_days desc
 #' @noRd
 list_exclude_days_nptdr <- function(exclude_days) {
   res <- mapply(
     function(ExStartTime, ExEndTime) {
-      seq(ExStartTime, ExEndTime, by = "days")
+      x <- try(seq(ExStartTime, ExEndTime, by = "days"), silent = TRUE)
+      if(inherits(x, "try-error")){
+        x <- seq(ExEndTime, ExStartTime, by = "days")
+      }
+      return(x)
     },
     exclude_days$start_date,
     exclude_days$end_date
