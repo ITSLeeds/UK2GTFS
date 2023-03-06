@@ -49,6 +49,10 @@ nptdr_makeCalendar <- function(schedule, exceptions, historic_bank_holidays = hi
                          .f = exclude_trips_nptdr,
                          trip_exc = exceptions_exc[,c("schedule","start_date","end_date")],
                         .progress = "Checking for Exclusions")
+
+
+
+
   # Multicore doesn't seem to help
   # out_func <- function(cal_exc, exceptions_exc, ncores){
   #   message("Excluding Trips: ",ncores," cores")
@@ -140,36 +144,18 @@ na2logical <- function(x, logical = FALSE){
 #' @param trip_exc desc
 #' @noRd
 #'
-exclude_trips_nptdr <- function(trip_sub, trip_exc
-                                #p
-                                ) {
-  #p()
+exclude_trips_nptdr <- function(trip_sub, trip_exc) {
   trip_exc_sub <- trip_exc[trip_exc$schedule == trip_sub$schedule,]
   if (!is.null(trip_exc_sub)) {
-
-    # trip_exc_sub$duration <- as.integer(trip_exc_sub$end_date - trip_exc_sub$start_date + 1)
-    # if(any(trip_exc_sub$duration > 3650)){
-    #   # Sometimes extremely long exclusions e.g. 2004 to 2900 then exclude after 2020.
-    #   trip_sub$end_date <- dplyr::if_else(trip_sub$end_date > lubridate::ymd("2020-12-31"),
-    #                               max(c(lubridate::ymd("2020-12-31"),trip_sub$start_date + 365 )),
-    #                               trip_sub$end_date)
-    #   trip_sub$start_date <- dplyr::if_else(trip_sub$start_date < lubridate::ymd("2000-01-01"),
-    #                               min(c(lubridate::ymd("2000-01-01"), trip_sub$end_date - 365)),
-    #                               trip_sub$start_date)
-    #
-    #   #message("Trip ",trip_sub$UID," trunkated within 2000-01-01 to 2020-12-31")
-    # }
-
-    # Exclusions
     # Classify Exclusions
-    trip_exc_sub$type <- mapply(classify_exclusions,
-                                ExStartTime = trip_exc_sub$start_date,
-                                ExEndTime = trip_exc_sub$end_date,
-                                StartDate = trip_sub$start_date,
-                                EndDate = trip_sub$end_date
+    trip_exc_sub$type <- classify_exclusions(
+      ExStartTime = trip_exc_sub$start_date,
+      ExEndTime = trip_exc_sub$end_date,
+      StartDate = trip_sub$start_date,
+      EndDate = trip_sub$end_date
     )
 
-
+    trip_exc_sub = trip_exc_sub[trip_exc_sub$type != "no overlap",]
     if ("total" %in% trip_exc_sub$type) {
       # Remove all
       return(NULL)

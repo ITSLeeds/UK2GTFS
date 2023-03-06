@@ -9,12 +9,13 @@ exclude_trips <- function(trip_sub, trip_exc) {
   if (!is.null(trip_exc_sub)) {
     # Exclusions
     # Classify Exclusions
-    trip_exc_sub$type <- mapply(classify_exclusions,
+    trip_exc_sub$type <- classify_exclusions(
       ExStartTime = trip_exc_sub$StartDate,
       ExEndTime = trip_exc_sub$EndDate,
       StartDate = trip_sub$StartDate,
       EndDate = trip_sub$EndDate
     )
+    trip_exc_sub = trip_exc_sub[trip_exc_sub$type != "no overlap",]
     if ("total" %in% trip_exc_sub$type) {
       # Remove all
       trip_sub$exclude_days <- NA
@@ -88,25 +89,17 @@ list_include_days <- function(include_days) {
 #' @param EndDate desc
 #' @noRd
 classify_exclusions <- function(ExStartTime, ExEndTime, StartDate, EndDate) {
-  if (ExStartTime <= StartDate) {
-    if (ExEndTime >= EndDate) {
-      # Total Exclusion
-      return("total")
-    } else {
-      # Trim Start
-      return("start")
-    }
-  } else if (ExStartTime > StartDate) {
-    if (ExEndTime >= EndDate) {
-      # Total Exclusion
-      return("end")
-    } else {
-      # Trim Start
-      return("middle")
-    }
-  } else {
-    return("no overlap")
-  }
+  start_earlier <- ExStartTime <= StartDate
+  finish_later <- ExEndTime >= EndDate
+  no_overlap <- (ExStartTime > EndDate) | (ExEndTime < StartDate)
+
+  ifelse(no_overlap, "no overlap",
+         ifelse(start_earlier,
+                ifelse(finish_later,"total","start"),
+                ifelse(finish_later,"end","middle"))
+
+  )
+
 }
 
 #' clean time
