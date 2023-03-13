@@ -588,8 +588,6 @@ nptdr_schedule2routes <- function(stop_times, schedule, exceptions, silent = TRU
                             historic_bank_holidays = historic_bank_holidays)
   calendar <- res[[1]]
   calendar_dates <- res[[2]]
-  # rm(res)
-
 
   # clean calednars
   calendar_dates_hash <- calendar_dates
@@ -601,45 +599,47 @@ nptdr_schedule2routes <- function(stop_times, schedule, exceptions, silent = TRU
                                           hash = digest::digest(hash, algo = "xxhash32"))
 
   calendar <- dplyr::left_join(calendar, calendar_dates_hash, by = "UID")
+  calendar$hash[is.na(calendar$hash)] <- "no_exceptions"
 
-  names(calendar)[names(calendar) == "UID"] <- "trip_id"
+
   calendar$start_date <- as.character(calendar$start_date)
   calendar$start_date <- gsub("-", "", calendar$start_date)
   calendar$end_date <- as.character(calendar$end_date)
   calendar$end_date <- gsub("-", "", calendar$end_date)
 
 
-  calendar$service_id <- seq_len(nrow(calendar))
-  calendar <- calendar[,c("trip_id","service_id","start_date","end_date",
+  #calendar$service_id <- seq_len(nrow(calendar))
+  calendar <- calendar[,c("UID","start_date","end_date",
                           "monday","tuesday","wednesday","thursday","friday",
                           "saturday","sunday","schedule","route_direction","hash")]
-  calendar$is_dup <- duplicated(calendar[,c("start_date","end_date",
-                                            "monday","tuesday","wednesday",
-                                            "thursday","friday",
-                                            "saturday","sunday","hash")])
-  breaks <- calendar$service_id[!calendar$is_dup]
-  breaks <- breaks -1
-  calendar$service_id <- as.integer(as.character(cut(calendar$service_id,
-                                                      c(breaks, nrow(calendar)),
-                                                      labels = breaks
-  ))) + 1
+
+  calendar_unique <- unique(calendar[,c("start_date","end_date",
+                                 "monday","tuesday","wednesday",
+                                 "thursday","friday",
+                                 "saturday","sunday","hash")])
+  calendar_unique$service_id <- seq(1, nrow(calendar_unique))
+
+  calendar <- dplyr::left_join(calendar, calendar_unique, by = c("start_date","end_date",
+                                                                 "monday","tuesday","wednesday",
+                                                                 "thursday","friday",
+                                                                 "saturday","sunday","hash"))
+  calendar_dates <- dplyr::left_join(calendar_dates, calendar[,c("UID","service_id")], by = "UID")
+  calendar_dates <- calendar_dates[,c("service_id","date","exception_type")]
+  calendar_dates <- unique(calendar_dates)
+
+  names(calendar)[names(calendar) == "UID"] <- "trip_id"
 
   trips <- calendar
-  trips <- trips[,c("trip_id","service_id","schedule","route_direction")]
+
+  calendar <- calendar[,c("service_id","start_date","end_date",
+                          "monday","tuesday","wednesday","thursday","friday",
+                          "saturday","sunday")]
+  calendar <- calendar[!duplicated(calendar$service_id),]
 
   # Remove stop times for completely excluded trips
   stop_times <- stop_times[stop_times$schedule %in% trips$schedule,]
 
-  calendar_dates_hash <- calendar[,c("trip_id","service_id")]
-  calendar_dates <- dplyr::left_join(calendar_dates, calendar_dates_hash, by = c("UID" = "trip_id"))
-  calendar_dates <- calendar_dates[,c("service_id","date","exception_type")]
-  calendar_dates <- unique(calendar_dates)
-
-  calendar <- calendar[!calendar$is_dup,]
-  calendar <- calendar[,c("service_id","start_date","end_date",
-                       "monday","tuesday","wednesday","thursday","friday",
-                       "saturday","sunday")]
-
+  trips <- trips[,c("trip_id","service_id","schedule","route_direction")]
   trips$direction_id <- 0
   trips$direction_id[trips$route_direction == "O"] <- 1
   trips$route_direction <- NULL

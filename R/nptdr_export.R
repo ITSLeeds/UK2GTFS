@@ -8,6 +8,8 @@
 #'
 nptdr_makeCalendar <- function(schedule, exceptions, historic_bank_holidays = historic_bank_holidays) {
   # prep the inputs
+  message(paste0(Sys.time(), " Constructing calendar and calendar_dates"))
+
   calendar <- schedule[, c("uid", "start_date", "end_date",
                            "days_operation","school_term_time","bank_holiday", "rowID", "running_board",
                            "schedule","route_direction")]
@@ -15,7 +17,14 @@ nptdr_makeCalendar <- function(schedule, exceptions, historic_bank_holidays = hi
                        "rowID", "Headcode", "schedule","route_direction")
   calendar$duration <- calendar$end_date - calendar$start_date + 1
 
-  message(paste0(Sys.time(), " Constructing calendar and calendar_dates"))
+  # Trim Calendar
+  # Sometime exclusion run out to 2900 etc
+  calendar$end_date <- dplyr::if_else(calendar$end_date > lubridate::ymd("2012-12-31"),
+                                      max(c(lubridate::ymd("2012-12-31"),calendar$start_date + 365 )),
+                                      calendar$end_date)
+  calendar$start_date <- dplyr::if_else(calendar$start_date < lubridate::ymd("2003-01-01"),
+                                        min(c(lubridate::ymd("2003-01-01"),calendar$end_date - 365 )),
+                                        calendar$start_date)
 
   # exception_type
   # In CIF    0 = exclude, 1 = include
@@ -50,48 +59,33 @@ nptdr_makeCalendar <- function(schedule, exceptions, historic_bank_holidays = hi
                          trip_exc = exceptions_exc[,c("schedule","start_date","end_date")],
                         .progress = "Checking for Exclusions")
 
-
-
-
-  # Multicore doesn't seem to help
-  # out_func <- function(cal_exc, exceptions_exc, ncores){
-  #   message("Excluding Trips: ",ncores," cores")
-  #   p <- progressr::progressor(length(cal_exc))
-  #   if(ncores == 1){
-  #     cal_exc <- purrr::map(cal_exc,
-  #                          .f = exclude_trips_nptdr,
-  #                          trip_exc = exceptions_exc,
-  #                          p = p)
-  #   } else {
-  #     future::plan(future::multisession, workers = ncores)
-  #
-  #     cal_exc <- furrr::future_map(cal_exc,
-  #                                   .f = exclude_trips_nptdr,
-  #                                   trip_exc = exceptions_exc,
-  #                                   p = p)
-  #     future::plan(future::sequential)
-  #   }
-  #   return(cal_exc)
-  # }
-  # progressr::handlers("cli")
-  # cal_exc <- progressr::with_progress(out_func(cal_exc[1:100], exceptions_exc, ncores))
-  #
-  # bench::mark(f1 = progressr::with_progress(out_func(cal_exc[1:1000], exceptions_exc, 1)),
-  #             f2 = progressr::with_progress(out_func(cal_exc[1:1000], exceptions_exc, 10)))
-
-
   cal_exc <- dplyr::bind_rows(cal_exc)
 
   cal_dates_exc <- data.frame(UID = rep(cal_exc$UID, times = lengths(cal_exc$exclude_days)),
+                              Days = rep(cal_exc$Days, times = lengths(cal_exc$exclude_days)),
                           date = unlist(cal_exc$exclude_days))
   cal_dates_exc$date <- as.Date(cal_dates_exc$date, origin = "1970-01-01")
   cal_dates_exc$exception_type <- 2
   cal_exc$exclude_days <- NULL
 
-  cal_dates_inc <- list_include_days_nptdr(exceptions_inc)
-  cal_dates_inc <- dplyr::left_join(cal_dates_inc, calendar[,c("UID","schedule")], by = "schedule")
-  cal_dates_inc <- cal_dates_inc[,c("UID","date")]
-  cal_dates_inc$exception_type <- 1
+  #Check for excluded data that don't run
+  cal_dates_exc$day <- lubridate::wday(cal_dates_exc$date, week_start = 1, label = FALSE)
+  cal_dates_exc$valid_day <- purrr::map2_lgl(cal_dates_exc$day, cal_dates_exc$Days, function(x,y){
+    as.logical(as.integer(substr(y,x,x)))
+  })
+  cal_dates_exc <- cal_dates_exc[cal_dates_exc$valid_day,]
+  cal_dates_exc <- cal_dates_exc[,c("UID","date","exception_type")]
+
+  if(nrow(exceptions_inc) > 0){
+    cal_dates_inc <- list_include_days_nptdr(exceptions_inc)
+    cal_dates_inc <- dplyr::left_join(cal_dates_inc, calendar[,c("UID","schedule")], by = "schedule")
+    cal_dates_inc <- cal_dates_inc[,c("UID","date")]
+    cal_dates_inc$exception_type <- 1
+  } else {
+    cal_dates_inc <- NULL
+  }
+
+
 
   calendar <- rbind(cal_noexc, cal_exc)
 
@@ -99,7 +93,7 @@ nptdr_makeCalendar <- function(schedule, exceptions, historic_bank_holidays = hi
 
   # TODO: bank_holiday = B as may need to exclude all other dates
   # I think it is fine to have a schedule only in calendar_dates
-  calendar <- calendar[na2logical(calendar$bank_holiday != "B"),]
+  calendar <- calendar[na2logical(calendar$bank_holiday != "B", TRUE),]
   calendar$school_term_time <- NULL
   calendar$bank_holiday <- NULL
 
