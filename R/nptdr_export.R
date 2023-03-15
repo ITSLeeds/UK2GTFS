@@ -44,20 +44,32 @@ nptdr_makeCalendar <- function(schedule, exceptions, historic_bank_holidays = hi
   cal_exc <- calendar[calendar$schedule %in% exceptions_exc$schedule,]
   cal_exc <- dplyr::group_by(cal_exc, UID)
   cal_exc <- dplyr::group_split(cal_exc)
+  cal_exc <- purrr::set_names(cal_exc, purrr::map_chr(cal_exc, ~.x$schedule[1]))
 
   # Trim Exceptions
+  exceptions_exc <- exceptions_exc[!is.na(exceptions_exc$end_date),]
+  exceptions_exc <- exceptions_exc[!is.na(exceptions_exc$start_date),]
+
   # Sometime exclusion run out to 2900 etc
   exceptions_exc$end_date <- dplyr::if_else(exceptions_exc$end_date > lubridate::ymd("2012-12-31"),
                                             max(c(lubridate::ymd("2012-12-31"),exceptions_exc$end_date + 365 )),
                                             exceptions_exc$end_date)
   exceptions_exc$start_date <- dplyr::if_else(exceptions_exc$start_date < lubridate::ymd("2003-01-01"),
                                             min(c(lubridate::ymd("2003-01-01"),exceptions_exc$end_date - 365 )),
-                                            exceptions_exc$start_date)
+                                            exceptzzzions_exc$start_date)
 
-  cal_exc <- purrr::map(cal_exc,
-                         .f = exclude_trips_nptdr,
-                         trip_exc = exceptions_exc[,c("schedule","start_date","end_date")],
-                        .progress = "Checking for Exclusions")
+
+  #trip_exc_sub <- trip_exc[trip_exc$schedule == trip_sub$schedule,]
+  trip_exc <- exceptions_exc[,c("schedule","start_date","end_date")]
+  trip_exc <- dplyr::group_by(trip_exc, schedule)
+  trip_exc <- dplyr::group_split(trip_exc)
+  trip_exc <- purrr::set_names(trip_exc, purrr::map_chr(trip_exc, ~.x$schedule[1]))
+
+  trip_exc <- trip_exc[match(names(cal_exc), names(trip_exc))]
+
+  cal_exc = purrr::map2(cal_exc, trip_exc,
+                    .f = exclude_trips_nptdr2,
+                    .progress = "Checking for Exclusions")
 
   cal_exc <- dplyr::bind_rows(cal_exc)
 
@@ -94,21 +106,88 @@ nptdr_makeCalendar <- function(schedule, exceptions, historic_bank_holidays = hi
   # TODO: bank_holiday = B as may need to exclude all other dates
   # I think it is fine to have a schedule only in calendar_dates
   calendar <- calendar[na2logical(calendar$bank_holiday != "B", TRUE),]
-  calendar$school_term_time <- NULL
+
   calendar$bank_holiday <- NULL
 
   # TODO: Detect Scotland and NI
-  # TODO: Historical term times
   message("Unique Scotland and NI bank holidays not correctly handeled")
-  message("School term dates not supported")
 
   bh <- historic_bank_holidays[historic_bank_holidays$date >= min(calendar$start_date, na.rm = TRUE),]
   bh <- bh[bh$date <= min(calendar$end_date, na.rm = TRUE), ]
   bh <- bh[bh$England,]
 
-
   calendar_dates <- nptdr_parse_bank_holidays(calendar_dates, bh)
   calendar_dates <- rbind(calendar_dates, cal_dates_exc, cal_dates_inc)
+
+  # TODO: Historical term times
+  data("school_terms")
+  message("School term dates not supported")
+
+  calendar_noschool = calendar[is.na(calendar$school_term_time),]
+  calendar_school = calendar[!is.na(calendar$school_term_time),]
+
+  calendar_school_term = calendar_school[calendar_school$school_term_time == "S",]
+  calendar_school_hol = calendar_school[calendar_school$school_term_time == "H",]
+
+  if(nrow(calendar_school_term)){
+    calendar_school_term <- dplyr::group_by(calendar_school_term, schedule)
+    calendar_school_term <- dplyr::group_split(calendar_school_term)
+
+    # S means term time only so exclude holidays
+    calendar_school_term = purrr::map(calendar_school_term,
+                                      trip_exc_sub = school_terms[school_terms$type == "holiday",],
+                                      .f = exclude_trips_nptdr2,
+                                      exmode = FALSE,
+                                      .progress = "School exclusions - term time only")
+    calendar_school_term <- dplyr::bind_rows(calendar_school_term)
+    cal_dates_school_term <- data.frame(UID = rep(calendar_school_term$UID, times = lengths(calendar_school_term$exclude_days)),
+                                Days = rep(calendar_school_term$Days, times = lengths(calendar_school_term$exclude_days)),
+                                date = unlist(calendar_school_term$exclude_days))
+    cal_dates_school_term$date <- as.Date(cal_dates_school_term$date, origin = "1970-01-01")
+    cal_dates_school_term$exception_type <- 2
+    calendar_school_term$exclude_days <- NULL
+
+    cal_dates_school_term$day <- lubridate::wday(cal_dates_school_term$date, week_start = 1, label = FALSE)
+    cal_dates_school_term$valid_day <- purrr::map2_lgl(cal_dates_school_term$day, cal_dates_school_term$Days, function(x,y){
+      as.logical(as.integer(substr(y,x,x)))
+    })
+    cal_dates_school_term <- cal_dates_school_term[cal_dates_school_term$valid_day,]
+    cal_dates_school_term <- cal_dates_school_term[,c("UID","date","exception_type")]
+
+  }
+
+  if(nrow(calendar_school_hol)){
+    calendar_school_hol <- dplyr::group_by(calendar_school_hol, schedule)
+    calendar_school_hol <- dplyr::group_split(calendar_school_hol)
+
+    # H means holiday time only so exclude term
+    calendar_school_hol = purrr::map(calendar_school_hol,
+                                      trip_exc_sub = school_terms[school_terms$type == "term",],
+                                      .f = exclude_trips_nptdr2,
+                                      exmode = FALSE,
+                                      .progress = "School exclusions - term time only")
+    calendar_school_hol <- dplyr::bind_rows(calendar_school_hol)
+    cal_dates_hol <- data.frame(UID = rep(calendar_school_hol$UID, times = lengths(calendar_school_hol$exclude_days)),
+                                        Days = rep(calendar_school_hol$Days, times = lengths(calendar_school_hol$exclude_days)),
+                                        date = unlist(calendar_school_hol$exclude_days))
+    cal_dates_hol$date <- as.Date(cal_dates_hol$date, origin = "1970-01-01")
+    cal_dates_hol$exception_type <- 2
+    calendar_school_hol$exclude_days <- NULL
+
+    cal_dates_hol$day <- lubridate::wday(cal_dates_hol$date, week_start = 1, label = FALSE)
+    cal_dates_hol$valid_day <- purrr::map2_lgl(cal_dates_hol$day, cal_dates_hol$Days, function(x,y){
+      as.logical(as.integer(substr(y,x,x)))
+    })
+    cal_dates_hol <- cal_dates_hol[cal_dates_hol$valid_day,]
+    cal_dates_hol <- cal_dates_hol[,c("UID","date","exception_type")]
+
+  }
+
+  calendar <- rbind(calendar_noschool, calendar_school_term, calendar_school_hol)
+  calendar_dates <- rbind(calendar_dates, cal_dates_school_term, cal_dates_hol)
+  calendar$school_term_time <- NULL
+  rm(calendar_noschool, calendar_school_term, calendar_school_hol, cal_dates_school_term, cal_dates_hol)
+
 
   days <- lapply(calendar$Days, function(x) {
     as.integer(substring(x, 1:7, 1:7))
@@ -136,11 +215,19 @@ na2logical <- function(x, logical = FALSE){
 #' remove trips
 #' @param trip_sub desc
 #' @param trip_exc desc
+#' @param exmode logical
 #' @noRd
 #'
-exclude_trips_nptdr <- function(trip_sub, trip_exc) {
-  trip_exc_sub <- trip_exc[trip_exc$schedule == trip_sub$schedule,]
+exclude_trips_nptdr2 <- function(trip_sub, trip_exc_sub, exmode = TRUE) {
+
   if (!is.null(trip_exc_sub)) {
+
+    if(exmode){
+      if(any(unique(trip_exc_sub$schedule) != trip_sub$schedule)){
+        stop("Error in matching schedules")
+      }
+    }
+
     # Classify Exclusions
     trip_exc_sub$type <- classify_exclusions(
       ExStartTime = trip_exc_sub$start_date,

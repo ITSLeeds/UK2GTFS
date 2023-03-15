@@ -9,12 +9,14 @@
 #' @param silent Logical, should messages be returned
 #' @param n_files debug option numerical vector for files to be passed e.g. 1:10
 #' @param enhance_stops Logical, if TRUE will download current NaPTAN to add in any missing stops
+#' @param mode_2010 Logical, different mode for 2010 and 2011 data
 #'
 #' @export
 nptdr2gtfs <- function(path = "D:/OneDrive - University of Leeds/Data/UK2GTFS/NPTDR/October-2004.zip",
                        silent = FALSE,
                        n_files = NULL,
-                       enhance_stops = TRUE){
+                       enhance_stops = TRUE,
+                       mode_2010 = FALSE){
 
   checkmate::assert_file_exists(path, extension = "zip")
   dir.create(file.path(tempdir(),"nptdr_temp"))
@@ -67,15 +69,18 @@ nptdr2gtfs <- function(path = "D:/OneDrive - University of Leeds/Data/UK2GTFS/NP
   # Import the NapTAN
   stops <- nptdr_naptan_import(fls_naptan)
 
+
   if(!silent){
     message(Sys.time()," Importing timetables")
   }
 
   # Import each CIF file
   if(is.null(n_files)){
-    res <- purrr::map(fls_cif, importCIF, .progress = "Reading files ")
+    res <- purrr::map(fls_cif, importCIF, .progress = "Reading files ",
+                      warn_missing_stops = !enhance_stops)
   } else {
-    res <- purrr::map(fls_cif[n_files], importCIF, .progress = "Reading files ")
+    res <- purrr::map(fls_cif[n_files], importCIF, .progress = "Reading files ",
+                      warn_missing_stops = !enhance_stops)
   }
 
   unlink(file.path(tempdir(),"nptdr_temp"), recursive = TRUE)
@@ -182,8 +187,9 @@ nptdr2gtfs <- function(path = "D:/OneDrive - University of Leeds/Data/UK2GTFS/NP
 #' Imports the CIF file and returns data.frame
 #'
 #' @param path_naptan Path to naptan file
+#' @param ukbbox Bounding box for the UK
 #' @noRd
-nptdr_naptan_import <- function(path_naptan){
+nptdr_naptan_import <- function(path_naptan, ukbbox = c(-9,49,2,61)){
 
   dir.create(file.path(tempdir(),"nptdr_temp","naptan"))
 
@@ -195,6 +201,14 @@ nptdr_naptan_import <- function(path_naptan){
   naptan_stops <- utils::read.csv(flnap)
   naptan_stops <- naptan_stops[,c("ATCOCode","Lon","Lat","CommonName","SMSNumber")]
   names(naptan_stops) <- c("stop_id","stop_lon","stop_lat","stop_name","stop_code")
+
+  # Filter out stops outside the UK
+  naptan_stops <- naptan_stops[
+                 naptan_stops$stop_lon > ukbbox[1] &
+                 naptan_stops$stop_lat > ukbbox[2] &
+                 naptan_stops$stop_lon < ukbbox[3] &
+                 naptan_stops$stop_lat < ukbbox[4]
+                 ,]
 
   unlink(file.path(tempdir(),"nptdr_temp","naptan"), recursive = TRUE)
 
@@ -209,8 +223,10 @@ nptdr_naptan_import <- function(path_naptan){
 #' Imports the CIF file and returns data.frame
 #'
 #' @param file Path to .CIF file
+#' @param ukbbox Bounding box for the UK
+#' @warn_missing_stops logical, should waring be given for missing stops?
 #' @noRd
-importCIF <- function(file) {
+importCIF <- function(file, ukbbox = c(-9,49,2,61), warn_missing_stops = FALSE ) {
 
   # see https://slideplayer.com/slide/14931535/
   raw <- readLines(
@@ -521,13 +537,23 @@ importCIF <- function(file) {
   QB <- QB[!duplicated(QB$stop_id),] # Handle occasional duplicates
   locs <- dplyr::left_join(QL, QB, by = "stop_id")
 
-  # Check for missing stops
-  chk <- unique(stop_times$stop_id)
-  chk <- chk[!chk %in% locs$stop_id]
-  if(length(chk) > 0){
-    warning("In ",substr(file,nchar(file) - 15,nchar(file))," there ",length(chk)," are stops without locations")
-  }
+  # Filter out stops outside the UK
+  locs <- locs[
+      locs$stop_lon > ukbbox[1] &
+      locs$stop_lat > ukbbox[2] &
+      locs$stop_lon < ukbbox[3] &
+      locs$stop_lat < ukbbox[4]
+    ,]
 
+
+  # Check for missing stops
+  if(warn_missing_stops){
+    chk <- unique(stop_times$stop_id)
+    chk <- chk[!chk %in% locs$stop_id]
+    if(length(chk) > 0){
+      warning("In '..",substr(file,nchar(file) - 17,nchar(file)),"' there ",length(chk)," are stops without locations")
+    }
+  }
 
   results <- list(stop_times, locs, QS, HD, tl, QE)
   names(results) <- c("stop_times", "locations","schedule","Header", "Footer", "Exceptions")
@@ -589,7 +615,7 @@ nptdr_schedule2routes <- function(stop_times, schedule, exceptions, silent = TRU
   calendar <- res[[1]]
   calendar_dates <- res[[2]]
 
-  # clean calednars
+  # clean calendars
   calendar_dates_hash <- calendar_dates
   calendar_dates_hash$hash <- as.numeric(calendar_dates_hash$date) + calendar_dates_hash$exception_type / 10
   calendar_dates_hash <- calendar_dates_hash[,c("UID","hash")]
