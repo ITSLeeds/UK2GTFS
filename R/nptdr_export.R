@@ -56,7 +56,7 @@ nptdr_makeCalendar <- function(schedule, exceptions, historic_bank_holidays = hi
                                             exceptions_exc$end_date)
   exceptions_exc$start_date <- dplyr::if_else(exceptions_exc$start_date < lubridate::ymd("2003-01-01"),
                                             min(c(lubridate::ymd("2003-01-01"),exceptions_exc$end_date - 365 )),
-                                            exceptzzzions_exc$start_date)
+                                            exceptions_exc$start_date)
 
 
   #trip_exc_sub <- trip_exc[trip_exc$schedule == trip_sub$schedule,]
