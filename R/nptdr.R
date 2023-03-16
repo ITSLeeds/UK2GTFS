@@ -14,8 +14,7 @@
 nptdr2gtfs <- function(path = "D:/OneDrive - University of Leeds/Data/UK2GTFS/NPTDR/October-2004.zip",
                        silent = FALSE,
                        n_files = NULL,
-                       enhance_stops = TRUE,
-                       mode_2010 = FALSE){
+                       enhance_stops = TRUE){
 
   checkmate::assert_file_exists(path, extension = "zip")
   dir.create(file.path(tempdir(),"nptdr_temp"))
