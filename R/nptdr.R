@@ -9,7 +9,6 @@
 #' @param silent Logical, should messages be returned
 #' @param n_files debug option numerical vector for files to be passed e.g. 1:10
 #' @param enhance_stops Logical, if TRUE will download current NaPTAN to add in any missing stops
-#' @param mode_2010 Logical, different mode for 2010 and 2011 data
 #'
 #' @export
 nptdr2gtfs <- function(path = "D:/OneDrive - University of Leeds/Data/UK2GTFS/NPTDR/October-2004.zip",
@@ -124,6 +123,10 @@ nptdr2gtfs <- function(path = "D:/OneDrive - University of Leeds/Data/UK2GTFS/NP
   # Add in any missing stops
   location_extra <- location[!location$stop_id %in% stops$stop_id,]
 
+
+
+
+
   if(nrow(location_extra) > 0){
     # Most location have 5/6 digit coordinates by some have 8
     location_extra <- location_extra[!is.na(location_extra$easting),]
@@ -144,6 +147,16 @@ nptdr2gtfs <- function(path = "D:/OneDrive - University of Leeds/Data/UK2GTFS/NP
     location_extra <- sf::st_transform(location_extra, 4326)
     location_extra <- cbind(sf::st_drop_geometry(location_extra), sf::st_coordinates(location_extra))
     names(location_extra) <- c("stop_id","stop_name","stop_code","stop_lon","stop_lat")
+
+    # Filter out stops outside the UK
+    ukbbox = c(-9,49,2,61)
+    location_extra <- location_extra[
+      location_extra$stop_lon > ukbbox[1] &
+        location_extra$stop_lat > ukbbox[2] &
+        location_extra$stop_lon < ukbbox[3] &
+        location_extra$stop_lat < ukbbox[4]
+      ,]
+
     location_extra <- location_extra[,names(stops)]
     location_extra <- location_extra[!is.na(location_extra$stop_lon),]
     stops <- rbind(stops, location_extra)
@@ -223,10 +236,9 @@ nptdr_naptan_import <- function(path_naptan, ukbbox = c(-9,49,2,61)){
 #' Imports the CIF file and returns data.frame
 #'
 #' @param file Path to .CIF file
-#' @param ukbbox Bounding box for the UK
 #' @warn_missing_stops logical, should waring be given for missing stops?
 #' @noRd
-importCIF <- function(file, ukbbox = c(-9,49,2,61), warn_missing_stops = FALSE ) {
+importCIF <- function(file, warn_missing_stops = FALSE ) {
 
   # see https://slideplayer.com/slide/14931535/
   raw <- readLines(
@@ -536,15 +548,6 @@ importCIF <- function(file, ukbbox = c(-9,49,2,61), warn_missing_stops = FALSE )
 
   QB <- QB[!duplicated(QB$stop_id),] # Handle occasional duplicates
   locs <- dplyr::left_join(QL, QB, by = "stop_id")
-
-  # Filter out stops outside the UK
-  locs <- locs[
-      locs$stop_lon > ukbbox[1] &
-      locs$stop_lat > ukbbox[2] &
-      locs$stop_lon < ukbbox[3] &
-      locs$stop_lat < ukbbox[4]
-    ,]
-
 
   # Check for missing stops
   if(warn_missing_stops){
