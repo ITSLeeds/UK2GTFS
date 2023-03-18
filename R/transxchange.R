@@ -83,7 +83,7 @@ transxchange2gtfs <- function(path_in,
 
   if (length(path_in) > 1) {
     if(!silent){message("Parsing provided xml files")}
-    files <- path_in[substr(path_in, nchar(path_in) - 4 + 1, nchar(path_in)) == ".xml"]
+    s <- path_in[substr(path_in, nchar(path_in) - 4 + 1, nchar(path_in)) == ".xml"]
   } else {
     dir.create(file.path(tempdir(), "txc"))
     if(!silent){ message(paste0(Sys.time(), " Unzipping data to temp folder"))}
@@ -160,6 +160,16 @@ transxchange2gtfs <- function(path_in,
       message("All files imported")
     }
 
+    # trim naptan, move less data to each worker
+    sids <- purrr::map(res_all, function(x){
+      s1 <- unique(x$JourneyPatternSections$From.StopPointRef)
+      s2 <- unique(x$JourneyPatternSections$To.StopPointRef)
+      s1 <- unique(c(s1,s2))
+      s1
+    })
+    sids <- unique(unlist(sids, use.names = FALSE))
+    naptan_trim <- naptan[naptan$stop_id %in% sids,]
+
     message(" ")
     message(paste0(Sys.time(), " Converting to GTFS, multicore"))
 
@@ -172,7 +182,7 @@ transxchange2gtfs <- function(path_in,
     gtfs_all <- foreach::`%dopar%`(boot, {
       transxchange_export_try(res_all[[i]],
                           cal = cal,
-                          naptan = naptan,
+                          naptan = naptan_trim,
                           scotland = scotland,
                           try_mode = try_mode)
       # setTxtProgressBar(pb, i)

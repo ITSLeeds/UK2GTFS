@@ -88,21 +88,29 @@ transxchange_import <- function(file, run_debug = TRUE, full_import = FALSE) {
 
   ## Operators ##########################################
   Operators <- xml2::xml_child(xml, "d1:Operators")
-  Operators <- import_operators(operators = Operators)
-  if (nrow(Operators) != 1) {
-    Operators <- Operators[Operators$OperatorCode %in% Services_main$RegisteredOperatorRef, ]
+  if(length(Operators) == 0){
+    # Operators missing
+    Operators <- NULL
+  } else {
+    Operators <- import_operators(operators = Operators)
     if (nrow(Operators) != 1) {
-      warning("Can't match operators to services, forcing link")
-      if (nrow(Operators) == 0) {
-        Operators <- xml2::xml_child(xml, "d1:Operators")
-        Operators <- import_operators(Operators)
-        Operators <- Operators[1, ]
-        Services_main$RegisteredOperatorRef <- Operators$OperatorCode
-      } else {
-        stop("Can't force realtionship between Operators and Services")
+      Operators <- Operators[Operators$OperatorCode %in% Services_main$RegisteredOperatorRef, ]
+      if (nrow(Operators) != 1) {
+        warning("Can't match operators to services, forcing link")
+        if (nrow(Operators) == 0) {
+          Operators <- xml2::xml_child(xml, "d1:Operators")
+          Operators <- import_operators(Operators)
+          Operators <- Operators[1, ]
+          Services_main$RegisteredOperatorRef <- Operators$OperatorCode
+        } else {
+          stop("Can't force realtionship between Operators and Services")
+        }
       }
     }
   }
+
+
+
 
   ## ServicedOrganisations ############################
   ServicedOrganisations <- xml2::xml_child(xml, "d1:ServicedOrganisations")

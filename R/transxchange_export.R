@@ -271,27 +271,35 @@ transxchange_export <- function(obj,
   # agency_id, agency_name, agency_url, agency_timezone
 
   # Check which code is used
-  if (all(routes$agency_id %in% Operators$NationalOperatorCode)) {
-    agency_id <- Operators$NationalOperatorCode
-  } else if (all(routes$agency_id %in% Operators$OperatorCode)) {
-    agency_id <- Operators$OperatorCode
+  if(is.null(Operators)){
+    agency_id <- unique(routes$agency_id)
+    agency_name <- rep("Unknown Operator", length(agency_id))
   } else {
-    if (length(unique(routes$agency_id)) == 1 & length(unique(Operators$NationalOperatorCode)) == 1) {
-      agency_id <- unique(routes$agency_id)
+    if (all(routes$agency_id %in% Operators$NationalOperatorCode)) {
+      agency_id <- Operators$NationalOperatorCode
+    } else if (all(routes$agency_id %in% Operators$OperatorCode)) {
+      agency_id <- Operators$OperatorCode
     } else {
-      stop("Unable to match OperatorCode between Services_main and Operators")
+      if (length(unique(routes$agency_id)) == 1 & length(unique(Operators$NationalOperatorCode)) == 1) {
+        agency_id <- unique(routes$agency_id)
+      } else {
+        stop("Unable to match OperatorCode between Services_main and Operators")
+      }
+    }
+
+    if (is.null(Operators$TradingName)) {
+      agency_name <- Operators$OperatorShortName
+    } else {
+      if (is.na(Operators$TradingName)) {
+        agency_name <- Operators$OperatorShortName
+      } else {
+        agency_name <- Operators$TradingName
+      }
     }
   }
 
-  if (is.null(Operators$TradingName)) {
-    agency_name <- Operators$OperatorShortName
-  } else {
-    if (is.na(Operators$TradingName)) {
-      agency_name <- Operators$OperatorShortName
-    } else {
-      agency_name <- Operators$TradingName
-    }
-  }
+
+
 
 
   agency <- data.frame(
