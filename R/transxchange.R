@@ -83,7 +83,7 @@ transxchange2gtfs <- function(path_in,
 
   if (length(path_in) > 1) {
     if(!silent){message("Parsing provided xml files")}
-    s <- path_in[substr(path_in, nchar(path_in) - 4 + 1, nchar(path_in)) == ".xml"]
+    files <- path_in[substr(path_in, nchar(path_in) - 4 + 1, nchar(path_in)) == ".xml"]
   } else {
     dir.create(file.path(tempdir(), "txc"))
     if(!silent){ message(paste0(Sys.time(), " Unzipping data to temp folder"))}
