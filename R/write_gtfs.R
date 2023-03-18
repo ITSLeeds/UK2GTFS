@@ -56,21 +56,21 @@ gtfs_write <- function(gtfs,
   }
 
 
-  dir.create(paste0(folder, "/gtfs_temp"))
-  data.table::fwrite(gtfs$calendar, paste0(folder, "/gtfs_temp/calendar.txt"), row.names = FALSE, quote = quote)
+  dir.create(paste0(tempdir(), "/gtfs_temp"))
+  data.table::fwrite(gtfs$calendar, paste0(tempdir(), "/gtfs_temp/calendar.txt"), row.names = FALSE, quote = quote)
   if (nrow(gtfs$calendar_dates) > 0) {
-    data.table::fwrite(gtfs$calendar_dates, paste0(folder, "/gtfs_temp/calendar_dates.txt"), row.names = FALSE, quote = quote)
+    data.table::fwrite(gtfs$calendar_dates, paste0(tempdir(), "/gtfs_temp/calendar_dates.txt"), row.names = FALSE, quote = quote)
   }
-  data.table::fwrite(gtfs$routes, paste0(folder, "/gtfs_temp/routes.txt"), row.names = FALSE, quote = quote)
-  data.table::fwrite(gtfs$stop_times, paste0(folder, "/gtfs_temp/stop_times.txt"), row.names = FALSE, quote = quote)
-  data.table::fwrite(gtfs$trips, paste0(folder, "/gtfs_temp/trips.txt"), row.names = FALSE, quote = quote)
-  data.table::fwrite(gtfs$stops, paste0(folder, "/gtfs_temp/stops.txt"), row.names = FALSE, quote = quote)
-  data.table::fwrite(gtfs$agency, paste0(folder, "/gtfs_temp/agency.txt"), row.names = FALSE, quote = quote)
+  data.table::fwrite(gtfs$routes, paste0(tempdir(), "/gtfs_temp/routes.txt"), row.names = FALSE, quote = quote)
+  data.table::fwrite(gtfs$stop_times, paste0(tempdir(), "/gtfs_temp/stop_times.txt"), row.names = FALSE, quote = quote)
+  data.table::fwrite(gtfs$trips, paste0(tempdir(), "/gtfs_temp/trips.txt"), row.names = FALSE, quote = quote)
+  data.table::fwrite(gtfs$stops, paste0(tempdir(), "/gtfs_temp/stops.txt"), row.names = FALSE, quote = quote)
+  data.table::fwrite(gtfs$agency, paste0(tempdir(), "/gtfs_temp/agency.txt"), row.names = FALSE, quote = quote)
   if ("transfers" %in% names(gtfs)) {
-    data.table::fwrite(gtfs$transfers, paste0(folder, "/gtfs_temp/transfers.txt"), row.names = FALSE, quote = quote)
+    data.table::fwrite(gtfs$transfers, paste0(tempdir(), "/gtfs_temp/transfers.txt"), row.names = FALSE, quote = quote)
   }
-  zip::zipr(paste0(folder, "/", name, ".zip"), list.files(paste0(folder, "/gtfs_temp"), full.names = TRUE), recurse = FALSE)
-  unlink(paste0(folder, "/gtfs_temp"), recursive = TRUE)
+  zip::zipr(paste0(folder, "/", name, ".zip"), list.files(paste0(tempdir(), "/gtfs_temp"), full.names = TRUE), recurse = FALSE)
+  unlink(paste0(tempdir(), "/gtfs_temp"), recursive = TRUE)
   message(paste0(folder, "/", name, ".zip"))
 }
 
