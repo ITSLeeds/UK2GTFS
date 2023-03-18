@@ -51,7 +51,7 @@ transxchange_export <- function(obj,
     }
   }
 
-  if(class(ServicedOrganisations) == "data.frame"){
+  if(inherits(ServicedOrganisations, "data.frame")){
     if(nrow(ServicedOrganisations) == 0){
       ServicedOrganisations <- NULL
     }

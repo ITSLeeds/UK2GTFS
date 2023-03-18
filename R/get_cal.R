@@ -59,5 +59,7 @@ get_bank_holidays <- function(url_ew = "https://www.gov.uk/bank-holidays/england
   cal$name[cal$name == "Boxing Day"] <- "BoxingDay"
   cal$name[cal$name == "Good Friday"] <- "GoodFriday"
 
+  unlink(file.path(tempdir(), "UK2GTFS"), recursive = TRUE)
+
   return(cal)
 }

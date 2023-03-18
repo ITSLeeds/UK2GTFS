@@ -108,11 +108,12 @@ transxchange2gtfs <- function(path_in,
 
   if (ncores == 1) {
     message(paste0(Sys.time(), " Importing TransXchange files, single core"))
-    res_all <- pbapply::pblapply(files,
-                                 transxchange_import_try,
-                                 run_debug = TRUE,
-                                 full_import = FALSE,
-                                 try_mode = try_mode)
+    res_all <- purrr::map(files,
+                           transxchange_import_try,
+                           run_debug = TRUE,
+                           full_import = FALSE,
+                           try_mode = try_mode,
+                           .progress = TRUE)
     res_all_message <- res_all[sapply(res_all, class) == "character"]
     res_all <- res_all[sapply(res_all, class) == "list"]
     if(length(res_all_message) > 0){
@@ -122,14 +123,14 @@ transxchange2gtfs <- function(path_in,
       message(paste(res_all_message, collapse = ",  "))
     }
     message(paste0(Sys.time(), " Converting to GTFS, single core"))
-    gtfs_all <- pbapply::pblapply(res_all,
-                                  transxchange_export_try,
-                                  run_debug = TRUE,
-                                  cal = cal,
-                                  naptan = naptan,
-                                  scotland = scotland,
-                                  try_mode = try_mode
-    )
+    gtfs_all <- purrr::map(res_all,
+                          transxchange_export_try,
+                          run_debug = TRUE,
+                          cal = cal,
+                          naptan = naptan,
+                          scotland = scotland,
+                          try_mode = try_mode,
+                          .progress = TRUE)
   } else {
     message(paste0(Sys.time(), " Importing TransXchange files, multicore"))
 
