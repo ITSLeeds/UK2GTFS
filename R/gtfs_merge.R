@@ -2,10 +2,11 @@
 #'
 #' @param gtfs_list a list of gtfs objects to be merged
 #' @param force logical, if TRUE duplicated values are merged taking the fist
+#' @param quiet logical, if TRUE less messages
 #'   instance to be the correct instance, in most cases this is ok, but may
 #'   cause some errors
 #' @export
-gtfs_merge <- function(gtfs_list, force = FALSE) {
+gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE) {
 
   # remove any NULLS
   gtfs_list <- gtfs_list[lengths(gtfs_list) != 0]
@@ -111,7 +112,7 @@ gtfs_merge <- function(gtfs_list, force = FALSE) {
 
   # routes
   if (any(duplicated(routes$route_id))) {
-    message("De-duplicating route_id")
+    if(!quiet){message("De-duplicating route_id")}
     route_id <- routes[, c("file_id", "route_id")]
     if (any(duplicated(route_id))) {
       if(force){
@@ -131,7 +132,7 @@ gtfs_merge <- function(gtfs_list, force = FALSE) {
 
   # calendar
   if (any(duplicated(calendar$service_id))) {
-    message("De-duplicating service_id")
+    if(!quiet){message("De-duplicating service_id")}
     service_id <- calendar[, c("file_id", "service_id")]
     if (any(duplicated(service_id))) {
       stop("Duplicated service_id within the same GTFS file")
@@ -151,7 +152,7 @@ gtfs_merge <- function(gtfs_list, force = FALSE) {
 
   # Trips
   if (any(duplicated(trips$trip_id))) {
-    message("De-duplicating trip_id")
+    if(!quiet){message("De-duplicating trip_id")}
     trip_id <- trips[, c("file_id", "trip_id")]
     if (any(duplicated(trip_id))) {
       if(force){
@@ -190,7 +191,7 @@ gtfs_merge <- function(gtfs_list, force = FALSE) {
 
   # Condense Duplicate Service patterns
   if (nrow(calendar_dates) > 0) {
-    message("Condensing duplicated service patterns")
+    if(!quiet){message("Condensing duplicated service patterns")}
     calendar_dates_summary <- dplyr::group_by(calendar_dates, service_id)
     if(class(calendar_dates_summary$date) == "Date"){
       calendar_dates_summary <- dplyr::summarise(calendar_dates_summary,

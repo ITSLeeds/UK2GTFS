@@ -82,13 +82,13 @@ transxchange2gtfs <- function(path_in,
   }
 
   if (length(path_in) > 1) {
-    message("Parsing provided xml files")
+    if(!silent){message("Parsing provided xml files")}
     files <- path_in[substr(path_in, nchar(path_in) - 4 + 1, nchar(path_in)) == ".xml"]
   } else {
     dir.create(file.path(tempdir(), "txc"))
-    message(paste0(Sys.time(), " Unzipping data to temp folder"))
+    if(!silent){ message(paste0(Sys.time(), " Unzipping data to temp folder"))}
     utils::unzip(path_in, exdir = file.path(tempdir(), "txc"))
-    message(paste0(Sys.time(), " Unzipping complete"))
+    if(!silent){ message(paste0(Sys.time(), " Unzipping complete"))}
 
     files <- list.files(file.path(tempdir(), "txc"),
                         pattern = ".xml",
@@ -100,7 +100,8 @@ transxchange2gtfs <- function(path_in,
   if(length(files) == 0){
     stop("No XML files found")
   } else {
-    message(length(files), " xml files have been found")
+    if(!silent){ message(length(files), " xml files have been found")}
+
   }
 
 
@@ -195,10 +196,7 @@ transxchange2gtfs <- function(path_in,
     message("All files converted")
   }
 
-
-  message(" ")
-  message(paste0(Sys.time(), " Merging GTFS objects"))
-
+  if(!silent){ message(paste0(Sys.time(), " Merging GTFS objects"))}
 
   gtfs_merged <- try(gtfs_merge(gtfs_all, force = force_merge))
 
