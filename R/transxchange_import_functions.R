@@ -261,7 +261,7 @@ import_services <- function(service, full_import = TRUE) {
     DaysOperation <- NULL
   }
 
-  if (xml2::xml_length(DaysNonOperation) > 0) {
+  if (any(xml2::xml_length(DaysNonOperation) > 0)) {
     DaysNonOperation_StartDate <- import_simple(DaysNonOperation, ".//d1:StartDate")
     DaysNonOperation_EndDate <- import_simple(DaysNonOperation, ".//d1:EndDate")
     DaysNonOperation_Note <- import_simple_xml(DaysNonOperation, ".//d1:Note")
