@@ -223,6 +223,13 @@ transxchange_export <- function(obj,
 
 
   # Journey Pattern Sections ------------------------------------------------
+
+  # Remove occasional -
+  JourneyPatternSections$RunTime <- gsub("-","",JourneyPatternSections$RunTime)
+  JourneyPatternSections$To.WaitTime <- gsub("-","",JourneyPatternSections$To.WaitTime)
+  JourneyPatternSections$From.WaitTime <- gsub("-","",JourneyPatternSections$From.WaitTime)
+
+
   if (run_debug) {
     chk <- gsub("[0-9]", "", JourneyPatternSections$RunTime)
     chk <- unique(chk)
