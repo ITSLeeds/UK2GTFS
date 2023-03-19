@@ -213,7 +213,7 @@ import_services <- function(service, full_import = TRUE) {
   }
 
   ss <- xml2::xml_find_all(service, ".//d1:JourneyPattern")
-  Direction <- import_simple(ss, ".//d1:Direction")
+  Direction <- import_simple_xml(ss, ".//d1:Direction") # changeed from import_simple, to fix bug in Bus Archive
   VehicleType <- import_withmissing2(ss, ".//d1:Description", 3, "@id")
   # RouteRef <- import_simple(ss, ".//d1:RouteRef")
   RouteRef <- import_simple_xml(ss, ".//d1:RouteRef")
