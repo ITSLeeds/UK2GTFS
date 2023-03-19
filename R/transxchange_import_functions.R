@@ -244,9 +244,9 @@ import_services <- function(service, full_import = TRUE) {
   # test fix ######
   DaysOperation <- xml2::xml_children(DaysOperation)
   DaysNonOperation <- xml2::xml_children(DaysNonOperation)
-  #################
+  # Seems to work now the if statements use any() on the length check.
 
-  if (xml2::xml_length(DaysOperation) > 0) {
+  if (any(xml2::xml_length(DaysOperation) > 0)) {
     DaysOperation_StartDate <- import_simple(DaysOperation, ".//d1:StartDate")
     DaysOperation_EndDate <- import_simple(DaysOperation, ".//d1:EndDate")
     DaysOperation_Note <- import_simple_xml(DaysOperation, ".//d1:Note")
