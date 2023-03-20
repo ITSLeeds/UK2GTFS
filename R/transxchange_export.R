@@ -370,19 +370,26 @@ transxchange_export <- function(obj,
                                     function(x){nrow(x) > 0},
                                     FUN.VALUE = TRUE, USE.NAMES = FALSE)]
     trips <- dplyr::bind_rows(trip_split)
-    trips_exclude <- trips[, c("trip_id", "exclude_days")]
-    trips_exclude <- trips_exclude[lengths(trips_exclude$exclude_days) > 0, ] # For lists
-    trips_exclude <- trips_exclude[!is.na(trips_exclude$exclude_days), ] # For NAs
-    if (nrow(trips_exclude) > 0) {
-      trips_exclude <- data.frame(
-        trip_id = rep(trips_exclude$trip_id, times = lengths(trips_exclude$exclude_days)),
-        date = as.Date(unlist(trips_exclude$exclude_days), origin = "1970-01-01"),
-        stringsAsFactors = FALSE
-      )
-      trips_exclude$exception_type <- 2
+    if(nrow(trips) > 0 ){
+      trips_exclude <- trips[, c("trip_id", "exclude_days")]
+      trips_exclude <- trips_exclude[lengths(trips_exclude$exclude_days) > 0, ] # For lists
+      trips_exclude <- trips_exclude[!is.na(trips_exclude$exclude_days), ] # For NAs
+      if (nrow(trips_exclude) > 0) {
+        trips_exclude <- data.frame(
+          trip_id = rep(trips_exclude$trip_id, times = lengths(trips_exclude$exclude_days)),
+          date = as.Date(unlist(trips_exclude$exclude_days), origin = "1970-01-01"),
+          stringsAsFactors = FALSE
+        )
+        trips_exclude$exception_type <- 2
+      } else {
+        rm(trips_exclude)
+      }
     } else {
-      rm(trips_exclude)
+      # Total Exclusion
+      return(NULL)
     }
+
+
   }
 
   # Step 1b: Do we have any Inclusions
