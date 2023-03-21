@@ -19,13 +19,13 @@ gtfs_read <- function(path){
   message_log <- c("Unable to find optional files: ")
 
   if(checkmate::test_file_exists(file.path(tmp_folder,"agency.txt"))){
-    gtfs$agency <- readr::read_csv(file.path(tmp_folder,"agency.txt"), lazy = FALSE)
+    gtfs$agency <- readr::read_csv(file.path(tmp_folder,"agency.txt"), lazy = FALSE, show_col_types = FALSE)
   } else {
     warning("Unable to find required file: agency.txt")
   }
 
   if(checkmate::test_file_exists(file.path(tmp_folder,"stops.txt"))){
-    gtfs$stops <- readr::read_csv(file.path(tmp_folder,"stops.txt"), lazy = FALSE)
+    gtfs$stops <- readr::read_csv(file.path(tmp_folder,"stops.txt"), lazy = FALSE, show_col_types = FALSE)
   } else {
     warning("Unable to find required file: stops.txt")
   }
