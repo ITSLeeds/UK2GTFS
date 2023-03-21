@@ -107,7 +107,13 @@ gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE) {
   stops$file_id <- NULL
   stops <- unique(stops)
   if (any(duplicated(stops$stop_id))) {
-    stop("Duplicated Stop IDS")
+    if(force){
+      stops <- stops[!duplicated(stops$stop_id),]
+    } else {
+      stop("Duplicated Stop IDS")
+    }
+
+
   }
 
   # routes
