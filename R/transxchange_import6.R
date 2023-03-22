@@ -70,11 +70,19 @@ transxchange_import <- function(file, run_debug = TRUE, full_import = FALSE) {
       stop("More than one service")
     }
   }
-  Services <- import_services(Services, full_import = full_import)
-  StandardService <- Services$StandardService
-  Services_main <- Services$Services_main
-  SpecialDaysOperation <- Services$SpecialDaysOperation
-  rm(Services)
+  if(length(Services) > 0){
+    Services <- import_services(Services, full_import = full_import)
+    StandardService <- Services$StandardService
+    Services_main <- Services$Services_main
+    SpecialDaysOperation <- Services$SpecialDaysOperation
+    rm(Services)
+  } else {
+    warning("No Services in ",file)
+    return(NULL)
+  }
+
+
+
 
   # Handle NA in service date
   # Sometimes end date is missing in which case assume service runs for one year
