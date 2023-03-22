@@ -55,7 +55,13 @@ transxchange_import <- function(file, run_debug = TRUE, full_import = FALSE) {
 
   ## JourneyPatternSections ##########################################
   JourneyPatternSections <- xml2::xml_child(xml, "d1:JourneyPatternSections")
-  JourneyPatternSections <- import_journeypatternsections(journeypatternsections = JourneyPatternSections)
+  if(length(JourneyPatternSections) > 0){
+    JourneyPatternSections <- import_journeypatternsections(journeypatternsections = JourneyPatternSections)
+  } else {
+    JourneyPatternSections <- NULL
+  }
+
+
 
   ## Services ##########################################
   Services <- xml2::xml_child(xml, "d1:Services")
