@@ -194,7 +194,7 @@ import_services <- function(service, full_import = TRUE) {
   DaysOfWeek <- paste(xml2::xml_name(xml2::xml_children(xml2::xml_find_first(service, ".//d1:DaysOfWeek"))), collapse = " ")
   StopRequirements <- import_simple(service, ".//d1:StopRequirements")
   Origin <- import_simple_xml(service, ".//d1:Origin")
-  Destination <- import_simple(service, ".//d1:Destination")
+  Destination <- import_simple_xml(service, ".//d1:Destination")
   LineName <- import_simple(service, ".//d1:LineName")
   BankHolidayNonOperation <- import_simple(service, ".//d1:BankHolidayNonOperation")
   if (length(BankHolidayNonOperation) == 0) {
