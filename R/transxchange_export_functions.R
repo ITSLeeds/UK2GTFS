@@ -187,7 +187,9 @@ clean_route_type <- function(rt, guess_bus = FALSE) {
     return(1)
   } else if (rt == "air") {
     return(1100)
-  } else {
+  } else if (rt == "AIR") {
+    return(1100)
+  }else {
     if(guess_bus){
       return(3)
     } else {

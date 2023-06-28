@@ -343,7 +343,9 @@ importCIF <- function(file, warn_missing_stops = FALSE ) {
   # if(nchar(vt) == 0){
   #   vt <- file_mode
   # }
-  QS$vehicle_type[is.na(QS$vehicle_type)] <- file_mode
+  good_types <- c("BUS","COACH","TRAIN","Bus","FERRY","METRO","Tram")
+
+  QS$vehicle_type[!QS$vehicle_type %in% good_types] <- file_mode
 
 
   # Origin Stop

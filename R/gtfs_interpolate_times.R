@@ -63,7 +63,7 @@ stops_interpolate <- function(x){
   if(any(duplicated(x$arrival_time))){
     # Check in correct order
     x <- x[order(x$stop_sequence),]
-    # Identify Break pooints
+    # Identify Break points
     x$arr_char <- as.character(x$arrival_time)
     x$dup_arr <- duplicated(x$arr_char)
     x$batch <- cumsum(!x$dup_arr)
@@ -112,7 +112,7 @@ stops_interpolate <- function(x){
   x$batch <- NULL
   x$arr_char <- NULL
 
-  # Needed becuase rbindlist doesn't work with periods for some reason
+  # Needed because rbindlist doesn't work with periods for some reason
   arrival_time <- try(period2gtfs(x$arrival_time), silent = TRUE)
   if("try-error" %in% class(arrival_time)){
     stop("conversion of times failed for tripID: ",unique(x$trip_id))
