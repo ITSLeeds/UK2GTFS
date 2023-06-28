@@ -132,7 +132,7 @@ period2gtfs <- function(x) {
 
   # Check for days
   dys <- lubridate::day(x)
-  if(sum(dys) > 0){
+  if(sum(dys, na.rm = TRUE) > 0){
     stop("Days detected in period objects, incorectly formatted period object")
   }
 

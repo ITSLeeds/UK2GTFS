@@ -100,17 +100,28 @@ gtfs_routes_sf <- function(gtfs){
   }
 
   stop_times <- dplyr::left_join(stop_times, stops, by = "stop_id")
+  stop_times <- stop_times[!is.na(stop_times$stop_lat),] # For missing stops
 
   stop_times <- dplyr::group_by(stop_times, trip_id)
   stop_times <- dplyr::group_split(stop_times)
-  stop_times <- lapply(stop_times, df2line)
+  stop_times <- purrr::map(stop_times, df2line, .progress = TRUE)
   stop_times <- dplyr::bind_rows(stop_times)
 
   stop_times <- dplyr::left_join(stop_times, gtfs$trips, by = "trip_id")
   stop_times <- dplyr::left_join(stop_times, gtfs$routes, by = "route_id")
   stop_times <- dplyr::left_join(stop_times, gtfs$agency, by = "agency_id")
 
-  stop_times <- stop_times[,c("route_id","agency_id","agency_name","route_short_name","route_long_name","route_desc","route_type")]
+  nms <- c("route_id","agency_id","agency_name","route_short_name","route_long_name","route_desc","route_type","geometry")
+
+  stop_times <- stop_times[,names(stop_times) %in% nms]
+
+  # Check for invalid
+  vld <- sf::st_is_valid(stop_times)
+  vld[is.na(vld)] <- FALSE
+  if(any(!vld)){
+    message(sum(!vld)," of ",length(vld)," invalid routes removed")
+    stop_times <- stop_times[vld,]
+  }
 
   return(stop_times)
 

@@ -49,25 +49,43 @@ gtfs_split_ids <- function(gtfs, trip_ids) {
 }
 
 #' Find fast trips
-#' @description
-#' Fast trips can idetify problems with the input data or converion process
-#' This fucntion returns trip_ids for trips that exceed max speed.
+#' @description Fast trips can identify problems with the input data or
+#'   conversion process. This function returns trip_ids for trips that exceed
+#'   `maxspeed`.
 #' @param gtfs list of gtfs tables
-#' @param maxspeed the maximum allowed speed in metres per second default 30 m/s (about 70 mph)
-#' @details
-#' The fucntion looks a straightline distance between the first and middle stop
-#' to allow for circular routes.
+#' @param maxspeed the maximum allowed speed in metres per second default 83 m/s
+#'   (about 185 mph the max speed of trains on HS1 line)
+#' @param routes logical, do one trip per route, faster but may miss some trips
+#' @details The function looks a straight line distance between each stop and
+#'   detects the fastest segment of the journey. A common cause of errors is
+#'   that a stop is in the wrong location so a bus can appear to teleport
+#'   across the country in seconds.
 #' @export
 
-gtfs_fast_trips <- function(gtfs, maxspeed = 30) {
+gtfs_fast_trips <- function(gtfs, maxspeed = 83, routes = TRUE) {
+
+  if(routes){
+    gtfs$trips <- gtfs$trips[!duplicated(gtfs$trips$route_id),]
+    gtfs$stop_times <- gtfs$stop_times[gtfs$stop_times$trip_id %in% gtfs$trips$trip_id,]
+  }
+
   trips <- gtfs$stop_times
   #times$stop_sequence <- as.integer(times$stop_sequence)
   trips <- dplyr::left_join(trips, gtfs$stops, by = "stop_id")
   trips$distance <- geodist::geodist(as.matrix(trips[,c("stop_lon","stop_lat")]), sequential = TRUE, pad = TRUE)
   trips$distance[trips$stop_sequence == 1] <- NA
-  trips$arrival_time <- as.POSIXct(trips$arrival_time, format="%H:%M:%S", origin = "1970-01-01")
-  trips$time <- c(NA, difftime(trips$arrival_time[2:nrow(trips)], trips$arrival_time[1:(nrow(trips)-1)]))
-  trips$speed <- trips$distance / trips$time
+  trips$time <- dplyr::if_else(is.na(trips$arrival_time), trips$departure_time, trips$arrival_time)
+  if(inherits(trips$time, "character")){
+    trips$time <- as.POSIXct(trips$time, format="%H:%M:%S", origin = "1970-01-01")
+  }
+  if(inherits(trips$time, "Period")){
+    trips$time2 <- c(NA, as.numeric(trips$time[2:nrow(trips)] - trips$time[1:(nrow(trips)-1)]))
+  } else {
+    trips$time <- as.POSIXct(trips$time, format="%H:%M:%S", origin = "1970-01-01")
+    trips$time2 <- c(NA, difftime(trips$time[2:nrow(trips)], trips$time[1:(nrow(trips)-1)]))
+  }
+
+  trips$speed <- trips$distance / trips$time2
   trips$speed[trips$speed == Inf] <- NA
 
   times <- dplyr::group_by(trips, trip_id)
@@ -77,6 +95,61 @@ gtfs_fast_trips <- function(gtfs, maxspeed = 30) {
   times <- times[times$max_speed > maxspeed,]
   return(times$trip_id)
 }
+
+#' Find fast stops
+#' @description A varient of gtfs_fast_trips that can detect stops that may be in the wrong location
+#' @param gtfs list of gtfs tables
+#' @param maxspeed the maximum allowed speed in metres per second default 83 m/s
+#'   (about 185 mph the max speed of trains on HS1 line)
+#' @details The function looks a straight line distance between each stop and
+#'   detects the fastest segment of the journey. A common cause of errors is
+#'   that a stop is in the wrong location so a bus can appear to teleport
+#'   across the country in seconds.
+#' @export
+
+gtfs_fast_stops <- function(gtfs, maxspeed = 83) {
+
+  trips <- gtfs$stop_times
+  trips <- dplyr::left_join(trips, gtfs$stops, by = "stop_id")
+  trips$distance <- geodist::geodist(as.matrix(trips[,c("stop_lon","stop_lat")]), sequential = TRUE, pad = TRUE)
+  trips$distance[trips$stop_sequence == 1] <- NA
+  trips$time <- dplyr::if_else(is.na(trips$arrival_time), trips$departure_time, trips$arrival_time)
+  if(inherits(trips$time, "character")){
+    trips$time <- as.POSIXct(trips$time, format="%H:%M:%S", origin = "1970-01-01")
+  }
+  if(inherits(trips$time, "Period")){
+    trips$time2 <- c(NA, as.numeric(trips$time[2:nrow(trips)] - trips$time[1:(nrow(trips)-1)]))
+  } else {
+    trips$time <- as.POSIXct(trips$time, format="%H:%M:%S", origin = "1970-01-01")
+    trips$time2 <- c(NA, difftime(trips$time[2:nrow(trips)], trips$time[1:(nrow(trips)-1)]))
+  }
+
+  trips$speed <- trips$distance / trips$time2
+  trips$speed[trips$speed == Inf] <- NA
+  trips$speed_after <- c(trips$speed[2:nrow(trips)],NA)
+  trips$distance_after <- c(trips$distance[2:nrow(trips)],NA)
+
+  times <- dplyr::group_by(trips, stop_id)
+  times <- dplyr::summarise(times,
+                            max_speed = round(max(c(speed,speed_after), na.rm = TRUE), 1),
+                            min_speed = round(min(c(speed,speed_after), na.rm = TRUE), 1),
+                            mean_speed = round(mean(c(speed,speed_after), na.rm = TRUE), 1),
+                            max_distance = round(max(c(distance,distance_after), na.rm = TRUE), 0),
+                            min_distance = round(min(c(distance,distance_after), na.rm = TRUE), 0),
+                            mean_distance = round(mean(c(distance,distance_after), na.rm = TRUE), 0),
+                            trips = dplyr::n()
+
+  )
+  times <- times[times$max_speed > maxspeed,]
+
+
+  times <- dplyr::left_join(times, gtfs$stops, by = "stop_id")
+  times <- sf::st_as_sf(times, coords = c("stop_lon","stop_lat"), crs = 4326)
+
+  return(times)
+}
+
+
 # gtfs_fast_trips <- function(gtfs, maxspeed = 30) {
 #   times <- gtfs$stop_times
 #   times$stop_sequence <- as.integer(times$stop_sequence)
