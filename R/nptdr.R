@@ -11,7 +11,7 @@
 #' @param enhance_stops Logical, if TRUE will download current NaPTAN to add in any missing stops
 #'
 #' @export
-nptdr2gtfs <- function(path = "D:/OneDrive - University of Leeds/Data/UK2GTFS/NPTDR/October-2004.zip",
+nptdr2gtfs <- function(path = "D:/OneDrive - University of Leeds/Data/UK2GTFS/NPTDR/October-2006.zip",
                        silent = FALSE,
                        n_files = NULL,
                        enhance_stops = TRUE){

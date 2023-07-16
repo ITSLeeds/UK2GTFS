@@ -59,6 +59,11 @@ gtfs_interpolate_times <- function(gtfs, ncores = 1){
 
 
 stops_interpolate <- function(x){
+  # skip if NAs in times, as can't handel
+  if(anyNA(x$arrival_time, x$departure_time)){
+    return(x)
+  }
+
   # Check for duplicates times
   if(any(duplicated(x$arrival_time))){
     # Check in correct order

@@ -129,7 +129,7 @@ nptdr_makeCalendar <- function(schedule, exceptions, historic_bank_holidays = hi
   calendar_school_term = calendar_school[calendar_school$school_term_time == "S",]
   calendar_school_hol = calendar_school[calendar_school$school_term_time == "H",]
 
-  if(nrow(calendar_school_term)){
+  if(nrow(calendar_school_term) > 0){
     calendar_school_term <- dplyr::group_by(calendar_school_term, schedule)
     calendar_school_term <- dplyr::group_split(calendar_school_term)
 
@@ -156,7 +156,7 @@ nptdr_makeCalendar <- function(schedule, exceptions, historic_bank_holidays = hi
 
   }
 
-  if(nrow(calendar_school_hol)){
+  if(nrow(calendar_school_hol) > 0){
     calendar_school_hol <- dplyr::group_by(calendar_school_hol, schedule)
     calendar_school_hol <- dplyr::group_split(calendar_school_hol)
 
@@ -165,7 +165,7 @@ nptdr_makeCalendar <- function(schedule, exceptions, historic_bank_holidays = hi
                                       trip_exc_sub = school_terms[school_terms$type == "term",],
                                       .f = exclude_trips_nptdr2,
                                       exmode = FALSE,
-                                      .progress = "School exclusions - term time only")
+                                      .progress = "School exclusions - holiday time only")
     calendar_school_hol <- dplyr::bind_rows(calendar_school_hol)
     cal_dates_hol <- data.frame(UID = rep(calendar_school_hol$UID, times = lengths(calendar_school_hol$exclude_days)),
                                         Days = rep(calendar_school_hol$Days, times = lengths(calendar_school_hol$exclude_days)),
