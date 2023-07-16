@@ -5,10 +5,10 @@
 \title{Import the .CIF file}
 \usage{
 nptdr2gtfs(
-  path =
-    "C:/Users/malco/OneDrive - University of Leeds/Data/UK2GTFS/NPTDR/October-2004.zip",
+  path = "D:/OneDrive - University of Leeds/Data/UK2GTFS/NPTDR/October-2004.zip",
   silent = FALSE,
-  n_files = NA
+  n_files = NULL,
+  enhance_stops = TRUE
 )
 }
 \arguments{
@@ -17,6 +17,8 @@ nptdr2gtfs(
 \item{silent}{Logical, should messages be returned}
 
 \item{n_files}{debug option numerical vector for files to be passed e.g. 1:10}
+
+\item{enhance_stops}{Logical, if TRUE will download current NaPTAN to add in any missing stops}
 }
 \description{
 Import the .CIF file

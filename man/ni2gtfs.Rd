@@ -19,6 +19,4 @@ NI to GTFS
 }
 \details{
 Convert Northern Ireland CIF files to GTFS
-
-
 }

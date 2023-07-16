@@ -5,7 +5,6 @@
 #' @param path_in Path to CIF file
 #' @param silent Logical, should progress be shown
 #' @return A GTFS named list
-#' @details
 #'
 #'
 

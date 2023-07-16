@@ -235,7 +235,7 @@ nptdr_naptan_import <- function(path_naptan, ukbbox = c(-9,49,2,61)){
 #' Imports the CIF file and returns data.frame
 #'
 #' @param file Path to .CIF file
-#' @warn_missing_stops logical, should waring be given for missing stops?
+#' @param warn_missing_stops logical, should warning be given for missing stops?
 #' @noRd
 importCIF <- function(file, warn_missing_stops = FALSE ) {
 

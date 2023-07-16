@@ -28,6 +28,8 @@ Imports:
   iotools,
   jsonlite,
   purrr (>= 1.0),
+  stringr,
+  stringr,
   furrr,
   future,
   digest,
