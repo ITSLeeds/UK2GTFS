@@ -18,9 +18,9 @@ As well as converting to GTFS `UK2GTFS` has functions for manipulating GTFS file
 
 ## Reading and Writing
 
-`gtfs_read`
+`gtfs_read()`
 
-`gtfs_write`
+`gtfs_write()`
 
 
 ## Cleaning and Validating GFTS
@@ -30,8 +30,6 @@ As well as converting to GTFS `UK2GTFS` has functions for manipulating GTFS file
 `gtfs_compress()` Reduce file size of a GTFS object
 
 `gtfs_fast_trips()` Find fast trips
-
-
 
 `gtfs_validate_internal()` Validate a GTFS object (in R)
 

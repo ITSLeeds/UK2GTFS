@@ -11,6 +11,10 @@ gtfs_split_ids(gtfs, trip_ids)
 
 \item{trip_ids}{a vector of trips ids}
 }
+\value{
+Returns a named list of two gtfs objects. The `true` list contains
+  trips that matched `trip_ids` the `false` list contains all other trips.
+}
 \description{
 Split a GTFS object based on trip_ids
 }

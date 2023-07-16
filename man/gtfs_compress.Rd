@@ -16,9 +16,9 @@ a gtfs object
 Reduce file size of a GTFS object
 }
 \details{
-by default UK2GTFS trys to preserve id numbers during the conversion
-  process to allow back comparions to the original files, e.g.
+by default UK2GTFS tries to preserve id numbers during the conversion
+  process to allow back comparisons to the original files, e.g.
   `transxchange2gtfs()` retains stop ids from the NAPTAN. However this means
-  files sizes are increased. This fucntion replaces ids with intergers and
+  files sizes are increased. This function replaces ids with integers and
   thus reduces the size of the gtfs file.
 }

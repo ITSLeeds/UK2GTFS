@@ -4,6 +4,9 @@
 #'
 #' @param gtfs gtfs list
 #' @param trip_ids a vector of trips ids
+#' @return Returns a named list of two gtfs objects. The `true` list contains
+#'   trips that matched `trip_ids` the `false` list contains all other trips.
+#'
 #' @export
 
 gtfs_split_ids <- function(gtfs, trip_ids) {
@@ -194,6 +197,14 @@ gtfs_fast_stops <- function(gtfs, maxspeed = 83) {
 #' Clean simple errors from GTFS files
 #'
 #' @param gtfs gtfs list
+#' @details
+#' Task done:
+#'
+#' 1. Remove stops with no location information
+#' 2. Remove stops that are never used
+#' 3. Replace missing agency names with "MISSINGAGENCY"
+#'
+#'
 #' @export
 gtfs_clean <- function(gtfs) {
   # 1 Remove stops with no locations

@@ -217,8 +217,14 @@ gtfs_validate_external <- function(path_gtfs, path_validator) {
 }
 
 
-#' Force a GTFS to be valid bu removing problems
+#' Force a GTFS to be valid by removing problems
 #' @param gtfs gtfs object
+#' @details
+#' Actions performed
+#' 1. Remove stops with missing location
+#' 2. Remove stops from stop_times that are not in stops
+#' 3. Remove trips from stop_times that are not in trips
+#'
 #' @export
 gtfs_force_valid <- function(gtfs) {
   message("This function does not fix problems it just removes them")

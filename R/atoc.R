@@ -3,7 +3,7 @@
 #' Convert ATOC CIF files to GTFS
 #'
 #' @param path_in Character, path to ATOC file e.g."C:/input/ttis123.zip"
-#' @param silent Logical, should progress messages be surpressed (default TRUE)
+#' @param silent Logical, should progress messages be suppressed (default TRUE)
 #' @param ncores Numeric, When parallel processing how many cores to use
 #'   (default 1)
 #' @param locations where to get tiploc locations (see details)
@@ -11,7 +11,7 @@
 #' @param shapes Logical, should shapes.txt be generated (default FALSE)
 #' @param transfers Logical, should transfers.txt be generated (default TRUE)
 #' @param missing_tiplocs Logical, if locations = tiplocs, then will check for
-#'   any missing tiplocs agains the main file and add them.(default TRUE)
+#'   any missing tiplocs against the main file and add them.(default TRUE)
 #' @family main
 #'
 #' @details Locations

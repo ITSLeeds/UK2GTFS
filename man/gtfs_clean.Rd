@@ -12,3 +12,10 @@ gtfs_clean(gtfs)
 \description{
 Clean simple errors from GTFS files
 }
+\details{
+Task done:
+
+1. Remove stops with no location information
+2. Remove stops that are never used
+3. Replace missing agency names with "MISSINGAGENCY"
+}

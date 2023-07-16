@@ -2,7 +2,7 @@
 % Please edit documentation in R/gtfs_validate.R
 \name{gtfs_force_valid}
 \alias{gtfs_force_valid}
-\title{Force a GTFS to be valid bu removing problems}
+\title{Force a GTFS to be valid by removing problems}
 \usage{
 gtfs_force_valid(gtfs)
 }
@@ -10,5 +10,11 @@ gtfs_force_valid(gtfs)
 \item{gtfs}{gtfs object}
 }
 \description{
-Force a GTFS to be valid bu removing problems
+Force a GTFS to be valid by removing problems
+}
+\details{
+Actions performed
+1. Remove stops with missing location
+2. Remove stops from stop_times that are not in stops
+3. Remove trips from stop_times that are not in trips
 }

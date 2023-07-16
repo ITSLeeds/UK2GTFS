@@ -3,10 +3,11 @@
 
 # UK2GTFS <a href='https://itsleeds.github.io/'><img src='man/figures/logo.png' align="right" height=215/></a>
 
-UK2GTFS is an R package to convert train, tram, bus, and metro timetable
-data from the unfriendly and difficult to use formats used in the UK to
-the easy to use [GTFS](https://developers.google.com/transit/gtfs/)
-format. The main purpose of developing the package is to support using
+UK2GTFS is an R package to convert and work with train, tram, bus,
+ferry, and metro timetable data from the unfriendly and difficult to use
+formats used in the UK to the easy to use
+[GTFS](https://developers.google.com/transit/gtfs/) format. The main
+purpose of developing the package is to support using
 [OpenTripPlanner](https://github.com/ropensci/opentripplanner) in the
 UK.
 
@@ -17,7 +18,7 @@ no guarantee of quality.**
 ## Introduction
 
 The UK has two main sources of public transport timetable data
-[**traveline**](https://www.travelinedata.org.uk/) publishes data on
+[**Traveline**](https://www.travelinedata.org.uk/) publishes data on
 buses and light rail and
 [**ATOC**](http://data.atoc.org/rail-industry-data) publishes data on
 heavy rail. Each uses a data format that is unique to that organisation
@@ -32,8 +33,12 @@ and easy.
 **Update November 2020**
 
 The [Open Bus Data Service](https://data.bus-data.dft.gov.uk/downloads/)
-Now offers a national GTFS download option based on [ITO
-World’s](https://www.itoworld.com) TransXchange to GTFS converter.
+now offers a national GTFS download option based on [ITO
+World’s](https://www.itoworld.com) TransXchange to GTFS converter. For
+non-expert users it will probably be easier to download there files.
+However this packages is still being maintained to support conversion of
+historical files, and because the conversion of TransXchange to GTFS is
+open to interpretation and having alternative converters is useful.
 
 ## Capabilities - why we need another package
 
@@ -42,29 +47,27 @@ This package aims to go beyond basic conversion by providing a range of
 additional functionality:
 
 1.  Data conversion
-      - Conversion of TransXchange to GTFS
-      - Conversion of ATOC CIF files to GTFS
-      - reading of TransXchange and CIF files is also supported,
+    -   Conversion of TransXchange to GTFS
+    -   Conversion of CIF files to GTFS
+    -   reading of TransXchange and CIF files is also supported,
         although some parts which are not required for GTFS conversion
         are only partially supported.
 2.  Data cleaning, the raw data often contains clear errors, the package
     does not blindly convert but also corrects some known errors
-      - Improved locations of tiplocs - used to locate feature on the
+    -   Improved locations of tiplocs - used to locate features on the
         heavy rail network
-      - Add bus stops missing in the NAPTAN
-      - Correction of spelling errors
-      - Removal of on-demand bus services (GTFS does not support
+    -   Add bus stops missing in the NAPTAN
+    -   Correction of spelling errors
+    -   Removal of on-demand bus services (GTFS does not support
         services that are on-demand)
 3.  Data polishing
-      - Support of journeys past midnight
-      - Routing of train journeys along tracks rather than straight
-        lines between stops (work in progress)
+    -   Support of journeys past midnight
 4.  GTFS tools, functions for working with GTFS data
-      - Reading / Writing
-      - Cleaning
-      - Compression
-      - Validation
-      - Subsetting
+    -   Reading / Writing
+    -   Cleaning
+    -   Compression
+    -   Validation
+    -   Subsetting
 
 ## Installation
 

@@ -15,8 +15,8 @@ gtfs_split(gtfs, n_split = 2)
 a list of GTFS objects
 }
 \description{
-For large regions GTFS fiels can get very big. THis fucntion splits a GTFS
+For large regions GTFS files can get very big. This function splits a GTFS
 object into a list of GTFS objects. It tries to balance the sizes of the
-objects. Splits are made by agency_id so maximumd number of splits equalts
+objects. Splits are made by agency_id so maximums number of splits equals
 the number of unique agency_ids.
 }

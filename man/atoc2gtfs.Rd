@@ -18,7 +18,7 @@ atoc2gtfs(
 \arguments{
 \item{path_in}{Character, path to ATOC file e.g."C:/input/ttis123.zip"}
 
-\item{silent}{Logical, should progress messages be surpressed (default TRUE)}
+\item{silent}{Logical, should progress messages be suppressed (default TRUE)}
 
 \item{ncores}{Numeric, When parallel processing how many cores to use
 (default 1)}
@@ -32,7 +32,7 @@ atoc2gtfs(
 \item{transfers}{Logical, should transfers.txt be generated (default TRUE)}
 
 \item{missing_tiplocs}{Logical, if locations = tiplocs, then will check for
-any missing tiplocs agains the main file and add them.(default TRUE)}
+any missing tiplocs against the main file and add them.(default TRUE)}
 }
 \description{
 Convert ATOC CIF files to GTFS
