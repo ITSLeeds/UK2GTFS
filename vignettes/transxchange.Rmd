@@ -74,11 +74,15 @@ ncores <- 3
 
 library(UK2GTFS)
 path_in <- paste0(onedrive,"Data/UK2GTFS/TransXChange/data_20201102/")
+path_in = "D:/OneDrive - University of Leeds/Data/UK2GTFS/TransXChange/data_20230503/SE.zip"
 files <- list.files(path_in, full.names = FALSE, pattern = "zip")
 files <- files[files != "NCSD.zip"]
 
 cal = get_bank_holidays()
 naptan = get_naptan()
+
+fls = list.files("R", full.names = T)
+for(fl in fls){source(fl)}
 
 for(i in 1:length(files)){
   message(files[i])

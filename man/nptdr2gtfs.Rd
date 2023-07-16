@@ -5,7 +5,7 @@
 \title{Import the .CIF file}
 \usage{
 nptdr2gtfs(
-  path = "D:/OneDrive - University of Leeds/Data/UK2GTFS/NPTDR/October-2004.zip",
+  path = "D:/OneDrive - University of Leeds/Data/UK2GTFS/NPTDR/October-2006.zip",
   silent = FALSE,
   n_files = NULL,
   enhance_stops = TRUE

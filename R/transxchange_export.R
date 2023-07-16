@@ -38,7 +38,7 @@ transxchange_export <- function(obj,
     cal <- cal[cal$EnglandWales, ]
   }
 
-  # Swtich NA to NULL
+  # Switch NA to NULL
   if (length(VehicleJourneys_exclude) == 1) {
     if (is.na(VehicleJourneys_exclude)) {
       VehicleJourneys_exclude <- NULL
@@ -73,7 +73,7 @@ transxchange_export <- function(obj,
   Services_main$EndDate <- as.Date(Services_main$EndDate)
 
   # Remove Bookeable Services
-  if (class(VehicleJourneys_notes) == "data.frame") {
+  if (inherits(VehicleJourneys_notes, "data.frame")) {
     VehicleJourneys_notes <- VehicleJourneys_notes[grepl("book", VehicleJourneys_notes$NoteText), ]
     vjc_remove <- unique(VehicleJourneys_notes$VehicleJourneyCode)
     VehicleJourneys <- VehicleJourneys[!VehicleJourneys$VehicleJourneyCode %in% vjc_remove, ]
@@ -83,7 +83,7 @@ transxchange_export <- function(obj,
   }
 
   # Split Service Organisations
-  if (class(ServicedOrganisations) == "data.frame") {
+  if (inherits(ServicedOrganisations,"data.frame")) {
     vj_so <- VehicleJourneys[, c("VehicleJourneyCode",
                                  "ServicedDaysOfOperation",
                                  "ServicedDaysOfOperationType",
@@ -358,7 +358,7 @@ transxchange_export <- function(obj,
 
 
   # Step 1: Do we Have any exclusions
-  if (class(VehicleJourneys_exclude) == "data.frame") {
+  if (inherits(VehicleJourneys_exclude,"data.frame")) {
     # Yes - Build Exclusions
 
     VehicleJourneys_exclude <- VehicleJourneys_exclude[VehicleJourneys_exclude$StartDate <= VehicleJourneys_exclude$EndDate,]
@@ -393,7 +393,7 @@ transxchange_export <- function(obj,
   }
 
   # Step 1b: Do we have any Inclusions
-  if (class(VehicleJourneys_include) == "data.frame") {
+  if (inherits(VehicleJourneys_include,"data.frame")) {
     trips_include <- split(VehicleJourneys_include, VehicleJourneys_include$VehicleJourneyCode)
     trips_include <- lapply(trips_include, list_include_days)
     trips_include <- data.frame(
