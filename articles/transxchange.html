@@ -40,7 +40,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">UK2GTFS</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2</span>
       </span>
     </div>
 
@@ -85,13 +85,15 @@
 
       
 
-      </header><script src="transxchange_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
+      </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
-      <h1 data-toc-skip>TransXchange - Bus, Tram, and Tube Timetables</h1>
-                        <h4 data-toc-skip class="author">Malcolm Morgan</h4>
+      <h1 data-toc-skip>TransXchange - Bus, Tram, and Tube
+Timetables</h1>
+                        <h4 data-toc-skip class="author">Malcolm
+Morgan</h4>
             
-            <h4 data-toc-skip class="date">2022-10-01</h4>
+            <h4 data-toc-skip class="date">2023-07-16</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/itsleeds/uk2gtfs/blob/HEAD/vignettes/transxchange.Rmd" class="external-link"><code>vignettes/transxchange.Rmd</code></a></small>
       <div class="hidden name"><code>transxchange.Rmd</code></div>
@@ -100,25 +102,36 @@
 
     
     
-<p>This vignette outlines how to produce GTFS timetables for buses and light rail network using TransXchange files.</p>
-<p>Note that GTFS data is now published for buses in Great Britain at <a href="https://data.bus-data.dft.gov.uk/timetable/download/" class="external-link">Open Bus Data</a>. UK2GTFS benefits from additional data checks and also including non-bus modes such as tram, underground, and boats.</p>
+<p>This vignette outlines how to produce GTFS timetables for buses and
+light rail network using TransXchange files.</p>
+<p>Note that GTFS data is now published for buses in Great Britain at <a href="https://data.bus-data.dft.gov.uk/timetable/download/" class="external-link">Open Bus
+Data</a>. UK2GTFS benefits from additional data checks and also
+including non-bus modes such as tram, underground, and boats.</p>
 <div class="section level2">
 <h2 id="transxchange-data---for-bus-tram-and-metro">TransXchange Data - for bus, tram, and metro<a class="anchor" aria-label="anchor" href="#transxchange-data---for-bus-tram-and-metro"></a>
 </h2>
-<p>TransXchange data can be downloaded from <a href="https://www.travelinedata.org.uk/traveline-open-data/data-reporting/" class="external-link">Traveline</a> you will need to apply for free access to the FTP sever to download the data.</p>
-<p>The data comes as zipped folders for different regions of Great Britain.</p>
+<p>TransXchange data can be downloaded from <a href="https://www.travelinedata.org.uk/traveline-open-data/data-reporting/" class="external-link">Traveline</a>
+you will need to apply for free access to the FTP sever to download the
+data.</p>
+<p>The data comes as zipped folders for different regions of Great
+Britain.</p>
 </div>
 <div class="section level2">
 <h2 id="converting-transxchange-to-gtfs">Converting TransXchange to GTFS<a class="anchor" aria-label="anchor" href="#converting-transxchange-to-gtfs"></a>
 </h2>
-<p>To do a simple conversion to GTFS, load the package, and use the <code><a href="../reference/transxchange2gtfs.html">transxchange2gtfs()</a></code> function. The function requires the following arguments.</p>
+<p>To do a simple conversion to GTFS, load the package, and use the
+<code><a href="../reference/transxchange2gtfs.html">transxchange2gtfs()</a></code> function. The function requires the
+following arguments.</p>
 <ul>
 <li>
-<code>path_in</code> is the file path to either a single zip folder or many XML files</li>
+<code>path_in</code> is the file path to either a single zip folder
+or many XML files</li>
 <li>
-<code>ncores</code> If &gt; 1 then multicore processing is used to speed up the processing. Always leave one spare core for your OS.</li>
+<code>ncores</code> If &gt; 1 then multicore processing is used to
+speed up the processing. Always leave one spare core for your OS.</li>
 <li>
-<code>try_mode</code> if TRUE file that can’t be converted are skipped</li>
+<code>try_mode</code> if TRUE file that can’t be converted are
+skipped</li>
 </ul>
 <p>A simple example is shown below:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
@@ -126,7 +139,8 @@
 <span><span class="va">path_in</span> <span class="op">&lt;-</span> <span class="st">"EA.zip"</span></span>
 <span><span class="va">gtfs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/transxchange2gtfs.html">transxchange2gtfs</a></span><span class="op">(</span>path_in <span class="op">=</span> <span class="va">path_in</span>,</span>
 <span>          ncores <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
-<p>Once the conversion has been completed, you can save the GTFS file.</p>
+<p>Once the conversion has been completed, you can save the GTFS
+file.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/gtfs_write.html">gtfs_write</a></span><span class="op">(</span><span class="va">gtfs</span>, </span>
 <span>           folder <span class="op">=</span> <span class="st">"C:/GTFS"</span>,</span>
@@ -136,14 +150,28 @@
 <div class="section level2">
 <h2 id="merging-problems">Merging problems<a class="anchor" aria-label="anchor" href="#merging-problems"></a>
 </h2>
-<p><code>transxchange2gtfs</code> converts each transXchange file into its own GTFS file. Then uses <code>gtfs_merge</code> to combine these into a single GTFS file. When this is done checks are performed to make sure the merged GTFS is valid. However this can fail. Often due to small differences between files such as the Bus operator having two spellings of their company name (e.g.<br>
+<p><code>transxchange2gtfs</code> converts each transXchange file into
+its own GTFS file. Then uses <code>gtfs_merge</code> to combine these
+into a single GTFS file. When this is done checks are performed to make
+sure the merged GTFS is valid. However this can fail. Often due to small
+differences between files such as the Bus operator having two spellings
+of their company name (e.g.<br>
 “Yorkshire Coastliner Ltd” or “Yorkshire Coastliner” ).</p>
-<p>If <code>transxchange2gtfs</code> is unable to merge it will return a list of GTFS objects. You can then manually merge using <code>gtfs_merge</code> and <code>force = TRUE</code> this is almost always ok.</p>
+<p>If <code>transxchange2gtfs</code> is unable to merge it will return a
+list of GTFS objects. You can then manually merge using
+<code>gtfs_merge</code> and <code>force = TRUE</code> this is almost
+always ok.</p>
 </div>
 <div class="section level2">
 <h2 id="stop-locations---the-naptan">Stop Locations - The NaPTAN<a class="anchor" aria-label="anchor" href="#stop-locations---the-naptan"></a>
 </h2>
-<p>TransXchange files do not contain the location of stops, so we must look them up in the NaPATAN. The NaPTAN is updated regularly so UK2GTFS will always download the latest copy using <code><a href="../reference/get_naptan.html">get_naptan()</a></code>. However the NaPTAN is not perfect, it misses some stops and has incorrect locations for others. UK2GTFS uses two internal files <code>naptan_missing</code> and <code>naptan_replace</code> to improve the NaPTAN.</p>
+<p>TransXchange files do not contain the location of stops, so we must
+look them up in the NaPATAN. The NaPTAN is updated regularly so UK2GTFS
+will always download the latest copy using <code><a href="../reference/get_naptan.html">get_naptan()</a></code>.
+However the NaPTAN is not perfect, it misses some stops and has
+incorrect locations for others. UK2GTFS uses two internal files
+<code>naptan_missing</code> and <code>naptan_replace</code> to improve
+the NaPTAN.</p>
 </div>
   </div>
 
@@ -164,7 +192,7 @@
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer>

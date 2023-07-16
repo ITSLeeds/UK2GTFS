@@ -28,6 +28,9 @@
     <loc>/reference/activity_codes.html</loc>
   </url>
   <url>
+    <loc>/reference/atco_areas.html</loc>
+  </url>
+  <url>
     <loc>/reference/atoc2gtfs.html</loc>
   </url>
   <url>
@@ -50,6 +53,9 @@
   </url>
   <url>
     <loc>/reference/gtfs_compress.html</loc>
+  </url>
+  <url>
+    <loc>/reference/gtfs_fast_stops.html</loc>
   </url>
   <url>
     <loc>/reference/gtfs_fast_trips.html</loc>
@@ -88,6 +94,9 @@
     <loc>/reference/gtfs_write.html</loc>
   </url>
   <url>
+    <loc>/reference/historic_bank_holidays.html</loc>
+  </url>
+  <url>
     <loc>/reference/importALF.html</loc>
   </url>
   <url>
@@ -115,6 +124,9 @@
     <loc>/reference/ni2gtfs.html</loc>
   </url>
   <url>
+    <loc>/reference/nptdr2gtfs.html</loc>
+  </url>
+  <url>
     <loc>/reference/nr2gtfs.html</loc>
   </url>
   <url>
@@ -122,6 +134,9 @@
   </url>
   <url>
     <loc>/reference/rail_heavy.html</loc>
+  </url>
+  <url>
+    <loc>/reference/school_terms.html</loc>
   </url>
   <url>
     <loc>/reference/station2stops.html</loc>
