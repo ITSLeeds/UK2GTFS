@@ -28,7 +28,15 @@ gtfs_read <- function(path){
   }
 
   if(checkmate::test_file_exists(file.path(tmp_folder,"stops.txt"))){
-    gtfs$stops <- readr::read_csv(file.path(tmp_folder,"stops.txt"), lazy = FALSE, show_col_types = FALSE)
+    gtfs$stops <- readr::read_csv(file.path(tmp_folder,"stops.txt"),
+                                  col_types = readr::cols(stop_id = readr::col_character(),
+                                                          stop_code = readr::col_character(),
+                                                          stop_name = readr::col_character(),
+                                                          stop_lat = readr::col_number(),
+                                                          stop_lon = readr::col_number()),
+
+
+                                  lazy = FALSE, show_col_types = FALSE)
   } else {
     warning("Unable to find required file: stops.txt")
   }

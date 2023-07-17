@@ -20,7 +20,7 @@ gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE) {
   calendar <- sapply(gtfs_list, "[", "calendar")
   calendar_dates <- sapply(gtfs_list, "[", "calendar_dates")
 
-  # bind togther
+  # bind together
   names(agency) <- seq(1, length(agency))
   suppressWarnings(agency <- dplyr::bind_rows(agency, .id = "file_id"))
 
@@ -77,7 +77,7 @@ gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE) {
   agency <- unique(agency)
   if (any(duplicated(agency$agency_id))) {
     # Check for upppercase problems
-    # Sometime same agency with a captial letter in the name
+    # Sometime same agency with a capital letter in the name
     agency.check <- agency
     agency.check$agency_name <- tolower(agency.check$agency_name)
     agency.check <- unique(agency.check)

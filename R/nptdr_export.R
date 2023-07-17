@@ -119,7 +119,7 @@ nptdr_makeCalendar <- function(schedule, exceptions, historic_bank_holidays = hi
   calendar_dates <- nptdr_parse_bank_holidays(calendar_dates, bh)
   calendar_dates <- rbind(calendar_dates, cal_dates_exc, cal_dates_inc)
 
-  # TODO: Historical term times
+  # Historical term times
   data("school_terms")
   message("School term dates are illustrative and not exact")
 
