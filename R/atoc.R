@@ -214,7 +214,7 @@ atoc2gtfs <- function(path_in,
 
   # Build Shapes
   if (shapes) {
-    message("Shapes are not yet supported")
+    message("Shapes are not yet supported, try ATOC_shapes()")
   }
 
   return(timetables)
