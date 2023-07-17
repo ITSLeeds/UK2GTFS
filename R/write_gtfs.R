@@ -69,6 +69,9 @@ gtfs_write <- function(gtfs,
   if ("transfers" %in% names(gtfs)) {
     data.table::fwrite(gtfs$transfers, paste0(tempdir(), "/gtfs_temp/transfers.txt"), row.names = FALSE, quote = quote)
   }
+  if ("shapes" %in% names(gtfs)) {
+    data.table::fwrite(gtfs$shapes, paste0(tempdir(), "/gtfs_temp/shapes.txt"), row.names = FALSE, quote = quote)
+  }
   zip::zipr(paste0(folder, "/", name, ".zip"), list.files(paste0(tempdir(), "/gtfs_temp"), full.names = TRUE), recurse = FALSE)
   unlink(paste0(tempdir(), "/gtfs_temp"), recursive = TRUE)
   message(paste0(folder, "/", name, ".zip"))
