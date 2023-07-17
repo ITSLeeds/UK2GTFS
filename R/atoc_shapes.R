@@ -6,20 +6,15 @@
 #'
 #' @param gtfs a gtfs object
 #' @param ncores number of cores
-#' @param agency which agency_id to build shapes for.
 #' @noRd
 #' @return
 #' Returns a data.frame representing shapes.txt
 #'
-ATOC_shapes <- function(gtfs, ncores = 1, agency = gtfs$agency$agency_id[1]) {
+ATOC_shapes <- function(gtfs, ncores = 1) {
   trips <- gtfs$trips
   routes <- gtfs$routes
   stops <- gtfs$stops
   stop_times <- gtfs$stop_times
-  # rm(gtfs)
-  message("Agency sellection disabled")
-  #routes <- routes[routes$agency_id == agency, ]
-
 
   # Make Graph of Railway
   # rail <- rail
@@ -57,29 +52,22 @@ ATOC_shapes <- function(gtfs, ncores = 1, agency = gtfs$agency$agency_id[1]) {
   pairs$id <- od_id_szudzik(pairs$stop_id_from, pairs$stop_id_to)
   pairs <- pairs[!duplicated(pairs$id), ]
 
+  # Add Coordinates
+  stops_from <- stops_rail[match(pairs$stop_id_from, stops_rail$stop_id),]
+  stops_to <- stops_rail[match(pairs$stop_id_to, stops_rail$stop_id),]
+  stops_from <- stops_from[,c("stop_lat","stop_lon")]
+  stops_to <- stops_to[,c("stop_lat","stop_lon")]
+  names(stops_from) = c("from_lat","from_lon")
+  names(stops_to) = c("to_lat","to_lon")
 
   # match stops to graph
   verts <- dodgr::dodgr_vertices(graph)
-  near <- RANN::nn2(data = verts[, c("x", "y")], query = stops_rail[, c("stop_lon", "stop_lat")], k = 1)
-  stops_rail$vert <- verts$id[near$nn.idx]
-  stops_rail$dist <- as.numeric(near$nn.dists)
-
-  pairs <- dplyr::left_join(pairs[, c("stop_id_from", "stop_id_to")],
-    stops_rail[, c("stop_id", "vert")],
-    by = c("stop_id_from" = "stop_id")
-  )
-  names(pairs) <- c("stop_id_from", "stop_id_to", "vert_from")
-  pairs <- dplyr::left_join(pairs,
-    stops_rail[, c("stop_id", "vert")],
-    by = c("stop_id_to" = "stop_id")
-  )
-  names(pairs) <- c("stop_id_from", "stop_id_to", "vert_from", "vert_to")
 
   # Route between pairs
   message(paste0(Sys.time()," Starting routing"))
   dp.list <- dodgr::dodgr_paths(graph,
-    from = pairs$vert_from,
-    to = pairs$vert_to,
+    from = stops_from,
+    to = stops_to,
     pairwise = TRUE, quiet = TRUE
   )
   message(paste0(Sys.time()," converting routes to GTFS format"))
@@ -87,7 +75,7 @@ ATOC_shapes <- function(gtfs, ncores = 1, agency = gtfs$agency$agency_id[1]) {
   # Convert to Linestrings
   dp.list <- unlist(dp.list, recursive = FALSE)
 
-  path_to_sf <- function(dp, verts, simplify = TRUE) {
+  path_to_sf <- function(dp, verts, simplify = FALSE) {
     # Check for emplyr paths
     if (length(dp) > 0) {
       path <- verts[match(dp, verts$id), ]
@@ -112,12 +100,10 @@ ATOC_shapes <- function(gtfs, ncores = 1, agency = gtfs$agency$agency_id[1]) {
   pairs$geometry <- sf::st_sfc(dp.list, crs = 4326)
   rm(dp.list, verts)
   pairs <- sf::st_as_sf(pairs)
-  # pairs$length <- as.numeric(st_length(pairs))
-  # qtm(pairs[pairs$length > 600000,], lines.lwd = 2)
 
   # Make pairs in opposite direction
   pairs_opp <- pairs
-  names(pairs_opp) <- c("stop_id_to", "stop_id_from", "vert_to", "vert_from", "geometry")
+  names(pairs_opp) <- c("stop_id_to", "stop_id_from", "id", "geometry")
 
   invert_linestring <- function(x) {
     x <- sf::st_coordinates(x)
@@ -134,20 +120,23 @@ ATOC_shapes <- function(gtfs, ncores = 1, agency = gtfs$agency$agency_id[1]) {
   rm(pairs_opp)
 
   #Simplify the lines
-  pairs <- st_transform(pairs, 27700)
-  pairs <- st_simplify(pairs, dTolerance = 10)
-  pairs <- st_transform(pairs, 4326)
+  pairs <- sf::st_transform(pairs, 27700)
+  pairs <- sf::st_simplify(pairs, dTolerance = 10)
+  pairs <- sf::st_transform(pairs, 4326)
+
+  # Identify unique trip chains
+  str <- dplyr::group_by(stop_times_rail, trip_id)
+  str <- dplyr::summarise(str, stop_chain = paste(stop_id, collapse = ","))
+  str_uni <- str[!duplicated(str$stop_chain),]
 
   # Match station pairs back to
-  str <- stop_times_rail
-  str$from <- c("foo", str$stop_id[seq(1, nrow(str) - 1)])
-  str <- dplyr::left_join(str, pairs, by = c("from" = "stop_id_from", "stop_id" = "stop_id_to"))
-
-  #st_split <- split(str, str$trip_id)
-  st_split <- dplyr::group_split(str, str$trip_id, .keep = FALSE)
+  st_split <- stop_times_rail[stop_times_rail$trip_id %in% str_uni$trip_id,]
+  st_split$from <- c("foo", st_split$stop_id[seq(1, nrow(st_split) - 1)])
+  st_split <- dplyr::left_join(st_split, pairs, by = c("from" = "stop_id_from", "stop_id" = "stop_id_to"))
+  st_split <- dplyr::group_split(st_split, st_split$trip_id, .keep = FALSE)
 
   message(paste0(Sys.time()," final formatting"))
-  rm(graph, near, pairs, str)
+  rm(graph, pairs)
   if (ncores == 1) {
     shape_res <- pbapply::pblapply(st_split, match_lines)
   } else {
@@ -160,21 +149,59 @@ ATOC_shapes <- function(gtfs, ncores = 1, agency = gtfs$agency$agency_id[1]) {
     rm(CL)
   }
 
-  stop_times_rail <- lapply(shape_res, `[[`, 2)
+  str5 <- lapply(shape_res, `[[`, 2)
   shapes <- lapply(shape_res, `[[`, 1)
   rm(shape_res, st_split, trips_rail, stops_rail)
   gc()
-  stop_times_rail <- dplyr::bind_rows(stop_times_rail)
-  shapes <- dplyr::bind_rows(shapes, .id = "shape_id")
+  str5 <- dplyr::bind_rows(str5)
+  shapes <- dplyr::bind_rows(shapes)
+  names(shapes)[3] = "shape_id"
 
-  stop_times <- gtfs$stop_times
-  stop_times <- stop_times[!stop_times$trip_id %in% unique(stop_times_rail$trip_id),]
-  gtfs$stop_times <- rbind(stop_times, stop_times_rail)
+  # Match up with original stop_times
+  names(str_uni) <- c("shape_id","stop_chain")
+  str <- dplyr::left_join(str, str_uni, by = "stop_chain")
+  str$stop_chain <- NULL
+
+  str5 <- str5[,c("trip_id","stop_id","stop_sequence","shape_dist_traveled")]
+  str5 <- dplyr::left_join(str, str5, by = c("shape_id" = "trip_id"))
+
+  stop_times = dplyr::left_join(gtfs$stop_times, str5,
+                         by = c("trip_id","stop_id","stop_sequence"))
+  gtfs$stop_times <- stop_times
+  gtfs$trips <- dplyr::left_join(gtfs$trips, str, by = "trip_id")
+
   gtfs$shapes <- shapes
 
   return(gtfs)
 }
 
+# From stplanr
+od_id_szudzik = function (x, y, ordermatters = FALSE)
+{
+  if (length(x) != length(y)) {
+    stop("x and y are not of equal length")
+  }
+  if (is(x, "factor")) {
+    x <- as.character(x)
+  }
+  if (is(y, "factor")) {
+    y <- as.character(y)
+  }
+  lvls <- unique(c(x, y))
+  x <- as.integer(factor(x, levels = lvls))
+  y <- as.integer(factor(y, levels = lvls))
+  if (ordermatters) {
+    ismax <- x > y
+    stplanr.key <- (ismax * 1) * (x^2 + x + y) + ((!ismax) *
+                                                    1) * (y^2 + x)
+  }
+  else {
+    a <- ifelse(x > y, y, x)
+    b <- ifelse(x > y, x, y)
+    stplanr.key <- b^2 + a
+  }
+  return(stplanr.key)
+}
 
 match_lines <- function(x) {
   x <- sf::st_as_sf(x, crs = 4326)
@@ -205,6 +232,11 @@ match_lines <- function(x) {
   shapes <- shapes[, c("shape_pt_lon", "shape_pt_lat")]
   shapes$trip_id <- x$trip_id[1]
   shapes$shape_pt_sequence <- seq(1, nrow(shapes))
+  shapes$dist <- geodist::geodist(shapes[,c("shape_pt_lon","shape_pt_lat")],
+                                    sequential = TRUE, pad = TRUE)
+  shapes$dist[1] <- 0
+  shapes$shape_dist_traveled <- round(cumsum(shapes$dist),0)
+  shapes$dist <- NULL
 
   x <- sf::st_drop_geometry(x)
   x <- x[, c(
@@ -218,7 +250,7 @@ match_lines <- function(x) {
 }
 
 st_length_cheap <- function(x){
-  coords <- st_coordinates(x)
+  coords <- sf::st_coordinates(x)
   coords <- coords[,c(1,2,ncol(coords))]
   coords <- split(coords[,c(1,2)], coords[,3])
 
