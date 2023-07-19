@@ -93,17 +93,8 @@ stops_interpolate <- function(x){
           newtimes <- lubridate::as.duration(tstart) + interval
           newtimes <- lubridate::as.period(newtimes)
 
-
           # Convert day:hours:min:sec to hours:min:sec
-          for(j in seq_along(newtimes)){
-            sub <- newtimes[j]
-            if(sub >= lubridate::hm("24:00")){
-              ndys <- lubridate::hours(lubridate::day(sub) * 24)
-              sub <- sub - lubridate::days(1)
-              sub <- sub + ndys
-              newtimes[j] <- sub
-            }
-          }
+          newtimes <- period_days_to_hours(newtimes)
 
           x$arrival_time[x$batch == btch] <- newtimes
         }
@@ -129,4 +120,17 @@ stops_interpolate <- function(x){
   }
   x$departure_time <- departure_time
   return(x)
+}
+
+
+period_days_to_hours <- function(x){
+  xday <- lubridate::day(x)
+  xhour <- lubridate::hour(x)
+  xmin <- lubridate::minute(x)
+  xsec <- lubridate::second(x)
+
+  y <- lubridate::period(hours = xhour + (xday * 24),
+                         minutes = xmin,
+                         seconds = xsec)
+  return(y)
 }
