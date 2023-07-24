@@ -184,7 +184,13 @@ nptdr_makeCalendar <- function(schedule, exceptions, historic_bank_holidays = hi
   }
 
   calendar <- rbind(calendar_noschool, calendar_school_term, calendar_school_hol)
-  calendar_dates <- rbind(calendar_dates, cal_dates_school_term, cal_dates_hol)
+  if(exists("cal_dates_school_term")){
+    calendar_dates <- rbind(calendar_dates, cal_dates_school_term)
+  }
+  if(exists("cal_dates_hol")){
+    calendar_dates <- rbind(calendar_dates, cal_dates_hol)
+  }
+
   calendar$school_term_time <- NULL
   rm(calendar_noschool, calendar_school_term, calendar_school_hol, cal_dates_school_term, cal_dates_hol)
 
