@@ -29,77 +29,75 @@ nptdr_makeCalendar <- function(schedule, exceptions, historic_bank_holidays = hi
   # exception_type
   # In CIF    0 = exclude, 1 = include
   # In GTFS   2 = exclude, 1 = include
+  if(nrow(exceptions) > 0){
+    exceptions$exception_type[exceptions$exception_type == 0] <- 2
+    # Process exclusions
+    if(!all(exceptions$exception_type %in% c(1,2))){
+      stop("Other types of exception")
+    }
 
-  exceptions$exception_type[exceptions$exception_type == 0] <- 2
-  # Process exclusions
-  if(!all(exceptions$exception_type %in% c(1,2))){
-    stop("Other types of exception")
+    # Split exclusions and inclusions
+    cal_noexc <- calendar[!calendar$schedule %in% exceptions$schedule,]
+    exceptions_exc <- exceptions[exceptions$exception_type == 2,]
+    exceptions_inc <- exceptions[exceptions$exception_type == 1,]
+
+    cal_exc <- calendar[calendar$schedule %in% exceptions_exc$schedule,]
+    cal_exc <- dplyr::group_by(cal_exc, UID)
+    cal_exc <- dplyr::group_split(cal_exc)
+    cal_exc <- purrr::set_names(cal_exc, purrr::map_chr(cal_exc, ~.x$schedule[1]))
+
+    # Trim Exceptions
+    exceptions_exc <- exceptions_exc[!is.na(exceptions_exc$end_date),]
+    exceptions_exc <- exceptions_exc[!is.na(exceptions_exc$start_date),]
+
+    # Sometime exclusion run out to 2900 etc
+    exceptions_exc$end_date <- dplyr::if_else(exceptions_exc$end_date > lubridate::ymd("2012-12-31"),
+                                              max(c(lubridate::ymd("2012-12-31"),exceptions_exc$end_date + 365 )),
+                                              exceptions_exc$end_date)
+    exceptions_exc$start_date <- dplyr::if_else(exceptions_exc$start_date < lubridate::ymd("2003-01-01"),
+                                                min(c(lubridate::ymd("2003-01-01"),exceptions_exc$end_date - 365 )),
+                                                exceptions_exc$start_date)
+
+    #trip_exc_sub <- trip_exc[trip_exc$schedule == trip_sub$schedule,]
+    trip_exc <- exceptions_exc[,c("schedule","start_date","end_date")]
+    trip_exc <- dplyr::group_by(trip_exc, schedule)
+    trip_exc <- dplyr::group_split(trip_exc)
+    trip_exc <- purrr::set_names(trip_exc, purrr::map_chr(trip_exc, ~.x$schedule[1]))
+
+    trip_exc <- trip_exc[match(names(cal_exc), names(trip_exc))]
+
+    cal_exc = purrr::map2(cal_exc, trip_exc,
+                          .f = exclude_trips_nptdr2,
+                          .progress = "Checking for Exclusions")
+
+    cal_exc <- dplyr::bind_rows(cal_exc)
+
+    cal_dates_exc <- data.frame(UID = rep(cal_exc$UID, times = lengths(cal_exc$exclude_days)),
+                                Days = rep(cal_exc$Days, times = lengths(cal_exc$exclude_days)),
+                                date = unlist(cal_exc$exclude_days))
+    cal_dates_exc$date <- as.Date(cal_dates_exc$date, origin = "1970-01-01")
+    cal_dates_exc$exception_type <- 2
+    cal_exc$exclude_days <- NULL
+
+    #Check for excluded data that don't run
+    cal_dates_exc$day <- lubridate::wday(cal_dates_exc$date, week_start = 1, label = FALSE)
+    cal_dates_exc$valid_day <- purrr::map2_lgl(cal_dates_exc$day, cal_dates_exc$Days, function(x,y){
+      as.logical(as.integer(substr(y,x,x)))
+    })
+    cal_dates_exc <- cal_dates_exc[cal_dates_exc$valid_day,]
+    cal_dates_exc <- cal_dates_exc[,c("UID","date","exception_type")]
+
+    if(nrow(exceptions_inc) > 0){
+      cal_dates_inc <- list_include_days_nptdr(exceptions_inc)
+      cal_dates_inc <- dplyr::left_join(cal_dates_inc, calendar[,c("UID","schedule")], by = "schedule")
+      cal_dates_inc <- cal_dates_inc[,c("UID","date")]
+      cal_dates_inc$exception_type <- 1
+    } else {
+      cal_dates_inc <- NULL
+    }
+
+    calendar <- rbind(cal_noexc, cal_exc)
   }
-
-  # Split exclusions and inclusions
-  cal_noexc <- calendar[!calendar$schedule %in% exceptions$schedule,]
-  exceptions_exc <- exceptions[exceptions$exception_type == 2,]
-  exceptions_inc <- exceptions[exceptions$exception_type == 1,]
-
-  cal_exc <- calendar[calendar$schedule %in% exceptions_exc$schedule,]
-  cal_exc <- dplyr::group_by(cal_exc, UID)
-  cal_exc <- dplyr::group_split(cal_exc)
-  cal_exc <- purrr::set_names(cal_exc, purrr::map_chr(cal_exc, ~.x$schedule[1]))
-
-  # Trim Exceptions
-  exceptions_exc <- exceptions_exc[!is.na(exceptions_exc$end_date),]
-  exceptions_exc <- exceptions_exc[!is.na(exceptions_exc$start_date),]
-
-  # Sometime exclusion run out to 2900 etc
-  exceptions_exc$end_date <- dplyr::if_else(exceptions_exc$end_date > lubridate::ymd("2012-12-31"),
-                                            max(c(lubridate::ymd("2012-12-31"),exceptions_exc$end_date + 365 )),
-                                            exceptions_exc$end_date)
-  exceptions_exc$start_date <- dplyr::if_else(exceptions_exc$start_date < lubridate::ymd("2003-01-01"),
-                                            min(c(lubridate::ymd("2003-01-01"),exceptions_exc$end_date - 365 )),
-                                            exceptions_exc$start_date)
-
-
-  #trip_exc_sub <- trip_exc[trip_exc$schedule == trip_sub$schedule,]
-  trip_exc <- exceptions_exc[,c("schedule","start_date","end_date")]
-  trip_exc <- dplyr::group_by(trip_exc, schedule)
-  trip_exc <- dplyr::group_split(trip_exc)
-  trip_exc <- purrr::set_names(trip_exc, purrr::map_chr(trip_exc, ~.x$schedule[1]))
-
-  trip_exc <- trip_exc[match(names(cal_exc), names(trip_exc))]
-
-  cal_exc = purrr::map2(cal_exc, trip_exc,
-                    .f = exclude_trips_nptdr2,
-                    .progress = "Checking for Exclusions")
-
-  cal_exc <- dplyr::bind_rows(cal_exc)
-
-  cal_dates_exc <- data.frame(UID = rep(cal_exc$UID, times = lengths(cal_exc$exclude_days)),
-                              Days = rep(cal_exc$Days, times = lengths(cal_exc$exclude_days)),
-                          date = unlist(cal_exc$exclude_days))
-  cal_dates_exc$date <- as.Date(cal_dates_exc$date, origin = "1970-01-01")
-  cal_dates_exc$exception_type <- 2
-  cal_exc$exclude_days <- NULL
-
-  #Check for excluded data that don't run
-  cal_dates_exc$day <- lubridate::wday(cal_dates_exc$date, week_start = 1, label = FALSE)
-  cal_dates_exc$valid_day <- purrr::map2_lgl(cal_dates_exc$day, cal_dates_exc$Days, function(x,y){
-    as.logical(as.integer(substr(y,x,x)))
-  })
-  cal_dates_exc <- cal_dates_exc[cal_dates_exc$valid_day,]
-  cal_dates_exc <- cal_dates_exc[,c("UID","date","exception_type")]
-
-  if(nrow(exceptions_inc) > 0){
-    cal_dates_inc <- list_include_days_nptdr(exceptions_inc)
-    cal_dates_inc <- dplyr::left_join(cal_dates_inc, calendar[,c("UID","schedule")], by = "schedule")
-    cal_dates_inc <- cal_dates_inc[,c("UID","date")]
-    cal_dates_inc$exception_type <- 1
-  } else {
-    cal_dates_inc <- NULL
-  }
-
-
-
-  calendar <- rbind(cal_noexc, cal_exc)
 
   calendar_dates <- calendar[,c("UID","start_date","end_date","school_term_time","bank_holiday")]
 
@@ -117,7 +115,13 @@ nptdr_makeCalendar <- function(schedule, exceptions, historic_bank_holidays = hi
   bh <- bh[bh$England,]
 
   calendar_dates <- nptdr_parse_bank_holidays(calendar_dates, bh)
-  calendar_dates <- rbind(calendar_dates, cal_dates_exc, cal_dates_inc)
+  if(exists("cal_dates_exc")){
+    calendar_dates <- rbind(calendar_dates, cal_dates_inc)
+  }
+  if(exists("cal_dates_inc")){
+    calendar_dates <- rbind(calendar_dates, cal_dates_inc)
+  }
+
 
   # Historical term times
   data("school_terms")
