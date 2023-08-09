@@ -149,11 +149,8 @@ splitDates <- function(cal) {
     end_date = dates[seq(2, length(dates))]
   )
 
-  cal.new <- dplyr::left_join(dates.df, cal,
-    by = c(
-      "start_date" = "start_date",
-      "end_date" = "end_date"
-    )
+  cal.new <- dplyr::right_join(cal, dates.df,
+    by = c( "start_date", "end_date" )
   )
 
   if ("P" %in% cal$STP) {
@@ -389,10 +386,10 @@ makeCalendar <- function(schedule, ncores = 1) {
   }
 
   res.calendar <- lapply(res, `[[`, 1)
-  res.calendar <- dplyr::bind_rows(res.calendar)
+  res.calendar <- data.table::rbindlist(res.calendar, use.names=FALSE) #res.calendar <- dplyr::bind_rows(res.calendar) #performance, was taking 10 minutes to execute the bind_rows
   res.calendar_dates <- lapply(res, `[[`, 2)
   res.calendar_dates <- res.calendar_dates[!is.na(res.calendar_dates)]
-  res.calendar_dates <- dplyr::bind_rows(res.calendar_dates)
+  res.calendar_dates <- data.table::rbindlist(res.calendar_dates, use.names=FALSE) #dplyr::bind_rows(res.calendar_dates) performance
 
   days <- lapply(res.calendar$Days, function(x) {
     as.integer(substring(x, 1:7, 1:7))
@@ -488,7 +485,7 @@ makeCalendar.inner <- function(calendar.sub) { # i, UIDs, calendar){
             }
           }
         }
-        splits <- dplyr::bind_rows(splits)
+        splits <- data.table::rbindlist(splits, use.names=FALSE) # dplyr::bind_rows(splits)
         return(list(splits, NA))
       }
     }
