@@ -88,12 +88,12 @@ station2transfers <- function(station, flf, path_out) {
 
   ### SECTION 4: ############################################################
   # make make the transfers.txt
-  # transfer betwwen stations are in the FLF file
+  # transfer between stations are in the FLF file
   transfers1 <- flf[, c("from", "to", "time")]
   transfers1$time <- transfers1$time * 60
   transfers1$transfer_type <- 2
 
-  # transfer within sations are in the stations file
+  # transfer within stations are in the stations file
   transfers2 <- station[, c("TIPLOC Code", "CRS Code", "Minimum Change Time")]
   transfers2 <- as.data.frame(transfers2)
   transfers2$geometry <- NULL
@@ -163,7 +163,7 @@ splitDates <- function(cal) {
     match <- match[1]
   }
 
-  # fill in the original missing schdule
+  # fill in the original missing schedule
   for (j in seq(1, nrow(cal.new))) {
     if (is.na(cal.new$UID[j])) {
       st_tmp <- cal.new$start_date[j]
@@ -228,13 +228,13 @@ splitDates <- function(cal) {
     }
   }
 
-  # remove cancled trips
+  # remove cancelled trips
   cal.new <- cal.new[cal.new$STP != "C", ]
 
   # fix duration
   cal.new$duration <- cal.new$end_date - cal.new$start_date + 1
 
-  # remove any zero or negative day schduels
+  # remove any zero or negative day schedules
   cal.new <- cal.new[cal.new$duration > 0, ]
 
   # Append UID to note the changes
@@ -263,9 +263,9 @@ splitDates <- function(cal) {
 #' internal function for cleaning calendar
 #'
 #' @details
-#' check for schdules that don overlay with the day they rund i.e.
-#'     Mon - Sat schduel for a sunday only service
-#' return a logcal vector of if the calendar is valid
+#' check for schedules that don't overlay with the days they run i.e.
+#'     Mon - Sat schedules for a sunday only service
+#' return a logical vector of if the calendar is valid
 #'
 #' @param tmp 1 row dataframe
 #' @noRd
@@ -300,10 +300,10 @@ checkrows <- function(tmp) {
 }
 
 # TODO: make mode affect name
-#' internal function for contructing longnames of routes
+#' internal function for constructing longnames of routes
 #'
 #' @details
-#' creates the long name of a route from appopriate variaibles
+#' creates the long name of a route from appropriate variables
 #'
 #' @param routes routes data.frame
 #' @param stop_times stop_times data.frame
@@ -336,7 +336,7 @@ longnames <- function(routes, stop_times) {
 #' @details
 #' split overlapping start and end dates
 #'
-#' @param schedule scheduel data.frame
+#' @param schedule schedule data.frame
 #' @param ncores number of processes for parallel processing (default = 1)
 #' @noRd
 #'
@@ -434,7 +434,7 @@ makeCalendar <- function(schedule, ncores = 1) {
   return(list(res.calendar, res.calendar_dates))
 }
 
-#' make calendar hleper function
+#' make calendar helper function
 #' @param i row number to do
 #' @noRd
 #'
@@ -452,7 +452,7 @@ makeCalendar.inner <- function(calendar.sub) { # i, UIDs, calendar){
     typ.all <- calendar.sub$STP
     if (all(dur == 1) & all(typ == "C") & length(typ) > 0 &
       length(typ.all) == 2) {
-      # One Day cancelationss
+      # One Day cancellations
       # Modify in the calendar_dates.txt
       return(list(
         calendar.sub[calendar.sub$STP == "P", ],
@@ -470,13 +470,13 @@ makeCalendar.inner <- function(calendar.sub) { # i, UIDs, calendar){
         splits <- list()
         daypatterns <- unique(calendar.sub$Days)
         for (k in seq(1, length(daypatterns))) {
-          # select for each patter but include cancellations with a
+          # select for each pattern but include cancellations with a
           # different day pattern
           calendar.sub.day <- calendar.sub[calendar.sub$Days == daypatterns[k] |
                                              calendar.sub$STP == "C", ]
 
           if (all(calendar.sub.day$STP == "C")) {
-            # ignore cases of only cancleds
+            # ignore cases of only cancelled
             splits[[k]] <- NULL
           } else {
             calendar.new.day <- splitDates(calendar.sub.day)
