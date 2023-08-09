@@ -253,7 +253,15 @@ splitDates <- function(cal) {
 
 
 
+DATE_EPOC <- as.Date("01/01/1970", format = "%d/%m/%Y")
+WEEKDAY_NAME_VECTOR <- c("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
+CHECKROWS_NAME_VECTOR <- c(WEEKDAY_NAME_VECTOR, "duration", "start_date", "end_date")
 
+DURATION_INDEX <- match("duration", CHECKROWS_NAME_VECTOR)
+START_DATE_INDEX <- match("start_date", CHECKROWS_NAME_VECTOR)
+END_DATE_INDEX <- match("end_date", CHECKROWS_NAME_VECTOR)
+MONDAY_INDEX <- match("monday", CHECKROWS_NAME_VECTOR)
+SUNDAY_INDEX <- match("sunday", CHECKROWS_NAME_VECTOR)
 
 # TODO: Does not work within functions, rejig to work in package.
 #
@@ -268,24 +276,22 @@ splitDates <- function(cal) {
 #' @noRd
 #'
 checkrows <- function(tmp) {
-  # tmp = res.calendar[i,]
+  #tmp = res[i,]
   # message(paste0("done ",i))
-  if (tmp$duration < 7) {
+
+  if (tmp[DURATION_INDEX] < 7) {
+
     days.valid <- weekdays(seq.POSIXt(
-      from = as.POSIXct.Date(tmp$start_date),
-      to = as.POSIXct.Date(tmp$end_date),
+      from = as.POSIXct.Date( as.Date(tmp[START_DATE_INDEX], DATE_EPOC) ),
+      to = as.POSIXct.Date( as.Date(tmp[END_DATE_INDEX], DATE_EPOC) ),
       by = "DSTday"
     ))
     days.valid <- tolower(days.valid)
-    days.match <- tmp[, c(
-      "monday", "tuesday", "wednesday", "thursday",
-      "friday", "saturday", "sunday"
-    )]
-    days.match <- sapply(days.match, function(x) {
-      x == 1
-    })
-    days.match <- days.match[days.match]
-    days.match <- names(days.match)
+
+    #get a vector of names of days of week that the timetable is valid on
+    days.match <- tmp[MONDAY_INDEX:SUNDAY_INDEX]
+    days.match <- WEEKDAY_NAME_VECTOR[ 1==days.match ]
+
     if (any(days.valid %in% days.match)) {
       return(TRUE)
     } else {
@@ -396,10 +402,7 @@ makeCalendar <- function(schedule, ncores = 1) {
   })
   days <- matrix(unlist(days), ncol = 7, byrow = TRUE)
   days <- as.data.frame(days)
-  names(days) <- c(
-    "monday", "tuesday", "wednesday", "thursday",
-    "friday", "saturday", "sunday"
-  )
+  names(days) <- WEEKDAY_NAME_VECTOR
 
   res.calendar <- cbind(res.calendar, days)
   res.calendar$Days <- NULL
@@ -408,7 +411,13 @@ makeCalendar <- function(schedule, ncores = 1) {
     Sys.time(),
     " Removing trips that only occur on days of the week that are non-operational"
   ))
-  res.calendar.split <- split(res.calendar, seq(1, nrow(res.calendar)))
+
+  #res.calendar.split <- split(res.calendar, seq(1, nrow(res.calendar)))
+  #performance - doing this split on 500k rows takes 60s - longer than the parallel execution below and consumes 3gb memory.
+
+  res.calendar.days <- res.calendar[,CHECKROWS_NAME_VECTOR]
+  res.calendar.days <- data.table::transpose(res.calendar.days)
+  #transpose on the same size runs in around 3s, but causes named dataframe with mixed datatypes to be coerced to unnamed vector of integer.
 
 
   if (ncores > 1) {
@@ -416,14 +425,13 @@ makeCalendar <- function(schedule, ncores = 1) {
     parallel::clusterEvalQ(cl, {
       loadNamespace("UK2GTFS")
     })
-    keep <- pbapply::pbsapply(res.calendar.split,
-      checkrows,
+    keep <- pbapply::pbsapply(res.calendar.days, checkrows,
       cl = cl
     )
     parallel::stopCluster(cl)
     rm(cl)
   } else {
-    keep <- pbapply::pbsapply(res.calendar.split, checkrows)
+    keep <- pbapply::pbsapply(res.calendar.days, checkrows)
   }
 
   res.calendar <- res.calendar[keep, ]
