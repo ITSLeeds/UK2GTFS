@@ -88,12 +88,12 @@ station2transfers <- function(station, flf, path_out) {
 
   ### SECTION 4: ############################################################
   # make make the transfers.txt
-  # transfer betwwen stations are in the FLF file
+  # transfer between stations are in the FLF file
   transfers1 <- flf[, c("from", "to", "time")]
   transfers1$time <- transfers1$time * 60
   transfers1$transfer_type <- 2
 
-  # transfer within sations are in the stations file
+  # transfer within stations are in the stations file
   transfers2 <- station[, c("TIPLOC Code", "CRS Code", "Minimum Change Time")]
   transfers2 <- as.data.frame(transfers2)
   transfers2$geometry <- NULL
@@ -149,11 +149,8 @@ splitDates <- function(cal) {
     end_date = dates[seq(2, length(dates))]
   )
 
-  cal.new <- dplyr::left_join(dates.df, cal,
-    by = c(
-      "start_date" = "start_date",
-      "end_date" = "end_date"
-    )
+  cal.new <- dplyr::right_join(cal, dates.df,
+    by = c( "start_date", "end_date" )
   )
 
   if ("P" %in% cal$STP) {
@@ -163,7 +160,7 @@ splitDates <- function(cal) {
     match <- match[1]
   }
 
-  # fill in the original missing schdule
+  # fill in the original missing schedule
   for (j in seq(1, nrow(cal.new))) {
     if (is.na(cal.new$UID[j])) {
       st_tmp <- cal.new$start_date[j]
@@ -228,13 +225,13 @@ splitDates <- function(cal) {
     }
   }
 
-  # remove cancled trips
+  # remove cancelled trips
   cal.new <- cal.new[cal.new$STP != "C", ]
 
   # fix duration
   cal.new$duration <- cal.new$end_date - cal.new$start_date + 1
 
-  # remove any zero or negative day schduels
+  # remove any zero or negative day schedules
   cal.new <- cal.new[cal.new$duration > 0, ]
 
   # Append UID to note the changes
@@ -256,39 +253,45 @@ splitDates <- function(cal) {
 
 
 
+DATE_EPOC <- as.Date("01/01/1970", format = "%d/%m/%Y")
+WEEKDAY_NAME_VECTOR <- c("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
+CHECKROWS_NAME_VECTOR <- c(WEEKDAY_NAME_VECTOR, "duration", "start_date", "end_date")
 
+DURATION_INDEX <- match("duration", CHECKROWS_NAME_VECTOR)
+START_DATE_INDEX <- match("start_date", CHECKROWS_NAME_VECTOR)
+END_DATE_INDEX <- match("end_date", CHECKROWS_NAME_VECTOR)
+MONDAY_INDEX <- match("monday", CHECKROWS_NAME_VECTOR)
+SUNDAY_INDEX <- match("sunday", CHECKROWS_NAME_VECTOR)
 
 # TODO: Does not work within functions, rejig to work in package.
 #
 #' internal function for cleaning calendar
 #'
 #' @details
-#' check for schdules that don overlay with the day they rund i.e.
-#'     Mon - Sat schduel for a sunday only service
-#' return a logcal vector of if the calendar is valid
+#' check for schedules that don't overlay with the days they run i.e.
+#'     Mon - Sat schedules for a sunday only service
+#' return a logical vector of if the calendar is valid
 #'
 #' @param tmp 1 row dataframe
 #' @noRd
 #'
 checkrows <- function(tmp) {
-  # tmp = res.calendar[i,]
+  #tmp = res[i,]
   # message(paste0("done ",i))
-  if (tmp$duration < 7) {
+
+  if (tmp[DURATION_INDEX] < 7) {
+
     days.valid <- weekdays(seq.POSIXt(
-      from = as.POSIXct.Date(tmp$start_date),
-      to = as.POSIXct.Date(tmp$end_date),
+      from = as.POSIXct.Date( as.Date(tmp[START_DATE_INDEX], DATE_EPOC) ),
+      to = as.POSIXct.Date( as.Date(tmp[END_DATE_INDEX], DATE_EPOC) ),
       by = "DSTday"
     ))
     days.valid <- tolower(days.valid)
-    days.match <- tmp[, c(
-      "monday", "tuesday", "wednesday", "thursday",
-      "friday", "saturday", "sunday"
-    )]
-    days.match <- sapply(days.match, function(x) {
-      x == 1
-    })
-    days.match <- days.match[days.match]
-    days.match <- names(days.match)
+
+    #get a vector of names of days of week that the timetable is valid on
+    days.match <- tmp[MONDAY_INDEX:SUNDAY_INDEX]
+    days.match <- WEEKDAY_NAME_VECTOR[ 1==days.match ]
+
     if (any(days.valid %in% days.match)) {
       return(TRUE)
     } else {
@@ -300,10 +303,10 @@ checkrows <- function(tmp) {
 }
 
 # TODO: make mode affect name
-#' internal function for contructing longnames of routes
+#' internal function for constructing longnames of routes
 #'
 #' @details
-#' creates the long name of a route from appopriate variaibles
+#' creates the long name of a route from appropriate variables
 #'
 #' @param routes routes data.frame
 #' @param stop_times stop_times data.frame
@@ -336,7 +339,7 @@ longnames <- function(routes, stop_times) {
 #' @details
 #' split overlapping start and end dates
 #'
-#' @param schedule scheduel data.frame
+#' @param schedule schedule data.frame
 #' @param ncores number of processes for parallel processing (default = 1)
 #' @noRd
 #'
@@ -389,20 +392,17 @@ makeCalendar <- function(schedule, ncores = 1) {
   }
 
   res.calendar <- lapply(res, `[[`, 1)
-  res.calendar <- dplyr::bind_rows(res.calendar)
+  res.calendar <- data.table::rbindlist(res.calendar, use.names=FALSE) #res.calendar <- dplyr::bind_rows(res.calendar) #performance, was taking 10 minutes to execute the bind_rows
   res.calendar_dates <- lapply(res, `[[`, 2)
   res.calendar_dates <- res.calendar_dates[!is.na(res.calendar_dates)]
-  res.calendar_dates <- dplyr::bind_rows(res.calendar_dates)
+  res.calendar_dates <- data.table::rbindlist(res.calendar_dates, use.names=FALSE) #dplyr::bind_rows(res.calendar_dates) performance
 
   days <- lapply(res.calendar$Days, function(x) {
     as.integer(substring(x, 1:7, 1:7))
   })
   days <- matrix(unlist(days), ncol = 7, byrow = TRUE)
   days <- as.data.frame(days)
-  names(days) <- c(
-    "monday", "tuesday", "wednesday", "thursday",
-    "friday", "saturday", "sunday"
-  )
+  names(days) <- WEEKDAY_NAME_VECTOR
 
   res.calendar <- cbind(res.calendar, days)
   res.calendar$Days <- NULL
@@ -411,7 +411,13 @@ makeCalendar <- function(schedule, ncores = 1) {
     Sys.time(),
     " Removing trips that only occur on days of the week that are non-operational"
   ))
-  res.calendar.split <- split(res.calendar, seq(1, nrow(res.calendar)))
+
+  #res.calendar.split <- split(res.calendar, seq(1, nrow(res.calendar)))
+  #performance - doing this split on 500k rows takes 60s - longer than the parallel execution below and consumes 3gb memory.
+
+  res.calendar.days <- res.calendar[,CHECKROWS_NAME_VECTOR]
+  res.calendar.days <- data.table::transpose(res.calendar.days)
+  #transpose on the same size runs in around 3s, but causes named dataframe with mixed datatypes to be coerced to unnamed vector of integer.
 
 
   if (ncores > 1) {
@@ -419,14 +425,13 @@ makeCalendar <- function(schedule, ncores = 1) {
     parallel::clusterEvalQ(cl, {
       loadNamespace("UK2GTFS")
     })
-    keep <- pbapply::pbsapply(res.calendar.split,
-      checkrows,
+    keep <- pbapply::pbsapply(res.calendar.days, checkrows,
       cl = cl
     )
     parallel::stopCluster(cl)
     rm(cl)
   } else {
-    keep <- pbapply::pbsapply(res.calendar.split, checkrows)
+    keep <- pbapply::pbsapply(res.calendar.days, checkrows)
   }
 
   res.calendar <- res.calendar[keep, ]
@@ -434,7 +439,7 @@ makeCalendar <- function(schedule, ncores = 1) {
   return(list(res.calendar, res.calendar_dates))
 }
 
-#' make calendar hleper function
+#' make calendar helper function
 #' @param i row number to do
 #' @noRd
 #'
@@ -452,7 +457,7 @@ makeCalendar.inner <- function(calendar.sub) { # i, UIDs, calendar){
     typ.all <- calendar.sub$STP
     if (all(dur == 1) & all(typ == "C") & length(typ) > 0 &
       length(typ.all) == 2) {
-      # One Day cancelationss
+      # One Day cancellations
       # Modify in the calendar_dates.txt
       return(list(
         calendar.sub[calendar.sub$STP == "P", ],
@@ -470,13 +475,13 @@ makeCalendar.inner <- function(calendar.sub) { # i, UIDs, calendar){
         splits <- list()
         daypatterns <- unique(calendar.sub$Days)
         for (k in seq(1, length(daypatterns))) {
-          # select for each patter but include cancellations with a
+          # select for each pattern but include cancellations with a
           # different day pattern
           calendar.sub.day <- calendar.sub[calendar.sub$Days == daypatterns[k] |
                                              calendar.sub$STP == "C", ]
 
           if (all(calendar.sub.day$STP == "C")) {
-            # ignore cases of only cancleds
+            # ignore cases of only cancelled
             splits[[k]] <- NULL
           } else {
             calendar.new.day <- splitDates(calendar.sub.day)
@@ -488,7 +493,7 @@ makeCalendar.inner <- function(calendar.sub) { # i, UIDs, calendar){
             }
           }
         }
-        splits <- dplyr::bind_rows(splits)
+        splits <- data.table::rbindlist(splits, use.names=FALSE) # dplyr::bind_rows(splits)
         return(list(splits, NA))
       }
     }
