@@ -95,7 +95,8 @@ gtfs_validate_internal <- function(gtfs) {
   }
 
   if (any(duplicated(gtfs$trips$trip_id))) {
-    warning("Duplicated trip_id in trips")
+    warning("Duplicated trip_id in trips:")
+    warning(gtfs$trips$trip_id[duplicated(gtfs$trips$trip_id)])
   }
 
   # stop_times
@@ -177,32 +178,44 @@ gtfs_validate_internal <- function(gtfs) {
 
   # Check for missing values
   if (!all(gtfs$routes$agency_id %in% gtfs$agency$agency_id)) {
-    warning("Unknown agency_id in routes")
+    unknown = unique(gtfs$routes$agency_id[!(gtfs$routes$agency_id %in% gtfs$agency$agency_id)])
+    warning("Unknown agency_id in routes: (", length(unknown), ") ", paste(unknown, collapse=" ") )
   }
 
   if (!all(gtfs$stop_times$trip_id %in% gtfs$trips$trip_id)) {
-    warning("Unknown trip_id in stop_times")
+    unknown = unique(gtfs$stop_times$trip_id[!(gtfs$stop_times$trip_id %in% gtfs$trips$trip_id)])
+    warning("Unknown trip_id in stop_times: (", length(unknown), ") values:")
+    warning( paste(unknown, collapse=" ") )
   }
 
   if (!all(gtfs$stop_times$stop_id %in% gtfs$stops$stop_id)) {
-    warning("Unknown stop_id in stop_times")
+    unknown = unique(gtfs$stop_times$stop_id[!(gtfs$stop_times$stop_id %in% gtfs$stops$stop_id)])
+    warning("Unknown stop_id in stop_times: (", length(unknown), ") values: (TIPLOC data may need refreshing)")
+    warning( paste(unknown, collapse=" ") )
   }
 
   # Duplicated IDs
   if (any(duplicated(gtfs$agency$agency_id))) {
-    warning("Duplicated agency_id in agency")
+    unknown = unique(gtfs$agency$agency_id[duplicated(gtfs$agency$agency_id)])
+    warning("Duplicated agency_id in agency: (", length(unknown), ") ", paste(unknown, collapse=" ") )
   }
 
   if (any(duplicated(gtfs$stops$stop_id))) {
-    warning("Duplicated stop_id in stops")
+    unknown = unique(gtfs$stops$stop_id[duplicated(gtfs$stops$stop_id)])
+    warning("Duplicated stop_id in stops: (", length(unknown), ") values:")
+    warning( paste(unknown, collapse=" ") )
   }
 
   if (any(duplicated(gtfs$trips$trip_id))) {
-    warning("Duplicated trip_id in trips")
+    unknown = unique(gtfs$trips$trip_id[duplicated(gtfs$trips$trip_id)])
+    warning("Duplicated trip_id in trips: (", length(unknown), ") values:")
+    warning( paste(unknown, collapse=" "))
   }
 
   if (any(duplicated(gtfs$routes$route_id))) {
-    warning("Duplicated route_id in routes")
+    unknown = unique(gtfs$routes$route_id[duplicated(gtfs$routes$route_id)])
+    warning("Duplicated route_id in routes: (", length(unknown), ") values:")
+    warning( paste(unknown, collapse=" "))
   }
 
 
