@@ -200,6 +200,7 @@ gtfs_fast_stops <- function(gtfs, maxspeed = 83) {
 #' @details
 #' Task done:
 #'
+#' 0. Remove stops with no coordinates
 #' 1. Remove stops with no location information
 #' 2. Remove stops that are never used
 #' 3. Replace missing agency names with "MISSINGAGENCY"
@@ -208,7 +209,10 @@ gtfs_fast_stops <- function(gtfs, maxspeed = 83) {
 #'
 #' @export
 gtfs_clean <- function(gtfs, removeNonPublic =  FALSE) {
-  # 1 Remove stop_times(calls) with no stop(location)
+  # 0 Remove stops with no coordinates
+  gtfs$stops <- gtfs$stops[!is.na(gtfs$stops$stop_lon) & !is.na(gtfs$stops$stop_lat), ]
+
+  # 1 Remove stop times with no locations
   gtfs$stop_times <- gtfs$stop_times[gtfs$stop_times$stop_id %in% unique(gtfs$stops$stop_id), ]
 
   # 2 Remove stops that are never used
