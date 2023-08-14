@@ -239,6 +239,8 @@ gtfs_validate_external <- function(path_gtfs, path_validator) {
 #' 3. Remove trips that don't exist in routes
 #' 4. Remove stop_times(calls) that don't exist in trips
 #' 5. Remove stop_times(calls) that don't exist in stops
+#' 6. Remove Calendar that have service_id that doesn't exist in trips
+#' 7. Remove Calendar_dates that have service_id that doesn't exist in trips
 #'
 #' @export
 gtfs_force_valid <- function(gtfs) {
@@ -258,6 +260,12 @@ gtfs_force_valid <- function(gtfs) {
 
   # 5. Stop Times that have stops_id that doesn't exist in stops
   gtfs$stop_times <- gtfs$stop_times[gtfs$stop_times$stop_id %in%  gtfs$stops$stop_id,]
+
+  # 6. Calendar that have service_id that doesn't exist in trip
+  gtfs$calendar <- gtfs$calendar[gtfs$calendar$service_id %in%  gtfs$trips$service_id,]
+
+  # 7. Calendar_dates that have service_id that doesn't exist in trip
+  gtfs$calendar_dates <- gtfs$calendar_dates[gtfs$calendar_dates$service_id %in%  gtfs$trips$service_id,]
 
   return(gtfs)
 }

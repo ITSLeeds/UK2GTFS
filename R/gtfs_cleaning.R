@@ -225,9 +225,16 @@ gtfs_clean <- function(gtfs, removeNonPublic =  FALSE) {
     joinedTrips <- merge(gtfs$trips, gtfs$routes, by = "route_id", all.x = TRUE)
 
     joinedCalls <- merge(gtfs$stop_times, joinedTrips, by = "trip_id", all.x = TRUE)
-
     filteredCalls <- joinedCalls[ !is.na( joinedCalls$route_type ), ]
     gtfs$stop_times <- filteredCalls[, names( gtfs$stop_times )]
+
+    joinedCalendar <- merge(gtfs$calendar, joinedTrips, by = "service_id", all.x = TRUE)
+    filteredCalendar <- joinedCalendar[ !is.na( joinedCalendar$route_type ), ]
+    gtfs$calendar <- filteredCalendar[, names( gtfs$calendar )]
+
+    joinedCalendarDates <- merge(gtfs$calendar_dates, joinedTrips, by = "service_id", all.x = TRUE)
+    filteredCalendarDates <- joinedCalendarDates[ !is.na( joinedCalendarDates$route_type ), ]
+    gtfs$calendar_dates <- filteredCalendarDates[, names( gtfs$calendar_dates )]
 
     filteredTrips <- joinedTrips[ !is.na( joinedTrips$route_type ), ]
     gtfs$trips <- filteredTrips[, names( gtfs$trips )]
