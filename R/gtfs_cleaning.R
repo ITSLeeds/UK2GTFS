@@ -207,7 +207,10 @@ gtfs_fast_stops <- function(gtfs, maxspeed = 83) {
 #'
 #' @export
 gtfs_clean <- function(gtfs) {
-  # 1 Remove stops with no locations
+  # 0 Remove stop with no coordinates
+  gtfs$stops <- gtfs$stops[!is.na(gtfs$stops$stop_lon) & !is.na(gtfs$stops$stop_lat), ]
+
+  # 1 Remove stop times with no locations
   gtfs$stop_times <- gtfs$stop_times[gtfs$stop_times$stop_id %in% unique(gtfs$stops$stop_id), ]
 
   # 2 Remove stops that are never used
