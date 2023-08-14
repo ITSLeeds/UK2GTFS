@@ -203,20 +203,37 @@ gtfs_fast_stops <- function(gtfs, maxspeed = 83) {
 #' 1. Remove stops with no location information
 #' 2. Remove stops that are never used
 #' 3. Replace missing agency names with "MISSINGAGENCY"
-#'
+#' 4. If service is not public and removeNonPublic=TRUE then remove it (freight, 'trips' aka charters)
+#'        (these have a null route_type, so loading into OpenTripPlanner fails if these are present)
 #'
 #' @export
-gtfs_clean <- function(gtfs) {
-  # 1 Remove stops with no locations
+gtfs_clean <- function(gtfs, removeNonPublic =  FALSE) {
+  # 1 Remove stop_times(calls) with no stop(location)
   gtfs$stop_times <- gtfs$stop_times[gtfs$stop_times$stop_id %in% unique(gtfs$stops$stop_id), ]
 
   # 2 Remove stops that are never used
   gtfs$stops <- gtfs$stops[gtfs$stops$stop_id %in% unique(gtfs$stop_times$stop_id), ]
 
-  # Replace "" agency_id with dummy name
+  # 3 Replace "" agency_id with dummy name
   gtfs$agency$agency_id[gtfs$agency$agency_id == ""] <- "MISSINGAGENCY"
   gtfs$routes$agency_id[gtfs$routes$agency_id == ""] <- "MISSINGAGENCY"
   gtfs$agency$agency_name[gtfs$agency$agency_name == ""] <- "MISSINGAGENCY"
+
+  # 4 remove calls, trips and routes that have an empty route_type (non public services)
+  if (removeNonPublic)
+  {
+    joinedTrips <- merge(gtfs$trips, gtfs$routes, by = "route_id", all.x = TRUE)
+
+    joinedCalls <- merge(gtfs$stop_times, joinedTrips, by = "trip_id", all.x = TRUE)
+
+    filteredCalls <- joinedCalls[ !is.na( joinedCalls$route_type ), ]
+    gtfs$stop_times <- filteredCalls[, names( gtfs$stop_times )]
+
+    filteredTrips <- joinedTrips[ !is.na( joinedTrips$route_type ), ]
+    gtfs$trips <- filteredTrips[, names( gtfs$trips )]
+
+    gtfs$routes <- gtfs$routes[ !is.na( gtfs$routes$route_type ), ]
+  }
 
   return(gtfs)
 }
