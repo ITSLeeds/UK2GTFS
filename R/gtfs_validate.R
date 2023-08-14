@@ -235,21 +235,29 @@ gtfs_validate_external <- function(path_gtfs, path_validator) {
 #' @details
 #' Actions performed
 #' 1. Remove stops with missing location
-#' 2. Remove stops from stop_times that are not in stops
-#' 3. Remove trips from stop_times that are not in trips
+#' 2. Remove routes that don't exist in agency
+#' 3. Remove trips that don't exist in routes
+#' 4. Remove stop_times(calls) that don't exist in trips
+#' 5. Remove stop_times(calls) that don't exist in stops
 #'
 #' @export
 gtfs_force_valid <- function(gtfs) {
   message("This function does not fix problems it just removes them")
 
-  # Stops with missing lat/lon
+  # 1. Stops with missing lat/lon
   gtfs$stops <- gtfs$stops[!is.na(gtfs$stops$stop_lon) & !is.na(gtfs$stops$stop_lat),]
 
-  # Stop Times that are not in stops
-  gtfs$stop_times <- gtfs$stop_times[gtfs$stop_times$stop_id %in%  gtfs$stops$stop_id,]
+  # 2. Routes that have agency_id that doesn't exist in agency
+  gtfs$routes <- gtfs$routes[gtfs$routes$agency_id %in%  gtfs$agency$agency_id,]
 
-  #Trips that are not in trips
+  # 3. Trips that have route_id that doesn't exist in route
+  gtfs$trips <- gtfs$trips[gtfs$trips$route_id %in%  gtfs$routes$route_id,]
+
+  # 4. Stop Times that have trip_id that doesn't exist in trips
   gtfs$stop_times <- gtfs$stop_times[gtfs$stop_times$trip_id %in% gtfs$trips$trip_id,]
+
+  # 5. Stop Times that have stops_id that doesn't exist in stops
+  gtfs$stop_times <- gtfs$stop_times[gtfs$stop_times$stop_id %in%  gtfs$stops$stop_id,]
 
   return(gtfs)
 }
