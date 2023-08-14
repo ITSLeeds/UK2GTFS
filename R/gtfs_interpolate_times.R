@@ -20,15 +20,15 @@
 gtfs_interpolate_times <- function(gtfs, ncores = 1){
   stop_times <- gtfs$stop_times
 
-  if(class(stop_times$arrival_time) != "Period"){
+  if(!inherits(stop_times$arrival_time, "Period")){
     stop_times$arrival_time <- lubridate::hms(stop_times$arrival_time)
   }
 
-  if(class(stop_times$departure_time) != "Period"){
+  if(!inherits(stop_times$departure_time, "Period")){
     stop_times$departure_time <- lubridate::hms(stop_times$departure_time)
   }
 
-  if(class(stop_times$stop_sequence) == "character"){
+  if(inherits(stop_times$stop_sequence, "character")){
     stop_times$stop_sequence <- as.integer(stop_times$stop_sequence)
   }
 
@@ -110,12 +110,12 @@ stops_interpolate <- function(x){
 
   # Needed because rbindlist doesn't work with periods for some reason
   arrival_time <- try(period2gtfs(x$arrival_time), silent = TRUE)
-  if("try-error" %in% class(arrival_time)){
+  if(inherits(arrival_time, "try-error")){
     stop("conversion of times failed for tripID: ",unique(x$trip_id))
   }
   x$arrival_time <- arrival_time
   departure_time <- try(period2gtfs(x$departure_time), silent = TRUE)
-  if("try-error" %in% class(departure_time)){
+  if(inherits(departure_time, "try-error")){
     stop("conversion of times failed for tripID: ",unique(x$trip_id))
   }
   x$departure_time <- departure_time

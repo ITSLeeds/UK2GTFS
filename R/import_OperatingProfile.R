@@ -68,11 +68,11 @@ import_OperatingProfile <- function(OperatingProfile) {
 
       # Check for children
       sdo_check <- try(xml2::xml_child(ServicedDaysOfOperation), silent = TRUE)
-      if(class(sdo_check) == "try-error"){
+      if(inherits(sdo_check, "try-error")){
         ServicedDaysOfOperation <- NULL
       }
       sndo_check <- try(xml2::xml_child(ServicedDaysOfNonOperation), silent = TRUE)
-      if(class(sdo_check) == "try-error"){
+      if(inherits(sdo_check, "try-error")){
         ServicedDaysOfOperation <- NULL
       }
 
@@ -224,14 +224,14 @@ import_OperatingProfile <- function(OperatingProfile) {
       stringsAsFactors = FALSE
     )
 
-    if(class(ServicedDaysOfOperation) == "data.frame"){
+    if(inherits(ServicedDaysOfOperation, "data.frame")){
       res <- cbind(res, ServicedDaysOfOperation)
     } else {
       res$ServicedDaysOfOperation <- NA
       res$ServicedDaysOfOperationType <- NA
     }
 
-    if(class(ServicedDaysOfNonOperation) == "data.frame"){
+    if(inherits(ServicedDaysOfNonOperation, "data.frame")){
       res <- cbind(res, ServicedDaysOfNonOperation)
     } else {
       res$ServicedDaysOfNonOperation <- NA
