@@ -131,8 +131,11 @@ gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE) {
 
     route_id$route_id_new <- seq(1, nrow(route_id))
     routes <- dplyr::left_join(routes, route_id, by = c("file_id", "route_id"))
-    routes <- routes[, c("route_id_new", "agency_id", "route_short_name", "route_long_name", "route_desc", "route_type")]
-    names(routes) <- c("route_id", "agency_id", "route_short_name", "route_long_name", "route_desc", "route_type")
+
+    columns_to_select <- c("route_id_new", "agency_id", "route_short_name", "route_long_name", "route_desc", "route_type")
+    columns_to_select <- columns_to_select[columns_to_select %in% colnames(routes)]
+    routes <- routes[, columns_to_select]
+    names(routes) <- columns_to_select
   }
 
 
