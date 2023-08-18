@@ -392,10 +392,10 @@ makeCalendar <- function(schedule, ncores = 1) {
   }
 
   res.calendar <- lapply(res, `[[`, 1)
-  res.calendar <- data.table::rbindlist(res.calendar, use.names=FALSE) #res.calendar <- dplyr::bind_rows(res.calendar) #performance, was taking 10 minutes to execute the bind_rows
+  res.calendar <- data.table::rbindlist(res.calendar, use.names=FALSE) #performance, was taking 10 minutes to execute bind_rows
   res.calendar_dates <- lapply(res, `[[`, 2)
   res.calendar_dates <- res.calendar_dates[!is.na(res.calendar_dates)]
-  res.calendar_dates <- data.table::rbindlist(res.calendar_dates, use.names=FALSE) #dplyr::bind_rows(res.calendar_dates) performance
+  res.calendar_dates <- data.table::rbindlist(res.calendar_dates, use.names=FALSE)
 
   days <- lapply(res.calendar$Days, function(x) {
     as.integer(substring(x, 1:7, 1:7))
@@ -409,7 +409,7 @@ makeCalendar <- function(schedule, ncores = 1) {
 
   message(paste0(
     Sys.time(),
-    " Removing trips that only occur on days of the week that are non-operational"
+    " Removing trips that only occur on days of the week that are outside the timetable validity period"
   ))
 
   #res.calendar.split <- split(res.calendar, seq(1, nrow(res.calendar)))
@@ -578,7 +578,7 @@ duplicate.stop_times_alt <- function(calendar, stop_times, ncores = 1) {
 
   # stop_times.dup = stop_times.dup[order(stop_times.dup$rowID),]
 
-  stop_times.comb <- rbind(stop_times, stop_times.dup)
+  stop_times.comb <- data.table::rbindlist(list(stop_times, stop_times.dup), use.names=FALSE)
 
   return(stop_times.comb)
 }
