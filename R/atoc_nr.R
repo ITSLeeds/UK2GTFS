@@ -38,6 +38,10 @@ nr2gtfs <- function(path_in,
                       locations = tiplocs,
                       agency = atoc_agency,
                       shapes = FALSE) {
+
+  load_data("tiplocs")
+  load_data("atoc_agency")
+
   # checkmate
   checkmate::assert_character(path_in, len = 1)
   checkmate::assert_file_exists(path_in)
@@ -65,7 +69,6 @@ nr2gtfs <- function(path_in,
 
   # Get the Station Locations
   if ("sf" %in% class(locations)) {
-    # load("data/tiplocs.RData")
     stops <- cbind(locations, sf::st_coordinates(locations))
     stops <- as.data.frame(stops)
     stops <- stops[, c(

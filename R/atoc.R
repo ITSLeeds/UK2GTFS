@@ -45,6 +45,10 @@ atoc2gtfs <- function(path_in,
                       shapes = FALSE,
                       transfers = TRUE,
                       missing_tiplocs = TRUE) {
+
+  load_data("tiplocs")
+  load_data("atoc_agency")
+
   # Checkmates
   checkmate::assert_character(path_in, len = 1)
   checkmate::assert_file_exists(path_in)

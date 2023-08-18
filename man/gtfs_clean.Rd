@@ -4,7 +4,7 @@
 \alias{gtfs_clean}
 \title{Clean simple errors from GTFS files}
 \usage{
-gtfs_clean(gtfs)
+gtfs_clean(gtfs, removeNonPublic = FALSE)
 }
 \arguments{
 \item{gtfs}{gtfs list}
@@ -15,7 +15,10 @@ Clean simple errors from GTFS files
 \details{
 Task done:
 
+0. Remove stops with no coordinates
 1. Remove stops with no location information
 2. Remove stops that are never used
 3. Replace missing agency names with "MISSINGAGENCY"
+4. If service is not public and removeNonPublic=TRUE then remove it (freight, 'trips' aka charters)
+       (these have a null route_type, so loading into OpenTripPlanner fails if these are present)
 }

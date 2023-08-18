@@ -16,7 +16,7 @@ ATOC_shapes <- function(gtfs) {
 
   # Make Graph of Railway
   # rail <- rail
-  rail_heavy <- rail_heavy
+  load_data("rail_heavy")
   rail_heavy$type <- "rail"
   # rail_light <- rail[rail$type == "light_rail", ]
   wts <- c(1)
