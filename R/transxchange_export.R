@@ -499,12 +499,12 @@ transxchange_export <- function(obj,
     calendar_dates <- data.frame(
       trip_id = character(),
       date = character(),
-      exception_type = character(),
+      exception_type = integer(),
       stringsAsFactors = FALSE
     )
     calendar_summary <- dplyr::group_by(calendar, start_date, end_date, DaysOfWeek)
   } else {
-    # remove calendar_dates for trips that have been competly removed
+    # remove calendar_dates for trips that have been competely removed
     calendar_dates <- calendar_dates[calendar_dates$trip_id %in% calendar$trip_id, ]
 
     calendar_summary <- dplyr::group_by(calendar, start_date, end_date, DaysOfWeek)
