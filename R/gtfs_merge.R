@@ -1,5 +1,11 @@
 #' merge a list of gtfs files
 #'
+#' !WARNING! only the tables:
+#' agency, stops, routes, trips, stop_times, calendar, calendar_dates, shapes
+#' are processed, any other tables in the input timetables are passed through
+#'
+#' if duplicate IDs are detected then completely new ID for all rows will be generated in the output.
+#'
 #' @param gtfs_list a list of gtfs objects to be merged
 #' @param force logical, if TRUE duplicated values are merged taking the fist
 #' @param quiet logical, if TRUE less messages
@@ -8,40 +14,62 @@
 #' @export
 gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE) {
 
-  # remove any NULLS
+  # remove any empty input tables
   gtfs_list <- gtfs_list[lengths(gtfs_list) != 0]
+  flattened <- unlist(gtfs_list, recursive = FALSE)
+  rm(gtfs_list)
+
+  #get unique input table names
+  tableNames <- unique(names(flattened))
+
+    grouped_list <- list()
+
+  # Loop through table names names and group data frames
+  for (tableName in tableNames) {
+
+    matched <- purrr::imap( flattened, function( item, name ) {
+      if (name == tableName) {
+        return(item)
+      }
+    })
+
+    #remove empty input tables
+    matched <- matched[lengths(matched) != 0]
+
+    #assign each instance of the input table a unique number
+    names(matched) <- seq(1, length(matched))
+
+    #add a column to the data frame containing this unique number
+    suppressWarnings(matched <- dplyr::bind_rows(matched, .id = "file_id"))
+
+    #if("calendar_dates"==tableName)
+    #{
+    #  #don't understand what this is doing ? comment would be nice.
+    #  calendar_dates <- calendar_dates[sapply(calendar_dates, function(x){ifelse(is.null(nrow(x)),0,nrow(x))}) > 0]
+    #  #matched <- matched[sapply(matched, function(x){ifelse(is.null(nrow(x)),0,nrow(x))}) > 0]
+    #}
+
+    #add to map
+    grouped_list[[tableName]] <-  matched
+  }
+
+  rm(flattened)
 
   # Split out lists
-  agency <- sapply(gtfs_list, "[", "agency")
-  stops <- sapply(gtfs_list, "[", "stops")
-  routes <- sapply(gtfs_list, "[", "routes")
-  trips <- sapply(gtfs_list, "[", "trips")
-  stop_times <- sapply(gtfs_list, "[", "stop_times")
-  calendar <- sapply(gtfs_list, "[", "calendar")
-  calendar_dates <- sapply(gtfs_list, "[", "calendar_dates")
+  agency <- grouped_list$agency
+  stops <- grouped_list$stops
+  routes <- grouped_list$routes
+  trips <- grouped_list$trips
+  stop_times <- grouped_list$stop_times
+  calendar <- grouped_list$calendar
+  calendar_dates <- grouped_list$calendar_dates
+  shapes <- grouped_list$shapes
+  frequencies <- grouped_list$frequencies
 
-  # bind together
-  names(agency) <- seq(1, length(agency))
-  suppressWarnings(agency <- dplyr::bind_rows(agency, .id = "file_id"))
+  #remove items from map.
+  grouped_list <- grouped_list[setdiff(names(grouped_list),
+          c("agency", "stops", "routes", "trips", "stop_times", "calendar", "calendar_dates", "shapes", "frequencies" ))]
 
-  names(stops) <- seq(1, length(stops))
-  suppressWarnings(stops <- dplyr::bind_rows(stops, .id = "file_id"))
-
-  names(routes) <- seq(1, length(routes))
-  suppressWarnings(routes <- dplyr::bind_rows(routes, .id = "file_id"))
-
-  names(trips) <- seq(1, length(trips))
-  suppressWarnings(trips <- dplyr::bind_rows(trips, .id = "file_id"))
-
-  names(stop_times) <- seq(1, length(stop_times))
-  suppressWarnings(stop_times <- dplyr::bind_rows(stop_times, .id = "file_id"))
-
-  names(calendar) <- seq(1, length(calendar))
-  suppressWarnings(calendar <- dplyr::bind_rows(calendar, .id = "file_id"))
-
-  names(calendar_dates) <- seq(1, length(calendar_dates))
-  calendar_dates <- calendar_dates[sapply(calendar_dates, function(x){ifelse(is.null(nrow(x)),0,nrow(x))}) > 0]
-  suppressWarnings(calendar_dates <- dplyr::bind_rows(calendar_dates, .id = "file_id"))
 
   # fix typo
   agency$agency_name <- as.character(agency$agency_name)
@@ -112,49 +140,54 @@ gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE) {
     } else {
       stop("Duplicated Stop IDS")
     }
-
-
   }
 
   # routes
   if (any(duplicated(routes$route_id))) {
     if(!quiet){message("De-duplicating route_id")}
-    route_id <- routes[, c("file_id", "route_id")]
-    if (any(duplicated(route_id))) {
+
+    retainedColumnNames <- colnames(routes)[!(colnames(routes) %in% c("route_id", "file_id"))]
+
+    new_route_id <- routes[, c("file_id", "route_id")]
+    if (any(duplicated(new_route_id))) {
       if(force){
-        routes <- routes[!duplicated(route_id), ]
-        route_id <- routes[, c("file_id", "route_id")]
+        routes <- routes[!duplicated(new_route_id), ]
+        new_route_id <- routes[, c("file_id", "route_id")]
       } else {
         stop("Duplicated route_id within the same GTFS file, try using force = TRUE")
       }
     }
 
-    route_id$route_id_new <- seq(1, nrow(route_id))
-    routes <- dplyr::left_join(routes, route_id, by = c("file_id", "route_id"))
+    new_route_id$route_id_new <- seq(1, nrow(new_route_id))
+    routes <- dplyr::left_join(routes, new_route_id, by = c("file_id", "route_id"))
 
-    columns_to_select <- c("route_id_new", "agency_id", "route_short_name", "route_long_name", "route_desc", "route_type")
-    columns_to_select <- columns_to_select[columns_to_select %in% colnames(routes)]
-    routes <- routes[, columns_to_select]
-    names(routes) <- columns_to_select
+    routes <- routes[, c("route_id_new", retainedColumnNames)]
+    routes <- routes %>% dplyr::rename(route_id = route_id_new)
   }
 
 
   # calendar
   if (any(duplicated(calendar$service_id))) {
     if(!quiet){message("De-duplicating service_id")}
-    service_id <- calendar[, c("file_id", "service_id")]
-    if (any(duplicated(service_id))) {
+
+    new_service_id <- calendar[, c("file_id", "service_id")]
+    if (any(duplicated(new_service_id))) {
       stop("Duplicated service_id within the same GTFS file")
     }
-    service_id$service_id_new <- seq(1, nrow(service_id))
-    calendar <- dplyr::left_join(calendar, service_id, by = c("file_id", "service_id"))
-    calendar <- calendar[, c("service_id_new", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "start_date", "end_date")]
-    names(calendar) <- c("service_id", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "start_date", "end_date")
+
+    new_service_id$service_id_new <- seq(1, nrow(new_service_id))
+
+    retainedColumnNames <- colnames(calendar)[!(colnames(calendar) %in% c("service_id", "file_id"))]
+    calendar <- dplyr::left_join(calendar, new_service_id, by = c("file_id", "service_id"))
+    calendar <- calendar[, c("service_id_new", retainedColumnNames)]
+    names(calendar) <- c("service_id", retainedColumnNames)
 
     if (nrow(calendar_dates) > 0) {
-      calendar_dates <- dplyr::left_join(calendar_dates, service_id, by = c("file_id", "service_id"))
-      calendar_dates <- calendar_dates[, c("service_id_new", "date", "exception_type")]
-      names(calendar_dates) <- c("service_id", "date", "exception_type")
+      retainedColumnNames <- colnames(calendar_dates)[!(colnames(calendar_dates) %in% c("service_id", "file_id"))]
+
+      calendar_dates <- dplyr::left_join(calendar_dates, new_service_id, by = c("file_id", "service_id"))
+      calendar_dates <- calendar_dates[, c("service_id_new", retainedColumnNames)]
+      calendar_dates <- calendar_dates %>% dplyr::rename(service_id = service_id_new)
     }
   }
 
@@ -162,45 +195,60 @@ gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE) {
   # Trips
   if (any(duplicated(trips$trip_id))) {
     if(!quiet){message("De-duplicating trip_id")}
-    trip_id <- trips[, c("file_id", "trip_id")]
-    if (any(duplicated(trip_id))) {
+
+    new_trip_id <- trips[, c("file_id", "trip_id")]
+    if (any(duplicated(new_trip_id))) {
       if(force){
         trips <- unique(trips)
         stop_times <- unique(stop_times)
-        trip_id <- trips[, c("file_id", "trip_id")]
+        new_trip_id <- trips[, c("file_id", "trip_id")]
       } else{
         stop("Duplicated trip_id within the same GTFS file")
       }
 
 
     }
-    trip_id$trip_id_new <- seq(1, nrow(trip_id))
-    trips <- dplyr::left_join(trips, trip_id, by = c("file_id", "trip_id"))
-    trips <- trips[, c("route_id", "service_id", "trip_id_new", "file_id")]
-    names(trips) <- c("route_id", "service_id", "trip_id", "file_id")
+    new_trip_id$trip_id_new <- seq(1, nrow(new_trip_id))
 
+    retainedColumnNames <- colnames(trips)[!(colnames(trips) %in% c("trip_id"))]
+    trips <- dplyr::left_join(trips, new_trip_id, by = c("file_id", "trip_id"))
+    trips <- trips[, c("trip_id_new", retainedColumnNames)]
+    trips <- trips %>% dplyr::rename(trip_id = trip_id_new)
 
-    stop_times <- dplyr::left_join(stop_times, trip_id, by = c("file_id", "trip_id"))
-    stop_times <- stop_times[, c("trip_id_new", "arrival_time", "departure_time", "stop_id", "stop_sequence", "timepoint")]
-    names(stop_times) <- c("trip_id", "arrival_time", "departure_time", "stop_id", "stop_sequence", "timepoint")
-  }
-  if (exists("service_id")) {
-    trips <- dplyr::left_join(trips, service_id, by = c("file_id", "service_id"))
-    trips <- trips[, c("route_id", "service_id_new", "trip_id", "file_id")]
-    names(trips) <- c("route_id", "service_id", "trip_id", "file_id")
-  }
-  if (exists("route_id")) {
-    trips <- dplyr::left_join(trips, route_id, by = c("file_id", "route_id"))
-    trips <- trips[, c("route_id_new", "service_id", "trip_id", "file_id")]
-    names(trips) <- c("route_id", "service_id", "trip_id", "file_id")
+    retainedColumnNames <- colnames(stop_times)[!(colnames(stop_times) %in% c("trip_id", "file_id"))]
+    stop_times <- dplyr::left_join(stop_times, new_trip_id, by = c("file_id", "trip_id"))
+    stop_times <- stop_times[, c("trip_id_new", retainedColumnNames)]
+    stop_times <- stop_times %>% dplyr::rename(trip_id = trip_id_new)
+
+    if ( length(frequencies) > 0 )
+    {
+      retainedColumnNames <- colnames(frequencies)[!(colnames(frequencies) %in% c("trip_id", "file_id"))]
+      frequencies <- dplyr::left_join(frequencies, new_trip_id, by = c("file_id", "trip_id"))
+      frequencies <- frequencies[, c("trip_id_new", retainedColumnNames)]
+      frequencies <- frequencies %>% dplyr::rename(trip_id = trip_id_new)
+    }
   }
 
-  trips <- trips[, c("route_id", "service_id", "trip_id")]
-  names(trips) <- c("route_id", "service_id", "trip_id")
+  if (exists("new_service_id")) {
+    retainedColumnNames <- colnames(trips)[!(colnames(trips) %in% c("service_id"))]
+    trips <- dplyr::left_join(trips, new_service_id, by = c("file_id", "service_id"))
+    trips <- trips[, c(retainedColumnNames, "service_id_new")]
+    trips <- trips %>% dplyr::rename(service_id = service_id_new)
+  }
+
+  if (exists("new_route_id")) {
+    retainedColumnNames <- colnames(trips)[!(colnames(trips) %in% c("route_id"))]
+    trips <- dplyr::left_join(trips, new_route_id, by = c("file_id", "route_id"))
+    trips <- trips[, c("route_id_new", retainedColumnNames)]
+    trips <- trips %>% dplyr::rename(route_id = route_id_new)
+  }
+
+  trips$file_id <- NULL
 
   # Condense Duplicate Service patterns
   if (nrow(calendar_dates) > 0) {
     if(!quiet){message("Condensing duplicated service patterns")}
+
     calendar_dates_summary <- dplyr::group_by(calendar_dates, service_id)
     if(class(calendar_dates_summary$date) == "Date"){
       calendar_dates_summary <- dplyr::summarise(calendar_dates_summary,
@@ -221,27 +269,48 @@ gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE) {
     calendar_summary$service_id_new <- dplyr::group_indices(calendar_summary)
     calendar_summary <- calendar_summary[, c("service_id_new", "service_id")]
 
+    retainedColumnNames <- colnames(trips)[!(colnames(trips) %in% c("service_id", "route_id"))]
     trips <- dplyr::left_join(trips, calendar_summary, by = c("service_id"))
-    trips <- trips[, c("route_id", "service_id_new", "trip_id")]
-    names(trips) <- c("route_id", "service_id", "trip_id")
+    trips <- trips[, c("route_id", "service_id_new", retainedColumnNames)]
+    trips <- trips %>% dplyr::rename(service_id = service_id_new)
 
+    retainedColumnNames <- colnames(calendar)[!(colnames(calendar) %in% c("service_id", "file_id"))]
     calendar <- dplyr::left_join(calendar, calendar_summary, by = c("service_id"))
-    calendar <- calendar[, c("service_id_new", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "start_date", "end_date")]
-    names(calendar) <- c("service_id", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "start_date", "end_date")
+    calendar <- calendar[, c("service_id_new", retainedColumnNames)]
+    calendar <- calendar %>% dplyr::rename(service_id = service_id_new)
     calendar <- calendar[!duplicated(calendar$service_id), ]
 
-
+    retainedColumnNames <- colnames(calendar_dates)[!(colnames(calendar_dates) %in% c("service_id", "file_id"))]
     calendar_dates <- dplyr::left_join(calendar_dates, calendar_summary, by = c("service_id"))
-    calendar_dates <- calendar_dates[, c("service_id_new", "date", "exception_type")]
-    names(calendar_dates) <- c("service_id", "date", "exception_type")
+    calendar_dates <- calendar_dates[, c("service_id_new", retainedColumnNames)]
+    calendar_dates <- calendar_dates %>% dplyr::rename(service_id = service_id_new)
     calendar_dates <- calendar_dates[!duplicated(calendar_dates$service_id), ]
   }
 
+  # shapes are keyed on a UUID type string, so fairly improbable that the keys collide unless it's actually the same object
+  composite_key <- paste0(shapes$shape_id, shapes$shape_pt_sequence, sep = "#")
+  if (any(duplicated(composite_key))) {
+    if(force){
+      shapes <- shapes[!duplicated(composite_key),]
+    } else {
+      stop("Duplicated Shapes IDS")
+    }
+  }
+
+  shapes$file_id <- NULL
   stop_times$file_id <- NULL
   routes$file_id <- NULL
   calendar$file_id <- NULL
+  res_final <- list(agency, stops, routes, trips, stop_times, calendar, calendar_dates, shapes, frequencies)
+  names(res_final) <- c("agency", "stops", "routes", "trips", "stop_times", "calendar", "calendar_dates", "shapes","frequencies")
 
-  res_final <- list(agency, stops, routes, trips, stop_times, calendar, calendar_dates)
-  names(res_final) <- c("agency", "stops", "routes", "trips", "stop_times", "calendar", "calendar_dates")
-  return(res_final)
+  #for tables we don't explicitly process - hope items are unique
+  for (item in grouped_list) {
+    item$file_id <- NULL
+  }
+
+  #remove nulls (e.g. tables that are often empty like frequencies)
+  res_final <- Filter(Negate(is.null), res_final)
+
+  return (c(res_final, grouped_list))
 }
