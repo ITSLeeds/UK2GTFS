@@ -16,7 +16,6 @@ gtfs_read <- function(path){
   files <- list.files(tmp_folder, pattern = ".txt")
 
   gtfs <- list()
-  message_log <- c("Unable to find optional files: ")
 
   if(checkmate::test_file_exists(file.path(tmp_folder,"agency.txt"))){
     gtfs$agency <- readr::read_csv(file.path(tmp_folder,"agency.txt"),
@@ -27,6 +26,7 @@ gtfs_read <- function(path){
   } else {
     warning("Unable to find required file: agency.txt")
   }
+
   if(checkmate::test_file_exists(file.path(tmp_folder,"stops.txt"))){
     gtfs$stops <- readr::read_csv(file.path(tmp_folder,"stops.txt"),
                                   col_types = readr::cols(stop_id = readr::col_character(),
@@ -34,7 +34,7 @@ gtfs_read <- function(path){
                                                           stop_name = readr::col_character(),
                                                           stop_lat = readr::col_number(),
                                                           stop_lon = readr::col_number(),
-                                                          wheelchair_boarding = readr::col_logical(),
+                                                          wheelchair_boarding = readr::col_integer(), #boolean but treat as integer so 0|1 written to file
                                                           location_type = readr::col_integer(),
                                                           parent_station = readr::col_character(),
                                                           platform_code = readr::col_character()),
@@ -65,7 +65,7 @@ gtfs_read <- function(path){
                                                           service_id = readr::col_character(),
                                                           block_id = readr::col_character(),
                                                           shape_id = readr::col_character(),
-                                                          wheelchair_accessible = readr::col_logical()
+                                                          wheelchair_accessible = readr::col_integer() #boolean but treat as integer so 0|1 written to file
                                                           ),
                                   show_col_types = FALSE,
                                   lazy = FALSE)
@@ -81,7 +81,7 @@ gtfs_read <- function(path){
                                                                departure_time = readr::col_character(),
                                                                arrival_time = readr::col_character(),
                                                                shape_dist_traveled = readr::col_number(),
-                                                               timepoint = readr::col_logical(),
+                                                               timepoint = readr::col_integer(), #boolean but treat as integer so 0|1 written to file
                                                                pickup_type = readr::col_integer(),
                                                                drop_off_type = readr::col_integer()),
                                        show_col_types = FALSE,
@@ -96,13 +96,13 @@ gtfs_read <- function(path){
   if(checkmate::test_file_exists(file.path(tmp_folder,"calendar.txt"))){
     gtfs$calendar <- readr::read_csv(file.path(tmp_folder,"calendar.txt"),
                                      col_types = readr::cols(service_id = readr::col_character(),
-                                                             monday = readr::col_logical(),
-                                                             tuesday = readr::col_logical(),
-                                                             wednesday = readr::col_logical(),
-                                                             thursday = readr::col_logical(),
-                                                             friday = readr::col_logical(),
-                                                             saturday = readr::col_logical(),
-                                                             sunday = readr::col_logical(),
+                                                             monday = readr::col_integer(), #boolean but treat as integer so 0|1 written to file
+                                                             tuesday = readr::col_integer(), #boolean but treat as integer so 0|1 written to file
+                                                             wednesday = readr::col_integer(), #boolean but treat as integer so 0|1 written to file
+                                                             thursday = readr::col_integer(), #boolean but treat as integer so 0|1 written to file
+                                                             friday = readr::col_integer(), #boolean but treat as integer so 0|1 written to file
+                                                             saturday = readr::col_integer(), #boolean but treat as integer so 0|1 written to file
+                                                             sunday = readr::col_integer(), #boolean but treat as integer so 0|1 written to file
                                                              start_date = readr::col_date(format = "%Y%m%d"),
                                                              end_date = readr::col_date(format = "%Y%m%d")),
                                      show_col_types = FALSE,
@@ -123,22 +123,6 @@ gtfs_read <- function(path){
     message("Unable to find conditionally required file: calendar_dates.txt")
   }
 
-  if(checkmate::test_file_exists(file.path(tmp_folder,"fare_attributes.txt"))){
-    gtfs$fare_attributes <- readr::read_csv(file.path(tmp_folder,"fare_attributes.txt"),
-                                            show_col_types = FALSE,
-                                            lazy = FALSE)
-  } else {
-    message_log <- c(message_log, "fare_attributes.txt")
-  }
-
-  if(checkmate::test_file_exists(file.path(tmp_folder,"fare_rules.txt"))){
-    gtfs$fare_rules <- readr::read_csv(file.path(tmp_folder,"fare_rules.txt"),
-                                       show_col_types = FALSE,
-                                       lazy = FALSE)
-  } else {
-    message_log <- c(message_log, "fare_rules.txt")
-  }
-
   if(checkmate::test_file_exists(file.path(tmp_folder,"shapes.txt"))){
     gtfs$shapes <- readr::read_csv(file.path(tmp_folder,"shapes.txt"),
                                    col_types = readr::cols(shape_id = readr::col_character(),
@@ -148,24 +132,23 @@ gtfs_read <- function(path){
                                                            shape_dist_traveled = readr::col_number()),
                                    show_col_types = FALSE,
                                    lazy = FALSE)
-  } else {
-    message_log <- c(message_log, "shapes.txt")
   }
 
-  if(checkmate::test_file_exists(file.path(tmp_folder,"transfers.txt"))){
-    gtfs$transfers <- readr::read_csv(file.path(tmp_folder,"transfers.txt"),
-                                      show_col_types = FALSE,
-                                      lazy = FALSE)
-  } else {
-    message_log <- c(message_log, "transfers.txt")
+
+  #load any other tables in the .zip file
+  filenamesOnly <- tools::file_path_sans_ext(basename(files))
+  notLoadedFiles = setdiff(  filenamesOnly, names(gtfs) )
+
+  for (fileName in notLoadedFiles)
+  {
+    table <- readr::read_csv(file.path( tmp_folder, paste0( fileName, ".txt" ) ),
+                              show_col_types = FALSE,
+                              lazy = FALSE)
+    gtfs[[fileName]] <- table
   }
 
+  #remove temp directory
   unlink(tmp_folder, recursive = TRUE)
-
-
-  if(length(message_log) > 0){
-    message(paste(message_log, collapse = " "))
-  }
 
   return(gtfs)
 }
