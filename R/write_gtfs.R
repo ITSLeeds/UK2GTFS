@@ -55,6 +55,16 @@ gtfs_write <- function(gtfs,
     gtfs$stop_times$departure_time <- period2gtfs(gtfs$stop_times$departure_time)
   }
 
+  if("frequencies" %in% names(gtfs))
+  {
+    if("difftime" %in% class(gtfs$frequencies$start_time)){
+      gtfs$frequencies$start_time <- format(gtfs$frequencies$start_time, format = "%H:%M:%S")
+    }
+
+    if("difftime" %in% class(gtfs$frequencies$end_time)){
+      gtfs$frequencies$end_time <- format(gtfs$frequencies$end_time, format = "%H:%M:%S")
+    }
+  }
 
   dir.create(paste0(tempdir(), "/gtfs_temp"))
 
