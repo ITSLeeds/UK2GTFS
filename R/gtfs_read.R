@@ -34,7 +34,7 @@ gtfs_read <- function(path){
                                                           stop_name = readr::col_character(),
                                                           stop_lat = readr::col_number(),
                                                           stop_lon = readr::col_number(),
-                                                          wheelchair_boarding = readr::col_integer(), #boolean but treat as integer so 0|1 written to file
+                                                          wheelchair_boarding = readr::col_integer(), #enum value 2 is valid but rarely seen outside the spec document
                                                           location_type = readr::col_integer(),
                                                           parent_station = readr::col_character(),
                                                           platform_code = readr::col_character()),
@@ -65,7 +65,7 @@ gtfs_read <- function(path){
                                                           service_id = readr::col_character(),
                                                           block_id = readr::col_character(),
                                                           shape_id = readr::col_character(),
-                                                          wheelchair_accessible = readr::col_integer() #boolean but treat as integer so 0|1 written to file
+                                                          wheelchair_accessible = readr::col_integer() #enum value 2 is valid but rarely seen outside the spec document
                                                           ),
                                   show_col_types = FALSE,
                                   lazy = FALSE)
