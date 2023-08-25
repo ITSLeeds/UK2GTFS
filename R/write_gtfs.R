@@ -34,24 +34,24 @@ gtfs_write <- function(gtfs,
 
 
   #Format Dates
-  if(class(gtfs$calendar$start_date) == "Date"){
+  if(inherits(gtfs$calendar$start_date, "Date")){
     gtfs$calendar$start_date <- format(gtfs$calendar$start_date, "%Y%m%d")
   }
 
-  if(class(gtfs$calendar$end_date) == "Date"){
+  if(inherits(gtfs$calendar$end_date, "Date")){
     gtfs$calendar$end_date <- format(gtfs$calendar$end_date, "%Y%m%d")
   }
 
-  if(class(gtfs$calendar_dates$date) == "Date"){
+  if(inherits(gtfs$calendar_dates$date, "Date")){
     gtfs$calendar_dates$date <- format(gtfs$calendar_dates$date, "%Y%m%d")
   }
 
   #Format times
-  if(class(gtfs$stop_times$arrival_time) == "Period"){
+  if(inherits(gtfs$stop_times$arrival_time, "Period")){
     gtfs$stop_times$arrival_time <- period2gtfs(gtfs$stop_times$arrival_time)
   }
 
-  if(class(gtfs$stop_times$departure_time) == "Period"){
+  if(inherits(gtfs$stop_times$departure_time, "Period")){
     gtfs$stop_times$departure_time <- period2gtfs(gtfs$stop_times$departure_time)
   }
 
@@ -93,7 +93,7 @@ gtfs_write <- function(gtfs,
 #'
 stripCommas <- function(df) {
   df[] <- lapply(df, function(x) {
-    if (class(x) == "character") {
+    if (inherits(x, "character")) {
       if(!all(validUTF8(x))){
         Encoding(x) <- "latin1"
         x <- enc2utf8(x)
@@ -115,7 +115,7 @@ stripCommas <- function(df) {
 #'
 stripTabs <- function(df, stripNewline) {
   df[] <- lapply(df, function(x) {
-    if (class(x) == "character") {
+    if (inherits(x, "character")) {
       if(!all(validUTF8(x))){
         Encoding(x) <- "latin1"
         x <- enc2utf8(x)

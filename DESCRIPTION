@@ -15,29 +15,27 @@ URL: https://github.com/itsleeds/uk2gtfs, https://itsleeds.git.io/uk2gtfs/
 BugReports: https://github.com/itsleeds/uk2gtfs/issues
 Encoding: UTF-8
 LazyData: true
+LazyDataCompression: gzip
 Imports:
   checkmate,
+  calendar,
   data.table,
+  dodgr,
   doSNOW,
   dplyr,
-  sf,
-  parallel,
+  digest,
   foreach, 
-  calendar,
   geodist,
   iotools,
-  jsonlite,
-  purrr (>= 1.0),
   stringr,
-  stringr,
-  furrr,
-  future,
-  digest,
+  sf,
+  parallel,
   lubridate,
-  zip,
+  purrr (>= 1.0),
   pbapply,
+  readr (>= 2.0),
   xml2,
-  readr (>= 2.0)
+  zip,
 Suggests: 
     cli,
     covr,

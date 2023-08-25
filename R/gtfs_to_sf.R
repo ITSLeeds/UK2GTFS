@@ -8,12 +8,12 @@
 gtfs_stops_sf <- function(gtfs){
   stops <- gtfs$stops
 
-  if(class(stops$stop_lon) != "numeric"){
+  if(!inherits(stops$stop_lon, "numeric")){
     message("Converting stop_lon to numeric")
     stops$stop_lon <- as.numeric(stops$stop_lon)
   }
 
-  if(class(stops$stop_lat) != "numeric"){
+  if(!inherits(stops$stop_lat, "numeric")){
     message("Converting stop_lat to numeric")
     stops$stop_lat <- as.numeric(stops$stop_lat)
   }
@@ -42,11 +42,11 @@ gtfs_trips_sf <- function(gtfs){
   stops <- gtfs$stops
   stops <- stops[,c("stop_id","stop_lon","stop_lat")]
 
-  if(class(stops$stop_lon) != "numeric"){
+  if(!inherits(stops$stop_lon, "numeric")){
     stops$stop_lon <- as.numeric(stops$stop_lon)
   }
 
-  if(class(stops$stop_lat) != "numeric"){
+  if(!inherits(stops$stop_lat, "numeric")){
     stops$stop_lat <- as.numeric(stops$stop_lat)
   }
 
@@ -85,11 +85,11 @@ gtfs_routes_sf <- function(gtfs){
   stops <- gtfs$stops
   stops <- stops[,c("stop_id","stop_lon","stop_lat")]
 
-  if(class(stops$stop_lon) != "numeric"){
+  if(!inherits(stops$stop_lon, "numeric")){
     stops$stop_lon <- as.numeric(stops$stop_lon)
   }
 
-  if(class(stops$stop_lat) != "numeric"){
+  if(!inherits(stops$stop_lat, "numeric")){
     stops$stop_lat <- as.numeric(stops$stop_lat)
   }
 
