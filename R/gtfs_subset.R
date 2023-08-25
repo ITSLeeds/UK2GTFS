@@ -36,7 +36,7 @@ gtfs_clip <- function(gtfs, bounds) {
   gtfs$stop_times <- gtfs$stop_times[gtfs$stop_times$stop_id %in% stops_inc, ]
   # Check for single stop trips
   n_stops <- table(gtfs$stop_times$trip_id)
-  single_stops <- as.integer(names(n_stops[n_stops == 1]))
+  single_stops <- names(n_stops[n_stops == 1])
   gtfs$stop_times <- gtfs$stop_times[!gtfs$stop_times$trip_id %in% single_stops, ]
 
   # Check for any unused stops

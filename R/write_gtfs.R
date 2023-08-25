@@ -1,6 +1,6 @@
 #' Write GTFS
 #'
-#' Takes a list of data frames represneting the GTFS fromat and saves them as GTFS
+#' Takes a list of data frames representing the GTFS format and saves them as GTFS
 #' Zip file.
 #'
 #' @param gtfs named list of data.frames
@@ -19,6 +19,7 @@ gtfs_write <- function(gtfs,
                        stripTab = TRUE,
                        stripNewline = TRUE,
                        quote = FALSE) {
+
   if (stripComma) {
     for (i in seq_len(length(gtfs))) {
       gtfs[[i]] <- stripCommas(gtfs[[i]])
@@ -33,7 +34,6 @@ gtfs_write <- function(gtfs,
 
 
   #Format Dates
-
   if(inherits(gtfs$calendar$start_date, "Date")){
     gtfs$calendar$start_date <- format(gtfs$calendar$start_date, "%Y%m%d")
   }
@@ -55,26 +55,32 @@ gtfs_write <- function(gtfs,
     gtfs$stop_times$departure_time <- period2gtfs(gtfs$stop_times$departure_time)
   }
 
+  if("frequencies" %in% names(gtfs))
+  {
+    if("difftime" %in% class(gtfs$frequencies$start_time)){
+      gtfs$frequencies$start_time <- format(gtfs$frequencies$start_time, format = "%H:%M:%S")
+    }
+
+    if("difftime" %in% class(gtfs$frequencies$end_time)){
+      gtfs$frequencies$end_time <- format(gtfs$frequencies$end_time, format = "%H:%M:%S")
+    }
+  }
 
   dir.create(paste0(tempdir(), "/gtfs_temp"))
-  data.table::fwrite(gtfs$calendar, paste0(tempdir(), "/gtfs_temp/calendar.txt"), row.names = FALSE, quote = quote)
-  if (nrow(gtfs$calendar_dates) > 0) {
-    data.table::fwrite(gtfs$calendar_dates, paste0(tempdir(), "/gtfs_temp/calendar_dates.txt"), row.names = FALSE, quote = quote)
+
+  for ( tableName in names(gtfs) )
+  {
+    table <- gtfs[[tableName]]
+
+    if ( !is.null(table) & nrow(table) > 0 )
+    {
+      data.table::fwrite(table, file.path(tempdir(), "gtfs_temp", paste0(tableName, ".txt")), row.names = FALSE, quote = quote)
+    }
   }
-  data.table::fwrite(gtfs$routes, paste0(tempdir(), "/gtfs_temp/routes.txt"), row.names = FALSE, quote = quote)
-  data.table::fwrite(gtfs$stop_times, paste0(tempdir(), "/gtfs_temp/stop_times.txt"), row.names = FALSE, quote = quote)
-  data.table::fwrite(gtfs$trips, paste0(tempdir(), "/gtfs_temp/trips.txt"), row.names = FALSE, quote = quote)
-  data.table::fwrite(gtfs$stops, paste0(tempdir(), "/gtfs_temp/stops.txt"), row.names = FALSE, quote = quote)
-  data.table::fwrite(gtfs$agency, paste0(tempdir(), "/gtfs_temp/agency.txt"), row.names = FALSE, quote = quote)
-  if ("transfers" %in% names(gtfs)) {
-    data.table::fwrite(gtfs$transfers, paste0(tempdir(), "/gtfs_temp/transfers.txt"), row.names = FALSE, quote = quote)
-  }
-  if ("shapes" %in% names(gtfs)) {
-    data.table::fwrite(gtfs$shapes, paste0(tempdir(), "/gtfs_temp/shapes.txt"), row.names = FALSE, quote = quote)
-  }
+
   zip::zipr(paste0(folder, "/", name, ".zip"), list.files(paste0(tempdir(), "/gtfs_temp"), full.names = TRUE), recurse = FALSE)
+
   unlink(paste0(tempdir(), "/gtfs_temp"), recursive = TRUE)
-  message(paste0(folder, "/", name, ".zip"))
 }
 
 
@@ -126,9 +132,11 @@ stripTabs <- function(df, stripNewline) {
 
 
 #' Convert Period to GTFS timestamps
+#' When writing a 400mb (zipped) file, we spend nearly 4 minutes in this fn(), about 10x longer than writing the files to the filesystem.
+#' profiler reports this being mostly nchar(), so we optimise down to one sprintf which reduces the time to 1 minute
+#' .format() is about 7x slower than sprintf()
 #'
-#'
-#' @param x peridos
+#' @param x periods
 #' @noRd
 #'
 period2gtfs <- function(x) {
@@ -139,14 +147,6 @@ period2gtfs <- function(x) {
     stop("Days detected in period objects, incorectly formatted period object")
   }
 
-  hrs <- as.character(lubridate::hour(x))
-  min <- as.character(lubridate::minute(x))
-  sec <- as.character(lubridate::second(x))
-
-  hrs <- ifelse(nchar(hrs) == 1,paste0("0",hrs), hrs)
-  min <- ifelse(nchar(min) == 1,paste0("0",min), min)
-  sec <- ifelse(nchar(sec) == 1,paste0("0",sec), sec)
-
-  return(paste0(hrs,":",min,":",sec))
+  return( sprintf("%02d:%02d:%02d", lubridate::hour(x), lubridate::minute(x), lubridate::second(x)) )
 }
 
