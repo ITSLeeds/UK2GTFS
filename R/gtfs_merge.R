@@ -1,20 +1,21 @@
 #' merge a list of gtfs files
 #'
 #' !WARNING! only the tables:
-#' agency, stops, routes, trips, stop_times, calendar, calendar_dates, shapes
+#' agency, stops, routes, trips, stop_times, calendar, calendar_dates, shapes, frequencies
 #' are processed, any other tables in the input timetables are passed through
 #'
-#' if duplicate IDs are detected then completely new ID for all rows will be generated in the output.
+#' if duplicate IDs are detected then completely new IDs for all rows will be generated in the output.
 #'
 #' @param gtfs_list a list of gtfs objects to be merged
 #' @param force logical, if TRUE duplicated values are merged taking the fist
-#' @param quiet logical, if TRUE less messages
 #'   instance to be the correct instance, in most cases this is ok, but may
 #'   cause some errors
+#' @param quiet logical, if TRUE less messages
+#' @param condenseServicePatterns logical, if TRUE service patterns across all routes are condensed into a unique set of patterns
 #' @export
-gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE) {
+gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE, condenseServicePatterns = TRUE) {
 
-  # remove any empty input tables
+  # remove any empty input GTFS objects
   gtfs_list <- gtfs_list[lengths(gtfs_list) != 0]
   flattened <- unlist(gtfs_list, recursive = FALSE)
   rm(gtfs_list)
@@ -33,7 +34,7 @@ gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE) {
       }
     })
 
-    #remove empty input tables
+    #remove input tables not matching tableName
     matched <- matched[lengths(matched) != 0]
 
     #assign each instance of the input table a unique number
@@ -41,10 +42,11 @@ gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE) {
 
     #add a column to the data frame containing this unique number
     suppressWarnings(matched <- dplyr::bind_rows(matched, .id = "file_id"))
+    matched$file_id <- as.integer(matched$file_id)
 
     #if("calendar_dates"==tableName)
     #{
-    #  #don't understand what this is doing ? comment would be nice.
+    #  #don't understand what this complex line is doing ? comment would be nice.
     #  calendar_dates <- calendar_dates[sapply(calendar_dates, function(x){ifelse(is.null(nrow(x)),0,nrow(x))}) > 0]
     #  #matched <- matched[sapply(matched, function(x){ifelse(is.null(nrow(x)),0,nrow(x))}) > 0]
     #}
@@ -167,13 +169,19 @@ gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE) {
 
 
   # calendar
-  if (any(duplicated(calendar$service_id))) {
+  calendar_dates_key <- paste(calendar_dates$service_id, calendar_dates$date, calendar_dates$exception_type, sep="#")
+
+  if (any(duplicated(calendar$service_id)) || any(duplicated(calendar_dates_key))) {
     if(!quiet){message("De-duplicating service_id")}
 
     new_service_id <- calendar[, c("file_id", "service_id")]
     if (any(duplicated(new_service_id))) {
       stop("Duplicated service_id within the same GTFS file")
     }
+
+    # it is valid to have calendar_dates with no associated calendar (see comments further down)
+    # so create the distinct set of service_id in both calendar and calendar_dates
+    new_service_id <- dplyr::union(unique(new_service_id), unique(calendar_dates[, c("file_id", "service_id")]))
 
     new_service_id$service_id_new <- seq(1, nrow(new_service_id))
 
@@ -246,9 +254,18 @@ gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE) {
   trips$file_id <- NULL
 
   # Condense Duplicate Service patterns
-  if (nrow(calendar_dates) > 0) {
+
+  # in an ideal world we should not have a trip without a service pattern, and not have calendar_dates with no associated calendar,
+  # but the real world data isn't that tidy.
+  # In a typical all GB BODS extract Around 0.2% of trips have a calendar ID but no row in calendar,
+  # 0.2% of calendar_dates have no trips, 0.1% of calendar_dates have no corresponding calendar.
+  # we need to guard against this to make sure we don't end up putting null values into any key fields
+  # This documentation https://gtfs.org/schedule/reference/#calendar_datestxt specifically mentions calendar dates without calendars
+  # as being a legitimate way to construct the data.
+  if (condenseServicePatterns && nrow(calendar_dates) > 0) {
     if(!quiet){message("Condensing duplicated service patterns")}
 
+    #find every unique combination of calendar_dates and calender values
     calendar_dates_summary <- dplyr::group_by(calendar_dates, service_id)
     if(class(calendar_dates_summary$date) == "Date"){
       calendar_dates_summary <- dplyr::summarise(calendar_dates_summary,
@@ -260,12 +277,15 @@ gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE) {
       )
     }
 
-    calendar_summary <- dplyr::left_join(calendar, calendar_dates_summary, by = "service_id")
+    #we want to keep all rows in calendar_dates even if they don't have a row in calendar
+    calendar_summary <- dplyr::full_join(calendar, calendar_dates_summary, by = "service_id")
     calendar_summary <- dplyr::group_by(
       calendar_summary,
       start_date, end_date, monday, tuesday, wednesday,
       thursday, friday, saturday, sunday, pattern
     )
+
+    #give every unique combination of dates / days / exceptions a new distinct service ID
     calendar_summary$service_id_new <- dplyr::group_indices(calendar_summary)
     calendar_summary <- calendar_summary[, c("service_id_new", "service_id")]
 
@@ -287,7 +307,8 @@ gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE) {
     calendar_dates <- calendar_dates[!duplicated(calendar_dates$service_id), ]
   }
 
-  # shapes are keyed on a UUID type string, so fairly improbable that the keys collide unless it's actually the same object
+
+  # shapes in a BODS extract are keyed on a UUID type string, so fairly improbable that the keys collide unless it's actually the same object
   composite_key <- paste0(shapes$shape_id, shapes$shape_pt_sequence, sep = "#")
   if (any(duplicated(composite_key))) {
     if(force){
@@ -301,6 +322,7 @@ gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE) {
   stop_times$file_id <- NULL
   routes$file_id <- NULL
   calendar$file_id <- NULL
+  frequencies$file_id <- NULL
   res_final <- list(agency, stops, routes, trips, stop_times, calendar, calendar_dates, shapes, frequencies)
   names(res_final) <- c("agency", "stops", "routes", "trips", "stop_times", "calendar", "calendar_dates", "shapes","frequencies")
 
