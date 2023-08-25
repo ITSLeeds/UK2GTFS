@@ -95,7 +95,8 @@ gtfs_validate_internal <- function(gtfs) {
   }
 
   if (any(duplicated(gtfs$trips$trip_id))) {
-    warning("Duplicated trip_id in trips")
+    warning("Duplicated trip_id in trips:")
+    warning(gtfs$trips$trip_id[duplicated(gtfs$trips$trip_id)])
   }
 
   # stop_times
@@ -177,32 +178,44 @@ gtfs_validate_internal <- function(gtfs) {
 
   # Check for missing values
   if (!all(gtfs$routes$agency_id %in% gtfs$agency$agency_id)) {
-    warning("Unknown agency_id in routes")
+    unknown = unique(gtfs$routes$agency_id[!(gtfs$routes$agency_id %in% gtfs$agency$agency_id)])
+    warning("Unknown agency_id in routes: (", length(unknown), ") ", paste(unknown, collapse=" ") )
   }
 
   if (!all(gtfs$stop_times$trip_id %in% gtfs$trips$trip_id)) {
-    warning("Unknown trip_id in stop_times")
+    unknown = unique(gtfs$stop_times$trip_id[!(gtfs$stop_times$trip_id %in% gtfs$trips$trip_id)])
+    warning("Unknown trip_id in stop_times: (", length(unknown), ") values:")
+    warning( paste(unknown, collapse=" ") )
   }
 
   if (!all(gtfs$stop_times$stop_id %in% gtfs$stops$stop_id)) {
-    warning("Unknown stop_id in stop_times")
+    unknown = unique(gtfs$stop_times$stop_id[!(gtfs$stop_times$stop_id %in% gtfs$stops$stop_id)])
+    warning("Unknown stop_id in stop_times: (", length(unknown), ") values: (TIPLOC data may need refreshing)")
+    warning( paste(unknown, collapse=" ") )
   }
 
   # Duplicated IDs
   if (any(duplicated(gtfs$agency$agency_id))) {
-    warning("Duplicated agency_id in agency")
+    unknown = unique(gtfs$agency$agency_id[duplicated(gtfs$agency$agency_id)])
+    warning("Duplicated agency_id in agency: (", length(unknown), ") ", paste(unknown, collapse=" ") )
   }
 
   if (any(duplicated(gtfs$stops$stop_id))) {
-    warning("Duplicated stop_id in stops")
+    unknown = unique(gtfs$stops$stop_id[duplicated(gtfs$stops$stop_id)])
+    warning("Duplicated stop_id in stops: (", length(unknown), ") values:")
+    warning( paste(unknown, collapse=" ") )
   }
 
   if (any(duplicated(gtfs$trips$trip_id))) {
-    warning("Duplicated trip_id in trips")
+    unknown = unique(gtfs$trips$trip_id[duplicated(gtfs$trips$trip_id)])
+    warning("Duplicated trip_id in trips: (", length(unknown), ") values:")
+    warning( paste(unknown, collapse=" "))
   }
 
   if (any(duplicated(gtfs$routes$route_id))) {
-    warning("Duplicated route_id in routes")
+    unknown = unique(gtfs$routes$route_id[duplicated(gtfs$routes$route_id)])
+    warning("Duplicated route_id in routes: (", length(unknown), ") values:")
+    warning( paste(unknown, collapse=" "))
   }
 
 
@@ -222,21 +235,37 @@ gtfs_validate_external <- function(path_gtfs, path_validator) {
 #' @details
 #' Actions performed
 #' 1. Remove stops with missing location
-#' 2. Remove stops from stop_times that are not in stops
-#' 3. Remove trips from stop_times that are not in trips
+#' 2. Remove routes that don't exist in agency
+#' 3. Remove trips that don't exist in routes
+#' 4. Remove stop_times(calls) that don't exist in trips
+#' 5. Remove stop_times(calls) that don't exist in stops
+#' 6. Remove Calendar that have service_id that doesn't exist in trips
+#' 7. Remove Calendar_dates that have service_id that doesn't exist in trips
 #'
 #' @export
 gtfs_force_valid <- function(gtfs) {
   message("This function does not fix problems it just removes them")
 
-  # Stops with missing lat/lon
+  # 1. Stops with missing lat/lon
   gtfs$stops <- gtfs$stops[!is.na(gtfs$stops$stop_lon) & !is.na(gtfs$stops$stop_lat),]
 
-  # Stop Times that are not in stops
+  # 2. Routes that have agency_id that doesn't exist in agency
+  gtfs$routes <- gtfs$routes[gtfs$routes$agency_id %in%  gtfs$agency$agency_id,]
+
+  # 3. Trips that have route_id that doesn't exist in route
+  gtfs$trips <- gtfs$trips[gtfs$trips$route_id %in%  gtfs$routes$route_id,]
+
+  # 4. Stop Times that have trip_id that doesn't exist in trips
+  gtfs$stop_times <- gtfs$stop_times[gtfs$stop_times$trip_id %in% gtfs$trips$trip_id,]
+
+  # 5. Stop Times that have stops_id that doesn't exist in stops
   gtfs$stop_times <- gtfs$stop_times[gtfs$stop_times$stop_id %in%  gtfs$stops$stop_id,]
 
-  #Trips that are not in trips
-  gtfs$stop_times <- gtfs$stop_times[gtfs$stop_times$trip_id %in% gtfs$trips$trip_id,]
+  # 6. Calendar that have service_id that doesn't exist in trip
+  gtfs$calendar <- gtfs$calendar[gtfs$calendar$service_id %in%  gtfs$trips$service_id,]
+
+  # 7. Calendar_dates that have service_id that doesn't exist in trip
+  gtfs$calendar_dates <- gtfs$calendar_dates[gtfs$calendar_dates$service_id %in%  gtfs$trips$service_id,]
 
   return(gtfs)
 }
