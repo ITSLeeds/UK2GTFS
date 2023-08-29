@@ -4,10 +4,12 @@
 \alias{gtfs_clean}
 \title{Clean simple errors from GTFS files}
 \usage{
-gtfs_clean(gtfs)
+gtfs_clean(gtfs, public_only = FALSE)
 }
 \arguments{
 \item{gtfs}{gtfs list}
+
+\item{public_only}{Logical, only return calls/services that are for public passenger pickup/set down (default FALSE)}
 }
 \description{
 Clean simple errors from GTFS files
@@ -15,7 +17,11 @@ Clean simple errors from GTFS files
 \details{
 Task done:
 
+0. Remove stops with no coordinates
 1. Remove stops with no location information
-2. Remove stops that are never used
-3. Replace missing agency names with "MISSINGAGENCY"
+2. Remove trips with less than two stops
+3. Remove stops that are never used
+4. Replace missing agency names with "MISSINGAGENCY"
+5. If service is not public and public_only=TRUE then remove it (freight, 'trips' aka charters)
+       (these have a null route_type, so loading into OpenTripPlanner fails if these are present)
 }

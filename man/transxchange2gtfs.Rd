@@ -12,7 +12,8 @@ transxchange2gtfs(
   naptan = get_naptan(),
   scotland = "auto",
   try_mode = TRUE,
-  force_merge = FALSE
+  force_merge = FALSE,
+  merge = TRUE
 )
 }
 \arguments{
@@ -27,7 +28,7 @@ transxchange2gtfs(
 \item{naptan}{Naptan stop locations from get_naptan()}
 
 \item{scotland}{character, should Scottish bank holidays be used? Can be
-"auto" (defualt), "yes", "no". If "auto" and path_in ends with "S.zip"
+"auto" (default), "yes", "no". If "auto" and path_in ends with "S.zip"
 Scottish bank holidays will be used, otherwise England and Wales bank
 holidays are used.}
 
@@ -36,6 +37,8 @@ calls thus a failure on a single file will not cause the whole process to
 fail. Warning this could result in a GTFS file with missing routes.}
 
 \item{force_merge}{Logical, passed to gtfs_merge(force), default FALSE}
+
+\item{merge}{Logical, if results are merged into one GTFS object by calling gtfs_merge, default TRUE}
 }
 \value{
 A GTFS named list

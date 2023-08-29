@@ -10,7 +10,9 @@ nr2gtfs(
   ncores = 1,
   locations = tiplocs,
   agency = atoc_agency,
-  shapes = FALSE
+  shapes = FALSE,
+  working_timetable = FALSE,
+  public_only = TRUE
 )
 }
 \arguments{
@@ -26,6 +28,10 @@ nr2gtfs(
 \item{agency}{where to get agency.txt (see details)}
 
 \item{shapes}{Logical, should shapes.txt be generated (default FALSE)}
+
+\item{working_timetable}{Logical, should WTT times be used instead of public times (default FALSE)}
+
+\item{public_only}{Logical, only return calls/services that are for public passenger pickup/set down (default TRUE)}
 }
 \value{
 A gtfs list
@@ -48,7 +54,7 @@ in the ATOC data or provide an SF data frame of your own.
 Agency
 
 The ATOC files do not contain the necessary information to build the
-agency.txt file. Therfore this data is provided with the package. You can
+agency.txt file. Therefore this data is provided with the package. You can
 also pass your own data frame of agency information.
 }
 \seealso{
