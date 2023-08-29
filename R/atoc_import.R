@@ -1,7 +1,8 @@
 #' @import data.table
 #' @importFrom data.table ":="
 
-#' Import the .alf file
+
+# Import the .alf file
 #'
 #' @details
 #' Imports the .alf file and returns data.frame
