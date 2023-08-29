@@ -1,3 +1,93 @@
+context("Running unit tests before system tests")
+
+library(data.table)
+
+fixDates <- function( df )
+{
+  df$start_date <- as.Date(df$start_date, format = "%d-%m-%Y")
+  df$end_date <- as.Date(df$end_date, format = "%d-%m-%Y")
+  df$duration <- df$end_date - df$start_date + 1
+
+  return (df)
+}
+
+test_that("test makeCalendar.inner:1", {
+
+  testData = data.frame(UID=c(       "uid1",       "uid1",        "uid1",        "uid1",        "uid1",         "uid1"),
+                        start_date=c("02-01-2023", "08-01-2023",  "01-03-2023",  "11-01-2023",  "08-03-2023",   "23-01-2023" ),
+                        end_date=c(  "04-02-2023", "05-02-2023",  "31-03-2023",  "19-01-2023",  "09-03-2023",   "23-01-2023" ),
+                        Days=c(      "1111110",    "0000001",     "0011100",     "0011000",     "0011000",      "1000000" ),
+                        STP=c(       "P",          "P",           "P",           "O",           "C",            "C" ),
+                        rowID=c(     1,            2,             3,             4,             5,              6))
+
+  testData <- fixDates( testData )
+
+  res <- makeCalendar.inner( testData )
+
+  res.calendar <- res[[1]]
+  res.calendar_dates <- res[[2]]
+  res.calendar_dates <- res.calendar_dates[!is.na(res.calendar_dates)]
+
+  #this is what the code produces - it is wrong. not applying the overlay correctly
+  expectedResult = data.table(UID=c( "uid1 a1",    "uid1 b1",    "uid1 a2",     "uid1 b2",     "uid1 a3",     "uid1 b3",     "uid1 a4"),
+                        start_date=c("02-01-2023", "23-01-2023", "08-01-2023",  "23-01-2023",  "01-03-2023",  "09-03-2023",  "11-01-2023"),
+                        end_date=c(  "22-01-2023", "04-02-2023", "22-01-2023",  "05-02-2023",  "08-03-2023",  "31-03-2023",  "19-01-2023"),
+                        Days=c(      "1111110",    "1111110",    "0000001",     "0000001",     "0011100",     "0011100",     "0011000"),
+                        STP=c(       "P",          "P",          "P",           "P",           "P",           "P",           "O"),
+                        rowID=c(     1,            1,            2,             2,             3,             3,             4))
+
+  expectedResult <- fixDates( expectedResult )
+
+  if (!identical(expectedResult,res.calendar))
+  {
+    comparison <- sapply(1:nrow(expectedResult), function(i) all.equal(expectedResult[i, ], res.calendar[i, ]))
+    print(comparison)
+  }
+
+  expect_true(identical(expectedResult,res.calendar) & 0==length(res.calendar_dates))
+})
+
+
+
+test_that("test makeCalendar.inner:2", {
+
+  testData = data.frame(UID=c(       "uid1",       "uid1",        "uid1",        "uid1",        "uid1",         "uid1"),
+                        start_date=c("02-01-2023", "08-01-2023",  "01-03-2023",  "11-01-2023",  "08-03-2023",   "23-01-2023" ),
+                        end_date=c(  "04-02-2023", "05-02-2023",  "31-03-2023",  "19-01-2023",  "16-03-2023",   "23-01-2023" ),
+                        Days=c(      "1111110",    "0000001",     "0011100",     "0011000",     "0011000",      "1000000" ),
+                        STP=c(       "P",          "P",           "P",           "O",           "C",            "C" ),
+                        rowID=c(     1,            2,             3,             4,             5,              6))
+
+  testData <- fixDates( testData )
+
+  res <- makeCalendar.inner( testData )
+
+  res.calendar <- res[[1]]
+  res.calendar_dates <- res[[2]]
+  res.calendar_dates <- res.calendar_dates[!is.na(res.calendar_dates)]
+
+  #this is what the code produces - it is wrong. e.g 10/3 service is missing
+  expectedResult = data.table(UID=c( "uid1 a1",    "uid1 b1",    "uid1 a2",     "uid1 b2",     "uid1 a3",     "uid1 b3",     "uid1 a4"),
+                        start_date=c("02-01-2023", "23-01-2023", "08-01-2023",  "23-01-2023",  "01-03-2023",  "16-03-2023",  "11-01-2023"),
+                        end_date=c(  "22-01-2023", "04-02-2023", "22-01-2023",  "05-02-2023",  "08-03-2023",  "31-03-2023",  "19-01-2023"),
+                        Days=c(      "1111110",    "1111110",    "0000001",     "0000001",     "0011100",     "0011100",     "0011000"),
+                        STP=c(       "P",          "P",          "P",           "P",           "P",           "P",           "O"),
+                        rowID=c(     1,            1,            2,             2,             3,             3,             4))
+
+  expectedResult <- fixDates( expectedResult )
+
+  if (!identical(expectedResult,res.calendar))
+  {
+    comparison <- sapply(1:nrow(expectedResult), function(i) all.equal(expectedResult[i, ], res.calendar[i, ]))
+    print(comparison)
+  }
+
+  expect_true(identical(expectedResult,res.calendar) & 0==length(res.calendar_dates))
+})
+
+
+
+
 
 context("Get the example atoc files")
 file_path <- file.path(tempdir(),"uk2gtfs_tests")
