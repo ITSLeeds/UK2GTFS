@@ -9,6 +9,8 @@
 #' @param locations where to get tiploc locations (see details)
 #' @param agency where to get agency.txt (see details)
 #' @param shapes Logical, should shapes.txt be generated (default FALSE)
+#' @param working_timetable Logical, should WTT times be used instead of public times (default FALSE)
+#' @param public_only Logical, only return calls/services that are for public passenger pickup/set down (default TRUE)
 #' @family main
 #' @return A gtfs list
 #'
@@ -26,7 +28,7 @@
 #' Agency
 #'
 #' The ATOC files do not contain the necessary information to build the
-#' agency.txt file. Therfore this data is provided with the package. You can
+#' agency.txt file. Therefore this data is provided with the package. You can
 #' also pass your own data frame of agency information.
 #'
 #'
@@ -37,7 +39,9 @@ nr2gtfs <- function(path_in,
                       ncores = 1,
                       locations = tiplocs,
                       agency = atoc_agency,
-                      shapes = FALSE) {
+                      shapes = FALSE,
+                      working_timetable = FALSE,
+                      public_only = TRUE) {
   # checkmate
   checkmate::assert_character(path_in, len = 1)
   checkmate::assert_file_exists(path_in)
@@ -59,7 +63,10 @@ nr2gtfs <- function(path_in,
   # Read In each File
   mca <- importMCA(
       file = path_in,
-      silent = silent, ncores = 1
+      silent = silent,
+      ncores = 1,
+      working_timetable = working_timetable,
+      public_only = public_only
   )
 
 
@@ -108,7 +115,8 @@ nr2gtfs <- function(path_in,
     stop_times = stop_times,
     schedule = schedule,
     silent = silent,
-    ncores = ncores
+    ncores = ncores,
+    public_only = public_only
   )
   rm(schedule)
 

@@ -18,74 +18,112 @@ gtfs_read <- function(path){
   gtfs <- list()
 
   if(checkmate::test_file_exists(file.path(tmp_folder,"agency.txt"))){
-    gtfs$agency <- readr::read_csv(file.path(tmp_folder,"agency.txt"),
-                                   col_types = readr::cols(agency_id = readr::col_character(),
-                                                           agency_noc = readr::col_character()),
-                                   show_col_types = FALSE,
-                                   lazy = FALSE)
+
+    gtfs$agency <- fread(
+      file.path(tmp_folder, "agency.txt"),
+      colClasses = c(
+        agency_id = "character",
+        agency_noc = "character"
+      ),
+      showProgress = FALSE,
+      sep=',',
+      header=TRUE,
+      data.table = TRUE
+    )
+
   } else {
     warning("Unable to find required file: agency.txt")
   }
 
   if(checkmate::test_file_exists(file.path(tmp_folder,"stops.txt"))){
-    gtfs$stops <- readr::read_csv(file.path(tmp_folder,"stops.txt"),
-                                  col_types = readr::cols(stop_id = readr::col_character(),
-                                                          stop_code = readr::col_character(),
-                                                          stop_name = readr::col_character(),
-                                                          stop_lat = readr::col_number(),
-                                                          stop_lon = readr::col_number(),
-                                                          wheelchair_boarding = readr::col_integer(), #enum value 2 is valid but rarely seen outside the spec document
-                                                          location_type = readr::col_integer(),
-                                                          parent_station = readr::col_character(),
-                                                          platform_code = readr::col_character()),
 
+    gtfs$stops <- fread(
+      file.path(tmp_folder, "stops.txt"),
+      colClasses = c(
+        stop_id = "character",
+        stop_code = "character",
+        stop_name = "character",
+        stop_lat = "numeric",
+        stop_lon = "numeric",
+        wheelchair_boarding = "integer", #enum value 2 is valid but rarely seen outside the spec document
+        location_type = "integer",
+        parent_station = "character",
+        platform_code = "character"
+      ),
+      showProgress = FALSE,
+      sep=',',
+      header=TRUE,
+      data.table = TRUE
+    )
 
-                                  lazy = FALSE, show_col_types = FALSE)
   } else {
     warning("Unable to find required file: stops.txt")
   }
 
   if(checkmate::test_file_exists(file.path(tmp_folder,"routes.txt"))){
-    gtfs$routes <- readr::read_csv(file.path(tmp_folder,"routes.txt"),
-                                   col_types = readr::cols(route_id = readr::col_character(),
-                                                           agency_id = readr::col_character(),
-                                                           route_short_name = readr::col_character(),
-                                                           route_long_name = readr::col_character(),
-                                                           route_type = readr::col_integer()),
-                                   show_col_types = FALSE,
-                                   lazy = FALSE)
+
+    gtfs$routes <- fread(
+      file.path(tmp_folder, "routes.txt"),
+      colClasses = c(
+        route_id = "character",
+        agency_id = "character",
+        route_short_name = "character",
+        route_long_name = "character",
+        route_type = "integer"
+      ),
+      showProgress = FALSE,
+      sep=',',
+      header=TRUE,
+      data.table = TRUE
+    )
+
   } else {
     warning("Unable to find required file: routes.txt")
   }
 
   if(checkmate::test_file_exists(file.path(tmp_folder,"trips.txt"))){
-    gtfs$trips <- readr::read_csv(file.path(tmp_folder,"trips.txt"),
-                                  col_types = readr::cols(trip_id = readr::col_character(),
-                                                          route_id = readr::col_character(),
-                                                          service_id = readr::col_character(),
-                                                          block_id = readr::col_character(),
-                                                          shape_id = readr::col_character(),
-                                                          wheelchair_accessible = readr::col_integer() #enum value 2 is valid but rarely seen outside the spec document
-                                                          ),
-                                  show_col_types = FALSE,
-                                  lazy = FALSE)
+
+    gtfs$trips <- fread(
+      file.path(tmp_folder, "trips.txt"),
+      colClasses = c(
+        trip_id = "character",
+        route_id = "character",
+        service_id = "character",
+        block_id = "character",
+        shape_id = "character",
+        wheelchair_accessible = "integer" #enum value 2 is valid but rarely seen outside the spec document
+      ),
+      showProgress = FALSE,
+      sep=',',
+      header=TRUE,
+      data.table = TRUE
+    )
+
   } else {
     warning("Unable to find required file: trips.txt")
   }
 
   if(checkmate::test_file_exists(file.path(tmp_folder,"stop_times.txt"))){
-    gtfs$stop_times <- readr::read_csv(file.path(tmp_folder,"stop_times.txt"),
-                                       col_types = readr::cols(trip_id = readr::col_character(),
-                                                               stop_id = readr::col_character(),
-                                                               stop_sequence = readr::col_integer(),
-                                                               departure_time = readr::col_character(),
-                                                               arrival_time = readr::col_character(),
-                                                               shape_dist_traveled = readr::col_number(),
-                                                               timepoint = readr::col_integer(), #boolean but treat as integer so 0|1 written to file
-                                                               pickup_type = readr::col_integer(),
-                                                               drop_off_type = readr::col_integer()),
-                                       show_col_types = FALSE,
-                                       lazy = FALSE)
+
+    gtfs$stop_times <- fread(
+      file.path(tmp_folder, "stop_times.txt"),
+      colClasses = c(
+        trip_id = "character",
+        stop_id = "character",
+        stop_sequence = "integer",
+        departure_time = "character",
+        arrival_time = "character",
+        shape_dist_traveled = "numeric",
+        timepoint = "integer",
+        pickup_type = "integer",
+        drop_off_type = "integer"
+      ),
+      showProgress = FALSE,
+      sep=',',
+      header=TRUE,
+      data.table = TRUE
+    )
+
     gtfs$stop_times$arrival_time <- lubridate::hms(gtfs$stop_times$arrival_time)
     gtfs$stop_times$departure_time <- lubridate::hms(gtfs$stop_times$departure_time)
 
@@ -94,44 +132,71 @@ gtfs_read <- function(path){
   }
 
   if(checkmate::test_file_exists(file.path(tmp_folder,"calendar.txt"))){
-    gtfs$calendar <- readr::read_csv(file.path(tmp_folder,"calendar.txt"),
-                                     col_types = readr::cols(service_id = readr::col_character(),
-                                                             monday = readr::col_integer(), #boolean but treat as integer so 0|1 written to file
-                                                             tuesday = readr::col_integer(), #boolean but treat as integer so 0|1 written to file
-                                                             wednesday = readr::col_integer(), #boolean but treat as integer so 0|1 written to file
-                                                             thursday = readr::col_integer(), #boolean but treat as integer so 0|1 written to file
-                                                             friday = readr::col_integer(), #boolean but treat as integer so 0|1 written to file
-                                                             saturday = readr::col_integer(), #boolean but treat as integer so 0|1 written to file
-                                                             sunday = readr::col_integer(), #boolean but treat as integer so 0|1 written to file
-                                                             start_date = readr::col_date(format = "%Y%m%d"),
-                                                             end_date = readr::col_date(format = "%Y%m%d")),
-                                     show_col_types = FALSE,
-                                     lazy = FALSE)
+
+    gtfs$calendar <- fread(
+      file.path(tmp_folder, "calendar.txt"),
+      colClasses = c(
+        service_id = "character",
+        monday = "integer",
+        tuesday = "integer",
+        wednesday = "integer",
+        thursday = "integer",
+        friday = "integer",
+        saturday = "integer",
+        sunday = "integer",
+        start_date = "character",
+        end_date = "character"
+      ),
+      showProgress = FALSE,
+      sep=',',
+      header=TRUE,
+      data.table = TRUE
+    )
+
+    gtfs$calendar[, start_date := as.IDate(start_date, "%Y%m%d")]
+    gtfs$calendar[, end_date := as.IDate(end_date, "%Y%m%d")]
 
   } else {
     message("Unable to find conditionally required file: calendar.txt")
   }
 
   if(checkmate::test_file_exists(file.path(tmp_folder,"calendar_dates.txt"))){
-    gtfs$calendar_dates <- readr::read_csv(file.path(tmp_folder,"calendar_dates.txt"),
-                                           col_types = readr::cols(service_id = readr::col_character(),
-                                                                   date = readr::col_date(format = "%Y%m%d"),
-                                                                   exception_type = readr::col_integer()),
-                                           show_col_types = FALSE,
-                                           lazy = FALSE)
+
+    gtfs$calendar_dates <- fread(
+      file.path(tmp_folder, "calendar_dates.txt"),
+      colClasses = c(
+        service_id = "character",
+        date = "character",
+        exception_type = "integer"
+      ),
+      showProgress = FALSE,
+      sep=',',
+      header=TRUE,
+      data.table = TRUE
+    )
+    gtfs$calendar_dates[, date := as.IDate(date, "%Y%m%d")]
+
   } else {
     message("Unable to find conditionally required file: calendar_dates.txt")
   }
 
   if(checkmate::test_file_exists(file.path(tmp_folder,"shapes.txt"))){
-    gtfs$shapes <- readr::read_csv(file.path(tmp_folder,"shapes.txt"),
-                                   col_types = readr::cols(shape_id = readr::col_character(),
-                                                           shape_pt_lat = readr::col_number(),
-                                                           shape_pt_lon = readr::col_number(),
-                                                           shape_pt_sequence = readr::col_integer(),
-                                                           shape_dist_traveled = readr::col_number()),
-                                   show_col_types = FALSE,
-                                   lazy = FALSE)
+
+    gtfs$shapes <- data.table::fread(
+      file.path(tmp_folder, "shapes.txt"),
+      colClasses = c(
+        shape_id = "character",
+        shape_pt_lat = "numeric",
+        shape_pt_lon = "numeric",
+        shape_pt_sequence = "integer",
+        shape_dist_traveled = "numeric"
+      ),
+      showProgress = FALSE,
+      sep=',',
+      header=TRUE,
+      data.table = TRUE
+    )
+
   }
 
 
@@ -141,9 +206,14 @@ gtfs_read <- function(path){
 
   for (fileName in notLoadedFiles)
   {
-    table <- readr::read_csv(file.path( tmp_folder, paste0( fileName, ".txt" ) ),
-                              show_col_types = FALSE,
-                              lazy = FALSE)
+    table <- fread(
+      file.path(tmp_folder, paste0(fileName, ".txt")),
+      showProgress = FALSE,
+      sep=',',
+      header=TRUE,
+      data.table = TRUE
+    )
+
     gtfs[[fileName]] <- table
   }
 

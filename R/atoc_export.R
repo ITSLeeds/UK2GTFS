@@ -132,7 +132,8 @@ station2transfers <- function(station, flf, path_out) {
   return(transfers)
 }
 
-#' split overlapping start and end dates#
+#' split overlapping start and end dates
+#' this function is performance critical - profile any changes
 #'
 #' @param cal cal object
 #' @details split overlapping start and end dates
@@ -140,18 +141,16 @@ station2transfers <- function(station, flf, path_out) {
 
 splitDates <- function(cal) {
 
-  # get all the dates that
+  # get a vector of all the start and end dates together from all base & overlay timetables
   dates <- c(cal$start_date, cal$end_date)
   dates <- dates[order(dates)]
   # create all unique pairs
-  dates.df <- data.frame(
+  dates.dt <- unique( data.table(
     start_date = dates[seq(1, length(dates) - 1)],
     end_date = dates[seq(2, length(dates))]
-  )
+  ) )
 
-  cal.new <- dplyr::right_join(cal, dates.df,
-    by = c( "start_date", "end_date" )
-  )
+  cal.new <- cal[dates.dt, on = c("start_date", "end_date")]
 
   if ("P" %in% cal$STP) {
     match <- "P"
@@ -163,34 +162,26 @@ splitDates <- function(cal) {
   # fill in the original missing schedule
   for (j in seq(1, nrow(cal.new))) {
     if (is.na(cal.new$UID[j])) {
-      st_tmp <- cal.new$start_date[j]
-      ed_tmp <- cal.new$end_date[j]
-      new.UID <- cal$UID[cal$STP == match & cal$start_date <= st_tmp &
-        cal$end_date >= ed_tmp]
-      new.Days <- cal$Days[cal$STP == match & cal$start_date <= st_tmp &
-        cal$end_date >= ed_tmp]
-      new.roWID <- cal$rowID[cal$STP == match & cal$start_date <= st_tmp &
-        cal$end_date >= ed_tmp]
-      new.ATOC <- cal$`ATOC Code`[cal$STP == match & cal$start_date <= st_tmp &
-        cal$end_date >= ed_tmp]
-      new.Retail <- cal$`Retail Train ID`[cal$STP == match &
-        cal$start_date <= st_tmp &
-        cal$end_date >= ed_tmp]
-      new.head <- cal$Headcode[cal$STP == match & cal$start_date <= st_tmp &
-        cal$end_date >= ed_tmp]
-      new.Status <- cal$`Train Status`[cal$STP == match &
-        cal$start_date <= st_tmp &
-        cal$end_date >= ed_tmp]
-      if (length(new.UID) == 1) {
-        cal.new$UID[j] <- new.UID
-        cal.new$Days[j] <- new.Days
-        cal.new$rowID[j] <- new.roWID
-        cal.new$`ATOC Code`[j] <- new.ATOC
-        cal.new$`Retail Train ID`[j] <- new.Retail
-        cal.new$`Train Status`[j] <- new.Status
-        cal.new$Headcode[j] <- new.head
+
+
+      matches = (cal$STP == match
+                 & cal$start_date <= cal.new$start_date[j]
+                 & cal$end_date >= cal.new$end_date[j])
+
+      sumM = sum(matches)
+
+      if (sumM == 1) {
+
+        #cal.new[j, `:=`(UID = cal$UID[ matches ],
+         #               Days = cal$Days[matches],
+          #              rowID = cal$rowID[matches],
+           #             STP = match)]
+
+        cal.new$UID[j] <- cal$UID[ matches ]
+        cal.new$Days[j] <- cal$Days[ matches ]
+        cal.new$rowID[j] <-  cal$rowID[ matches ]
         cal.new$STP[j] <- match
-      } else if (length(new.UID) > 1) {
+      } else if (sumM > 1) {
         message("Going From")
         print(cal)
         message("To")
@@ -205,9 +196,9 @@ splitDates <- function(cal) {
   cal.new <- cal.new[!is.na(cal.new$UID), ]
 
   # remove duplicated rows
-  cal.new <- cal.new[!duplicated(cal.new), ]
+  cal.new <- cal.new[!duplicated(cal.new), ] #this is expensive - is it needed ?
 
-  # modify end and start dates
+  # modify end and start dates on base timetable so they don't overlap the overlay dates.
   for (j in seq(1, nrow(cal.new))) {
     if (cal.new$STP[j] == "P") {
       # check if end date need changing
@@ -302,7 +293,6 @@ checkrows <- function(tmp) {
   }
 }
 
-# TODO: make mode affect name
 #' internal function for constructing longnames of routes
 #'
 #' @details
@@ -317,12 +307,10 @@ longnames <- function(routes, stop_times) {
   stop_times_sub <- dplyr::summarise(stop_times_sub,
     schedule = unique(schedule),
     stop_a = stop_id[stop_sequence == 1],
-    # seq = min(stop_sequence),
     stop_b = stop_id[stop_sequence == max(stop_sequence)]
   )
 
-  stop_times_sub$route_long_name <- paste0("Train from ",
-                                           stop_times_sub$stop_a,
+  stop_times_sub$route_long_name <- paste0(stop_times_sub$stop_a,
                                            " to ",
                                            stop_times_sub$stop_b)
   stop_times_sub <- stop_times_sub[!duplicated(stop_times_sub$schedule), ]
@@ -330,6 +318,10 @@ longnames <- function(routes, stop_times) {
 
   routes <- dplyr::left_join(routes, stop_times_sub,
                              by = c("rowID" = "schedule"))
+
+  routes[`Train Category` == "SS", route_long_name := paste("Ship from",route_long_name)]
+  routes[`Train Category` %in% c("BS", "BR"), route_long_name := paste("Bus from",route_long_name)]
+  routes[!(`Train Category` %in% c("SS", "BS", "BR")), route_long_name := paste("Train from",route_long_name)]
 
   return(routes)
 }
@@ -345,29 +337,20 @@ longnames <- function(routes, stop_times) {
 #'
 makeCalendar <- function(schedule, ncores = 1) {
   # prep the inputs
-  calendar <- schedule[, c("Train UID", "Date Runs From", "Date Runs To",
-                           "Days Run", "STP indicator", "rowID", "Headcode",
-                           "ATOC Code", "Retail Train ID", "Train Status")]
+  calendar <- schedule[, c("Train UID", "Date Runs From", "Date Runs To", "Days Run", "STP indicator", "rowID" )]
+  names(calendar) <- c("UID", "start_date", "end_date", "Days", "STP", "rowID" )
+
   calendar$`STP indicator` <- as.character(calendar$`STP indicator`)
-  # calendar = calendar[order(-calendar$`STP indicator`),]
-  names(calendar) <- c("UID", "start_date", "end_date", "Days", "STP",
-                       "rowID", "Headcode", "ATOC Code",
-                       "Retail Train ID", "Train Status")
   calendar$duration <- calendar$end_date - calendar$start_date + 1
 
   # UIDs = unique(calendar$UID)
   # length_todo = length(UIDs)
   message(paste0(Sys.time(), " Constructing calendar and calendar_dates"))
-  calendar_split <- split(calendar, calendar$UID)
-
+  calendar$UID2 <- calendar$UID
+  calendar_split <- calendar[, .(list(.SD)), by = UID2][,V1]
 
   if (ncores > 1) {
     cl <- parallel::makeCluster(ncores)
-    # parallel::clusterExport(
-    #   cl = cl,
-    #   varlist = c("calendar", "UIDs"),
-    #   envir = environment()
-    # )
     parallel::clusterEvalQ(cl, {
       loadNamespace("UK2GTFS")
     })
@@ -375,8 +358,6 @@ makeCalendar <- function(schedule, ncores = 1) {
     res <- pbapply::pblapply(calendar_split,
       # 1:length_todo,
       makeCalendar.inner,
-      # UIDs = UIDs,
-      # calendar = calendar,
       cl = cl
     )
     parallel::stopCluster(cl)
@@ -385,9 +366,7 @@ makeCalendar <- function(schedule, ncores = 1) {
     res <- pbapply::pblapply(
       calendar_split,
       # 1:length_todo,
-      makeCalendar.inner # ,
-      # UIDs = UIDs,
-      # calendar = calendar
+      makeCalendar.inner
     )
   }
 
@@ -415,7 +394,7 @@ makeCalendar <- function(schedule, ncores = 1) {
   #res.calendar.split <- split(res.calendar, seq(1, nrow(res.calendar)))
   #performance - doing this split on 500k rows takes 60s - longer than the parallel execution below and consumes 3gb memory.
 
-  res.calendar.days <- res.calendar[,CHECKROWS_NAME_VECTOR]
+  res.calendar.days <- res.calendar[, ..CHECKROWS_NAME_VECTOR]
   res.calendar.days <- data.table::transpose(res.calendar.days)
   #transpose on the same size runs in around 3s, but causes named dataframe with mixed datatypes to be coerced to unnamed vector of integer.
 
@@ -452,48 +431,61 @@ makeCalendar.inner <- function(calendar.sub) { # i, UIDs, calendar){
     return(list(calendar.sub, NA))
   } else {
     # check duration and types
+
+    #get durations of overlays
     dur <- as.numeric(calendar.sub$duration[calendar.sub$STP != "P"])
+
+    #get vector of types of overlays
     typ <- calendar.sub$STP[calendar.sub$STP != "P"]
+
+    #get vector of all timetable types including base timetable
     typ.all <- calendar.sub$STP
-    if (all(dur == 1) & all(typ == "C") & length(typ) > 0 &
-      length(typ.all) == 2) {
-      # One Day cancellations
+
+    #if every overlay is a one day cancellation (and there is only one of them)
+    if (all(dur == 1) & all(typ == "C") & length(typ) > 0 & length(typ.all) == 2) {
+
       # Modify in the calendar_dates.txt
       return(list(
         calendar.sub[calendar.sub$STP == "P", ],
         calendar.sub[calendar.sub$STP != "P", ]
       ))
+
     } else {
-      # check for identical day pattern
-      if (length(unique(calendar.sub$Days)) == 1 &
-        sum(typ.all == "P") == 1) {
+      # if the day patterns are all identical, and we have only one base timetable
+      if (length(unique(calendar.sub$Days)) == 1 & sum(typ.all == "P") == 1) {
+
         calendar.new <- splitDates(calendar.sub)
         #calendar.new <- UK2GTFS:::splitDates(calendar.sub)
         return(list(calendar.new, NA))
+
       } else {
+
         # split by day pattern
         splits <- list()
         daypatterns <- unique(calendar.sub$Days)
+
         for (k in seq(1, length(daypatterns))) {
           # select for each pattern but include cancellations with a
           # different day pattern
-          calendar.sub.day <- calendar.sub[calendar.sub$Days == daypatterns[k] |
-                                             calendar.sub$STP == "C", ]
+          calendar.sub.day <- calendar.sub[calendar.sub$Days == daypatterns[k] | calendar.sub$STP == "C", ]
 
           if (all(calendar.sub.day$STP == "C")) {
-            # ignore cases of only cancelled
+            # ignore cases of everything is cancelled
             splits[[k]] <- NULL
-          } else {
+          }
+          else {
             calendar.new.day <- splitDates(calendar.sub.day)
             #calendar.new.day <- UK2GTFS:::splitDates(calendar.sub.day)
             # rejects nas
-            if (class(calendar.new.day) == "data.frame") {
+            if (inherits(calendar.new.day, "data.frame")) {
               calendar.new.day$UID <- paste0(calendar.new.day$UID, k)
               splits[[k]] <- calendar.new.day
             }
           }
         }
+
         splits <- data.table::rbindlist(splits, use.names=FALSE) # dplyr::bind_rows(splits)
+
         return(list(splits, NA))
       }
     }
@@ -519,7 +511,10 @@ duplicate.stop_times_alt <- function(calendar, stop_times, ncores = 1) {
   stop_times <- dplyr::left_join(stop_times, rowID.unique,
     by = c("schedule" = "Var1")
   )
-  stop_times_split <- split(stop_times, stop_times$schedule)
+
+
+  stop_times$schedule2 <- stop_times$schedule
+  stop_times_split <- stop_times[, .(list(.SD)), by = "schedule2"][,V1]
 
   # TODO: The could handle cases of non duplicated stoptimes within duplicate.stop_times.int
   # rather than splitting and rejoining, would bring code tidyness and speed improvements
@@ -543,6 +538,9 @@ duplicate.stop_times_alt <- function(calendar, stop_times, ncores = 1) {
     stop_times.dup <- pbapply::pblapply(stop_times_split, duplicate.stop_times.int)
   } else {
     cl <- parallel::makeCluster(ncores)
+    parallel::clusterEvalQ(cl, {
+      loadNamespace("UK2GTFS")
+    })
     stop_times.dup <- pbapply::pblapply(stop_times_split,
       duplicate.stop_times.int,
       cl = cl
@@ -551,13 +549,14 @@ duplicate.stop_times_alt <- function(calendar, stop_times, ncores = 1) {
     rm(cl)
   }
 
-  stop_times.dup <- dplyr::bind_rows(stop_times.dup)
+  #stop_times.dup <- dplyr::bind_rows(stop_times.dup) performance
+  stop_times.dup <- data.table::rbindlist(stop_times.dup, use.names=FALSE)
   # stop_times.dup$index <- NULL
 
   # Join on the nonduplicated trip_ids
   trip.ids.nodup <- calendar.nodup[, c("rowID", "trip_id")]
   stop_times <- dplyr::left_join(stop_times, trip.ids.nodup, by = c("schedule" = "rowID"))
-  stop_times <- stop_times[!is.na(stop_times$trip_id), ] # when routes are cancled their stop times are left without valid trip_ids
+  stop_times <- stop_times[!is.na(stop_times$trip_id), ] # when routes are cancelled their stop times are left without valid trip_ids
 
   # join on the duplicated trip_ids
   calendar2 <- dplyr::group_by(calendar, rowID)
@@ -585,21 +584,21 @@ duplicate.stop_times_alt <- function(calendar, stop_times, ncores = 1) {
 
 
 
-#' fix times for jounrneys that run past midnight
+#' fix times for journeys that run past midnight
 #'
 #' @details
-#' When train runs over midnight GTFS requries the stop times to be in
+#' When train runs over midnight GTFS requires the stop times to be in
 #'    24h+ e.g. 26:30:00
 #'
 #' @param stop_times stop_times data.frame
 #' @param safe logical (default = TRUE) should the check for trains
-#'    running more than 24h be perfomed?
+#'    running more than 24h be performed?
 #'
 #' @details
 #' Not running the 24 check is faster, if the check is run a warning
 #'    is returned, but the error is not fixed. As the longest train
-#'    jounrey in the UK is 13 hours (Aberdeen to Penzance) this is
-#'    unlikley to be a problem.
+#'    journey in the UK is 13 hours (Aberdeen to Penzance) this is
+#'    unlikely to be a problem.
 #' @noRd
 #'
 afterMidnight <- function(stop_times, safe = TRUE) {
@@ -632,9 +631,8 @@ afterMidnight <- function(stop_times, safe = TRUE) {
   }
 
   numb2time2 <- function(numb){
-    numb <- stringr::str_pad(as.character(numb), 4, pad = "0")
-    numb <- paste0(substr(numb,1,2),":",substr(numb,3,4),":00")
-    numb
+    #performance, substr is relatively expensive
+    numb <- sprintf("%02d:%02d:00", numb %/% 100, numb %% 100)
   }
 
   stop_times$arrival_time <- numb2time2(stop_times$arvfinal)
@@ -656,7 +654,7 @@ afterMidnight <- function(stop_times, safe = TRUE) {
 #'
 #' @noRd
 #'
-clean_activities2 <- function(x) {
+clean_activities2 <- function(x, public_only = TRUE) {
 
   #x <- strsplit(x," ")
   #x <- lapply(x, function(y){
@@ -665,14 +663,24 @@ clean_activities2 <- function(x) {
   #x <- unlist(x)
 
   x <- data.frame(activity = x, stringsAsFactors = FALSE)
-  x <- dplyr::left_join(x, activity_codes, by = c("activity"))
-  if (anyNA(x$pickup_type)) {
-    mss <- unique(x$activity[is.na(x$pickup_type)])
-    message("Unknown Activity codes '", paste(unique(mss), collapse = "' '"), "' please report these codes as a GitHub Issue")
-    x$pickup_type[is.na(x$pickup_type)] <- 0
-    x$drop_off_type[is.na(x$drop_off_type)] <- 0
+
+  if (public_only)
+  {
+    x <- dplyr::left_join(x, activity_codes, by = c("activity"))
+    if (anyNA(x$pickup_type)) {
+      mss <- unique(x$activity[is.na(x$pickup_type)])
+      warning("Unknown Activity codes '", paste(unique(mss), collapse = "' '"), "' please report these codes as a GitHub Issue")
+      x$pickup_type[is.na(x$pickup_type)] <- 0
+      x$drop_off_type[is.na(x$drop_off_type)] <- 0
+    }
+    x <- x[, c("pickup_type", "drop_off_type")]
+  }
+  else #set all of the stops on a route to be passenger boarding / alighting from a GTFS perspective
+  {
+    x$pickup_type <- 0
+    x$drop_off_type <- 0
+    x <- x[, c("pickup_type", "drop_off_type", "activity")]
   }
 
-  x <- x[, c("pickup_type", "drop_off_type")]
   return(x)
 }

@@ -134,7 +134,7 @@ stripTabs <- function(df, stripNewline) {
 #' Convert Period to GTFS timestamps
 #' When writing a 400mb (zipped) file, we spend nearly 4 minutes in this fn(), about 10x longer than writing the files to the filesystem.
 #' profiler reports this being mostly nchar(), so we optimise down to one sprintf which reduces the time to 1 minute
-#' .format() is about 7x slower than sprintf()
+#' .format() is about 7x slower than sprintf() in this situation. Performance may be different on a data.table
 #'
 #' @param x periods
 #' @noRd

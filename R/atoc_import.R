@@ -1,3 +1,6 @@
+#' @import data.table
+#' @importFrom data.table ":="
+
 #' Import the .alf file
 #'
 #' @details
@@ -17,7 +20,7 @@ importALF <- function(file) {
     stringsAsFactors = FALSE
   )
 
-  # Now Fix Misaigned Values
+  # Now Fix Misaligned Values
   # Check each column for misalignments
   checkCol <- function(x, val) {
     checkCol.inner <- function(x, val) {
@@ -142,7 +145,7 @@ importMSN <- function(file, silent = TRUE) {
     col_types = rep("character", 17 - 1),
     widths = c(1, 4, 26 + 4, 1, 7, 3, 3, 3, 5, 1, 5, 2, 1, 1, 11, 3)
   )
-
+  station <- data.table(station)
   names(station) <- c(
     "Record Type", "Reserved1", "Station Name",
     "CATE Interchange status", "TIPLOC Code", "CRS Reference Code",
@@ -162,7 +165,7 @@ importMSN <- function(file, silent = TRUE) {
   station <- strip_whitespace(station)
 
   # convert to SF object
-  # for some reasonf the coordinates are mangled
+  # for some reason the coordinates are mangled
   station$`Ordnance Survey Grid Ref East` <- as.numeric(station$`Ordnance Survey Grid Ref East`)
   station$`Ordnance Survey Grid Ref North` <- as.numeric(station$`Ordnance Survey Grid Ref North`)
   station$`Ordnance Survey Grid Ref East` <- station$`Ordnance Survey Grid Ref East` * 100 - 1e6
@@ -190,7 +193,7 @@ importMSN <- function(file, silent = TRUE) {
     col_types = rep("character", 5 - 1),
     widths = c(1, 4, 26 + 4, 45)
   )
-
+  timetable <- data.table(timetable)
   names(timetable) <- c(
     "Record Type", "Reserved1", "Station Name",
     "GBTT numbers"
@@ -213,7 +216,7 @@ importMSN <- function(file, silent = TRUE) {
     col_types = rep("character", 2),
     widths = c(1, 79)
   )
-
+  comment <- data.table(comment)
   names(comment) <- c("Record Type", "Comment")
 
   comment$`Record Type` <- NULL
@@ -229,7 +232,7 @@ importMSN <- function(file, silent = TRUE) {
     col_types = rep("character", 6 - 1),
     widths = c(1, 4, 26 + 5, 26, 20)
   )
-
+  alias <- data.table(alias)
   names(alias) <- c(
     "Record Type", "Reserved1", "Station Name",
     "Station Alias", "Reserved3"
@@ -250,13 +253,14 @@ importMSN <- function(file, silent = TRUE) {
 #' Strip White Space
 #'
 #' @details
-#' Strips whitespace from a dataframe of charters vectors and returns
-#'     the data frame
+#' Strips trailing whitespace from a dataframe of character vectors
+#' empty values are converted to NA
+#'     returns the data frame
 #'
 #' @param df data frame
 #' @noRd
 #'
-strip_whitespace <- function(df) {
+strip_whitespace_df <- function(df) {
   sws <- function(val) {
     val <- trimws(val, which = "right")
     val[val == ""] <- NA
@@ -266,6 +270,109 @@ strip_whitespace <- function(df) {
   return(df)
 }
 
+#' Strip White Space
+#'
+#' @details
+#' Strips trailing whitespace from all char columns in a data.table
+#' empty values are converted to NA
+#'     returns the data.table
+#'
+#' @param dt data table
+#' @noRd
+#'
+strip_whitespace <- function(dt) {
+
+  char_cols <- sapply(dt, is.character)
+  char_col_names <- names(char_cols[char_cols])
+
+  return ( dt[, (char_col_names) := lapply(.SD, function(val) {
+    val <- trimws(val, which = "right")
+    val[val == ""] <- NA
+    return(val)
+  }), .SDcols = char_col_names] )
+}
+
+
+
+
+process_times <- function(dt, working_timetable) {
+  if (working_timetable) {
+    if ("Scheduled Arrival Time" %in% colnames(dt)) {
+      dt[, `Arrival Time` := gsub("H", "", `Scheduled Arrival Time`)]
+    }
+
+    if ("Scheduled Departure Time" %in% colnames(dt)) {
+      dt[, `Departure Time` := gsub("H", "", `Scheduled Departure Time`)]
+    }
+  } else {
+    if ("Public Arrival Time" %in% colnames(dt)) {
+      dt[, `Arrival Time` := gsub("H", "", `Public Arrival Time`)]
+    }
+
+    if ("Public Departure Time" %in% colnames(dt)) {
+      dt[, `Departure Time` := gsub("H", "", `Public Departure Time`)]
+    }
+  }
+
+  return(dt)
+}
+
+
+# Process Activity Codes
+process_activity <- function(dt, public_only) {
+
+  dt[, Activity := strsplit(Activity, "(?<=.{2})", perl=TRUE)]
+
+  if (public_only) {
+    # Filter to stops for passengers
+    #see https://wiki.openraildata.com/index.php?title=Activity_codes for definitions
+    acts <- c(
+      "TB", # Train Starts
+      "T ", # Stops to take up and set down passengers
+      "D ", # Stops to set down passengers
+      "U ", # Stops to take up passengers
+      "R ", # Request stop
+      "TF"  # Train Finishes
+    )
+
+    clean_activity3 <- function(x) {
+      x <- x[x %in% acts]
+      if (length(x) > 0) {
+        x <- paste(x, collapse = ",")
+        return(x)
+      } else {
+        return("Other")
+      }
+    }
+  } else {
+
+
+    clean_activity3 <- function(x) {
+
+      #remove empty elements
+      x <- x[x != "  "]
+
+      if (length(x) > 0) {
+        x <- paste(x, collapse = ",")
+        return(x)
+      } else {
+        return("Other")
+      }
+    }
+  }
+
+  dt[, Activity := lapply(Activity, clean_activity3)]
+
+  dt <- dt[Activity != "Other"]
+
+  dt[, Activity := gsub("\\s+", "", Activity)]
+
+  return(dt)
+}
+
+
+
+
 #' Import the .mca file
 #'
 #' @details
@@ -273,16 +380,18 @@ strip_whitespace <- function(df) {
 #'
 #' @param file Path to .mca file
 #' @param silent logical, should messages be displayed
-#' @param ncores number of cores to use when paralell processing
+#' @param ncores number of cores to use when parallel processing
 #' @param full_import import all data, default FALSE
 #' @param working_timetable use rail industry scheduling times instead of public times
+#' @param public_only only return calls that are for public passenger pick up/set down
 #' @export
 #'
 importMCA <- function(file,
                       silent = TRUE,
                       ncores = 1,
                       full_import = FALSE,
-                      working_timetable = FALSE) {
+                      working_timetable = FALSE,
+                      public_only = TRUE) {
 
   # see https://wiki.openraildata.com/index.php/CIF_File_Format
   if (!silent) {
@@ -311,6 +420,7 @@ importMCA <- function(file,
       6, 1, 1, 1, 1, 4, 4, 1, 1
     )
   )
+  BS <- data.table(BS)
   names(BS) <- c(
     "Record Identity", "Transaction Type", "Train UID", "Date Runs From",
     "Date Runs To", "Days Run", "Bank Holiday Running", "Train Status",
@@ -350,6 +460,7 @@ importMCA <- function(file,
     col_types = rep("character", 8),
     widths = c(2, 4, 5, 2, 1, 8, 1, 57)
   )
+  BX <- data.table(BX)
   names(BX) <- c(
     "Record Identity", "Traction Class", "UIC Code", "ATOC Code",
     "Applicable Timetable Code", "Retail Train ID", "Source", "Spare"
@@ -362,6 +473,8 @@ importMCA <- function(file,
   # Add the rowid
   BX$rowID <- seq(from = 1, to = length(types))[types == "BX"]
 
+
+
   # Origin Station
   if (!silent) {
     message(paste0(Sys.time(), " importing Origin Station"))
@@ -372,28 +485,26 @@ importMCA <- function(file,
     col_types = rep("character", 12),
     widths = c(2, 7, 1, 5, 4, 3, 3, 2, 2, 12, 2, 37)
   )
+  LO <- data.table(LO)
   names(LO) <- c(
     "Record Identity", "Location", "Suffix", "Scheduled Departure Time",
     "Public Departure Time", "Platform", "Line", "Engineering Allowance",
-    "Pathing Allowance", "Pathing Allowance", "Performance Allowance",
+    "Pathing Allowance", "Activity", "Performance Allowance",
     "Spare"
   )
   LO$Spare <- NULL
   LO$`Record Identity` <- NULL
-  LO <- strip_whitespace(LO)
-
-  if(working_timetable){
-    LO$`Departure Time` <- gsub("H", "",
-                              LO$`Scheduled Departure Time`)
-  }else{
-    LO$`Departure Time` <- gsub("H", "",
-                              LO$`Public Departure Time`)
-  }
-
-  LO <- LO[, c("Location", "Departure Time")]
-
   # Add the rowid
   LO$rowID <- seq(from = 1, to = length(types))[types == "LO"]
+
+  LO <- process_activity(LO, public_only)
+
+  LO <- process_times( LO, working_timetable )
+
+  LO <- LO[, c("rowID", "Location", "Activity", "Departure Time" )]
+
+  LO <- strip_whitespace(LO)
+
 
   # Intermediate Station
   if (!silent) {
@@ -405,6 +516,7 @@ importMCA <- function(file,
     col_types = rep("character", 16),
     widths = c(2, 7, 1, 5, 5, 5, 4, 4, 3, 3, 3, 12, 2, 2, 2, 20)
   )
+  LI <- data.table(LI)
   names(LI) <- c(
     "Record Identity", "Location", "Suffix", "Scheduled Arrival Time",
     "Scheduled Departure Time", "Scheduled Pass", "Public Arrival Time",
@@ -414,57 +526,16 @@ importMCA <- function(file,
   )
   LI$Spare <- NULL
   LI$`Record Identity` <- NULL
-
-  # Process Activity Codes
-  activity <- strsplit(LI$Activity, "(?<=.{2})", perl=TRUE)
-
-  clean_activity3 <- function(x){
-    # Filter to stops for passengers
-    acts <- c(
-      "TB", # Train Starts
-      "T ", # Stops to take up and set down passengers
-      "D ", # Stops to set down passengers
-      "U ", # Stops to take up passengers
-      "R ", # Request stop
-      "TF"  # Train Finishes
-    )
-    x <- x[x %in% acts]
-    x <- gsub(" ","",x)
-    if(length(x) > 0){
-      x <- paste(x, collapse = ",")
-      return(x)
-    } else {
-      return("Other")
-    }
-  }
-
-  LI$Activity <- unlist(lapply(activity, clean_activity3))
-
-  LI <- strip_whitespace(LI)
-
   # Add the rowid
   LI$rowID <- seq(from = 1, to = length(types))[types == "LI"]
 
-  LI <- LI[LI$Activity != "Other",]
-  # Check for errors in the times
+  LI <- process_activity(LI, public_only)
 
+  LI <- process_times( LI, working_timetable )
 
-  if(working_timetable){
-    LI$`Arrival Time` <- gsub("H", "",
-                                LI$`Scheduled Arrival Time`)
-    LI$`Departure Time` <- gsub("H", "",
-                                LI$`Scheduled Departure Time`)
-  }else{
-    LI$`Arrival Time` <- gsub("H", "",
-                                LI$`Public Arrival Time`)
-    LI$`Departure Time` <- gsub("H", "",
-                                LI$`Public Departure Time`)
-  }
+  LI <- LI[, c("rowID", "Location", "Activity", "Arrival Time", "Departure Time" )]
 
-  LI <- LI[, c(
-    "Location", "Arrival Time",
-    "Departure Time", "Activity", "rowID"
-  )]
+  LI <- strip_whitespace(LI)
 
 
 
@@ -478,30 +549,24 @@ importMCA <- function(file,
     col_types = rep("character", 9),
     widths = c(2, 7, 1, 5, 4, 3, 3, 12, 43)
   )
+  LT <- data.table(LT)
   names(LT) <- c(
     "Record Identity", "Location", "Suffix", "Scheduled Arrival Time",
     "Public Arrival Time", "Platform", "Path", "Activity", "Spare"
   )
   LT$Spare <- NULL
   LT$`Record Identity` <- NULL
-
-  # Process Activity Codes
-  activity <- strsplit(LT$Activity, "(?<=.{2})", perl=TRUE)
-  LT$Activity <- unlist(lapply(activity, clean_activity3))
-
-  LT <- strip_whitespace(LT)
-  LT$`Scheduled Arrival Time` <- gsub("H", "", LT$`Scheduled Arrival Time`)
-
-  if(working_timetable){
-    LT$`Arrival Time` <- gsub("H", "", LT$`Scheduled Arrival Time`)
-  }else{
-    LT$`Arrival Time` <- gsub("H", "", LT$`Public Arrival Time`)
-  }
-
-  LT <- LT[, c("Location", "Arrival Time", "Activity")]
-
   # Add the rowid
   LT$rowID <- seq(from = 1, to = length(types))[types == "LT"]
+
+  LT <- process_activity(LT, public_only)
+
+  LT <- process_times( LT, working_timetable )
+
+  LT <- LT[, c("rowID", "Location", "Activity", "Arrival Time" )]
+
+  LT <- strip_whitespace(LT)
+
 
   # TIPLOC Insert
   if (full_import) {
@@ -518,6 +583,7 @@ importMCA <- function(file,
         4, 4, 5, 8, 5
       )
     )
+    CR <- data.table(CR)
     names(CR) <- c(
       "Record Identity", "Location", "Train Category", "Train Identity",
       "Headcode", "Course Indicator",
@@ -543,6 +609,7 @@ importMCA <- function(file,
       col_types = rep("character", 11),
       widths = c(2, 7, 2, 6, 1, 26, 5, 4, 3, 16, 8)
     )
+    TI <- data.table(TI)
     names(TI) <- c(
       "Record Identity", "TIPLOC code", "Capitals", "NALCO",
       "NLC Check Character", "TPS Description",
@@ -565,6 +632,7 @@ importMCA <- function(file,
       col_types = rep("character", 12),
       widths = c(2, 7, 2, 6, 1, 26, 5, 4, 3, 16, 7, 1)
     )
+    TA <- data.table(TA)
     names(TA) <- c(
       "Record Identity", "TIPLOC code", "Capitals", "NALCO",
       "NLC Check Character", "TPS Description", "STANOX", "PO MCP Code",
@@ -587,6 +655,7 @@ importMCA <- function(file,
       col_types = rep("character", 3),
       widths = c(2, 7, 71)
     )
+    TD <- data.table(TD)
     names(TD) <- c("Record Identity", "TIPLOC code", "Spare")
     TD$Spare <- NULL
     TD$`Record Identity` <- NULL
@@ -608,6 +677,7 @@ importMCA <- function(file,
       col_types = rep("character", 16),
       widths = c(2, 1, 6, 6, 6, 6, 7, 2, 1, 7, 1, 1, 1, 1, 31, 1)
     )
+    AA <- data.table(AA)
     names(AA) <- c(
       "Record Identity", "Transaction Type", "Base UID", "Assoc UID",
       "Assoc Start date", "Assoc End date", "Assoc Days", "Assoc Cat",
@@ -646,6 +716,7 @@ importMCA <- function(file,
     col_types = rep("character", 2),
     widths = c(2, 78)
   )
+  ZZ <- data.table(ZZ)
   names(ZZ) <- c("Record Identity", "Spare")
   ZZ$Spare <- NULL
   ZZ <- strip_whitespace(ZZ)
@@ -657,8 +728,12 @@ importMCA <- function(file,
   if (!silent) {
     message(paste0(Sys.time(), " Preparing Imported Data"))
   }
+
   stop_times <- dplyr::bind_rows(list(LO, LI, LT))
   stop_times <- stop_times[order(stop_times$rowID), ]
+
+  #the BS record is followed by the LO, LI, LT records relating to it
+  #- so we effectively group by the BS record and apply the BS row ID to the 'schedule' column of the stop times relating to it.
   stop_times$schedule <- as.integer(as.character(cut(stop_times$rowID,
     c(BS$rowID, ZZ$rowID[1]),
     labels = BS$rowID
@@ -666,6 +741,8 @@ importMCA <- function(file,
   stop_times$stop_sequence <- sequence(rle(stop_times$schedule)$lengths)
 
 
+  # the BX record appears the row after the BS record, so it's rowId is one more than it's corresponding BS record.
+  # use this to join the two records together.
   BX$rowIDm1 <- BX$rowID - 1
   BX$rowID <- NULL
   schedule <- dplyr::left_join(BS, BX, by = c("rowID" = "rowIDm1"))
