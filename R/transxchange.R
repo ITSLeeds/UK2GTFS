@@ -8,13 +8,14 @@
 #' @param cal Calendar object from get_bank_holidays()
 #' @param naptan Naptan stop locations from get_naptan()
 #' @param scotland character, should Scottish bank holidays be used? Can be
-#'   "auto" (defualt), "yes", "no". If "auto" and path_in ends with "S.zip"
+#'   "auto" (default), "yes", "no". If "auto" and path_in ends with "S.zip"
 #'   Scottish bank holidays will be used, otherwise England and Wales bank
 #'   holidays are used.
 #' @param try_mode Logical, if TRUE import and conversion are wrapped in try
 #'   calls thus a failure on a single file will not cause the whole process to
 #'   fail. Warning this could result in a GTFS file with missing routes.
 #' @param force_merge Logical, passed to gtfs_merge(force), default FALSE
+#' @param merge Logical, if results are merged into one GTFS object by calling gtfs_merge, default TRUE
 #' @return A GTFS named list
 #' @details
 #'
@@ -38,7 +39,8 @@ transxchange2gtfs <- function(path_in,
                               naptan = get_naptan(),
                               scotland = "auto",
                               try_mode = TRUE,
-                              force_merge = FALSE) {
+                              force_merge = FALSE,
+                              merge = TRUE) {
   # Check inputs
   checkmate::assert_numeric(ncores)
   checkmate::assert_logical(silent)
@@ -206,13 +208,16 @@ transxchange2gtfs <- function(path_in,
     message("All files converted")
   }
 
-  if(!silent){ message(paste0(Sys.time(), " Merging GTFS objects"))}
+  if(merge)
+  {
+    if(!silent){ message(paste0(Sys.time(), " Merging GTFS objects"))}
 
-  gtfs_merged <- try(gtfs_merge(gtfs_all, force=force_merge, quiet=silent))
+    gtfs_merged <- gtfs_merge(gtfs_all, force=force_merge, quiet=silent)
 
-  if (class(gtfs_merged) == "try-error") {
-    warning("Merging failed, returing unmerged GFTS object for analysis")
-    return(gtfs_all) #this is not helpful - caller has no idea there was an error and ploughs on, causing strange errors much later on
+    return(gtfs_merged)
   }
-  return(gtfs_merged)
+  else
+  {
+    return (gtfs_all)
+  }
 }
