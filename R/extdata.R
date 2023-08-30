@@ -72,6 +72,8 @@ download_data <- function(tag_name, package_location, date){
 #' @noRd
 
 check_data <- function(){
+  # Try not to hammer the API
+  Sys.sleep(5)
   # Check date on data repo
   res = try(httr::GET("https://api.github.com/repos/ITSleeds/UK2GTFS-data/releases"),
             silent = TRUE)
@@ -82,6 +84,12 @@ check_data <- function(){
 
   res = RcppSimdJson::fparse(res$content)
   date = res$published_at[1]
+  if(is.null(date)){
+    message("Unable to check for latest data")
+    return(TRUE)
+  }
+
+
   tag_name = res$tag_name[1]
 
   #Check if date.txt in package

@@ -479,7 +479,7 @@ makeCalendar.inner <- function(calendar.sub) { # i, UIDs, calendar){
           } else {
             calendar.new.day <- splitDates(calendar.sub.day)
             # rejects nas
-            if (class(calendar.new.day) == "data.frame") {
+            if (inherits(calendar.new.day, "data.frame")) {
               calendar.new.day$UID <- paste0(calendar.new.day$UID, k)
               splits[[k]] <- calendar.new.day
             }

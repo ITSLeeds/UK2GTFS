@@ -169,10 +169,10 @@ od_id_szudzik = function (x, y, ordermatters = FALSE)
   if (length(x) != length(y)) {
     stop("x and y are not of equal length")
   }
-  if (is(x, "factor")) {
+  if (inherits(x, "factor")) {
     x <- as.character(x)
   }
-  if (is(y, "factor")) {
+  if (inherits(y, "factor")) {
     y <- as.character(y)
   }
   lvls <- unique(c(x, y))
@@ -259,89 +259,6 @@ st_length_cheap <- function(x){
 }
 
 
-## Testing Scripts
-# check that all stations are near the rail network
-#gtfs <- gtfs_read("C:/Users/malco/OneDrive - University of Leeds/Data/UK2GTFS/GTFS/gtfs_20200502/atoc_ttis627.zip")
 
-# stops <- gtfs$stops
-# routes <- gtfs$routes
-# trips <- gtfs$trips
-# stop_times <- gtfs$stop_times
-# routes <- routes[routes$route_type == 2, ]
-# trips <- trips[trips$route_id %in% routes$route_id, ]
-# stop_times <- stop_times[stop_times$trip_id %in% trips$trip_id, ]
-# stops <- stops[stops$stop_id %in% unique(stop_times$stop_id),]
-#
-# track <- UK2GTFS::rail_heavy
-# stops <- st_as_sf(stops, coords = c("stop_lon","stop_lat"), crs = 4326)
-# track$type <- "rail"
-# wts <- c(1)
-# names(wts) <- as.character("rail")
-# graph <- dodgr::weight_streetnet(track, type_col = "type", wt_profile = wts, id_col = "id")
-# verts <- dodgr::dodgr_vertices(graph)
-# stops <- cbind(st_drop_geometry(stops), st_coordinates(stops))
-# near <- RANN::nn2(data = verts[, c("x", "y")], query = stops[, c("X", "Y")], k = 1)
-# stops$vert <- verts$id[near$nn.idx]
-# stops$dist <- as.numeric(near$nn.dists)
-# stops$vert[stops$dist > 1e-7] <- NA
-#
-# graph <- dodgr::dodgr_contract_graph(graph, verts = unique(stops$vert))
-#
-# verts <- dodgr::dodgr_vertices(graph)
-# near <- RANN::nn2(data = verts[, c("x", "y")], query = stops[, c("X", "Y")], k = 1)
-# stops$vert <- verts$id[near$nn.idx]
-# stops$dist <- as.numeric(near$nn.dists)
-# stops$vert[stops$dist > 1e-7] <- NA
-#
-#
-# # Make a unique set of stop pairs
-# pairs <- stop_times[, c("trip_id", "stop_id")]
-# names(pairs) <- c("trip_id_from", "stop_id_from")
-# pairs$stop_id_to <- c(pairs$stop_id_from[2:length(pairs$stop_id_from)], NA)
-# pairs$trip_id_to <- c(pairs$trip_id_from[2:length(pairs$stop_id_from)], NA)
-# pairs <- pairs[pairs$trip_id_from == pairs$trip_id_to, ]
-# pairs <- pairs[, c("stop_id_from", "stop_id_to")]
-# pairs <- pairs[!is.na(pairs$stop_id_from), ]
-# pairs <- unique(pairs)
-# pairs$id <- od_id_szudzik(pairs$stop_id_from, pairs$stop_id_to)
-# pairs <- pairs[!duplicated(pairs$id), ]
-#
-# # match stops to graph
-# pairs <- dplyr::left_join(pairs[, c("stop_id_from", "stop_id_to")],
-#                           stops[, c("stop_id", "vert")],
-#                           by = c("stop_id_from" = "stop_id")
-# )
-# names(pairs) <- c("stop_id_from", "stop_id_to", "vert_from")
-# pairs <- dplyr::left_join(pairs,
-#                           stops[, c("stop_id", "vert")],
-#                           by = c("stop_id_to" = "stop_id")
-# )
-# names(pairs) <- c("stop_id_from", "stop_id_to", "vert_from", "vert_to")
-#
-# pairs <- pairs[!is.na(pairs$vert_from),]
-# pairs <- pairs[!is.na(pairs$vert_to),]
-#
-#
-# # Route between pairs
-# print(Sys.time())
-# dp.list <- dodgr::dodgr_paths(graph,
-#                               from = pairs$vert_from,
-#                               to = pairs$vert_to,
-#                               pairwise = TRUE, quiet = FALSE
-# )
-# print(Sys.time())
-#
-#
-#
-#
-# track_points <- st_cast(track, "POINT")
-# near <- st_nn(stops, track_points, returnDist = TRUE)
-#
-# stops$dist <- unlist(near$dist)
-# stops$near <- unlist(near$nn)
-# qtm(track) + qtm(stops[stops$dist > 10,])
-#
-# stops$geom2 <- track_points$geometry[stops$near]
-# stops$geometry <- ifelse(stops$dist < 100, stops$geom2, stops$geometry)
 
 
