@@ -52,7 +52,7 @@ update_data <- function(){
 download_data <- function(tag_name, package_location, date){
 
   dir.create(file.path(tempdir(),"UK2GTFS_load"))
-  download.file(paste0("https://github.com/ITSLeeds/UK2GTFS-data/releases/download/",
+  utils::download.file(paste0("https://github.com/ITSLeeds/UK2GTFS-data/releases/download/",
                        tag_name,"/all.zip"),
                 destfile = file.path(tempdir(),"UK2GTFS_load/all.zip"),
                 mode = "wb")

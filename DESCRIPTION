@@ -26,6 +26,7 @@ Imports:
   digest,
   foreach, 
   geodist,
+  httr,
   iotools,
   stringr,
   sf,
@@ -34,6 +35,7 @@ Imports:
   purrr (>= 1.0),
   pbapply,
   readr (>= 2.0),
+  RcppSimdJson,
   xml2,
   zip,
 Suggests: 

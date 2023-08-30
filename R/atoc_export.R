@@ -373,10 +373,7 @@ makeCalendar <- function(schedule, ncores = 1) {
     })
     pbapply::pboptions(use_lb = TRUE)
     res <- pbapply::pblapply(calendar_split,
-      # 1:length_todo,
       makeCalendar.inner,
-      # UIDs = UIDs,
-      # calendar = calendar,
       cl = cl
     )
     parallel::stopCluster(cl)
@@ -384,11 +381,7 @@ makeCalendar <- function(schedule, ncores = 1) {
   } else {
     res <- pbapply::pblapply(
       calendar_split,
-      # 1:length_todo,
-      makeCalendar.inner # ,
-      # UIDs = UIDs,
-      # calendar = calendar
-    )
+      makeCalendar.inner)
   }
 
   res.calendar <- lapply(res, `[[`, 1)
@@ -485,7 +478,6 @@ makeCalendar.inner <- function(calendar.sub) { # i, UIDs, calendar){
             splits[[k]] <- NULL
           } else {
             calendar.new.day <- splitDates(calendar.sub.day)
-            #calendar.new.day <- UK2GTFS:::splitDates(calendar.sub.day)
             # rejects nas
             if (class(calendar.new.day) == "data.frame") {
               calendar.new.day$UID <- paste0(calendar.new.day$UID, k)
@@ -657,12 +649,6 @@ afterMidnight <- function(stop_times, safe = TRUE) {
 #' @noRd
 #'
 clean_activities2 <- function(x) {
-
-  #x <- strsplit(x," ")
-  #x <- lapply(x, function(y){
-  #  y <- paste(y[order(y, decreasing = TRUE)], collapse = " ")
-  #})
-  #x <- unlist(x)
 
   x <- data.frame(activity = x, stringsAsFactors = FALSE)
   x <- dplyr::left_join(x, activity_codes, by = c("activity"))

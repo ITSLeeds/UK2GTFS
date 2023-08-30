@@ -8,6 +8,8 @@ gtfs_clean(gtfs, removeNonPublic = FALSE)
 }
 \arguments{
 \item{gtfs}{gtfs list}
+
+\item{removeNonPublic}{logical if TRUE remove routes with route_type missing}
 }
 \description{
 Clean simple errors from GTFS files
