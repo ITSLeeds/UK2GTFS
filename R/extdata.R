@@ -32,8 +32,8 @@ update_data <- function(){
 
     } else {
       message("Data not updated, run update_data()")
-      #message("Updating internal package data")
-      #download_data(check$tag_name, check$package_location, check$date)
+      message("Updating internal package data")
+      download_data(check$tag_name, check$package_location, check$date)
     }
 
   } else {
