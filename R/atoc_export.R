@@ -101,11 +101,13 @@ station2transfers <- function(station, flf, path_out) {
   transfers3 <- transfers2[, c("TIPLOC Code", "CRS Code")]
   names(transfers3) <- c("from_stop_id", "CRS Code")
   transfers1 <- dplyr::left_join(transfers1, transfers3,
-    by = c("from" = "CRS Code")
+    by = c("from" = "CRS Code"),
+    relationship = "many-to-many"
   )
   names(transfers3) <- c("to_stop_id", "CRS Code")
   transfers1 <- dplyr::left_join(transfers1, transfers3,
-    by = c("to" = "CRS Code")
+    by = c("to" = "CRS Code"),
+    relationship = "many-to-many"
   )
   transfers1 <- transfers1[, c(
     "from_stop_id", "to_stop_id",
