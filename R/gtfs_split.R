@@ -1,6 +1,6 @@
 #' Split a GTFS object
 #'
-#' For large regions GTFS files can get very big. This fucntion splits a GTFS
+#' For large regions GTFS files can get very big. This function splits a GTFS
 #' object into a list of GTFS objects. It tries to balance the sizes of the
 #' objects. Splits are made by agency_id so maximum number of splits equals
 #' the number of unique agency_ids.

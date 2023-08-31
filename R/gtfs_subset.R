@@ -1,7 +1,7 @@
 #' Clip a GTFS object to a geographical area
 #'
 #' Clips the GTFS file to only include stops within the bounds object, trips
-#' that cross the bouundary of the the object are truncated. Any trips that stop
+#' that cross the boundary of the the object are truncated. Any trips that stop
 #' only once in the bounds are removed completely.
 #'
 #' @param gtfs a gtfs object
