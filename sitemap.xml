@@ -31,13 +31,7 @@
     <loc>/reference/activity_codes.html</loc>
   </url>
   <url>
-    <loc>/reference/atco_areas.html</loc>
-  </url>
-  <url>
     <loc>/reference/atoc2gtfs.html</loc>
-  </url>
-  <url>
-    <loc>/reference/atoc_agency.html</loc>
   </url>
   <url>
     <loc>/reference/dl_example_file.html</loc>
@@ -97,9 +91,6 @@
     <loc>/reference/gtfs_write.html</loc>
   </url>
   <url>
-    <loc>/reference/historic_bank_holidays.html</loc>
-  </url>
-  <url>
     <loc>/reference/importALF.html</loc>
   </url>
   <url>
@@ -118,10 +109,7 @@
     <loc>/reference/index.html</loc>
   </url>
   <url>
-    <loc>/reference/naptan_missing.html</loc>
-  </url>
-  <url>
-    <loc>/reference/naptan_replace.html</loc>
+    <loc>/reference/load_data.html</loc>
   </url>
   <url>
     <loc>/reference/ni2gtfs.html</loc>
@@ -133,24 +121,18 @@
     <loc>/reference/nr2gtfs.html</loc>
   </url>
   <url>
-    <loc>/reference/rail.html</loc>
-  </url>
-  <url>
-    <loc>/reference/rail_heavy.html</loc>
-  </url>
-  <url>
     <loc>/reference/school_terms.html</loc>
   </url>
   <url>
     <loc>/reference/station2stops.html</loc>
   </url>
   <url>
-    <loc>/reference/tiplocs.html</loc>
-  </url>
-  <url>
     <loc>/reference/transxchange2gtfs.html</loc>
   </url>
   <url>
     <loc>/reference/transxchange_import.html</loc>
+  </url>
+  <url>
+    <loc>/reference/update_data.html</loc>
   </url>
 </urlset>

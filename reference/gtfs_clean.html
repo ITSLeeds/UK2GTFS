@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">UK2GTFS</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.1</span>
       </span>
     </div>
 
@@ -66,7 +66,7 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">gtfs_clean</span><span class="op">(</span><span class="va">gtfs</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">gtfs_clean</span><span class="op">(</span><span class="va">gtfs</span>, removeNonPublic <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -74,13 +74,20 @@
     <dl><dt>gtfs</dt>
 <dd><p>gtfs list</p></dd>
 
+
+<dt>removeNonPublic</dt>
+<dd><p>logical if TRUE remove routes with route_type missing</p></dd>
+
 </dl></div>
     <div id="details">
     <h2>Details</h2>
     <p>Task done:</p>
-<p>1. Remove stops with no location information
+<p>0. Remove stops with no coordinates
+1. Remove stops with no location information
 2. Remove stops that are never used
-3. Replace missing agency names with "MISSINGAGENCY"</p>
+3. Replace missing agency names with "MISSINGAGENCY"
+4. If service is not public and removeNonPublic=TRUE then remove it (freight, 'trips' aka charters)
+       (these have a null route_type, so loading into OpenTripPlanner fails if these are present)</p>
     </div>
 
   </div>
