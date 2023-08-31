@@ -304,7 +304,6 @@ checkrows <- function(tmp) {
   }
 }
 
-# TODO: make mode affect name
 #' internal function for constructing longnames of routes
 #'
 #' @details
