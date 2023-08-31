@@ -68,10 +68,11 @@ download_data <- function(tag_name, package_location, date){
 #'
 #' As UK2GTFS has large datasets that update separately to the R package they
 #' are checked and downloaded a package load time
+#' @param default_tag What release to assume if unable to check.
 #' @return TRUE if data is up-to-date or if unable to check
 #' @noRd
 
-check_data <- function(){
+check_data <- function(default_tag = "v0.1.2"){
   # Try not to hammer the API
   Sys.sleep(5)
   # Check date on data repo
@@ -79,18 +80,19 @@ check_data <- function(){
             silent = TRUE)
   if(inherits(res, "try-error")){
     message("Unable to check for latest data")
-    return(TRUE)
+    date = Sys.time()
+    tag_name = default_tag
+  } else {
+    res = RcppSimdJson::fparse(res$content)
+    date = res$published_at[1]
+    if(is.null(date)){
+      message("Unable to check for latest data")
+      date = Sys.time()
+      tag_name = default_tag
+    } else {
+      tag_name = res$tag_name[1]
+    }
   }
-
-  res = RcppSimdJson::fparse(res$content)
-  date = res$published_at[1]
-  if(is.null(date)){
-    message("Unable to check for latest data")
-    return(TRUE)
-  }
-
-
-  tag_name = res$tag_name[1]
 
   #Check if date.txt in package
   package_location <- system.file(package = "UK2GTFS")
