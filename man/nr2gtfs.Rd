@@ -8,8 +8,8 @@ nr2gtfs(
   path_in,
   silent = TRUE,
   ncores = 1,
-  locations = tiplocs,
-  agency = atoc_agency,
+  locations = "tiplocs",
+  agency = "atoc_agency",
   shapes = FALSE
 )
 }
@@ -48,7 +48,7 @@ in the ATOC data or provide an SF data frame of your own.
 Agency
 
 The ATOC files do not contain the necessary information to build the
-agency.txt file. Therfore this data is provided with the package. You can
+agency.txt file. Therefore this data is provided with the package. You can
 also pass your own data frame of agency information.
 }
 \seealso{
