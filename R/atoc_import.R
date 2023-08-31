@@ -17,7 +17,7 @@ importALF <- function(file) {
     stringsAsFactors = FALSE
   )
 
-  # Now Fix Misaigned Values
+  # Now Fix Misaligned Values
   # Check each column for misalignments
   checkCol <- function(x, val) {
     checkCol.inner <- function(x, val) {

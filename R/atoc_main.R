@@ -4,12 +4,13 @@
 #' Export ATOC schedule as GTFS
 #'
 #' @param stop_times stop-times
+#' @param stops stops data.frame
 #' @param schedule list of dataframes
 #' @param silent logical
 #' @param ncores number of cores to use
 #' @noRd
 #'
-schedule2routes <- function(stop_times, schedule, silent = TRUE, ncores = 1) {
+schedule2routes <- function(stop_times, stops, schedule, silent = TRUE, ncores = 1) {
 
 
   ### SECTION 1: ###############################################################################
@@ -80,7 +81,7 @@ schedule2routes <- function(stop_times, schedule, silent = TRUE, ncores = 1) {
 
 
   ### SECTION 3: ###############################################################################
-  # When splitting the calendar roWIDs are duplicated
+  # When splitting the calendar rowIDs are duplicated
   # so create new system of trip_ids and duplicate the relevant stop_times
   if (!silent) {
     message(paste0(Sys.time(), " Duplicating necessary stop times"))
@@ -90,15 +91,15 @@ schedule2routes <- function(stop_times, schedule, silent = TRUE, ncores = 1) {
   stop_times <- duplicate.stop_times_alt(calendar = calendar, stop_times = stop_times, ncores = 1)
 
   ### SECTION 5: ###############################################################################
-  # make make the trips.txt  file by matching the calnedar to the stop_times
+  # make the trips.txt file by matching the calendar to the stop_times
 
   trips <- calendar[, c("service_id", "trip_id", "rowID", "ATOC Code", "Train Status")]
-  trips <- longnames(routes = trips, stop_times = stop_times)
+  trips <- longnames(routes = trips, stop_times = stop_times, stops = stops)
 
   ### SECTION 4: ###############################################################################
-  # make make the routes.txt
+  # make the routes.txt
   # a route is all the trips with a common start and end
-  # i.e. scheduels original UID
+  # i.e. schedules original UID
   if (!silent) {
     message(paste0(Sys.time(), " Building routes.txt"))
   }
@@ -122,7 +123,9 @@ schedule2routes <- function(stop_times, schedule, silent = TRUE, ncores = 1) {
 
   routes <- routes[, c("route_id", "route_type", "ATOC Code", "route_long_name")]
   names(routes) <- c("route_id", "route_type", "agency_id", "route_long_name")
-  routes$route_short_name <- routes$route_id
+
+  # IDs are not meaningful, just leave out
+  routes$route_short_name <- "" # was: routes$route_id
 
   routes$route_type[routes$agency_id == "LT"] <- 1 # London Underground is Metro
 

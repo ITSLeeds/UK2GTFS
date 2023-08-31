@@ -120,6 +120,7 @@ nr2gtfs <- function(path_in,
   # Main Timetable Build
   timetables <- schedule2routes(
     stop_times = stop_times,
+    stops = stops,
     schedule = schedule,
     silent = silent,
     ncores = ncores
