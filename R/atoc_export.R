@@ -299,10 +299,11 @@ checkrows <- function(tmp) {
   }
 }
 
-#' internal function for contructing longnames of routes
+# TODO: make mode affect name
+#' internal function for constructing longnames of routes
 #'
 #' @details
-#' creates the long name of a route from appropriate variaibles
+#' creates the long name of a route from appropriate variables
 #'
 #' @param routes routes data.frame
 #' @param stop_times stop_times data.frame

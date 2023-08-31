@@ -2,7 +2,7 @@
 #'
 #' For large regions GTFS files can get very big. This function splits a GTFS
 #' object into a list of GTFS objects. It tries to balance the sizes of the
-#' objects. Splits are made by agency_id so maximum number of splits equals
+#' objects. Splits are made by agency_id so maximums number of splits equals
 #' the number of unique agency_ids.
 #'
 #' @param gtfs a gtfs object
