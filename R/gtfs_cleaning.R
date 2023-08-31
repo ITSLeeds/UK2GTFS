@@ -197,6 +197,7 @@ gtfs_fast_stops <- function(gtfs, maxspeed = 83) {
 #' Clean simple errors from GTFS files
 #'
 #' @param gtfs gtfs list
+#' @param removeNonPublic logical if TRUE remove routes with route_type missing
 #' @details
 #' Task done:
 #'

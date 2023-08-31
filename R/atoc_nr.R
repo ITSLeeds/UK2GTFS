@@ -26,7 +26,7 @@
 #' Agency
 #'
 #' The ATOC files do not contain the necessary information to build the
-#' agency.txt file. Therfore this data is provided with the package. You can
+#' agency.txt file. Therefore this data is provided with the package. You can
 #' also pass your own data frame of agency information.
 #'
 #'
@@ -35,9 +35,24 @@
 nr2gtfs <- function(path_in,
                       silent = TRUE,
                       ncores = 1,
-                      locations = tiplocs,
-                      agency = atoc_agency,
+                      locations = "tiplocs",
+                      agency = "atoc_agency",
                       shapes = FALSE) {
+
+  if(inherits(locations,"character")){
+    if(locations == "tiplocs"){
+      load_data("tiplocs")
+      locations = tiplocs
+    }
+  }
+
+  if(inherits(agency,"character")){
+    if(agency == "atoc_agency"){
+      load_data("atoc_agency")
+      agency = atoc_agency
+    }
+  }
+
   # checkmate
   checkmate::assert_character(path_in, len = 1)
   checkmate::assert_file_exists(path_in)
@@ -65,7 +80,6 @@ nr2gtfs <- function(path_in,
 
   # Get the Station Locations
   if ("sf" %in% class(locations)) {
-    # load("data/tiplocs.RData")
     stops <- cbind(locations, sf::st_coordinates(locations))
     stops <- as.data.frame(stops)
     stops <- stops[, c(

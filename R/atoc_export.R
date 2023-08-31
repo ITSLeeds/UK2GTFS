@@ -101,11 +101,13 @@ station2transfers <- function(station, flf, path_out) {
   transfers3 <- transfers2[, c("TIPLOC Code", "CRS Code")]
   names(transfers3) <- c("from_stop_id", "CRS Code")
   transfers1 <- dplyr::left_join(transfers1, transfers3,
-    by = c("from" = "CRS Code")
+    by = c("from" = "CRS Code"),
+    relationship = "many-to-many"
   )
   names(transfers3) <- c("to_stop_id", "CRS Code")
   transfers1 <- dplyr::left_join(transfers1, transfers3,
-    by = c("to" = "CRS Code")
+    by = c("to" = "CRS Code"),
+    relationship = "many-to-many"
   )
   transfers1 <- transfers1[, c(
     "from_stop_id", "to_stop_id",
@@ -373,10 +375,7 @@ makeCalendar <- function(schedule, ncores = 1) {
     })
     pbapply::pboptions(use_lb = TRUE)
     res <- pbapply::pblapply(calendar_split,
-      # 1:length_todo,
       makeCalendar.inner,
-      # UIDs = UIDs,
-      # calendar = calendar,
       cl = cl
     )
     parallel::stopCluster(cl)
@@ -384,11 +383,7 @@ makeCalendar <- function(schedule, ncores = 1) {
   } else {
     res <- pbapply::pblapply(
       calendar_split,
-      # 1:length_todo,
-      makeCalendar.inner # ,
-      # UIDs = UIDs,
-      # calendar = calendar
-    )
+      makeCalendar.inner)
   }
 
   res.calendar <- lapply(res, `[[`, 1)
@@ -485,9 +480,8 @@ makeCalendar.inner <- function(calendar.sub) { # i, UIDs, calendar){
             splits[[k]] <- NULL
           } else {
             calendar.new.day <- splitDates(calendar.sub.day)
-            #calendar.new.day <- UK2GTFS:::splitDates(calendar.sub.day)
             # rejects nas
-            if (class(calendar.new.day) == "data.frame") {
+            if (inherits(calendar.new.day, "data.frame")) {
               calendar.new.day$UID <- paste0(calendar.new.day$UID, k)
               splits[[k]] <- calendar.new.day
             }
@@ -657,12 +651,6 @@ afterMidnight <- function(stop_times, safe = TRUE) {
 #' @noRd
 #'
 clean_activities2 <- function(x) {
-
-  #x <- strsplit(x," ")
-  #x <- lapply(x, function(y){
-  #  y <- paste(y[order(y, decreasing = TRUE)], collapse = " ")
-  #})
-  #x <- unlist(x)
 
   x <- data.frame(activity = x, stringsAsFactors = FALSE)
   x <- dplyr::left_join(x, activity_codes, by = c("activity"))

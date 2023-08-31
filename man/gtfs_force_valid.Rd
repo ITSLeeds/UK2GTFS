@@ -15,6 +15,10 @@ Force a GTFS to be valid by removing problems
 \details{
 Actions performed
 1. Remove stops with missing location
-2. Remove stops from stop_times that are not in stops
-3. Remove trips from stop_times that are not in trips
+2. Remove routes that don't exist in agency
+3. Remove trips that don't exist in routes
+4. Remove stop_times(calls) that don't exist in trips
+5. Remove stop_times(calls) that don't exist in stops
+6. Remove Calendar that have service_id that doesn't exist in trips
+7. Remove Calendar_dates that have service_id that doesn't exist in trips
 }
