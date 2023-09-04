@@ -15,10 +15,10 @@
 gtfs_write <- function(gtfs,
                        folder = getwd(),
                        name = "gtfs",
-                       stripComma = TRUE,
-                       stripTab = TRUE,
-                       stripNewline = TRUE,
-                       quote = FALSE) {
+                       stripComma = FALSE,
+                       stripTab = FALSE,
+                       stripNewline = FALSE,
+                       quote = TRUE) {
 
   if (stripComma) {
     for (i in seq_len(length(gtfs))) {
@@ -33,36 +33,26 @@ gtfs_write <- function(gtfs,
   }
 
 
-  #Format Dates
-  if(inherits(gtfs$calendar$start_date, "Date")){
-    gtfs$calendar$start_date <- format(gtfs$calendar$start_date, "%Y%m%d")
-  }
-
-  if(inherits(gtfs$calendar$end_date, "Date")){
-    gtfs$calendar$end_date <- format(gtfs$calendar$end_date, "%Y%m%d")
-  }
-
-  if(inherits(gtfs$calendar_dates$date, "Date")){
-    gtfs$calendar_dates$date <- format(gtfs$calendar_dates$date, "%Y%m%d")
-  }
-
-  #Format times
-  if(inherits(gtfs$stop_times$arrival_time, "Period")){
-    gtfs$stop_times$arrival_time <- period2gtfs(gtfs$stop_times$arrival_time)
-  }
-
-  if(inherits(gtfs$stop_times$departure_time, "Period")){
-    gtfs$stop_times$departure_time <- period2gtfs(gtfs$stop_times$departure_time)
-  }
-
-  if("frequencies" %in% names(gtfs))
+  if (FALSE)
   {
-    if("difftime" %in% class(gtfs$frequencies$start_time)){
-      gtfs$frequencies$start_time <- format(gtfs$frequencies$start_time, format = "%H:%M:%S")
+    #Format times
+    if(inherits(gtfs$stop_times$arrival_time, "Period")){
+      gtfs$stop_times$arrival_time <- period2gtfs(gtfs$stop_times$arrival_time)
     }
 
-    if("difftime" %in% class(gtfs$frequencies$end_time)){
-      gtfs$frequencies$end_time <- format(gtfs$frequencies$end_time, format = "%H:%M:%S")
+    if(inherits(gtfs$stop_times$departure_time, "Period")){
+      gtfs$stop_times$departure_time <- period2gtfs(gtfs$stop_times$departure_time)
+    }
+
+    if("frequencies" %in% names(gtfs))
+    {
+      if("difftime" %in% class(gtfs$frequencies$start_time)){
+        gtfs$frequencies$start_time <- format(gtfs$frequencies$start_time, format = "%H:%M:%S")
+      }
+
+      if("difftime" %in% class(gtfs$frequencies$end_time)){
+        gtfs$frequencies$end_time <- format(gtfs$frequencies$end_time, format = "%H:%M:%S")
+      }
     }
   }
 
@@ -71,6 +61,8 @@ gtfs_write <- function(gtfs,
   for ( tableName in names(gtfs) )
   {
     table <- gtfs[[tableName]]
+
+    table <- formatAttributesToGtfsSchema( table )
 
     if ( !is.null(table) & nrow(table) > 0 )
     {
@@ -149,4 +141,66 @@ period2gtfs <- function(x) {
 
   return( sprintf("%02d:%02d:%02d", lubridate::hour(x), lubridate::minute(x), lubridate::second(x)) )
 }
+
+
+formatAttributesToGtfsSchema <- function(dt)
+{
+
+  {
+    periodColumnsToFormat <- names(dt)[ sapply(dt, function(x){ inherits(x, "Period") }) ]
+
+    if (length(periodColumnsToFormat) > 0)
+    {
+      dt[, (periodColumnsToFormat) := lapply(.SD, period2gtfs), .SDcols = periodColumnsToFormat]
+    }
+  }
+
+  {
+    diffTimeColumnsToFormat <- names(dt)[ sapply(dt, function(x){ "difftime" %in% class( x ) }) ]
+
+    if (length(diffTimeColumnsToFormat) > 0)
+    {
+      dt[, (diffTimeColumnsToFormat) := lapply(.SD, format, format = "%H:%M:%S"), .SDcols = diffTimeColumnsToFormat]
+    }
+  }
+
+  {
+    dateColumnsToFormat <- names(dt)[ sapply(dt, function(x){ inherits(x, "Date") }) ]
+
+    if (length(dateColumnsToFormat) > 0)
+    {
+      dt[, (dateColumnsToFormat) := lapply(.SD,
+                    function(d){ gsub("-", "", as.character(d) ) } ),
+                    .SDcols = dateColumnsToFormat]
+    }
+  }
+
+  {
+    factorColumnsToFormat <- names(dt)[ sapply(dt, function(x){ is.factor( x ) }) ]
+
+    if (length(factorColumnsToFormat) > 0)
+    {
+      dt[, (factorColumnsToFormat) := lapply(.SD, as.character), .SDcols = factorColumnsToFormat]
+    }
+  }
+
+
+  {
+    logicalColumnsToFormat <- names(dt)[ sapply(dt, function(x){ is.logical( x ) }) ]
+
+    if (length(logicalColumnsToFormat) > 0)
+    {
+      dt[, (logicalColumnsToFormat) := lapply(.SD, as.integer), .SDcols = logicalColumnsToFormat]
+    }
+  }
+
+  return (dt)
+}
+
+
+
+
+
+
+
 
