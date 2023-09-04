@@ -50,11 +50,9 @@ nr2gtfs <- function(path_in,
   checkmate::assert_logical(shapes)
 
   if (ncores == 1) {
-    message(paste0(
-      Sys.time(),
-      " This will take some time, make sure you use 'ncores' to enable multi-core processing"
-    ))
+    message(paste0(Sys.time(), " This will take some time, make sure you use 'ncores' to enable multi-core processing"))
   }
+
   # Is input a zip or a folder
   if (!grepl(".gz", path_in)) {
     stop("path_in is not a .gz file")
@@ -75,14 +73,8 @@ nr2gtfs <- function(path_in,
     # load("data/tiplocs.RData")
     stops <- cbind(locations, sf::st_coordinates(locations))
     stops <- as.data.frame(stops)
-    stops <- stops[, c(
-      "stop_id", "stop_code", "stop_name",
-      "Y", "X"
-    )]
-    names(stops) <- c(
-      "stop_id", "stop_code", "stop_name",
-      "stop_lat", "stop_lon"
-    )
+    stops <- stops[, c( "stop_id", "stop_code", "stop_name", "Y", "X" )]
+    names(stops) <- c(  "stop_id", "stop_code", "stop_name", "stop_lat", "stop_lon" )
     stops$stop_lat <- round(stops$stop_lat, 5)
     stops$stop_lon <- round(stops$stop_lon, 5)
   } else {
@@ -97,15 +89,9 @@ nr2gtfs <- function(path_in,
   # rm(alf, flf, mca, msn)
 
   stop_times <- stop_times[, c(
-    "Arrival Time",
-    "Departure Time",
-    "Location", "stop_sequence",
-    "Activity", "rowID", "schedule"
-  )]
+    "Arrival Time", "Departure Time", "Location", "stop_sequence", "Activity", "rowID", "schedule")]
   names(stop_times) <- c(
-    "arrival_time", "departure_time", "stop_id",
-    "stop_sequence", "Activity", "rowID", "schedule"
-  )
+    "arrival_time", "departure_time", "stop_id", "stop_sequence", "Activity", "rowID", "schedule")
 
   # remove any unused stops
   stops <- stops[stops$stop_id %in% stop_times$stop_id, ]
