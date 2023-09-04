@@ -578,8 +578,10 @@ test_that("1:test allocateCancellationsAcrossCalendars", {
   calendar <- fixCalendarDates( calendar )
   calendar <- splitAndRebindBitmask( calendar )
 
-  cancellations = data.table(
-                        UID=c(       "aaaaa",      "bbbbbb",      "ccccccc",     "ddddddd",     "eeeeee"), #this column gets removed
+  #TODO - discuss. the GTFS spec allows cancellations/ additions with no associates calendar - we're currently
+  #       filtering these out, which is probably the right thing to do ?
+  cancellations = data.table(                                                                   #these columns get removed
+                        UID=c(       "aaaaa",      "bbbbbb",      "ccccccc",     "ddddddd",     "eeeeee",      "fffffff"),
                         originalUID=c("uid1",      "uid1",        "uid1",        "uid2",        "uid2",        "uid4"),
                         start_date=c("02-01-2023", "03-01-2023",  "06-01-2023",  "14-03-2023",  "15-01-2023",  "26-01-2023" ),
                         end_date=c(  "02-01-2023", "03-01-2023",  "06-01-2023",  "14-03-2023",  "15-01-2023",  "26-01-2023" ),
