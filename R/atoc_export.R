@@ -132,119 +132,233 @@ station2transfers <- function(station, flf, path_out) {
   return(transfers)
 }
 
+
+
+NOT_NEEDED <- c("__NOT_NEEDED_MARKER__~@$$%&*((")
+
+
+#this function is massively performance critical - profile any changes to it.makes up 30% of the whole makeCalendar process
+selectOverlayTimeableAndCopyAttributes <- function(cal, calNew, rowIndex)
+{
+  #if we have two adjacent complete items e.g. ....end 13th Jan      start 14th jan.....
+  #then it's not a real gap and just an artefact of the algorithm use to generate the dates
+  if( rowIndex>1 && rowIndex<nrow(calNew)
+      && !is.na(calNew$UID[rowIndex-1]) && !is.na(calNew$UID[rowIndex+1])
+      && calNew$end_date[rowIndex-1]+1 == calNew$start_date[rowIndex+1])
+  {
+    calNew$UID[rowIndex] <- NOT_NEEDED
+    return (calNew)
+  }
+
+  #get candidate base timetable(s) that the new period sits within
+  baseTimetableIndexes = cal[ cal$start_date <= calNew$start_date[rowIndex]     #performance - this is an expensive line
+                        & cal$end_date >= calNew$end_date[rowIndex],,which=TRUE]
+
+  #are we in a gap between two base timetables with no overlays
+  if ( length(baseTimetableIndexes)<=0 )
+  {
+    calNew$UID[rowIndex] <- NOT_NEEDED
+    return (calNew)
+  }
+
+
+  # apply timetable overlay selection logic - pick highest priority timetable type
+  # as per https://wiki.openraildata.com/index.php/SCHEDULE
+  # "Conveniently, it also means that the lowest alphabetical STP indicator wins - 'C' and 'O' are both lower in the alphabet than 'P'."
+
+  #pick the lowest alphabetic STP (highest priority), and just in case there is more than one, the shortest duration one.
+
+  #priorityTimetable <- baseTimetables[order(STP, duration), head(.SD, 1)]
+  #performance we pre-sort all the entries by the priority & duration
+  #this speeds things up when we look up the required priority overlay **SEE_NOTE**
+  #so we don't need to sort again here, just pick the top filtered result
+
+  #stash the generated start & end dates
+  #performance - copying to separate variables seems to be fastest
+  start_date = calNew$start_date[rowIndex]
+  end_date = calNew$end_date[rowIndex]
+
+  calNew[rowIndex,] <- cal[baseTimetableIndexes[1],] #this is the most time consuming line in this fn. takes about 10x longer than the
+                                                     #single variable copy below
+  calNew$start_date[rowIndex] = start_date
+  calNew$end_date[rowIndex] = end_date
+
+  return (calNew)
+}
+
+
+
 #' split overlapping start and end dates
+#' duplicated items have the same rowId as the original but a new UID with an alpha character appended to it.
+#'
 #' this function is performance critical - profile any changes
 #'
-#' @param cal cal object
+#' THIS ONLY WORKS ON ITEMS WHERE THE DAY PATTERNS ARE ALL THE SAME
+#' (or are only 1 day DURATION)
+#'
+#' @param cal calendar object
 #' @details split overlapping start and end dates
 #' @noRd
 
 splitDates <- function(cal) {
 
-  # get a vector of all the start and end dates together from all base & overlay timetables
+  # get a vector of all the start and end dates together from all base & overlay timetables and sort them
   dates <- c(cal$start_date, cal$end_date)
   dates <- dates[order(dates)]
-  # create all unique pairs
+
+  # create all unique pairs so we know how to chop the dates up into non-overlapping periods
   dates.dt <- unique( data.table(
     start_date = dates[seq(1, length(dates) - 1)],
     end_date = dates[seq(2, length(dates))]
   ) )
 
-  cal.new <- cal[dates.dt, on = c("start_date", "end_date")]
+  #left join back to the source data so we can see which (if any) date segments we have already covered, and which we need to replicate
+  calNew <- cal[dates.dt, on = c("start_date", "end_date")]
 
-  if ("P" %in% cal$STP) {
-    match <- "P"
-  } else {
-    match <- cal$STP[cal$STP != "C"]
-    match <- match[1]
-  }
+  #some dates may already be overlapping
+  calNew <- fixOverlappingDates( calNew )
 
-  # fill in the original missing schedule
-  for (j in seq(1, nrow(cal.new))) {
-    if (is.na(cal.new$UID[j])) {
+  # fill in the missing schedule parts from the original
+  # the filled in parts should (if the data is correctly layered) be the highest priority part of the timetable
 
+  # we make multiple passes over the timetable working our way outwards from completed items to NA items
 
-      matches = (cal$STP == match
-                 & cal$start_date <= cal.new$start_date[j]
-                 & cal$end_date >= cal.new$end_date[j])
+  rowCount = nrow(calNew)
 
-      sumM = sum(matches)
+  for (i in seq(1,10)) #should really be a max of 3 passes
+  {
+    #forwards
+    for (j in seq(1, rowCount)) {
 
-      if (sumM == 1) {
+      #if we are not valid & the next item is already valid, fill in our details and adjust our end date
+      if (j<rowCount && is.na(calNew$UID[j]) && !is.na(calNew$UID[j+1]) )
+      {
+        calNew <- selectOverlayTimeableAndCopyAttributes(cal, calNew, j)
 
-        #cal.new[j, `:=`(UID = cal$UID[ matches ],
-         #               Days = cal$Days[matches],
-          #              rowID = cal$rowID[matches],
-           #             STP = match)]
-
-        cal.new$UID[j] <- cal$UID[ matches ]
-        cal.new$Days[j] <- cal$Days[ matches ]
-        cal.new$rowID[j] <-  cal$rowID[ matches ]
-        cal.new$STP[j] <- match
-      } else if (sumM > 1) {
-        message("Going From")
-        print(cal)
-        message("To")
-        print(cal.new)
-        stop()
-        # readline(prompt="Press [enter] to continue")print()
-      }
-    }
-  }
-
-  # remove any gaps
-  cal.new <- cal.new[!is.na(cal.new$UID), ]
-
-  # remove duplicated rows
-  cal.new <- cal.new[!duplicated(cal.new), ] #this is expensive - is it needed ?
-
-  # modify end and start dates on base timetable so they don't overlap the overlay dates.
-  for (j in seq(1, nrow(cal.new))) {
-    if (cal.new$STP[j] == "P") {
-      # check if end date need changing
-      if (j < nrow(cal.new)) {
-        if (cal.new$end_date[j] == cal.new$start_date[j + 1]) {
-          cal.new$end_date[j] <- (cal.new$end_date[j] - 1)
+        if ( NOT_NEEDED != calNew$UID[j+1])
+        {
+          calNew$end_date[j] <- calNew$start_date[j+1] -1
         }
-      }
-      # check if start date needs changing
-      if (j > 1) {
-        if (cal.new$start_date[j] == cal.new$end_date[j - 1]) {
-          cal.new$start_date[j] <- (cal.new$start_date[j] + 1)
+
+        #if previous item valid adjust our start date
+        if(j>1 && !is.na(calNew$UID[j-1]) && NOT_NEEDED != calNew$UID[j-1] )
+        {
+          calNew$start_date[j] <- calNew$end_date[j-1] +1
         }
       }
     }
-  }
 
-  # remove cancelled trips
-  cal.new <- cal.new[cal.new$STP != "C", ]
+    #backwards
+    for (j in seq(rowCount, 1)) {
+
+      #if we are not valid & the previous item is already valid, fill in our details and adjust our start date
+      if (j>1 && is.na(calNew$UID[j]) && !is.na(calNew$UID[j-1]) )
+      {
+        calNew <- selectOverlayTimeableAndCopyAttributes(cal, calNew, j)
+
+        if ( NOT_NEEDED != calNew$UID[j-1])
+        {
+          calNew$start_date[j] <- calNew$end_date[j-1] +1
+        }
+
+        #if next item valid adjust our start date
+        if(j<rowCount && !is.na(calNew$UID[j+1]) && NOT_NEEDED != calNew$UID[j+1]  )
+        {
+          calNew$end_date[j] <- calNew$start_date[j+1] -1
+        }
+      }
+    }
+
+    if ( !any( is.na(calNew$UID) ) ) break #if all done jump out of loop
+  }
 
   # fix duration
-  cal.new$duration <- cal.new$end_date - cal.new$start_date + 1
+  calNew$duration <- calNew$end_date - calNew$start_date + 1
+
+  #remove the items we know are not needed
+#  calNew <- calNew[ NOT_NEEDED != calNew$UID, ]
+
+  # remove any gaps. this can occur when we have multiple base timetables over a period of time
+  # e.g. a March timetable and a May timetable, with a gap in April where there is no base timetable
+#  calNew <- calNew[!is.na(calNew$UID), ]
+
+  # remove cancelled trips (we just leave a gap in the calendar with nothing running)
+#  calNew <- calNew[calNew$STP != "C", ]
 
   # remove any zero or negative day schedules
-  cal.new <- cal.new[cal.new$duration > 0, ]
+#  calNew <- calNew[calNew$duration > 0, ]
+
+  #performance, do all subsets in one go
+  #calNew <- calNew[!is.na(UID) & UID != NOT_NEEDED & STP != "C" & duration > 0]
+  calNew <- calNew[ (!is.na(UID)) & (get("NOT_NEEDED") != UID) & (STP != "C") & (duration > 0), ]
 
   # Append UID to note the changes
-  if (nrow(cal.new) > 0) {
-    if (nrow(cal.new) < 27) {
-      cal.new$UID <- paste0(cal.new$UID, " ", letters[1:nrow(cal.new)])
+  if (nrow(calNew) > 0) {
+    if (nrow(calNew) <= 26) {
+      calNew$UID <- paste0(calNew$UID, " ", letters[1:nrow(calNew)])
     } else {
       # Cases where we need extra letters, gives upto 676 ids
       lett <- paste0(rep(letters, each = 26), rep(letters, times = 26))
-      cal.new$UID <- paste0(cal.new$UID, " ", lett[1:nrow(cal.new)])
+      calNew$UID <- paste0(calNew$UID, " ", lett[1:nrow(calNew)])
     }
   } else {
-    cal.new <- NA
+    calNew <- NA
   }
 
+  return(calNew)
+}
 
-  return(cal.new)
+
+# triggered by test case "10:test makeCalendarInner"
+# when we have a 1 day overlay sitting on the start/end data of a base timetable
+# the dates overlap - fix it
+fixOverlappingDates <- function( cal )
+{
+  rowCount = nrow(cal)
+
+  #forwards
+  for (j in seq(1, rowCount)) {
+
+    #adjust our end date if next item a higher priority overlay
+    if (j<rowCount && !is.na(cal$UID[j]) && !is.na(cal$UID[j+1]) )
+    {
+      if ( cal$STP[j+1] < cal$STP[j] )
+      {
+        cal$end_date[j] <- cal$start_date[j+1] -1
+      }
+
+      if(j>1 && !is.na(cal$UID[j-1]) && cal$STP[j-1] < cal$STP[j] )
+      {
+        cal$start_date[j] <- cal$end_date[j-1] +1
+      }
+    }
+  }
+
+  #backwards
+  for (j in seq(rowCount, 1)) {
+
+    #adjust our end date if previous item a higher priority overlay
+    if (j>1 && !is.na(cal$UID[j]) && !is.na(cal$UID[j-1]) )
+    {
+      if ( cal$STP[j-1] < cal$STP[j] )
+      {
+        cal$start_date[j] <- cal$end_date[j-1] +1
+      }
+
+      if(j<rowCount && !is.na(cal$UID[j+1]) && cal$STP[j+1] < cal$STP[j] )
+      {
+        cal$end_date[j] <- cal$start_date[j+1] -1
+      }
+    }
+  }
+
+  return (cal)
 }
 
 
 
-DATE_EPOC <- as.Date("01/01/1970", format = "%d/%m/%Y")
+
+DATE_EPOC <- as.Date(lubridate::origin) #as.Date("01/01/1970", format = "%d/%m/%Y")
 WEEKDAY_NAME_VECTOR <- c("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
 CHECKROWS_NAME_VECTOR <- c(WEEKDAY_NAME_VECTOR, "duration", "start_date", "end_date")
 
@@ -267,31 +381,61 @@ SUNDAY_INDEX <- match("sunday", CHECKROWS_NAME_VECTOR)
 #' @noRd
 #'
 checkrows <- function(tmp) {
-  #tmp = res[i,]
-  # message(paste0("done ",i))
 
-  if (tmp[DURATION_INDEX] < 7) {
-
-    days.valid <- weekdays(seq.POSIXt(
-      from = as.POSIXct.Date( as.Date(tmp[START_DATE_INDEX], DATE_EPOC) ),
-      to = as.POSIXct.Date( as.Date(tmp[END_DATE_INDEX], DATE_EPOC) ),
-      by = "DSTday"
-    ))
-    days.valid <- tolower(days.valid)
-
-    #get a vector of names of days of week that the timetable is valid on
-    days.match <- tmp[MONDAY_INDEX:SUNDAY_INDEX]
-    days.match <- WEEKDAY_NAME_VECTOR[ 1==days.match ]
-
-    if (any(days.valid %in% days.match)) {
-      return(TRUE)
-    } else {
-      return(FALSE)
-    }
-  } else {
-    return(TRUE)
+  if (tmp[DURATION_INDEX] >= 7)
+  {
+    return (TRUE)
   }
+
+  days.valid <- weekdays(seq.POSIXt(
+    from = as.POSIXct.Date( as.Date(tmp[START_DATE_INDEX], DATE_EPOC) ),
+    to = as.POSIXct.Date( as.Date(tmp[END_DATE_INDEX], DATE_EPOC) ),
+    by = "DSTday"
+  ))
+  days.valid <- tolower(days.valid)
+
+  #get a vector of names of days of week that the timetable is valid on
+  days.match <- tmp[MONDAY_INDEX:SUNDAY_INDEX]
+  days.match <- WEEKDAY_NAME_VECTOR[ 1==days.match ]
+
+  return (any(days.valid %in% days.match))
 }
+
+
+checkOperatingDayActive <- function(calendar) {
+
+  if (all(calendar$duration >= 7))
+  {
+    return (calendar$Days!="0000000")
+  }
+
+  #get a list of days of week that the timetable is valid on
+  opDays <- splitBitmaskMat( calendar$Days, asInteger=FALSE )
+  opDays <- split(opDays, row(opDays))
+
+  checkValid <- function(dur, sd, ed, od ){
+
+    if (dur >= 7)
+    {
+      return (any(od))
+    }
+
+    dayNumbers <- lubridate::wday( seq.Date(from = sd, to = ed, by = "day"), label = FALSE, week_start=1 )
+
+    return ( any(od[dayNumbers]) )
+  }
+
+  validCalendars <- mapply( checkValid, calendar$duration,
+                            calendar$start_date, calendar$end_date,
+                            opDays, SIMPLIFY = TRUE )
+  return (validCalendars)
+}
+
+
+
+
+
+
 
 #' internal function for constructing longnames of routes
 #'
@@ -303,6 +447,7 @@ checkrows <- function(tmp) {
 #' @noRd
 #'
 longnames <- function(routes, stop_times) {
+
   stop_times_sub <- dplyr::group_by(stop_times, trip_id)
   stop_times_sub <- dplyr::summarise(stop_times_sub,
     schedule = unique(schedule),
@@ -326,6 +471,122 @@ longnames <- function(routes, stop_times) {
   return(routes)
 }
 
+
+START_PATTERN_VECTOR = c("1","01","001","0001","00001","000001","0000001")
+END_PATTERN_VECTOR = c("1000000","100000","10000","1000","100","10","1")
+
+#calendars should start on the first day they are effective, and end on the last day.
+#i.e. if the first day in the day bitmask is Tuesday - then the start date should be Tuesday, not some other day.
+validateCalendarDates <- function( calendar )
+{
+  start_day_number = lubridate::wday( calendar$start_date, label = FALSE, week_start=1 )
+  end_day_number = lubridate::wday( calendar$end_date, label = FALSE, week_start=1 )
+
+  startOk <- START_PATTERN_VECTOR[ start_day_number ] == stringi::stri_sub(calendar$Days, 1, start_day_number)
+  endOk <- END_PATTERN_VECTOR[ end_day_number ] == stringr::str_sub(calendar$Days, end_day_number, 7)
+
+  return (startOk & endOk)
+}
+
+
+
+
+#' split and rebind bitmask
+#'
+#' @details
+#' splits 'Days' bitmask into individual logical fields called monday, tuesday, etc...
+#'
+#' @param calendar data.table of calendar items
+#' @noRd
+#'
+splitAndRebindBitmask <- function( calendar )
+{
+  return (cbind( calendar, splitBitmaskDt( calendar$Days, FALSE ) ) )
+}
+
+#this function gets expensive if you call it a lot, creating data.table takes a while
+splitBitmaskDt <- function( bitmaskVector, asInteger=FALSE )
+{
+  return (as.data.table(splitBitmaskMat( bitmaskVector, asInteger=asInteger )))
+}
+
+splitBitmaskMat <- function( bitmaskVector, asInteger=FALSE )
+{
+  splitDays = splitBitmask( bitmaskVector, asInteger=asInteger )
+
+  return (matrix(splitDays, ncol=7, byrow=TRUE, dimnames=list(NULL,WEEKDAY_NAME_VECTOR)))
+}
+
+splitBitmask <- function( bitmask, asInteger=FALSE )
+{
+  duff = which( nchar(bitmask) != 7 )
+
+  bitmask[duff] = "       "
+
+  splitDays = strsplit(bitmask, "")
+
+  splitDays = as.integer(unlist(splitDays))
+
+  if (!asInteger)
+  {
+    splitDays = as.logical(splitDays)
+  }
+
+  return (splitDays)
+}
+
+
+
+#' allocate Cancellations Across Calendars
+#'
+#' @details
+#' expects input calendar items to have been separated out into non-overlapping dates
+#' and 'Days' bitmask unpacked into separate int or logical attributes
+#'
+#' "originalUID" is used to identify where the cancellations originally came from
+#' after allocating across the split calender items the cancellations will have an updated
+#' "UID" that says which calender they are now associated with
+#'
+#' @param calendar data.table of calendar items that are NOT cancellations (that has 'Days' bitmask unpacked )
+#' @param cancellations data.table of calender items that ARE cancellations (that has 'Days' bitmask unpacked )
+#' @noRd
+#'
+allocateCancellationsAcrossCalendars <- function( calendar, cancellations )
+{
+  tempNames = names(calendar)
+
+  #stash some join fields away because we want to keep the data from the cancellations rather than the calendar table
+  #which otherwise get over-written by the join process
+  cancellations$start_date2 <- cancellations$start_date
+  cancellations$end_date2 <- cancellations$end_date
+  cancellations$UID <- NULL #we want the new UID from the calendar entries
+
+  #left join cancellations to calendar by the original service ID
+  #and the date of the cancellation lying inside the period of the calendar
+  #and the day of the cancellation is an operating day of the calendar item
+  joined = cancellations[calendar, on = .(originalUID==originalUID,
+                                          start_date>=start_date,
+                                          end_date<=end_date)][
+                                            ((i.monday&monday) | (i.tuesday&tuesday) | (i.wednesday&wednesday)
+                                             | (i.thursday&thursday) | (i.friday&friday) | (i.saturday&saturday) | (i.sunday&sunday)), ]
+  #revert the stashed (join) fields
+  joined$start_date <- joined$start_date2
+  joined$start_date2 <- NULL
+  joined$end_date <- joined$end_date2
+  joined$end_date2 <- NULL
+
+  #remove joined fields we don't need
+  joined <- joined[, .SD, .SDcols=tempNames]
+
+  #belt and braces - fix any NA fields by reverting from the original UID
+  joined[is.na(UID), UID := originalUID]
+
+  return( joined )
+}
+
+
+
+
 #' make calendar
 #'
 #' @details
@@ -340,14 +601,33 @@ makeCalendar <- function(schedule, ncores = 1) {
   calendar <- schedule[, c("Train UID", "Date Runs From", "Date Runs To", "Days Run", "STP indicator", "rowID" )]
   names(calendar) <- c("UID", "start_date", "end_date", "Days", "STP", "rowID" )
 
-  calendar$`STP indicator` <- as.character(calendar$`STP indicator`)
+  calendar$STP <- as.character(calendar$STP)
   calendar$duration <- calendar$end_date - calendar$start_date + 1
+
+  if ( !all(validateCalendarDates( calendar ) ) )
+  {
+    warning(paste0(Sys.time(), " Some calendar dates had incorrect start or end dates that did not align with operating day bitmask"))
+    #TODO be more verbose about which ones
+  }
+
+
+  #we're going to be splitting and replicating calendar entries - stash the original UID so we can join back on it later
+  calendar$originalUID <- calendar$UID
+
+  #brutal, but makes code later on simpler, make all cancellations one day cancellations by splitting
+  #TODO don't split up into one day cancellations if all the operating day patterns on a service are identical
+  cancellations <- makeAllOneDay( calendar[calendar$STP == "C", ] )
+  calendar <- calendar[calendar$STP != "C", ]
+
+  #calendar$start_date = as.integer( calendar$start_date )
+  #calendar$end_date = as.integer( calendar$end_date )
+#test treating date as int: seem to be about twice as fast on the critical line when selecting base timetable
 
   # UIDs = unique(calendar$UID)
   # length_todo = length(UIDs)
   message(paste0(Sys.time(), " Constructing calendar and calendar_dates"))
-  calendar$UID2 <- calendar$UID
-  calendar_split <- calendar[, .(list(.SD)), by = UID2][,V1]
+  calendar$`__TEMP__` <- calendar$UID
+  calendar_split <- calendar[, .(list(.SD)), by = `__TEMP__`][,V1]
 
   if (ncores > 1) {
     cl <- parallel::makeCluster(ncores)
@@ -356,8 +636,7 @@ makeCalendar <- function(schedule, ncores = 1) {
     })
     pbapply::pboptions(use_lb = TRUE)
     res <- pbapply::pblapply(calendar_split,
-      # 1:length_todo,
-      makeCalendar.inner,
+      makeCalendarInner,
       cl = cl
     )
     parallel::stopCluster(cl)
@@ -365,17 +644,50 @@ makeCalendar <- function(schedule, ncores = 1) {
   } else {
     res <- pbapply::pblapply(
       calendar_split,
-      # 1:length_todo,
-      makeCalendar.inner
+      makeCalendarInner
     )
   }
 
   res.calendar <- lapply(res, `[[`, 1)
-  res.calendar <- data.table::rbindlist(res.calendar, use.names=FALSE) #performance, was taking 10 minutes to execute bind_rows
-  res.calendar_dates <- lapply(res, `[[`, 2)
-  res.calendar_dates <- res.calendar_dates[!is.na(res.calendar_dates)]
-  res.calendar_dates <- data.table::rbindlist(res.calendar_dates, use.names=FALSE)
+  res.calendar <- data.table::rbindlist(res.calendar, use.names=FALSE) #performance, takes 10 minutes to execute bind_rows on full GB daily timetable
 
+  res.cancellation_dates <- lapply(res, `[[`, 2)
+  res.cancellation_dates <- res.cancellation_dates[!is.na(res.cancellation_dates)]
+  res.cancellation_dates <- data.table::rbindlist(res.cancellation_dates, use.names=FALSE)
+  stopifnot( 0==nrow(res.cancellation_dates) )
+  rm(res.cancellation_dates)
+  #since we didn't pass in any cancellations we should no longer get any back
+
+  res.calendar = splitAndRebindBitmask( res.calendar )
+  cancellations = splitAndRebindBitmask( cancellations )
+
+  #associate the split up cancellations with the (new) calendar they are associated with
+  #(only works because cancellations are all one day duration)
+  cancellations = allocateCancellationsAcrossCalendars( res.calendar, cancellations )
+
+  #no longer need the field that was used to associate the original and replicated calendars together
+  cancellations$originalUID <- NULL
+  res.calendar$originalUID <- NULL
+
+  return(list(res.calendar, cancellations))
+
+
+
+
+
+
+
+
+
+
+  if (FALSE) #don't think we need any of this code any more ?
+  {
+  message(paste0(
+    Sys.time(),
+    " Removing trips that only occur on days of the week that are outside the timetable validity period"
+  ))
+
+  #unpack the days bitmask into a vector of int
   days <- lapply(res.calendar$Days, function(x) {
     as.integer(substring(x, 1:7, 1:7))
   })
@@ -383,21 +695,18 @@ makeCalendar <- function(schedule, ncores = 1) {
   days <- as.data.frame(days)
   names(days) <- WEEKDAY_NAME_VECTOR
 
+  #attach unpacked bits back onto source calendar
   res.calendar <- cbind(res.calendar, days)
   res.calendar$Days <- NULL
 
-  message(paste0(
-    Sys.time(),
-    " Removing trips that only occur on days of the week that are outside the timetable validity period"
-  ))
 
-  #res.calendar.split <- split(res.calendar, seq(1, nrow(res.calendar)))
-  #performance - doing this split on 500k rows takes 60s - longer than the parallel execution below and consumes 3gb memory.
 
   res.calendar.days <- res.calendar[, ..CHECKROWS_NAME_VECTOR]
   res.calendar.days <- data.table::transpose(res.calendar.days)
-  #transpose on the same size runs in around 3s, but causes named dataframe with mixed datatypes to be coerced to unnamed vector of integer.
-
+  #res.calendar.split <- split(res.calendar, seq(1, nrow(res.calendar)))
+  #transpose runs in around 3s (compared to 60s for split() on a data.frame),
+  #but causes named dataframe with mixed datatypes to be coerced to unnamed vector of integer.
+  #TODO see if data.table performs as well but with simpler code.
 
   if (ncores > 1) {
     cl <- parallel::makeCluster(ncores)
@@ -414,173 +723,703 @@ makeCalendar <- function(schedule, ncores = 1) {
   }
 
   res.calendar <- res.calendar[keep, ]
+  }
 
-  return(list(res.calendar, res.calendar_dates))
 }
 
-#' make calendar helper function
-#' @param i row number to do
+
+
+
+
+
+makeAllOneDay0 <- function( cal )
+{
+  duration <- cal$end_date - cal$start_date + 1
+
+  if ( 0==nrow(cal) || all(1 == duration))
+  {
+    #nothing to do
+    return (cal)
+  }
+
+  start_day_number = lubridate::wday( cal$start_date, label = FALSE, week_start=1 )
+
+  # we want to rotate the day pattern so that the pattern aligns with the start date,
+  # then we can replicate it the required number of times
+  #TODO made this too complex, leave the pattern where it is and just work out an offset
+
+  #create all possible rotations of day pattern
+  allDayPatterns <- c( cal$Days,
+                       (paste0(substr(cal$Days, 2, 7),substr(cal$Days, 1, 1))),
+                       (paste0(substr(cal$Days, 3, 7),substr(cal$Days, 1, 2))),
+                       (paste0(substr(cal$Days, 4, 7),substr(cal$Days, 1, 3))),
+                       (paste0(substr(cal$Days, 5, 7),substr(cal$Days, 1, 4))),
+                       (paste0(substr(cal$Days, 6, 7),substr(cal$Days, 1, 5))),
+                       (paste0(substr(cal$Days, 7, 7),substr(cal$Days, 1, 6))))
+
+  dayPatternMatrix <- matrix( allDayPatterns, ncol=7 )
+
+  #create logical matrix with the pattern we want selected
+  cols <- col(dayPatternMatrix)
+  toSelect <- cols == start_day_number
+
+  #pull out the desired pattern (need to transpose both matrices otherwise the unwind into a vector is in the wrong order)
+  selectedRotation <- t(dayPatternMatrix)[ t(toSelect) ]
+
+  numWeeks <- as.integer(ceiling(as.integer(cal$duration) / 7))
+
+
+  # replicate the pattern, truncate to <duration> number of days
+  # create a sequence of dates - then return the dates selected in the pattern
+  makeDates <- function(rot, w, d, start, end){
+
+    selectedDaysLogical <- as.logical(as.integer(strsplit(rot, "")[[1]]))
+
+    selectedDays <- rep(selectedDaysLogical, times = w)
+
+    truncated <- selectedDays[ 1:d ]
+
+    dateSequence <- seq.Date(from = start, to = end, by = "day")
+
+    selectedDates <- dateSequence[ truncated ]
+  }
+
+  selectedDates <- mapply(
+    makeDates,
+    selectedRotation, numWeeks, duration, cal$start_date, cal$end_date
+  )
+
+  #replicate the calendar rows the appropriate number of times
+  repetitions <- sapply(selectedDates, length)
+  replicatedcal <- cal[rep(seq_len(.N), times = repetitions)]
+
+  #set the start and end date for each calender item to the single day identified earlier
+  all_dates <- as.Date(unlist(selectedDates), origin = "1970-01-01")
+  replicatedcal$end_date <- replicatedcal$start_date <- all_dates
+
+  #tidy up the values so they are correct for the spilt items
+  replicatedcal$duration <- 1
+  replicatedcal$Days = SINGLE_DAY_PATTERN_VECTOR[ lubridate::wday( replicatedcal$start_date, label = FALSE, week_start=1 ) ]
+
+  return (replicatedcal)
+}
+
+
+
+
+
+
+
+
+SINGLE_DAY_PATTERN_VECTOR = c("1000000","0100000","0010000","0001000","0000100","0000010","0000001")
+
+SINGLE_DAY_PATTERN_LIST = list(c(TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
+                                c(FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE),
+                                c(FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE),
+                                c(FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE),
+                                c(FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE),
+                                c(FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE),
+                                c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE))
+
+
+makeReplicationDates <- function(cal, startDayNum, endDayNum){
+
+  #make a sequences of dates, offsetting the start date so it's always monday (aligning with bitmask start day)
+  #                           and the end date so it's always sunday
+  firstDate = min(cal$start_date) - 7
+  lastDate = max(cal$end_date) + 7
+  allDates = seq.Date(from = firstDate, to = lastDate, by = "day")
+
+  offset = as.integer(cal$start_date)-startDayNum+2-as.integer(firstDate)
+  end = as.integer(cal$end_date)+8-endDayNum-as.integer(firstDate)
+
+  dates <- Map(function(o, e) allDates[o:e], offset, end)
+
+  return ( as.Date( unlist(dates), origin = DATE_EPOC ) )
+}
+
+
+
+#' replicates the input calendar objects into single day duration calendar objects
+#' calender objects should NOT have had the 'days' bitmask field unpacked
+#' (will still produce an output but the unpacked monday, tuesday etc fields will no longer be consistent with the packed 'Days' bitmask)
+#'
+#' @param cal data.table containing all the calendars to be split up into individual days
 #' @noRd
 #'
-makeCalendar.inner <- function(calendar.sub) { # i, UIDs, calendar){
-  # UIDs.sub = UIDs[i]
-  # calendar.sub = calendar[calendar$UID == UIDs.sub,]
-  # calendar.sub = schedule[schedule$`Train UID` == UIDs.sub,]
-  if (nrow(calendar.sub) == 1) {
+makeAllOneDay <- function( cal )
+{
+  duration <- cal$end_date - cal$start_date + 1
+
+  if ( 0==nrow(cal) || all(1 == duration))
+  {
+    #nothing to do
+    return (cal)
+  }
+
+  #make a list of dates for each object being replicated
+  startDayNum = lubridate::wday( cal$start_date, label = FALSE, week_start=1 )
+  endDayNum = lubridate::wday( cal$end_date, label = FALSE, week_start=1 )
+  dateSequence = makeReplicationDates( cal, startDayNum, endDayNum )
+
+  #work out how many time we need to replicate each item: number of operating days in week * num weeks
+  bitmaskMat = splitBitmaskMat( cal$Days, asInteger=FALSE )
+  dayCount = rowSums(bitmaskMat)
+  numWeeks <- ceiling(as.integer(cal$duration) / 7)
+  repetitions = dayCount * numWeeks
+
+  #replicate the calendar rows the appropriate number of times
+  replicatedcal <- cal[rep(seq_len(.N), times = repetitions)]
+
+  #get a mask of operating days
+  operatingDayLogical <- rep( split(bitmaskMat, row(bitmaskMat)), times = numWeeks)
+
+  #set the start and end date for each calender item to the single day identified earlier
+  selectedDates = dateSequence[unlist(operatingDayLogical)]
+  replicatedcal$end_date <- replicatedcal$start_date <- selectedDates
+
+  #tidy up the values so they are correct for the spilt items
+  replicatedcal$duration <- 1
+  replicatedcal$Days = SINGLE_DAY_PATTERN_VECTOR[ lubridate::wday( replicatedcal$start_date, label = FALSE, week_start=1 ) ]
+
+  return (replicatedcal)
+}
+
+
+
+
+#' along a similar line to 'makeAllOneDay' duplicates input calendar objects into single WEEK duration calendar objects
+#'
+#' @param cal data.table containing all the calendars to be split up into individual weeks
+#' @noRd
+#'
+expandAllWeeks <- function( cal )
+{
+  if ( 0==nrow(cal) )
+  {
+    #nothing to do
+    return (cal)
+  }
+
+  #duration <- cal$end_date - cal$start_date + 1
+
+  #make a list of dates for each object being replicated
+  startDayNum = lubridate::wday( cal$start_date, label = FALSE, week_start=1 )
+  endDayNum = lubridate::wday( cal$end_date, label = FALSE, week_start=1 )
+  dateSequence = makeReplicationDates( cal, startDayNum, endDayNum )
+
+  numWeeks <- ceiling(as.integer(cal$duration) / 7)
+
+  #replicate a logical vector for the start date and use that to select the relevant dates from the date sequence
+  startDayLogical <- SINGLE_DAY_PATTERN_LIST[startDayNum]
+  startDays <- rep(startDayLogical, times = numWeeks)
+  startDates <- dateSequence[ unlist(startDays) ]
+
+  #replicate a logical vector for the end date and use that to select the relevant dates from the date sequence
+  endDayLogical <- SINGLE_DAY_PATTERN_LIST[endDayNum]
+  endDays <- rep(endDayLogical, times = numWeeks)
+  endDates <- dateSequence[ unlist(endDays) ]
+
+  #replicate the calendar rows the appropriate number of times
+  replicatedcal <- cal[rep(seq_len(.N), times = numWeeks)]
+
+  #set the start and end date for each calender item
+  replicatedcal$start_date <- startDates
+  replicatedcal$end_date <- endDates
+
+  #tidy up the values so they are correct for the spilt items
+  replicatedcal$duration <- replicatedcal$end_date - replicatedcal$start_date + 1
+
+  return (replicatedcal)
+}
+
+
+
+
+
+#' make calendar helper function
+#' this originally expected and dealt with cancellations too. This worked ok for single day duration cancellations
+#' but had problems with multi-day cancellations when combined with overlays
+#' code hasn't been changed to reject / avoid cancellations but results may not be predictable / tested scenarios
+#' @param calendarSub data.table containing all the calendars (aka CIF operating patterns) for a single service
+#' @noRd
+#'
+makeCalendarInner <- function(calendarSub) {
+
+  if ( 1 == nrow(calendarSub) )
+  {
     # make into an single entry
-    return(list(calendar.sub, NA))
-  } else {
+    res = list(calendarSub, NA)
+  }
+  else
+  {
+    if (length(unique(calendarSub$UID)) > 1)
+    {
+      stop(paste("Error: makeCalendarInner was passed more than one service to work on. service=", unique(calendarSub$UID)))
+    }
+
     # check duration and types
+    allTypes <- calendarSub$STP
 
-    #get durations of overlays
-    dur <- as.numeric(calendar.sub$duration[calendar.sub$STP != "P"])
+    # as per https://wiki.openraildata.com/index.php/SCHEDULE
+    # "Conveniently, it also means that the lowest alphabetical STP indicator wins - 'C' and 'O' are both lower in the alphabet than 'P'."
+    baseType = max(allTypes) #usually we expect 'P' to be the base timetable... but it can also be STP service in which case it will be 'N'
 
-    #get vector of types of overlays
-    typ <- calendar.sub$STP[calendar.sub$STP != "P"]
+    overlayDurations <- as.numeric(calendarSub$duration[calendarSub$STP != baseType])
+    overlayTypes <- calendarSub$STP[calendarSub$STP != baseType]
 
-    #get vector of all timetable types including base timetable
-    typ.all <- calendar.sub$STP
+    if( length(overlayDurations) <= 0 )
+    {
+      #assume the input data is good and the base timetables don't break any of the overlaying /operating day rules
+      res = list(calendarSub, NA)
+    }
+    #if every overlay is a one day cancellation (and only one base timetable)
+    else if (all(overlayDurations == 1) && all(overlayTypes == "C") && sum(allTypes == baseType) == 1 )
+    {
+      warning("Unexpected item in the makeCalendarInner-ing area, cancellations should now be handled at a higher level (1)")
 
-    #if every overlay is a one day cancellation (and there is only one of them)
-    if (all(dur == 1) & all(typ == "C") & length(typ) > 0 & length(typ.all) == 2) {
+      # Apply the cancellation via entries in calendar_dates.txt
+      res = list( calendarSub[calendarSub$STP != "C", ],
+                   calendarSub[calendarSub$STP == "C", ])
+    }
+    else
+    {
+      uniqueDayPatterns <- unique(calendarSub$Days[calendarSub$STP != "C"])
 
-      # Modify in the calendar_dates.txt
-      return(list(
-        calendar.sub[calendar.sub$STP == "P", ],
-        calendar.sub[calendar.sub$STP != "P", ]
-      ))
+      # if the day patterns are all identical
+      if (length(uniqueDayPatterns) <= 1 )
+      {
+        #performance pre-sort all the entries by the priority
+        #this speeds things up when we look up the required priority overlay **SEE_NOTE**
+        #calendarSub = calendarSub[ order(STP, duration), ]
+        setkey( calendarSub, STP, duration )
+        setindex( calendarSub, start_date, end_date)
 
-    } else {
-      # if the day patterns are all identical, and we have only one base timetable
-      if (length(unique(calendar.sub$Days)) == 1 & sum(typ.all == "P") == 1) {
-
-        calendar.new <- splitDates(calendar.sub)
-        #calendar.new <- UK2GTFS:::splitDates(calendar.sub)
-        return(list(calendar.new, NA))
-
-      } else {
-
-        # split by day pattern
-        splits <- list()
-        daypatterns <- unique(calendar.sub$Days)
-
-        for (k in seq(1, length(daypatterns))) {
-          # select for each pattern but include cancellations with a
-          # different day pattern
-          calendar.sub.day <- calendar.sub[calendar.sub$Days == daypatterns[k] | calendar.sub$STP == "C", ]
-
-          if (all(calendar.sub.day$STP == "C")) {
-            # ignore cases of everything is cancelled
-            splits[[k]] <- NULL
-          }
-          else {
-            calendar.new.day <- splitDates(calendar.sub.day)
-            #calendar.new.day <- UK2GTFS:::splitDates(calendar.sub.day)
-            # rejects nas
-            if (inherits(calendar.new.day, "data.frame")) {
-              calendar.new.day$UID <- paste0(calendar.new.day$UID, k)
-              splits[[k]] <- calendar.new.day
-            }
-          }
+        calendar_new <- makeCalendarsUnique( splitDates(calendarSub) )
+        res = list(calendar_new, NA)
+      }
+      else # split by day pattern
+      {
+        #this works if the day patterns don't overlap any operating days.
+        if ( any( countIntersectingDayPatterns(uniqueDayPatterns) > 1) )
+        {
+          #this scenario DOES exist in the downloaded ATOC test data
+          #stop(paste("Scenario with overlay pattern not matching base pattern is not currently handled. service=", unique(calendarSub$UID)))
+          res = makeCalendarForDifferentDayPatterns( calendarSub )
         }
-
-        splits <- data.table::rbindlist(splits, use.names=FALSE) # dplyr::bind_rows(splits)
-
-        return(list(splits, NA))
+        else
+        {
+          res = makeCalendarForDayPatterns( uniqueDayPatterns, calendarSub )
+        }
       }
     }
   }
+
+  #stopifnot( is.list(res) )
+  return (res)
 }
+
+
+
+
+CALENDAR_UNIQUE_CHECK_COLUMN_NAMES <- c("originalUID","start_date","end_date","Days","STP","duration" )
+
+
+# We have lots of complex logic, which means that when we have multiple base timetables that are separated
+# in the temporal domain e.g. march, april - we end up duplicating the overlays
+#
+# this is a bit of a gluey hack that could be fixed by looking in the temporal domain when deciding what overlaps
+# see test case no.10 ("10:test makeCalendarInner") that triggered addition of this logic
+#
+makeCalendarsUnique <- function ( calendar )
+{
+  calendar <- calendar[ !duplicated( calendar, by=CALENDAR_UNIQUE_CHECK_COLUMN_NAMES ) ]
+
+  return( calendar )
+}
+
+
+
+
+countIntersectingDayPatterns <- function( dayPatterns )
+{
+  unpacked = splitBitmaskMat( dayPatterns, asInteger = TRUE )
+  sums = colSums(unpacked) #add up number of intersections for monday etc...
+  names(sums) <- NULL #makes unit test construction easier
+  return ( sums )
+}
+
+intersectingDayPattern <- function( dayPattern1, dayPattern2 )
+{
+  return (any( countIntersectingDayPatterns( c(dayPattern1,dayPattern2) ) > 1) )
+}
+
+
+intersectingDayPatterns <- function( dayPatternBase, dayPatternOverlay )
+{
+  if (is.null(dayPatternOverlay) || is.null(dayPatternBase) ) return (NULL)
+
+  unpackedOverlay = splitBitmaskMat( dayPatternOverlay, asInteger = FALSE )
+  unpackedBase = splitBitmaskMat( dayPatternBase, asInteger = FALSE )
+
+  #repeat the base for every Overlay
+  unpackedBaseRep = rep( unpackedBase, length(dayPatternOverlay) )
+  unpackedBaseRepmat = matrix(unpackedBaseRep, ncol=7, byrow=TRUE)
+
+  intersects = unpackedBaseRepmat & unpackedOverlay
+
+  res <- apply(intersects, 1, any)
+
+  return ( res )
+}
+
+
+intersectingDayPatterns0 <- function( dayPatternBase, dayPatternOverlay )
+{
+  if (is.null(dayPatternOverlay) || is.null(dayPatternBase) ) return (NULL)
+
+  intersectingDayPattern_vec <- Vectorize(intersectingDayPattern, vectorize.args = c("dayPattern2"))
+
+  res = intersectingDayPattern_vec( dayPatternBase, dayPatternOverlay )
+  names(res) <- NULL #makes unit test construction easier
+stopifnot(is.logical(res))
+  return ( res )
+}
+
+
+
+makeCalendarForDayPatterns <- function( dayPatterns, calendar )
+{
+  splits <- list()
+
+  #performance pre-sort all the entries by the priority
+  #this speeds things up when we look up the required priority overlay **SEE_NOTE**
+  #calendar = calendar[ order(STP, duration), ]
+  setkey( calendar, STP, duration )
+  setindex( calendar, start_date, end_date)
+
+  for (k in seq(1, length(dayPatterns))) {
+    # select for each pattern but include cancellations with a
+    # different day pattern
+    calendarDay <- calendar[calendar$Days == dayPatterns[k] | calendar$STP == "C", ]
+    # TODO cancellations now handled elsewhere - remove this once code stable
+
+    if (all(calendarDay$STP == "C")) {
+      # ignore cases of everything is cancelled
+      splits[[k]] <- NULL
+      warning("unexpected item in the makeCalendarForDayPatterns-ing area, cancellations should now be handled at a higher level")
+    }
+    else {
+      calendarNewDay <- splitDates(calendarDay)
+
+      # rejects NAs
+      if (inherits(calendarNewDay, "data.frame")) {
+        # further differentiate the UID by appending a number to the end for each different days pattern
+        calendarNewDay$UID <- paste0(calendarNewDay$UID, k)
+        splits[[k]] <- calendarNewDay
+      }
+    }
+  }
+
+  splits <- data.table::rbindlist(splits, use.names=FALSE)
+
+  splits <- makeCalendarsUnique( splits )
+
+  # after all this faffing about and splitting and joining, it's quite likely we've created some
+  # small fragments of base timetable that aren't valid (e.g mon-fri service but start and end date on weekend)
+  splits <- splits[ checkOperatingDayActive( splits ) ]
+
+  return(list(splits, NA))
+}
+
+
+# this is a complex case where the overlays don't have the same day pattern as the base timetable
+#
+# e.g base is mon-sat, and we have some engineering work for 3 weeks tue-thur
+#
+# the approach we take is to duplicate the overlay timetables for every week they are in effect, then overlay them.
+#
+# aha but the complexity isn't finished. If the overlay is tue+thur then wed is the base timetable.
+#
+# when we get to this latter complexity we just split the overlay into individual days and apply it that way.
+#
+makeCalendarForDifferentDayPatterns <- function( calendar )
+{
+  baseType = max(calendar$STP)
+  baseTimetables =  calendar[calendar$STP == baseType]
+  overlayTimetables =  calendar[calendar$STP != baseType]
+
+  gappyOverlays = overlayTimetables[ hasGapInOperatingDays(overlayTimetables$Days) ]
+  continiousOverlays = overlayTimetables[ !hasGapInOperatingDays(overlayTimetables$Days) ]
+
+  gappyOverlays = makeAllOneDay( gappyOverlays )
+  continiousOverlays = expandAllWeeks( continiousOverlays )
+
+  overlays =  data.table::rbindlist( list(continiousOverlays,gappyOverlays), use.names=FALSE)
+
+
+  splits <- list()
+
+  distinctBasePatterns = unique( baseTimetables$Days )
+
+  for (k in seq(1, length(distinctBasePatterns))) {
+
+    thisBase = baseTimetables[baseTimetables$Days == distinctBasePatterns[k] ]
+
+    thisOverlay = overlays[ intersectingDayPatterns( distinctBasePatterns[k], overlays$Days ) ]
+
+    if (nrow(thisOverlay) <= 0)
+    {
+      splits[[k]] <- thisBase
+    }
+    else
+    {
+      timetablesForThisPattern = data.table::rbindlist( list( thisBase, thisOverlay ), use.names=FALSE)
+
+      #performance pre-sort all the entries by the priority
+      #this speeds things up when we look up the required priority overlay **SEE_NOTE**
+      #timetablesForThisPattern = timetablesForThisPattern[ order(STP, duration), ]
+      setkey( timetablesForThisPattern, STP, duration )
+      setindex( timetablesForThisPattern, start_date, end_date)
+
+      thisSplit <- splitDates( timetablesForThisPattern )
+
+      # rejects NAs
+      if (inherits(thisSplit, "data.frame")) {
+        # further differentiate the UID by appending a number to the end for each different days pattern
+        thisSplit$UID <- paste0(thisSplit$UID, k)
+        splits[[k]] <- thisSplit
+      }
+    }
+  }
+
+  splits <- data.table::rbindlist(splits, use.names=FALSE)
+
+  splits <- makeCalendarsUnique( splits )
+
+  # after all this faffing about and splitting and joining, it's quite likely we've created some
+  # small fragments of base timetable that aren't valid (e.g mon-fri service but start and end date on weekend)
+  splits <- splits[ checkOperatingDayActive( splits ) ]
+
+  return(list(splits, NA))
+}
+
+
+# in a week bitmask, if there are non-operating days between the first and last operating day of the week - will return TRUE
+# e.g.    0010000 = FALSE      0011100 = FALSE       0101000 = TRUE
+hasGapInOperatingDays <- function( daysBitmask )
+{
+  firstDay = stringi::stri_locate_first( daysBitmask, fixed = "1" )[,1]
+  lastDay = stringi::stri_locate_last( daysBitmask, fixed = "1" )[,1]
+
+  operatingDayCount = stringi::stri_count( daysBitmask, fixed = "1" )
+
+  res = ( lastDay-firstDay+1 != operatingDayCount )
+
+  res[is.na(res)] <- FALSE #shouldn't really get this, probably operating days are '0000000'
+
+  return( res )
+}
+
+
+
+
+
+#' duplicateItem
+#'
+#' @details
+#' Function that duplicates a data.table, adding a "index" column to all rows in the output indicating which
+#' instance of the duplication the row is associated with
+#'
+#' @param dt data.table
+#' @param reps number of duplicates to be created
+#' @param indexStart starting number for the "index" value added to the item
+#' @noRd
+#'
+duplicateItem <- function( dt, reps, indexStart=1 )
+{
+  if ( is.na(reps) | reps<1 ) return (NULL)
+
+  #replicate all the rows in dt       times=reps
+  duplicates <- dt[rep(seq(1, nrow(dt)), reps), ]
+
+  #create and apply indexes to the created rows- each group of replicated rows gets the same index number.
+  index <- rep(seq( indexStart, indexStart-1+reps ), nrow(dt))
+
+  duplicates$index <- index[order(index)]
+
+  return(duplicates)
+}
+
+
+
+
+#' duplicateItems
+#'
+#' @details
+#' Function that duplicates a very large data.table, adding a "index" column to all rows in the output indicating which
+#' instance of the duplication the row is associated with
+#'
+#' requires a column called "_reps" on the object to determine how many times it is to be duplicated
+#'
+#' @param dt data.table
+#' @param split_attribute name of attribute to split the items between worker tasks
+#' @param indexStart starting number for the "index" value added to the item
+#' @noRd
+#'
+duplicateItems <- function( dt, split_attribute, ncores=1, indexStart=1 )
+{
+  #add an additional column before splitting on it - so that the value we're really splitting on still appears in the output.
+  dt[, `_TEMP_` := get(split_attribute) ]
+  dt_split <- dt[, .(list(.SD)), by = `_TEMP_`][,V1]
+  dt$`_TEMP_` <- NULL
+
+
+  duplicate_int <- function(dta) {
+    rep <- dta$`_reps`[1]
+    return ( duplicateItem( dta, rep, indexStart ) )
+  }
+
+
+  if (ncores == 1) {
+    duplicates <- pbapply::pblapply(dt_split, duplicate_int)
+  } else {
+    cl <- parallel::makeCluster(ncores)
+    parallel::clusterEvalQ(cl, {
+      loadNamespace("UK2GTFS")
+    })
+
+    duplicates <- pbapply::pblapply(dt_split,
+                                        duplicate_int,
+                                        cl = cl)
+    parallel::stopCluster(cl)
+    rm(cl)
+  }
+
+  duplicates <- data.table::rbindlist(duplicates, use.names=FALSE)
+
+  duplicates$`_reps` <- NULL #performance, putting this inside duplicate_int roughly doubles the execution time
+
+  return (duplicates)
+}
+
+
+
+
 
 #' Duplicate stop_times
 #'
 #' @details
-#' Function that duplicates top times for trips that have been split into
-#'     multiple trips
+#' Function that duplicates stop times for trips that have been split into
+#'     multiple trips and sets the new trip id on the duplicated stop_times
 #'
 #' @param calendar calendar data.frame
 #' @param stop_times stop_times data.frame
 #' @param ncores number of processes for parallel processing (default = 1)
 #' @noRd
 #'
-duplicate.stop_times_alt <- function(calendar, stop_times, ncores = 1) {
-  calendar.nodup <- calendar[!duplicated(calendar$rowID), ]
-  calendar.dup <- calendar[duplicated(calendar$rowID), ]
-  rowID.unique <- as.data.frame(table(calendar.dup$rowID))
-  rowID.unique$Var1 <- as.integer(as.character(rowID.unique$Var1))
-  stop_times <- dplyr::left_join(stop_times, rowID.unique,
-    by = c("schedule" = "Var1")
+duplicate_stop_times <- function(calendar, stop_times, ncores = 1) {
+
+  outputColumnNames = c(
+    "trip_id", "arrival_time", "departure_time", "stop_id", "stop_sequence",
+    "pickup_type", "drop_off_type", "schedule"
   )
 
+  #it's pretty marginal doing this on multiple threads. With a typical number,
+  #doing the split takes 2.4s and the duplication 7.8s (on one thread)
+  #TODO look at avoiding the split if threads=1
 
-  stop_times$schedule2 <- stop_times$schedule
-  stop_times_split <- stop_times[, .(list(.SD)), by = "schedule2"][,V1]
-
-  # TODO: The could handle cases of non duplicated stoptimes within duplicate.stop_times.int
-  # rather than splitting and rejoining, would bring code tidyness and speed improvements
-  duplicate.stop_times.int <- function(stop_times.tmp) {
-    # message(i)
-    # stop_times.tmp = stop_times[stop_times$schedule == rowID.unique$Var1[i],]
-    # reps = rowID.unique$Freq[i]
-    reps <- stop_times.tmp$Freq[1]
-    if (is.na(reps)) {
-      return(NULL)
-    } else {
-      index <- rep(seq(1, reps), nrow(stop_times.tmp))
-      index <- index[order(index)]
-      stop_times.tmp <- stop_times.tmp[rep(seq(1, nrow(stop_times.tmp)), reps), ]
-      stop_times.tmp$index <- index
-      return(stop_times.tmp)
-    }
-  }
-
-  if (ncores == 1) {
-    stop_times.dup <- pbapply::pblapply(stop_times_split, duplicate.stop_times.int)
-  } else {
-    cl <- parallel::makeCluster(ncores)
-    parallel::clusterEvalQ(cl, {
-      loadNamespace("UK2GTFS")
-    })
-    stop_times.dup <- pbapply::pblapply(stop_times_split,
-      duplicate.stop_times.int,
-      cl = cl
-    )
-    parallel::stopCluster(cl)
-    rm(cl)
-  }
-
-  #stop_times.dup <- dplyr::bind_rows(stop_times.dup) performance
-  stop_times.dup <- data.table::rbindlist(stop_times.dup, use.names=FALSE)
-  # stop_times.dup$index <- NULL
-
-  # Join on the nonduplicated trip_ids
-  trip.ids.nodup <- calendar.nodup[, c("rowID", "trip_id")]
-  stop_times <- dplyr::left_join(stop_times, trip.ids.nodup, by = c("schedule" = "rowID"))
-  stop_times <- stop_times[!is.na(stop_times$trip_id), ] # when routes are cancelled their stop times are left without valid trip_ids
-
-  # join on the duplicated trip_ids
-  calendar2 <- dplyr::group_by(calendar, rowID)
-  calendar2 <- dplyr::mutate(calendar2, Index = seq(1, dplyr::n()))
-
-  stop_times.dup$index2 <- as.integer(stop_times.dup$index + 1)
-  trip.ids.dup <- calendar2[, c("rowID", "trip_id", "Index")]
-  trip.ids.dup <- as.data.frame(trip.ids.dup)
-  stop_times.dup <- dplyr::left_join(stop_times.dup, trip.ids.dup, by = c("schedule" = "rowID", "index2" = "Index"))
-  stop_times.dup <- stop_times.dup[, c(
-    "arrival_time", "departure_time", "stop_id", "stop_sequence",
-    "pickup_type", "drop_off_type", "rowID", "schedule", "trip_id"
-  )]
-  stop_times <- stop_times[, c(
-    "arrival_time", "departure_time", "stop_id", "stop_sequence",
-    "pickup_type", "drop_off_type", "rowID", "schedule", "trip_id"
-  )]
-
-  # stop_times.dup = stop_times.dup[order(stop_times.dup$rowID),]
-
-  stop_times.comb <- data.table::rbindlist(list(stop_times, stop_times.dup), use.names=FALSE)
-
-  return(stop_times.comb)
+  return ( duplicate_related_items( calendar, stop_times,
+                                    original_join_field = "schedule",
+                                    new_join_field = "trip_id",
+                                    outputColumnNames = outputColumnNames,
+                                    ncores=ncores ) )
 }
+
+
+
+#' Duplicate related items
+#'
+#' @details
+#' Function that duplicates items that are related to calendar
+#'     expected input are calendar items have been duplicated but retain the same (now duplicate) 'rowID'
+#'     this tells us which objects to duplicate and how many are required
+#'     the related_items have an attribute <original_join_field>, which joins back to 'rowID' on the calendar items
+#'
+#'     After duplication the duplicated items are joined back onto the input calendar items
+#'     to create an additional attribute on the output objects
+#'
+#'     The calendar item attribute <new_join_field> forms the new relation between the calendar items and
+#'     related items, so must be unique.
+#'
+#' @param calendar calendar data.frame
+#' @param related_items data.frame of items to be replicated
+#' @param ncores number of processes for parallel processing (default = 1) (currently hangs/crashes if >1)
+#' @noRd
+#'
+duplicate_related_items <- function(calendar, related_items, original_join_field, new_join_field, outputColumnNames, ncores = 1) {
+
+  calendar.dup <- calendar[duplicated(calendar$rowID), ]
+
+  if( nrow(calendar.dup) <= 0 )
+  {
+    #no duplicating to do
+    warning("duplicate_related_items: there were no duplicates detected. In real data this may indicate there has been an error earlier in the processing.")
+    related_items_dup = data.table()
+  }
+  else
+  {
+    #create a count of the number of each duplicate of rowID
+    rowID.unique <- as.data.frame(table(calendar.dup$rowID))
+    rowID.unique$Var1 <- as.integer(as.character(rowID.unique$Var1))
+
+    #join the count of number of duplicates required to the stop times (so we can retrieve it later when doing the duplication)
+    related_items <- dplyr::left_join(related_items, rowID.unique,
+                                   by = setNames("Var1",original_join_field)  )
+
+    #set the number of duplications required
+    related_items$`_reps` <- related_items$Freq
+
+    # TODO: The could handle cases of non duplicated stoptimes within duplicate.stop_times.int
+    # rather than splitting and rejoining, would bring code tidyness and speed improvements
+    related_items_dup <- duplicateItems( related_items, original_join_field, ncores=ncores, indexStart=1 )
+
+
+    # join via rowID+index to get new de-duplicated trip_id
+
+    #create index on the table we want to join to - group by the rowId, index runs from 0..count()-1 of group size
+    #we start at zero so we don't effect the original stop_times rows and just join in the duplicated rows
+    new_join_ids <- dplyr::group_by(calendar, rowID)
+    new_join_ids <- dplyr::mutate(new_join_ids, Index = seq(0, dplyr::n()-1))
+    new_join_ids <- as.data.frame( new_join_ids[, c("rowID", new_join_field, "Index")] )
+
+    related_items_dup <- dplyr::left_join(related_items_dup, new_join_ids, by = setNames(c("rowID","Index"),c(original_join_field,"index")) )
+
+    #select columns required
+    related_items_dup <- related_items_dup[, outputColumnNames, with=FALSE]
+  }
+
+  calendar.nodup <- calendar[!duplicated(calendar$rowID), ]
+
+  # when routes are cancelled their stop times are left without valid trip_ids - remove those rows
+  # this only applies to the non-duplicated rows
+  # Join via rowID to determine the trip_id
+  related_ids_nodup <- calendar.nodup[, c("rowID", new_join_field), with=FALSE]
+  related_items_no_dup <- dplyr::left_join(related_items, related_ids_nodup, by = setNames("rowID",original_join_field))
+  related_items_no_dup <- related_items_no_dup[!is.na(related_items_no_dup[[new_join_field]]), ]
+
+
+  #select columns required, join output results together
+  related_items_no_dup <- related_items_no_dup[, outputColumnNames, with=FALSE]
+
+  related_items_comb <- data.table::rbindlist(list(related_items_no_dup, related_items_dup), use.names=FALSE)
+
+  return(related_items_comb)
+}
+
+
+
+
 
 
 
@@ -646,6 +1485,26 @@ afterMidnight <- function(stop_times, safe = TRUE) {
 
 
 
+
+fixStopTimeData <- function(stop_times)
+{
+  # Fix arrival_time / departure_time being 0000 for pick up only or drop off only trains
+  stop_times$departure_time <- dplyr::if_else(stop_times$departure_time == "0000" & stop_times$Activity == "D",
+                                              stop_times$arrival_time,
+                                              stop_times$departure_time)
+  stop_times$arrival_time <- dplyr::if_else(stop_times$arrival_time == "0000" & stop_times$Activity == "U",
+                                            stop_times$departure_time,
+                                            stop_times$arrival_time)
+
+  #fix missing arrival / departure times by copying from the other time.
+  stop_times$arrival_time[is.na(stop_times$arrival_time)] <- stop_times$departure_time[is.na(stop_times$arrival_time)]
+  stop_times$departure_time[is.na(stop_times$departure_time)] <- stop_times$arrival_time[is.na(stop_times$departure_time)]
+
+  return (stop_times)
+}
+
+
+
 #' Clean Activities
 #' @param x character activities
 #' @details
@@ -655,12 +1514,6 @@ afterMidnight <- function(stop_times, safe = TRUE) {
 #' @noRd
 #'
 clean_activities2 <- function(x, public_only = TRUE) {
-
-  #x <- strsplit(x," ")
-  #x <- lapply(x, function(y){
-  #  y <- paste(y[order(y, decreasing = TRUE)], collapse = " ")
-  #})
-  #x <- unlist(x)
 
   x <- data.frame(activity = x, stringsAsFactors = FALSE)
 

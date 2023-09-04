@@ -19,26 +19,17 @@ schedule2routes <- function(stop_times, schedule, silent = TRUE, ncores = 1, pub
     message(paste0(Sys.time(), " Building stop_times"))
   }
 
-  # Fix arrival_time / departure_time being 0000 for pick up only or drop off only trains
-  stop_times$departure_time <- dplyr::if_else(stop_times$departure_time == "0000" & stop_times$Activity == "D",
-                                              stop_times$arrival_time,
-                                              stop_times$departure_time)
-  stop_times$arrival_time <- dplyr::if_else(stop_times$arrival_time == "0000" & stop_times$Activity == "U",
-                                            stop_times$departure_time,
-                                            stop_times$arrival_time)
+  stop_times <- fixStopTimeData( stop_times )
 
   # Convert Activity to pickup_type and drop_off_type
   upoffs <- clean_activities2(stop_times$Activity, public_only=public_only)
   stop_times <- cbind(stop_times, upoffs)
 
-  #fix missing arrival / departure times by copying from the other time.
-  stop_times$arrival_time[is.na(stop_times$arrival_time)] <- stop_times$departure_time[is.na(stop_times$arrival_time)]
-  stop_times$departure_time[is.na(stop_times$departure_time)] <- stop_times$arrival_time[is.na(stop_times$departure_time)]
-
   stop_times <- stop_times[, c("arrival_time", "departure_time", "stop_id", "stop_sequence", "pickup_type", "drop_off_type", "rowID", "schedule")]
 
   if (public_only)
   {
+    #remove calls that don't allow the public to board or alight (type==1)
     stop_times <- stop_times[!(stop_times$pickup_type == 1 & stop_times$drop_off_type == 1), ]
   }
 
@@ -52,7 +43,7 @@ schedule2routes <- function(stop_times, schedule, silent = TRUE, ncores = 1, pub
   # build the calendar file
   res <- makeCalendar(schedule = schedule, ncores = ncores)
   calendar <- res[[1]]
-  calendar_dates <- res[[2]]
+  cancellation_dates <- res[[2]]
   rm(res)
 
   #remove columns we don't need any more
@@ -67,41 +58,54 @@ schedule2routes <- function(stop_times, schedule, silent = TRUE, ncores = 1, pub
 
   gc()
 
-  calendar$trip_id <- 1:nrow(calendar) # not sure why this was here, but used in duplicate.stop_times
-  # calendar$service_id = 1:nrow(calendar) # For this purpose the service and the trip are always the same
+  # In CIF land, one service ID can have multiple operating patterns, expressed as multiple BS records (and their associated LO,LI,LT records) having the same UID
+  # that's the opposite of the GTFS concept where a single calendar (operating pattern) can be used by multiple trips, but a single trip can only have one operating pattern.
+  # The CIF concept of a single UID maps more closely onto GTFS routes.
+  #
+  # so we maintain a 1:1 relationship between Trips and Calendars, duplicating CIF service IDs as required to represent the multiplicity of possible operating patterns.
+  #
+  # see merging code where there is functionality to de-duplicate calendar patterns down to a unique set. (condenseServicePatterns)
+
 
   # clean calendars
-  # calendar = calendar[,c("UID","monday","tuesday","wednesday","thursday","friday","saturday","sunday",
-  #                       "start_date","end_date","rowID","trip_id")]
   names(calendar)[names(calendar) == "UID"] <- "service_id"
-  calendar$start_date <- as.character(calendar$start_date)
-  calendar$start_date <- gsub("-", "", calendar$start_date)
-  calendar$end_date <- as.character(calendar$end_date)
-  calendar$end_date <- gsub("-", "", calendar$end_date)
+  calendar <- formatAttributesToGtfsSchema( calendar )
 
-  calendar_dates <- calendar_dates[, c("UID", "start_date")]
-  names(calendar_dates) <- c("service_id", "date")
-  calendar_dates$date <- as.character(calendar_dates$date)
-  calendar_dates$date <- gsub("-", "", calendar_dates$date)
-  calendar_dates$exception_type <- 2 # all events passed to calendar_dates are single day cancellations
+  cancellation_dates <- cancellation_dates[, c("UID", "start_date")]
+  names(cancellation_dates) <- c("service_id", "date")
+  cancellation_dates <- formatAttributesToGtfsSchema( cancellation_dates )
+  cancellation_dates$exception_type <- 2 # all events passed to cancellation_dates are single day cancellations
 
 
 
   ### SECTION 3: ###############################################################################
-  # When splitting the calendar roWIDs are duplicated
+
+  calendar$trip_id <- 1:nrow(calendar)
+  # calendar$service_id = 1:nrow(calendar)
+
+
+
+  # When splitting the calendar rowIDs are duplicated
   # so create new system of trip_ids and duplicate the relevant stop_times
   if (!silent) {
     message(paste0(Sys.time(), " Duplicating necessary stop times"))
   }
 
-                                  #TODO find out why this hangs if ncores > 1
-  stop_times <- duplicate.stop_times_alt(calendar = calendar, stop_times = stop_times, ncores = 1)
+  #TODO find out why this hangs if ncores > 1
+  #also sets the trip_id on stop_times
+  stop_times <- duplicate_stop_times(calendar = calendar, stop_times = stop_times, ncores = 1)
+
 
   ### SECTION 5: ###############################################################################
   # make make the trips.txt  file by matching the calendar to the stop_times
 
   trips <- calendar[, c("service_id", "trip_id", "rowID", "ATOC Code", "Train Status", "Train Category", "Power Type", "Train Identity")]
   trips <- longnames(routes = trips, stop_times = stop_times)
+
+
+  # Fix Times (and remove some fields)
+  stop_times <- afterMidnight(stop_times)
+
 
   ### SECTION 4: ###############################################################################
   # make make the routes.txt
@@ -111,7 +115,7 @@ schedule2routes <- function(stop_times, schedule, silent = TRUE, ncores = 1, pub
     message(paste0(Sys.time(), " Building routes.txt"))
   }
 
-  #do the conversion to route_type before grouping because several status map to the same route_type and we get 'duplicate' routes that look the same.
+  #do the conversion to route_type before grouping because several statuses map to the same route_type and we get 'duplicate' routes that look the same.
   train_status <- data.table(
     train_status = c("B", "F", "P", "S", "T", "1", "2", "3", "4", "5"),
     route_type = c(   3,   NA,  2,   4,   NA,  2,   NA,  NA,  4,   3),
@@ -136,17 +140,17 @@ schedule2routes <- function(stop_times, schedule, silent = TRUE, ncores = 1, pub
 
   routes$route_type[routes$agency_id == "LT" & routes$route_type == 2 ] <- 1
       # London Underground is Metro (unless already identified as a bus/ship etc)
+      #TODO look at what this causes LizPurpCrossRailElizabethLine to be categorised as.
+      #TODO move to longnames()
 
   ### Section 6: #######################################################
   # Final Checks
 
-  # Fix Times
-  stop_times <- afterMidnight(stop_times)
 
 
-  #gtfs systems tend to be tolerant of additional fields, so expose the train_category and power_type so that the consumer can do more analysis on them if they wish.
+  #gtfs systems tend to be tolerant of additional fields, so expose the train_category and power_type so that the consumer can do analysis on them.
   #e.g. filter out ECS moves
-  # Ditch unneeded columns
+  # Ditch unnecessary columns
   routes <- routes[, c("route_id", "agency_id", "route_short_name", "route_long_name", "route_type", "train_category")]
   trips <- trips[, c("trip_id", "route_id", "service_id", "Train Identity", "Power Type")]
   names(trips) <- c("trip_id", "route_id", "service_id", "train_identity", "power_type")
@@ -155,7 +159,11 @@ schedule2routes <- function(stop_times, schedule, silent = TRUE, ncores = 1, pub
 
 
   # end of function
-  timetables <- list(calendar, calendar_dates, routes, stop_times, trips)
+  timetables <- list(calendar, cancellation_dates, routes, stop_times, trips)
   names(timetables) <- c("calendar", "calendar_dates", "routes", "stop_times", "trips")
+
   return(timetables)
 }
+
+
+
