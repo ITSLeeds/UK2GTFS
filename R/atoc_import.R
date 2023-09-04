@@ -295,7 +295,7 @@ strip_whitespace <- function(dt) {
 
 
 
-
+#TODO update this to handle seconds instead of just truncating them (public TT is to nearest minute, WTT more accurate)
 process_times <- function(dt, working_timetable) {
   if (working_timetable) {
     if ("Scheduled Arrival Time" %in% colnames(dt)) {
@@ -322,7 +322,8 @@ process_times <- function(dt, working_timetable) {
 # Process Activity Codes
 process_activity <- function(dt, public_only) {
 
-  dt[, Activity := strsplit(Activity, "(?<=.{2})", perl=TRUE)]
+  #performance, runs about twice as fast if we do processing outside data.table then insert it later
+  splitActivity = stringi::stri_extract_all_regex(dt$Activity, ".{2}")
 
   if (public_only) {
     # Filter to stops for passengers
@@ -362,7 +363,8 @@ process_activity <- function(dt, public_only) {
     }
   }
 
-  dt[, Activity := lapply(Activity, clean_activity3)]
+
+  dt$Activity = lapply(splitActivity, clean_activity3)
 
   dt <- dt[Activity != "Other"]
 
