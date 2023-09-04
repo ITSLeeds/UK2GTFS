@@ -593,7 +593,7 @@ test_that("1:test allocateCancellationsAcrossCalendars", {
 
   expectedResult = data.table(
     UID=c(       "uid1 a",     "uid1 a",      "uid2 d"),
-    #originalUID=c("uid1",      "uid1",        "uid2"),
+    originalUID=c("uid1",      "uid1",        "uid2"),
     start_date=c("02-01-2023", "03-01-2023",  "14-03-2023"),
     end_date=c(  "02-01-2023", "03-01-2023",  "14-03-2023"),
     Days=c(      "1000000",    "0100000",     "0100000"),
