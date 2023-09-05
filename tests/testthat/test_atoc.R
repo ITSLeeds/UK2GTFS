@@ -1,4 +1,4 @@
-ontext("Get the example atoc files")
+context("Get the example atoc files")
 file_path <- file.path(tempdir(),"uk2gtfs_tests")
 dir.create(file_path)
 data_path <- file.path(tempdir(),"uk2gtfs_data")
