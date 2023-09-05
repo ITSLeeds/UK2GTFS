@@ -24,6 +24,6 @@ data.
 \details{
 TransXchange records bank holidays by name (e.g. Christmas Day),
   some UK bank holidays move around, so this function downloads the official
-  bank holiday calendar. The offical feed only covers a short period of time
+  bank holiday calendar. The official feed only covers a short period of time
   so this may not be suitable for converting files from the past / future.
 }
