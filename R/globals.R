@@ -15,3 +15,28 @@ utils::globalVariables(c(
   'operator_code','route_id'
 ))
 
+
+
+#' UK2GTFS option stopProcessingAtUid
+#' @description sets/gets a UID value at which processing will stop - used for debugging
+#' @param value option value to be set
+#' @details If no value passed in will return the current setting of the option. (Usually NULL)
+#'   If value passed in, timetable build processing will stop in atoc_overlay.makeCalendarInner()
+#'   when an exact match for that value is encountered.
+#'
+#'   THIS ONLY WORKS WITH ncores==1
+#'   (probably some environment nonsense I don't understand)
+#'
+#' @export
+UK2GTFS_option_stopProcessingAtUid <- function(value)
+{
+  if (missing(value))
+  {
+    return( getOption("UK2GTFS_opt_stopProcessingAtUid") )
+  }
+  else
+  {
+    return( options(UK2GTFS_opt_stopProcessingAtUid = value) )
+  }
+}
+

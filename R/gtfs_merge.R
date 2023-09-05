@@ -20,10 +20,19 @@ gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE, condenseServicePa
   flattened <- unlist(gtfs_list, recursive = FALSE)
   rm(gtfs_list)
 
+  #The Atoc code has moved from data.frame to data.table for performance reasons, but the transXchange code hasn't migrated yet.
+  #this is a breaking change for some items because the behaviour for data.table isn't the same as data.frame, despite extending data.frame. nice.
+  #least painful way to fix this for now is to convert to data.table if supplied data.frame
+  flattened <- lapply( flattened, function(item)
+    {
+      if ( inherits(item, "data.table" ) ) return (item)
+      return (data.table(item))
+    } )
+
   #get unique input table names
   tableNames <- unique(names(flattened))
 
-    grouped_list <- list()
+  grouped_list <- list()
 
   # Loop through table names names and group data frames
   for (tableName in tableNames) {
@@ -125,8 +134,8 @@ gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE, condenseServicePa
                                    agency_lang = agency_lang[1]
                                    )
       } else {
-        stop(paste0("Duplicated Agency IDs ",
-                    paste(unique(agency.check$agency_id[duplicated(agency.check$agency_id)]), collapse = " ")))
+        stop("Duplicated Agency IDs: ",
+                    paste(unique(agency.check$agency_id[duplicated(agency.check$agency_id)]), collapse = " "))
       }
     } else {
       agency <- agency[!duplicated(agency$agency_id), ]
@@ -140,7 +149,8 @@ gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE, condenseServicePa
     if(force){
       stops <- stops[!duplicated(stops$stop_id),]
     } else {
-      stop("Duplicated Stop IDS")
+      stop("Duplicated Stop IDS: ",
+           paste( unique(stops$stop_id[duplicated(stops$stop_id)]), collapse = " "))
     }
   }
 
@@ -156,14 +166,15 @@ gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE, condenseServicePa
         routes <- routes[!duplicated(new_route_id), ]
         new_route_id <- routes[, c("file_id", "route_id")]
       } else {
-        stop("Duplicated route_id within the same GTFS file, try using force = TRUE")
+        stop("Duplicated route_id within the same GTFS file, try using force = TRUE ",
+             paste( unique(new_route_id$route_id[duplicated(new_route_id)]), collapse = " "))
       }
     }
 
     new_route_id$route_id_new <- seq(1, nrow(new_route_id))
     routes <- dplyr::left_join(routes, new_route_id, by = c("file_id", "route_id"))
 
-    routes <- routes[, c("route_id_new", retainedColumnNames)]
+    routes <- routes[, c("route_id_new", retainedColumnNames), with=FALSE]
     routes <- routes %>% dplyr::rename(route_id = route_id_new)
   }
 
@@ -176,7 +187,8 @@ gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE, condenseServicePa
 
     new_service_id <- calendar[, c("file_id", "service_id")]
     if (any(duplicated(new_service_id))) {
-      stop("Duplicated service_id within the same GTFS file")
+      stop("Duplicated service_id within the same GTFS file: ",
+           paste( unique(new_service_id$service_id[duplicated(new_service_id)]), collapse = " "))
     }
 
     # it is valid to have calendar_dates with no associated calendar (see comments further down)
@@ -187,14 +199,14 @@ gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE, condenseServicePa
 
     retainedColumnNames <- colnames(calendar)[!(colnames(calendar) %in% c("service_id", "file_id"))]
     calendar <- dplyr::left_join(calendar, new_service_id, by = c("file_id", "service_id"))
-    calendar <- calendar[, c("service_id_new", retainedColumnNames)]
+    calendar <- calendar[, c("service_id_new", retainedColumnNames), with=FALSE]
     names(calendar) <- c("service_id", retainedColumnNames)
 
     if (nrow(calendar_dates) > 0) {
       retainedColumnNames <- colnames(calendar_dates)[!(colnames(calendar_dates) %in% c("service_id", "file_id"))]
 
       calendar_dates <- dplyr::left_join(calendar_dates, new_service_id, by = c("file_id", "service_id"))
-      calendar_dates <- calendar_dates[, c("service_id_new", retainedColumnNames)]
+      calendar_dates <- calendar_dates[, c("service_id_new", retainedColumnNames), with=FALSE]
       calendar_dates <- calendar_dates %>% dplyr::rename(service_id = service_id_new)
     }
   }
@@ -211,7 +223,8 @@ gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE, condenseServicePa
         stop_times <- unique(stop_times)
         new_trip_id <- trips[, c("file_id", "trip_id")]
       } else{
-        stop("Duplicated trip_id within the same GTFS file")
+        stop(paste0("Duplicated trip_id within the same GTFS file",
+          paste( unique( new_trip_id$trip_id[duplicated(new_trip_id)]), collapse = " ")))
       }
 
 
@@ -220,19 +233,19 @@ gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE, condenseServicePa
 
     retainedColumnNames <- colnames(trips)[!(colnames(trips) %in% c("trip_id"))]
     trips <- dplyr::left_join(trips, new_trip_id, by = c("file_id", "trip_id"))
-    trips <- trips[, c("trip_id_new", retainedColumnNames)]
+    trips <- trips[, c("trip_id_new", retainedColumnNames), with=FALSE]
     trips <- trips %>% dplyr::rename(trip_id = trip_id_new)
 
     retainedColumnNames <- colnames(stop_times)[!(colnames(stop_times) %in% c("trip_id", "file_id"))]
     stop_times <- dplyr::left_join(stop_times, new_trip_id, by = c("file_id", "trip_id"))
-    stop_times <- stop_times[, c("trip_id_new", retainedColumnNames)]
+    stop_times <- stop_times[, c("trip_id_new", retainedColumnNames), with=FALSE]
     stop_times <- stop_times %>% dplyr::rename(trip_id = trip_id_new)
 
     if ( length(frequencies) > 0 )
     {
       retainedColumnNames <- colnames(frequencies)[!(colnames(frequencies) %in% c("trip_id", "file_id"))]
       frequencies <- dplyr::left_join(frequencies, new_trip_id, by = c("file_id", "trip_id"))
-      frequencies <- frequencies[, c("trip_id_new", retainedColumnNames)]
+      frequencies <- frequencies[, c("trip_id_new", retainedColumnNames), with=FALSE]
       frequencies <- frequencies %>% dplyr::rename(trip_id = trip_id_new)
     }
   }
@@ -240,14 +253,14 @@ gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE, condenseServicePa
   if (exists("new_service_id")) {
     retainedColumnNames <- colnames(trips)[!(colnames(trips) %in% c("service_id"))]
     trips <- dplyr::left_join(trips, new_service_id, by = c("file_id", "service_id"))
-    trips <- trips[, c(retainedColumnNames, "service_id_new")]
+    trips <- trips[, c(retainedColumnNames, "service_id_new"), with=FALSE]
     trips <- trips %>% dplyr::rename(service_id = service_id_new)
   }
 
   if (exists("new_route_id")) {
     retainedColumnNames <- colnames(trips)[!(colnames(trips) %in% c("route_id"))]
     trips <- dplyr::left_join(trips, new_route_id, by = c("file_id", "route_id"))
-    trips <- trips[, c("route_id_new", retainedColumnNames)]
+    trips <- trips[, c("route_id_new", retainedColumnNames), with=FALSE]
     trips <- trips %>% dplyr::rename(route_id = route_id_new)
   }
 
@@ -265,9 +278,9 @@ gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE, condenseServicePa
   if (condenseServicePatterns && nrow(calendar_dates) > 0) {
     if(!quiet){message("Condensing duplicated service patterns")}
 
-    #find every unique combination of calendar_dates and calender values
+    #find every unique combination of calendar_dates and calendar values
     calendar_dates_summary <- dplyr::group_by(calendar_dates, service_id)
-    if(class(calendar_dates_summary$date) == "Date"){
+    if( inherits(calendar_dates_summary$date, "Date") ){
       calendar_dates_summary <- dplyr::summarise(calendar_dates_summary,
                                                  pattern = paste(c(as.character(date), exception_type), collapse = "")
       )
@@ -291,18 +304,18 @@ gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE, condenseServicePa
 
     retainedColumnNames <- colnames(trips)[!(colnames(trips) %in% c("service_id", "route_id"))]
     trips <- dplyr::left_join(trips, calendar_summary, by = c("service_id"))
-    trips <- trips[, c("route_id", "service_id_new", retainedColumnNames)]
+    trips <- trips[, c("route_id", "service_id_new", retainedColumnNames), with=FALSE]
     trips <- trips %>% dplyr::rename(service_id = service_id_new)
 
     retainedColumnNames <- colnames(calendar)[!(colnames(calendar) %in% c("service_id", "file_id"))]
     calendar <- dplyr::left_join(calendar, calendar_summary, by = c("service_id"))
-    calendar <- calendar[, c("service_id_new", retainedColumnNames)]
+    calendar <- calendar[, c("service_id_new", retainedColumnNames), with=FALSE]
     calendar <- calendar %>% dplyr::rename(service_id = service_id_new)
     calendar <- calendar[!duplicated(calendar$service_id), ]
 
     retainedColumnNames <- colnames(calendar_dates)[!(colnames(calendar_dates) %in% c("service_id", "file_id"))]
     calendar_dates <- dplyr::left_join(calendar_dates, calendar_summary, by = c("service_id"))
-    calendar_dates <- calendar_dates[, c("service_id_new", retainedColumnNames)]
+    calendar_dates <- calendar_dates[, c("service_id_new", retainedColumnNames), with=FALSE]
     calendar_dates <- calendar_dates %>% dplyr::rename(service_id = service_id_new)
     calendar_dates <- calendar_dates[!duplicated(calendar_dates$service_id), ]
   }
@@ -314,7 +327,8 @@ gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE, condenseServicePa
     if(force){
       shapes <- shapes[!duplicated(composite_key),]
     } else {
-      stop("Duplicated Shapes IDS")
+      stop(paste0("Duplicated Shapes IDS",
+           paste( unique( composite_key[duplicated(composite_key)]), collapse = " ")))
     }
   }
 

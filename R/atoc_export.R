@@ -209,8 +209,9 @@ makeCalendar <- function(schedule, ncores = 1) {
 #test treating date as int: seem to be about twice as fast on the critical line when selecting base timetable
 #TODO add package option to switch between processing as date/int otherwise debugging is too hard
 
-  # UIDs = unique(calendar$UID)
-  # length_todo = length(UIDs)
+  #debugging option
+  set_STOP_PROCESSING_UID( getOption("UK2GTFS_opt_stopProcessingAtUid") )
+
   message(paste0(Sys.time(), " Constructing calendar and calendar_dates"))
   calendar$`__TEMP__` <- calendar$UID
   calendar_split <- calendar[, .(list(.SD)), by = `__TEMP__`][,V1]
@@ -254,6 +255,16 @@ makeCalendar <- function(schedule, ncores = 1) {
   #no longer need the field that was used to associate the original and replicated calendars together
   cancellations$originalUID <- NULL
   res.calendar$originalUID <- NULL
+
+  #error checking
+  dups = duplicated( res.calendar$UID )
+  if( any(TRUE==dups) )
+  {
+    dups = unique( res.calendar$UID[ dups ] )
+
+    warning(paste(Sys.time(), "Duplicate UIDs were created by the makeCalendar() process, this is likely to cause downstream proceessing errors. ",
+                                "Please capture the data and raise a bug / create a test case. ", dups))
+  }
 
   return(list(res.calendar, cancellations))
 }

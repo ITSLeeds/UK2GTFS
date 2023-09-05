@@ -38,6 +38,33 @@ printDifferences <- function( v1, v2 )
 }
 
 
+
+
+
+test_that("test changing module level variable", {
+
+  env <- asNamespace("UK2GTFS")
+
+  current = get("STOP_PROCESSING_UID", envir=env)
+
+  set_STOP_PROCESSING_UID( "xxxx")
+
+  new = get("STOP_PROCESSING_UID", envir=env)
+
+  set_STOP_PROCESSING_UID( "yyyy")
+
+  new2 = get("STOP_PROCESSING_UID", envir=env)
+
+  set_STOP_PROCESSING_UID( NULL )
+
+  new3 = get("STOP_PROCESSING_UID", envir=env)
+
+  expect_true( "xxxx"==new && "yyyy"==new2 && is.null(new3) )
+})
+
+
+
+
 test_that("test countIntersectingDayPatterns:1", {
 
   OK = TRUE
@@ -820,7 +847,7 @@ test_that("5:test makeCalendarInner:one day cancellations(current)", {
   res.calendar <- res[[1]]
   res.calendar_dates <- res[[2]]
 
-  expectedResult = data.table(UID=c( "uid1 a1",    "uid1 b1",    "uid1 c1",    "uid1 a2",     "uid1 b2",     "uid1 c2"),
+  expectedResult = data.table(UID=c( "uid1 a",     "uid1 b",     "uid1 c",     "uid1 a2",     "uid1 b2",     "uid1 c2"),
                         start_date=c("02-01-2023", "12-01-2023", "24-01-2023", "08-01-2023",  "12-01-2023",  "24-01-2023"),
                         end_date=c(  "10-01-2023", "22-01-2023", "04-02-2023", "10-01-2023",  "22-01-2023",  "05-02-2023"),
                         Days=c(      "1111110",    "1111110",    "1111110",    "0000001",     "0000001",     "0000001"),
@@ -855,7 +882,7 @@ test_that("6:test makeCalendarInner:overlay -matching base pattern", {
   res.calendar <- res[[1]]
   res.calendar_dates <- res[[2]]
 
-  expectedResult = data.table(UID=c(       "uid1 a1",    "uid1 b1",    "uid1 c1",    "uid1 a2"),
+  expectedResult = data.table(UID=c(       "uid1 a",     "uid1 b",     "uid1 c",     "uid12"),
                               start_date=c("02-01-2023", "09-01-2023", "22-01-2023", "08-01-2023"),
                               end_date=c(  "08-01-2023", "21-01-2023", "04-02-2023", "05-02-2023"),
                               Days=c(      "1111110",    "1111110",    "1111110",    "0000001"),
@@ -867,7 +894,6 @@ test_that("6:test makeCalendarInner:overlay -matching base pattern", {
   expectedResult = removeOriginalUidField( expectedResult )
 
   printDifferencesDf(expectedResult,res.calendar)
-
 
   expect_true(identical(expectedResult,res.calendar) & is.na(res.calendar_dates))
 
@@ -889,12 +915,20 @@ test_that("6.1:test makeCalendarInner:bases with different patterns, no overlay"
   res.calendar <- res[[1]]
   res.calendar_dates <- res[[2]]
 
+  expectedResult = data.table(UID=c( "uid1 a",     "uid1 b",      "uid1 c"),
+                        start_date=c("22-05-2023", "25-09-2023",  "02-10-2023"),
+                        end_date=c(  "22-09-2023", "26-09-2023",  "13-10-2023"),
+                        Days=c(      "1111100",    "1100000",     "1111100"),
+                        STP=c(       "P",          "P",           "P"),
+                        rowID=c(     1,            2,             3))
+  expectedResult <- fixCalendarDates( expectedResult )
+
   res.calendar = removeOriginalUidField( res.calendar )
-  testData = removeOriginalUidField( testData )
+  expectedResult = removeOriginalUidField( expectedResult )
 
-  printDifferencesDf(testData,res.calendar)
+  printDifferencesDf(expectedResult,res.calendar)
 
-  expect_true(identical(testData,res.calendar) & is.na(res.calendar_dates))
+  expect_true(identical(expectedResult,res.calendar) & is.na(res.calendar_dates))
 })
 
 
@@ -913,12 +947,20 @@ test_that("6.2:test makeCalendarInner:base is N (STP) with different patterns, n
   res.calendar <- res[[1]]
   res.calendar_dates <- res[[2]]
 
+  expectedResult = data.table(UID=c( "uid1 a",     "uid1 b"),
+                        start_date=c("26-06-2023", "31-07-2023"),
+                        end_date=c(  "29-07-2023", "03-08-2023"),
+                        Days=c(      "1111110",    "1111000"),
+                        STP=c(       "N",          "N"),
+                        rowID=c(     1,            2))
+  expectedResult <- fixCalendarDates( expectedResult )
+
   res.calendar = removeOriginalUidField( res.calendar )
-  testData = removeOriginalUidField( testData )
+  expectedResult = removeOriginalUidField( expectedResult )
 
-  printDifferencesDf(testData,res.calendar)
+  printDifferencesDf(expectedResult,res.calendar)
 
-  expect_true(identical(testData,res.calendar) & is.na(res.calendar_dates))
+  expect_true(identical(expectedResult,res.calendar) & is.na(res.calendar_dates))
 })
 
 
@@ -938,7 +980,7 @@ test_that("7:test makeCalendarInner:overlay -different to base pattern", {
   res.calendar <- res[[1]]
   res.calendar_dates <- res[[2]]
 
-  expectedResult = data.table(UID=c(       "uid1 a1",     "uid1 b1",   "uid1 c1",    "uid1 d1",    "uid1 e1",    "uid1"),
+  expectedResult = data.table(UID=c(       "uid1 a",     "uid1 b",     "uid1 c",     "uid1 d",     "uid1 e",     "uid12"),
                               start_date=c("02-01-2023", "10-01-2023", "15-01-2023", "17-01-2023", "22-01-2023", "08-01-2023"),
                               end_date=c(  "09-01-2023", "14-01-2023", "16-01-2023", "21-01-2023", "04-02-2023", "05-02-2023"),
                               Days=c(      "1111110",    "0111110",    "1111110",    "0111110",    "1111110",    "0000001"),
@@ -971,7 +1013,7 @@ test_that("8:test makeCalendarInner:overlay -different to base pattern-gap in pa
   res.calendar_dates <- res[[2]]
 
   expectedResult = data.table(
-    UID=c(       "uid1 a1",    "uid1 b1",    "uid1 c1",    "uid1 d1",    "uid1 e1",    "uid1 f1"),
+    UID=c(       "uid1 a",     "uid1 b",     "uid1 c",     "uid1 d",     "uid1 e",     "uid1 f"),
     start_date=c("02-01-2023", "10-01-2023", "11-01-2023", "12-01-2023", "13-01-2023", "14-01-2023"),
     end_date=c(  "09-01-2023", "10-01-2023", "11-01-2023", "12-01-2023", "13-01-2023", "16-01-2023"),
     Days=c(      "1111110",    "0100000",    "0010000",    "1111110",    "0000100",    "1111110"),
@@ -979,7 +1021,7 @@ test_that("8:test makeCalendarInner:overlay -different to base pattern-gap in pa
     rowID=c(     1,            3,            3,            1,            3,            1))
 
   expectedResult = rbind(expectedResult, data.table(
-    UID=c(       "uid1 g1",    "uid1 h1",    "uid1 i1",    "uid1 j1",    "uid1 k1",    "uid1"),
+    UID=c(       "uid1 g",     "uid1 h",     "uid1 i",     "uid1 j",     "uid1 k",     "uid12"),
     start_date=c("17-01-2023", "18-01-2023", "19-01-2023", "20-01-2023", "21-01-2023", "08-01-2023"),
     end_date=c(  "17-01-2023", "18-01-2023", "19-01-2023", "20-01-2023", "04-02-2023", "05-02-2023"),
     Days=c(      "0100000",    "0010000",    "1111110",    "0000100",    "1111110",    "0000001"),
@@ -1013,7 +1055,7 @@ test_that("9:test makeCalendarInner:overlay -different to base pattern-gap in pa
   res.calendar_dates <- res[[2]]
 
   expectedResult = data.table(
-    UID=c(       "uid1 a1",    "uid1 b1",    "uid1 c1",    "uid1 d1",    "uid1 e1"),     #the 'f' calendar gets thrown away
+    UID=c(       "uid1 a",     "uid1 b",     "uid1 c",     "uid1 d",     "uid1 e"),     #the 'f' calendar gets thrown away
     start_date=c("02-01-2023", "10-01-2023", "11-01-2023", "12-01-2023", "13-01-2023"),
     end_date=c(  "09-01-2023", "10-01-2023", "11-01-2023", "12-01-2023", "13-01-2023"),
     Days=c(      "0111100",    "0100000",    "0010000",    "0111100",    "0000100"),
@@ -1021,7 +1063,7 @@ test_that("9:test makeCalendarInner:overlay -different to base pattern-gap in pa
     rowID=c(     1,            3,            3,            1,            3))
 
   expectedResult = rbind(expectedResult, data.table(
-    UID=c(       "uid1 g1",    "uid1 h1",    "uid1 i1",    "uid1 j1",    "uid1 k1",    "uid1"),
+    UID=c(       "uid1 g",     "uid1 h",     "uid1 i",     "uid1 j",     "uid1 k",     "uid12"),
     start_date=c("17-01-2023", "18-01-2023", "19-01-2023", "20-01-2023", "21-01-2023", "08-01-2023"),
     end_date=c(  "17-01-2023", "18-01-2023", "19-01-2023", "20-01-2023", "03-02-2023", "05-02-2023"),
     Days=c(      "0100000",    "0010000",    "0111100",    "0000100",    "0111100",    "0000001"),
@@ -1063,7 +1105,7 @@ test_that("10:test makeCalendarInner", {
   #     instead of going 'oh that's fine, march and april don't overlap
 
   expectedResult = data.table(
-    UID=c(       "uid1 a1",    "uid1 b1",    "uid1 c1",    "uid1 d1",    "uid1 e1",     "uid1 f1"),
+    UID=c(       "uid1 a",     "uid1 b",     "uid1 c",     "uid1 d",     "uid1 e",      "uid1 f"),
     start_date=c("02-01-2023", "11-01-2023", "13-01-2023", "18-01-2023", "20-01-2023",  "24-01-2023"),
     end_date=c(  "10-01-2023", "11-01-2023", "17-01-2023", "19-01-2023", "22-01-2023",  "03-02-2023"),
     Days=c(      "1111100",    "0011000",    "1111100",    "0011000",    "1111100",     "1111100"),
@@ -1071,7 +1113,7 @@ test_that("10:test makeCalendarInner", {
     rowID=c(     1,            4,            1,            4,            1,             1))
 
   expectedResult = rbind(expectedResult, data.table(
-    UID=c(       "uid1",       "uid1 c3",    "uid1 d3"    ),
+    UID=c(       "uid12",      "uid1 c3",    "uid1 d3"    ),
     start_date=c("08-01-2023", "01-03-2023", "10-03-2023" ),
     end_date=c(  "05-02-2023", "07-03-2023", "31-03-2023" ),
     Days=c(      "0000001",    "0011100",    "0011100"    ),
@@ -1107,8 +1149,7 @@ test_that("11:test makeCalendarInner: overlay matching pattern of a base that is
   res.calendar <- res[[1]]
   res.calendar_dates <- res[[2]]
 
-  #this is what the code produces - it is wrong. e.g 10/3 service is missing
-  expectedResult = data.table(UID=c( "uid1 a1",    "uid1 b1",    "uid1 c1",     "uid1 d1",     "uid1 e1",     "uid1 a2"),
+  expectedResult = data.table(UID=c( "uid1 a",     "uid1 b",     "uid1 c",      "uid1 d",      "uid1 e",      "uid12"),
                         start_date=c("04-01-2023", "11-01-2023", "20-01-2023",  "01-03-2023",  "17-03-2023",  "08-01-2023"),
                         end_date=c(  "10-01-2023", "19-01-2023", "02-02-2023",  "07-03-2023",  "30-03-2023",  "05-02-2023"),
                         Days=c(      "0011000",    "0011000",    "0011000",     "0011000",     "0011000",     "0000001"),
@@ -1153,7 +1194,7 @@ test_that("12: test makeCalendarInner", {
   res.calendar_dates <- res[[2]]
 
   expectedResult = data.table(
-    UID=c(       "uid1 a1",    "uid1 b1",    "uid1 c1",    "uid1 d1",    "uid1 e1",    "uid1 f1"),
+    UID=c(       "uid1 a",     "uid1 b",     "uid1 c",     "uid1 d",     "uid1 e",     "uid1 f"),
     start_date=c("02-01-2023", "10-01-2023", "11-01-2023", "14-01-2023", "17-01-2023", "18-01-2023"),
     end_date=c(  "08-01-2023", "10-01-2023", "13-01-2023", "15-01-2023", "17-01-2023", "20-01-2023"),
     Days=c(      "1111110",    "1111110",    "0011100",    "1111110",    "1111110",    "0011100"),
@@ -1161,12 +1202,57 @@ test_that("12: test makeCalendarInner", {
     rowID=c(     1,            1,            4,            1,            1,            4))
 
   expectedResult = rbind(expectedResult, data.table(
-    UID=c(       "uid1 g1",    "uid1 h1",    "uid1 i1",    "uid1 a2",    "uid1 c2",    "uid1 d3"),
+    UID=c(       "uid1 g",     "uid1 h",     "uid1 i",     "uid1 a2",    "uid1 c2",    "uid1 d3"),
     start_date=c("21-01-2023", "25-01-2023", "28-01-2023", "08-01-2023", "23-01-2023", "01-03-2023"),
     end_date=c(  "24-01-2023", "27-01-2023", "04-02-2023", "14-01-2023", "05-02-2023", "31-03-2023"),
     Days=c(      "1111110",    "0011100",    "1111110",    "0000001",    "0000001",    "0011100"),
     STP=c(       "P",          "O",          "P",          "P",          "P",          "P"),
     rowID=c(     1,            4,            1,            2,            2,            3)))
+
+  expectedResult <- fixCalendarDates( expectedResult )
+
+  res.calendar = removeOriginalUidField( res.calendar )
+  expectedResult = removeOriginalUidField( expectedResult )
+
+  printDifferencesDf(expectedResult,res.calendar)
+
+  expect_true(identical(expectedResult,res.calendar) & is.na(res.calendar_dates))
+})
+
+
+
+test_that("11:test makeCalendarInner: overlay matching pattern of a base that is offset temporaly", {
+
+  testData = data.table(
+    UID=c(       "C09094",     "C09094",      "C09094",      "C09094",      "C09094",     "C09094",     "C09094"),
+    start_date=c("22-05-2023", "27-05-2023",  "10-08-2023",  "07-09-2023",  "21-09-2023", "05-10-2023", "28-10-2023"),
+    end_date=c(  "08-12-2023", "09-09-2023",  "10-08-2023",  "07-09-2023",  "21-09-2023", "05-10-2023", "09-12-2023"),
+    Days=c(      "1111100",    "0000010",     "0001000",     "0001000",     "0001000" ,   "0001000",    "0000010"),
+    STP=c(       "P",          "P",           "O",           "O",           "O",          "O",          "P"),
+    rowID=c(     440737,       1205259,       2856390,       4529108,        5368156,     5835925,      6097391))
+
+  testData <- fixCalendarDates( testData )
+
+  res <- makeCalendarInner( testData )
+
+  res.calendar <- res[[1]]
+  res.calendar_dates <- res[[2]]
+
+  expectedResult = data.table(
+    UID=c(       "C09094 a",   "C09094 b",    "C09094 c",    "C09094 d",    "C09094 e",   "C09094 f",   "C09094 g"),
+    start_date=c("22-05-2023", "10-08-2023",  "11-08-2023",  "07-09-2023",  "08-09-2023", "21-09-2023", "22-09-2023"),
+    end_date=c(  "09-08-2023", "10-08-2023",  "06-09-2023",  "07-09-2023",  "20-09-2023", "21-09-2023", "04-10-2023"),
+    Days=c(      "1111100",    "0001000",     "1111100",     "0001000",     "1111100" ,   "0001000",    "1111100"),
+    STP=c(       "P",          "O",           "P",           "O",           "P",          "O",          "P"),
+    rowID=c(     440737,       2856390,       440737,        4529108,       440737,       5368156,      440737))
+
+  expectedResult = rbind(expectedResult, data.table(
+    UID=c(       "C09094 h",   "C09094 i",    "C09094 a2",   "C09094 b2"),
+    start_date=c("05-10-2023", "06-10-2023",  "27-05-2023",  "28-10-2023"),
+    end_date=c(  "05-10-2023", "08-12-2023",  "09-09-2023",  "09-12-2023"),
+    Days=c(      "0001000",    "1111100",     "0000010",     "0000010"),
+    STP=c(       "O",          "P",           "P",           "P"),
+    rowID=c(     5835925,      440737,        1205259,       6097391)))
 
   expectedResult <- fixCalendarDates( expectedResult )
 

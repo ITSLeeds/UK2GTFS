@@ -3,6 +3,65 @@
 
 
 
+assign("STOP_PROCESSING_UID", NULL )
+
+set_STOP_PROCESSING_UID <- function( value )
+{
+  env <- asNamespace("UK2GTFS")
+
+  unlockBinding("STOP_PROCESSING_UID", env)
+
+  assign("STOP_PROCESSING_UID", value, envir = env)
+
+  lockBinding("STOP_PROCESSING_UID", env)
+
+  if(!is.null(value))
+  {
+    message(paste0(Sys.time(), " Set STOP_PROCESSING_UID to [", get("STOP_PROCESSING_UID"), "]"))
+  }
+}
+
+
+
+
+
+# Append to the UID to note the changes - and ensure that all service_id's in the output file remain unique
+appendLetterSuffix <- function( cal )
+{
+  rows = nrow(cal)
+
+  if (rows > 1)
+  {
+    if (rows <= 26)
+    {
+      cal$UID <- paste0(cal$UID, " ", letters[1:rows])
+    }
+    else
+    {
+      # Cases where we need extra letters, gives up to 676 ids
+      lett <- paste0(rep(letters, each = 26), rep(letters, times = 26))
+      cal$UID <- paste0(cal$UID, " ", lett[1:rows])
+    }
+  }
+
+  return (cal)
+}
+
+
+# Append to the UID to note the changes - and ensure that all service_id's in the output file remain unique
+appendNumberSuffix<-function( cal, numToAppend )
+{
+  if( numToAppend>1 ) #don't need to append a new number if we only have one pattern
+  {
+    # further differentiate the UID by appending a number to the end for each different days pattern
+    cal$UID <- paste0(cal$UID, numToAppend)
+  }
+
+  return (cal)
+}
+
+
+
 # in a week bitmask, if there are non-operating days between the first and last operating day of the week - will return TRUE
 # e.g.    0010000 = FALSE      0011100 = FALSE       0101000 = TRUE
 hasGapInOperatingDays <- function( daysBitmask )
@@ -321,7 +380,7 @@ allocateCancellationsAcrossCalendars <- function( calendar, cancellations )
   #and the day of the cancellation is an operating day of the calendar item
   joined = cancellations[calendar, on = .(originalUID==originalUID,
                                           start_date>=start_date,
-                                          end_date<=end_date)][
+                                          end_date<=end_date), nomatch = 0][
                                             ((i.monday&monday) | (i.tuesday&tuesday) | (i.wednesday&wednesday)
                                              | (i.thursday&thursday) | (i.friday&friday) | (i.saturday&saturday) | (i.sunday&sunday)), ]
   #revert the stashed (join) fields
@@ -550,20 +609,18 @@ splitDates <- function(cal) {
   calNew <- calNew[ (!is.na(UID)) & (get("NOT_NEEDED") != UID) & (STP != "C") & (duration > 0), ]
 
   # Append UID to note the changes
-  if (nrow(calNew) > 0) {
-    if (nrow(calNew) <= 26) {
-      calNew$UID <- paste0(calNew$UID, " ", letters[1:nrow(calNew)])
-    } else {
-      # Cases where we need extra letters, gives upto 676 ids
-      lett <- paste0(rep(letters, each = 26), rep(letters, times = 26))
-      calNew$UID <- paste0(calNew$UID, " ", lett[1:nrow(calNew)])
-    }
-  } else {
+  if (nrow(calNew) > 0)
+  {
+    calNew <- appendLetterSuffix( calNew )
+  }
+  else
+  {
     calNew <- NA
   }
 
   return(calNew)
 }
+
 
 
 
@@ -576,6 +633,15 @@ splitDates <- function(cal) {
 #' @noRd
 #'
 makeCalendarInner <- function(calendarSub) {
+
+  if ( !is.null(STOP_PROCESSING_UID) )
+  {
+    if ( any( STOP_PROCESSING_UID==calendarSub$UID) )
+    {
+      message(paste0(Sys.time(), " Reached STOP_PROCESSING_UID value [", unique(calendarSub$UID), "] length=", length(calendarSub$UID)))
+      stop("Option:UK2GTFS_option_stopProcessingAtUid has been set: Stopped processing at UID=", STOP_PROCESSING_UID)
+    }
+  }
 
   if ( 1 == nrow(calendarSub) )
   {
@@ -602,15 +668,15 @@ makeCalendarInner <- function(calendarSub) {
     if( length(overlayDurations) <= 0 )
     {
       #assume the input data is good and the base timetables don't break any of the overlaying /operating day rules
-      res = list(calendarSub, NA)
+      res = list( appendLetterSuffix(calendarSub), NA)
     }
-    #if every overlay is a one day cancellation (and only one base timetable)
+    #if every overlay is a one day cancellation       #TODO remove this condition on only one base - code works, removing just breaks some tests that would need fixing
     else if (all(overlayDurations == 1) && all(overlayTypes == "C") && sum(allTypes == baseType) == 1 )
     {
       warning("Unexpected item in the makeCalendarInner-ing area, cancellations should now be handled at a higher level (1)")
 
       # Apply the cancellation via entries in calendar_dates.txt
-      res = list( calendarSub[calendarSub$STP != "C", ],
+      res = list( appendLetterSuffix( calendarSub[calendarSub$STP != "C", ] ),
                   calendarSub[calendarSub$STP == "C", ])
     }
     else
@@ -679,9 +745,7 @@ makeCalendarForDayPatterns <- function( dayPatterns, calendar )
 
       # rejects NAs
       if (inherits(calendarNewDay, "data.frame")) {
-        # further differentiate the UID by appending a number to the end for each different days pattern
-        calendarNewDay$UID <- paste0(calendarNewDay$UID, k)
-        splits[[k]] <- calendarNewDay
+        splits[[k]] <- appendNumberSuffix( calendarNewDay, k )
       }
     }
   }
@@ -729,17 +793,17 @@ makeCalendarForDifferentDayPatterns <- function( calendar )
 
   for (k in seq(1, length(distinctBasePatterns))) {
 
-    thisBase = baseTimetables[baseTimetables$Days == distinctBasePatterns[k] ]
+    theseBases = baseTimetables[baseTimetables$Days == distinctBasePatterns[k] ]
 
-    thisOverlay = overlays[ intersectingDayPatterns( distinctBasePatterns[k], overlays$Days ) ]
+    theseOverlays = overlays[ intersectingDayPatterns( distinctBasePatterns[k], overlays$Days ) ]
 
-    if (nrow(thisOverlay) <= 0)
+    if (nrow(theseOverlays) <= 0)
     {
-      splits[[k]] <- thisBase
+      splits[[k]] <- appendNumberSuffix( appendLetterSuffix( theseBases ), k )
     }
     else
     {
-      timetablesForThisPattern = data.table::rbindlist( list( thisBase, thisOverlay ), use.names=FALSE)
+      timetablesForThisPattern = data.table::rbindlist( list( theseBases, theseOverlays ), use.names=FALSE)
 
       #performance pre-sort all the entries by the priority
       #this speeds things up when we look up the required priority overlay **SEE_NOTE**
@@ -751,9 +815,8 @@ makeCalendarForDifferentDayPatterns <- function( calendar )
 
       # rejects NAs
       if (inherits(thisSplit, "data.frame")) {
-        # further differentiate the UID by appending a number to the end for each different days pattern
-        thisSplit$UID <- paste0(thisSplit$UID, k)
-        splits[[k]] <- thisSplit
+
+        splits[[k]] <- appendNumberSuffix( thisSplit, k )
       }
     }
   }
@@ -768,6 +831,7 @@ makeCalendarForDifferentDayPatterns <- function( calendar )
 
   return(list(splits, NA))
 }
+
 
 
 
