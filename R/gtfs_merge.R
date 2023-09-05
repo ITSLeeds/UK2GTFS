@@ -330,10 +330,10 @@ gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE, condenseServicePa
     }
   }
 
+  if ("file_id" %in% colnames(stop_times) ) stop_times$file_id <- NULL
+  if ("file_id" %in% colnames(calendar) ) calendar$file_id <- NULL
   shapes$file_id <- NULL
-  stop_times$file_id <- NULL
   routes$file_id <- NULL
-  calendar$file_id <- NULL
   frequencies$file_id <- NULL
   res_final <- list(agency, stops, routes, trips, stop_times, calendar, calendar_dates, shapes, frequencies)
   names(res_final) <- c("agency", "stops", "routes", "trips", "stop_times", "calendar", "calendar_dates", "shapes","frequencies")
