@@ -149,8 +149,7 @@ gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE, condenseServicePa
     if(force){
       stops <- stops[!duplicated(stops$stop_id),]
     } else {
-      stop("Duplicated Stop IDS: ",
-           paste( unique(stops$stop_id[duplicated(stops$stop_id)]), collapse = " "))
+      stop("Duplicated Stop IDS: ", paste( unique(stops$stop_id[duplicated(stops$stop_id)]), collapse = " "))
     }
   }
 
@@ -166,7 +165,7 @@ gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE, condenseServicePa
         routes <- routes[!duplicated(new_route_id), ]
         new_route_id <- routes[, c("file_id", "route_id")]
       } else {
-        stop("Duplicated route_id within the same GTFS file, try using force = TRUE ",
+        stop("Duplicated route_id within the same GTFS file, try using force = TRUE :",
              paste( unique(new_route_id$route_id[duplicated(new_route_id)]), collapse = " "))
       }
     }
@@ -223,8 +222,8 @@ gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE, condenseServicePa
         stop_times <- unique(stop_times)
         new_trip_id <- trips[, c("file_id", "trip_id")]
       } else{
-        stop(paste0("Duplicated trip_id within the same GTFS file",
-          paste( unique( new_trip_id$trip_id[duplicated(new_trip_id)]), collapse = " ")))
+        stop("Duplicated trip_id within the same GTFS file :",
+          paste( unique( new_trip_id$trip_id[duplicated(new_trip_id)]), collapse = " "))
       }
 
 
@@ -327,8 +326,7 @@ gtfs_merge <- function(gtfs_list, force = FALSE, quiet = TRUE, condenseServicePa
     if(force){
       shapes <- shapes[!duplicated(composite_key),]
     } else {
-      stop(paste0("Duplicated Shapes IDS",
-           paste( unique( composite_key[duplicated(composite_key)]), collapse = " ")))
+      stop("Duplicated Shapes IDS :", paste( unique( composite_key[duplicated(composite_key)]), collapse = " "))
     }
   }
 
