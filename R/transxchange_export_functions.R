@@ -363,10 +363,10 @@ expand_stop_times2 <- function(i, jps, trips) {
     spto = jps_sub$To.StopPointRef[1:(nrow(jps_sub)-1)]
     if(!all(spfm == spto)){
       jps_sub_new <- try(reorder_jps(jps_sub), silent = TRUE)
-      if(class(jps_sub_new) == "try-error"){
+      if(inherits(jps_sub_new, "try-error")){
         jps_sub_new <- try(reorder_jps(jps_sub, func = max), silent = TRUE)
       }
-      if(class(jps_sub_new) == "try-error"){
+      if(inherits(jps_sub_new, "try-error")){
         warning("Cannnot find correct order of stops, defaulting to file order")
       } else {
         jps_sub <- jps_sub_new

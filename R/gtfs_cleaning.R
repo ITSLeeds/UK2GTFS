@@ -194,10 +194,14 @@ gtfs_fast_stops <- function(gtfs, maxspeed = 83) {
 # }
 
 
+PUBLIC_SERVICE_CATEGORY = c("OL", "OU", "OO", "OW", "XC", "XD", "XI",
+                            "XR", "XU", "XX", "XZ", "BR", "BS", "SS" )
+
+
 #' Clean simple errors from GTFS files
 #'
 #' @param gtfs gtfs list
-#' @param public_only Logical, only return calls/services that are for public passenger pickup/set down (default FALSE)
+#' @param public_only Logical, if TRUE remove routes with route_type missing
 #' @details
 #' Task done:
 #'
@@ -208,6 +212,7 @@ gtfs_fast_stops <- function(gtfs, maxspeed = 83) {
 #' 4. Replace missing agency names with "MISSINGAGENCY"
 #' 5. If service is not public and public_only=TRUE then remove it (freight, 'trips' aka charters)
 #'        (these have a null route_type, so loading into OpenTripPlanner fails if these are present)
+#' 6' If public_only=TRUE then remove services with 'train_category' not for public use. e.g. EE (ECS-Empty Coaching Stock)
 #'
 #' @export
 gtfs_clean <- function(gtfs, public_only =  FALSE) {
@@ -240,8 +245,7 @@ gtfs_clean <- function(gtfs, public_only =  FALSE) {
     if ("train_category" %in% names(joinedCalls) )
     {
       filteredCalls <- joinedCalls[ !is.na( joinedCalls$route_type) &
-                                    joinedCalls$train_category %in% c("OL", "OU", "OO", "OW", "XC", "XD", "XI",
-                                                              "XR", "XU", "XX", "XZ", "BR", "BS", "SS" ), ]
+                                    joinedCalls$train_category %in% PUBLIC_SERVICE_CATEGORY, ]
     }
     else
     {
@@ -257,8 +261,7 @@ gtfs_clean <- function(gtfs, public_only =  FALSE) {
     if ("train_category" %in% names(joinedTrips) )
     {
       filteredTrips <- joinedTrips[ !is.na( joinedTrips$route_type ) &
-                                      joinedTrips$train_category %in% c("OL", "OU", "OO", "OW", "XC", "XD", "XI",
-                                                              "XR", "XU", "XX", "XZ", "BR", "BS", "SS" ), ]
+                                      joinedTrips$train_category %in% PUBLIC_SERVICE_CATEGORY, ]
     }
     else
     {
@@ -270,8 +273,7 @@ gtfs_clean <- function(gtfs, public_only =  FALSE) {
     if ("train_category" %in% names(gtfs$routes) )
     {
       gtfs$routes <- gtfs$routes[ !is.na( gtfs$routes$route_type ) &
-                                    gtfs$routes$train_category %in% c("OL", "OU", "OO", "OW", "XC", "XD", "XI",
-                                                              "XR", "XU", "XX", "XZ", "BR", "BS", "SS" ), ]
+                                    gtfs$routes$train_category %in% PUBLIC_SERVICE_CATEGORY, ]
     }
     else
     {

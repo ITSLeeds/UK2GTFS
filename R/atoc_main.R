@@ -4,13 +4,14 @@
 #' Export ATOC schedule as GTFS
 #'
 #' @param stop_times stop-times
+#' @param stops stops data.frame
 #' @param schedule list of dataframes
 #' @param silent logical
 #' @param ncores number of cores to use
 #' @param public_only filters to services / calls that are public pickup/set down only
 #' @noRd
 #'
-schedule2routes <- function(stop_times, schedule, silent = TRUE, ncores = 1, public_only=TRUE) {
+schedule2routes <- function(stop_times, stops, schedule, silent = TRUE, ncores = 1, public_only=TRUE) {
 
 
   ### SECTION 1: ###############################################################################
@@ -100,7 +101,7 @@ schedule2routes <- function(stop_times, schedule, silent = TRUE, ncores = 1, pub
   # make make the trips.txt  file by matching the calendar to the stop_times
 
   trips <- calendar[, c("service_id", "trip_id", "rowID", "ATOC Code", "Train Status", "Train Category", "Power Type", "Train Identity")]
-  trips <- longnames(routes = trips, stop_times = stop_times)
+  trips <- longnames(routes = trips, stop_times = stop_times, stops=stops)
 
 
   # Fix Times (and remove some fields)
@@ -108,7 +109,7 @@ schedule2routes <- function(stop_times, schedule, silent = TRUE, ncores = 1, pub
 
 
   ### SECTION 4: ###############################################################################
-  # make make the routes.txt
+  # make the routes.txt
   # a route is all the trips with a common start and end
   # i.e. schedules original UID
   if (!silent) {
@@ -136,7 +137,8 @@ schedule2routes <- function(stop_times, schedule, silent = TRUE, ncores = 1, pub
 
   routes <- routes[, c("route_id", "route_type", "ATOC Code", "route_long_name", "Train Category" )]
   names(routes) <- c("route_id", "route_type", "agency_id", "route_long_name", "train_category" )
-  routes$route_short_name <- routes$route_id
+  # IDs are not meaningful, just leave out
+  routes$route_short_name <- "" # was: routes$route_id
 
   routes$route_type[routes$agency_id == "LT" & routes$route_type == 2 ] <- 1
       # London Underground is Metro (unless already identified as a bus/ship etc)

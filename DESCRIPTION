@@ -5,6 +5,7 @@ Version: 1.0
 Authors@R: c(
     person("Malcolm", "Morgan", email = "m.morgan1@leeds.ac.uk", role = c("aut","cre"), 
       comment = c(ORCID = "0000-0002-9488-9183")),
+    person("Adrian", "Schönig", role = c("ctb")),
     person("Owen", "O'Neill", email = "owen@wvr.org.uk", role = c("aut"), 
       comment = c(ORCID = "0009-0008-0595-3042"))
     )
@@ -28,6 +29,7 @@ Imports:
   digest,
   foreach, 
   geodist,
+  httr,
   iotools,
   stringr,
   sf,
@@ -36,6 +38,7 @@ Imports:
   purrr (>= 1.0),
   pbapply,
   readr (>= 2.0),
+  RcppSimdJson,
   xml2,
   zip,
 Suggests: 

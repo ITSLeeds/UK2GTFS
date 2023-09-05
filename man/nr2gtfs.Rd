@@ -8,8 +8,8 @@ nr2gtfs(
   path_in,
   silent = TRUE,
   ncores = 1,
-  locations = tiplocs,
-  agency = atoc_agency,
+  locations = "tiplocs",
+  agency = "atoc_agency",
   shapes = FALSE,
   working_timetable = FALSE,
   public_only = TRUE

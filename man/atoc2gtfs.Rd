@@ -8,8 +8,8 @@ atoc2gtfs(
   path_in,
   silent = TRUE,
   ncores = 1,
-  locations = tiplocs,
-  agency = atoc_agency,
+  locations = "tiplocs",
+  agency = "atoc_agency",
   shapes = FALSE,
   transfers = TRUE,
   missing_tiplocs = TRUE

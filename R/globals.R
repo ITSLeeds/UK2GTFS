@@ -12,7 +12,8 @@ utils::globalVariables(c(
   'agency_url','agency_timezone',
   'agency_lang','agency_id',   'Freq',
   'UID','hash','vehicle_type','running_board','service_number',
-  'operator_code','route_id'
+  'operator_code','route_id',
+  'speed_after','distance','school_terms','distance_after','historic_bank_holidays'
 ))
 
 

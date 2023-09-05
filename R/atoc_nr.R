@@ -37,11 +37,26 @@
 nr2gtfs <- function(path_in,
                       silent = TRUE,
                       ncores = 1,
-                      locations = tiplocs,
-                      agency = atoc_agency,
+                      locations = "tiplocs",
+                      agency = "atoc_agency",
                       shapes = FALSE,
                       working_timetable = FALSE,
                       public_only = TRUE) {
+
+  if(inherits(locations,"character")){
+    if(locations == "tiplocs"){
+      load_data("tiplocs")
+      locations = tiplocs
+    }
+  }
+
+  if(inherits(agency,"character")){
+    if(agency == "atoc_agency"){
+      load_data("atoc_agency")
+      agency = atoc_agency
+    }
+  }
+  
   # checkmate
   checkmate::assert_character(path_in, len = 1)
   checkmate::assert_file_exists(path_in)
@@ -70,7 +85,6 @@ nr2gtfs <- function(path_in,
 
   # Get the Station Locations
   if ("sf" %in% class(locations)) {
-    # load("data/tiplocs.RData")
     stops <- cbind(locations, sf::st_coordinates(locations))
     stops <- as.data.frame(stops)
     stops <- stops[, c( "stop_id", "stop_code", "stop_name", "Y", "X" )]
@@ -99,6 +113,7 @@ nr2gtfs <- function(path_in,
   # Main Timetable Build
   timetables <- schedule2routes(
     stop_times = stop_times,
+    stops = stops,
     schedule = schedule,
     silent = silent,
     ncores = ncores,

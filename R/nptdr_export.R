@@ -124,7 +124,7 @@ nptdr_makeCalendar <- function(schedule, exceptions, historic_bank_holidays = hi
 
 
   # Historical term times
-  data("school_terms")
+  utils::data("school_terms")
   message("School term dates are illustrative and not exact")
 
   calendar_noschool = calendar[is.na(calendar$school_term_time),]

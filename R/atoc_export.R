@@ -101,11 +101,13 @@ station2transfers <- function(station, flf, path_out) {
   transfers3 <- transfers2[, c("TIPLOC Code", "CRS Code")]
   names(transfers3) <- c("from_stop_id", "CRS Code")
   transfers1 <- dplyr::left_join(transfers1, transfers3,
-    by = c("from" = "CRS Code")
+    by = c("from" = "CRS Code"),
+    relationship = "many-to-many"
   )
   names(transfers3) <- c("to_stop_id", "CRS Code")
   transfers1 <- dplyr::left_join(transfers1, transfers3,
-    by = c("to" = "CRS Code")
+    by = c("to" = "CRS Code"),
+    relationship = "many-to-many"
   )
   transfers1 <- transfers1[, c(
     "from_stop_id", "to_stop_id",
@@ -142,29 +144,45 @@ station2transfers <- function(station, flf, path_out) {
 #'
 #' @param routes routes data.frame
 #' @param stop_times stop_times data.frame
+#' @param stops stops data.frame
 #' @noRd
 #'
-longnames <- function(routes, stop_times) {
+longnames <- function(routes, stop_times, stops) {
 
   stop_times_sub <- dplyr::group_by(stop_times, trip_id)
   stop_times_sub <- dplyr::summarise(stop_times_sub,
     schedule = unique(schedule),
-    stop_a = stop_id[stop_sequence == 1],
-    stop_b = stop_id[stop_sequence == max(stop_sequence)]
-  )
+    stop_id_a = stop_id[stop_sequence == 1],
+    # seq = min(stop_sequence),
+    stop_id_b = stop_id[stop_sequence == max(stop_sequence)]  )
 
-  stop_times_sub$route_long_name <- paste0(stop_times_sub$stop_a,
+  # Add names for `stop_id_[a|b]` as `stop_name_[a|b]`
+  stop_times_sub <- dplyr::left_join(
+    stop_times_sub,
+    dplyr::rename(stops[, c("stop_id", "stop_name")], stop_name_a = stop_name),
+    by = c("stop_id_a" = "stop_id"))
+  stop_times_sub <- dplyr::left_join(
+    stop_times_sub,
+    dplyr::rename(stops[, c("stop_id", "stop_name")], stop_name_b = stop_name),
+    by = c("stop_id_b" = "stop_id"))
+
+  stop_times_sub$route_long_name <- paste0("from ",
+                                           stop_times_sub$stop_name_a,
                                            " to ",
-                                           stop_times_sub$stop_b)
+                                           stop_times_sub$stop_name_b)
+
+  stop_times_sub$route_long_name <- gsub(" Rail Station", "" , stop_times_sub$route_long_name)
+
   stop_times_sub <- stop_times_sub[!duplicated(stop_times_sub$schedule), ]
   stop_times_sub <- stop_times_sub[, c("schedule", "route_long_name")]
 
   routes <- dplyr::left_join(routes, stop_times_sub,
                              by = c("rowID" = "schedule"))
 
-  routes[`Train Category` == "SS", route_long_name := paste("Ship from",route_long_name)]
-  routes[`Train Category` %in% c("BS", "BR"), route_long_name := paste("Bus from",route_long_name)]
-  routes[!(`Train Category` %in% c("SS", "BS", "BR")), route_long_name := paste("Train from",route_long_name)]
+
+  routes[`Train Category` == "SS", route_long_name := paste("Ship ",route_long_name)]
+  routes[`Train Category` %in% c("BS", "BR"), route_long_name := paste("Bus ",route_long_name)]
+  routes[!(`Train Category` %in% c("SS", "BS", "BR")), route_long_name := paste("Train ",route_long_name)]
   #TODO reflect the London Transport services being set to metro/underground in this naming code
 
   return(routes)

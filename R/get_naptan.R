@@ -13,7 +13,10 @@
 #'
 #' @export
 
-get_naptan <- function(url = "https://naptan.api.dft.gov.uk/v1/access-nodes?dataFormat=csv", naptan_extra = naptan_missing) {
+get_naptan <- function(url = "https://naptan.api.dft.gov.uk/v1/access-nodes?dataFormat=csv",
+                       naptan_extra = naptan_missing) {
+
+  load_data("naptan_missing")
 
   dir.create("temp_naptan")
   utils::download.file(url = url, destfile = "temp_naptan/Stops.csv", mode = "wb", quiet = TRUE)

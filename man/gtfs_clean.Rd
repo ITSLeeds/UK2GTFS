@@ -9,7 +9,7 @@ gtfs_clean(gtfs, public_only = FALSE)
 \arguments{
 \item{gtfs}{gtfs list}
 
-\item{public_only}{Logical, only return calls/services that are for public passenger pickup/set down (default FALSE)}
+\item{public_only}{Logical, if TRUE remove routes with route_type missing}
 }
 \description{
 Clean simple errors from GTFS files
@@ -24,4 +24,5 @@ Task done:
 4. Replace missing agency names with "MISSINGAGENCY"
 5. If service is not public and public_only=TRUE then remove it (freight, 'trips' aka charters)
        (these have a null route_type, so loading into OpenTripPlanner fails if these are present)
+6' If public_only=TRUE then remove services with 'train_category' not for public use. e.g. EE (ECS-Empty Coaching Stock)
 }
