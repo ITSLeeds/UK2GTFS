@@ -16,4 +16,7 @@ sets/gets a UID value at which processing will stop - used for debugging
 If no value passed in will return the current setting of the option. (Usually NULL)
   If value passed in, timetable build processing will stop in atoc_overlay.makeCalendarInner()
   when an exact match for that value is encountered.
+
+  THIS ONLY WORKS WITH ncores==1
+  (probably some environment nonsense I don't understand)
 }
