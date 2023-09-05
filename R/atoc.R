@@ -31,7 +31,7 @@
 #'   Agency
 #'
 #'   The ATOC files do not contain the necessary information to build the
-#'   agency.txt file. Therfore this data is provided with the package. You can
+#'   agency.txt file. Therefore this data is provided with the package. You can
 #'   also pass your own data frame of agency information.
 #'
 #'
