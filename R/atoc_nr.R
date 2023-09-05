@@ -42,21 +42,6 @@ nr2gtfs <- function(path_in,
                       shapes = FALSE,
                       working_timetable = FALSE,
                       public_only = TRUE) {
-
-  if(inherits(locations,"character")){
-    if(locations == "tiplocs"){
-      load_data("tiplocs")
-      locations = tiplocs
-    }
-  }
-
-  if(inherits(agency,"character")){
-    if(agency == "atoc_agency"){
-      load_data("atoc_agency")
-      agency = atoc_agency
-    }
-  }
-  
   # checkmate
   checkmate::assert_character(path_in, len = 1)
   checkmate::assert_file_exists(path_in)
@@ -67,6 +52,46 @@ nr2gtfs <- function(path_in,
   if (ncores == 1) {
     message(paste0(Sys.time(), " This will take some time, make sure you use 'ncores' to enable multi-core processing"))
   }
+
+  if(inherits(agency,"character")){
+    if(agency == "atoc_agency"){
+      load_data("atoc_agency")
+      agency = atoc_agency
+      if ( !inherits(agency, "data.frame") || 0==nrow(agency) ){ stop("failed to load atoc_agency data.") }
+    }
+  }
+
+  if(inherits(locations,"character")){
+    if(locations == "tiplocs"){
+      load_data("tiplocs")
+      locations = tiplocs
+      if ( !inherits(locations, "data.frame") || 0==nrow(locations) ){ stop("failed to tiploc data.") }
+    }
+  }
+
+  # Get the Station Locations
+  if (inherits(locations, "data.frame"))
+  {
+    if (inherits(locations, "sf"))
+    {
+      stops <- cbind(locations, sf::st_coordinates(locations))
+      stops <- as.data.frame(stops)
+      stops <- stops[, c( "stop_id", "stop_code", "stop_name", "Y", "X" )]
+    }
+    else
+    {
+      stops = locations
+    }
+
+    names(stops) <- c(  "stop_id", "stop_code", "stop_name", "stop_lat", "stop_lon" )
+  } else {
+    stops <- utils::read.csv(locations, stringsAsFactors = FALSE)
+  }
+
+  stops$stop_lat <- round(stops$stop_lat, 5)
+  stops$stop_lon <- round(stops$stop_lon, 5)
+
+
 
   # Is input a zip or a folder
   if (!grepl(".gz", path_in)) {
@@ -83,17 +108,6 @@ nr2gtfs <- function(path_in,
   )
 
 
-  # Get the Station Locations
-  if ("sf" %in% class(locations)) {
-    stops <- cbind(locations, sf::st_coordinates(locations))
-    stops <- as.data.frame(stops)
-    stops <- stops[, c( "stop_id", "stop_code", "stop_name", "Y", "X" )]
-    names(stops) <- c(  "stop_id", "stop_code", "stop_name", "stop_lat", "stop_lon" )
-    stops$stop_lat <- round(stops$stop_lat, 5)
-    stops$stop_lon <- round(stops$stop_lon, 5)
-  } else {
-    stops <- utils::read.csv(locations, stringsAsFactors = FALSE)
-  }
 
   # Construct the GTFS
   stop_times <- mca[["stop_times"]]
@@ -109,6 +123,12 @@ nr2gtfs <- function(path_in,
 
   # remove any unused stops
   stops <- stops[stops$stop_id %in% stop_times$stop_id, ]
+
+  if ( nrow(stops)<=0 )
+  {
+    stop("Could not match any stops in input data to internal stop database.")
+  }
+
 
   # Main Timetable Build
   timetables <- schedule2routes(
