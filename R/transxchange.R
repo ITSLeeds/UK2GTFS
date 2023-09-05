@@ -19,12 +19,12 @@
 #' @return A GTFS named list
 #' @details
 #'
-#' This is a meta fucntion which aids TransXchange to GTFS conversion. It simple
+#' This is a meta function which aids TransXchange to GTFS conversion. It simple
 #' runs transxchange_import(), transxchange_export(), gtfs_merge(), gtfs_write()
 #'
 #' Progress Bars
 #'
-#' To minimise overall processing when using mulitple cores the fucntion works
+#' To minimise overall processing when using multiple cores the function works
 #' from largest to smallest file.This can mean the progress bar sits a 0% for
 #' quite some time, before starting to move rapidly.
 #'
