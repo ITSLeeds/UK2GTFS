@@ -765,81 +765,17 @@ test_that("3:test makeCalendarInner:one base: one day cancellations", {
 
 
 
-test_that("4:test makeCalendarInner:one day cancellations(old)", {
+test_that("4:test makeCalendarInner:one day cancellations(current)", {
 
-  #there are multiple valid ways to process this - because of cancellations being handled at a higher level this
-  #test case no longer applies - but quite a bit of work to create the test case, so keep it for now.
-  expect_true(TRUE)
+  #all overlays 1 day cancellations
 
-  if(FALSE)
-  {
-    #all overlays 1 day cancellations
+  testData = data.table(UID=c(       "uid1",       "uid1",        "uid1",        "uid1",        "uid1",         "uid1"),
+                        start_date=c("02-01-2023", "08-01-2023",  "01-03-2023",  "11-01-2023",  "09-03-2023",   "23-01-2023" ),
+                        end_date=c(  "04-02-2023", "05-02-2023",  "31-03-2023",  "11-01-2023",  "09-03-2023",   "23-01-2023" ),
+                        Days=c(      "1111110",    "0000001",     "0011100",     "0010000",     "0001000",      "1000000" ),
+                        STP=c(       "P",          "P",           "P",           "C",           "C",            "C" ),
+                        rowID=c(     1,            2,             3,             4,             5,              6))
 
-    testData = data.table(UID=c(       "uid1",       "uid1",        "uid1",        "uid1",        "uid1",         "uid1"),
-                          start_date=c("02-01-2023", "08-01-2023",  "01-03-2023",  "11-01-2023",  "09-03-2023",   "23-01-2023" ),
-                          end_date=c(  "04-02-2023", "05-02-2023",  "31-03-2023",  "11-01-2023",  "09-03-2023",   "23-01-2023" ),
-                          Days=c(      "1111110",    "0000001",     "0011100",     "0010000",     "0001000",      "1000000" ),
-                          STP=c(       "P",          "P",           "P",           "C",           "C",            "C" ),
-                          rowID=c(     1,            2,             3,             4,             5,              6))
-
-    testData <- fixCalendarDates( testData )
-
-    res <- makeCalendarInner( testData )
-
-    res.calendar <- res[[1]]
-    res.calendar_dates <- res[[2]]
-
-    expectedResult = data.table(UID=c(       "uid1",       "uid1",        "uid1"),
-                                start_date=c("02-01-2023", "08-01-2023",  "01-03-2023"),
-                                end_date=c(  "04-02-2023", "05-02-2023",  "31-03-2023"),
-                                Days=c(      "1111110",    "0000001",     "0011100"),
-                                STP=c(       "P",          "P",           "P"),
-                                rowID=c(     1,            2,             3))
-    expectedResult <- fixCalendarDates( expectedResult )
-
-    res.calendar = removeOriginalUidField( res.calendar )
-    expectedResult = removeOriginalUidField( expectedResult )
-
-    printDifferencesDf(expectedResult,res.calendar)
-
-
-    expectedResultDates = data.table(UID=c("uid1",        "uid1",         "uid1"),
-                          start_date=c("11-01-2023",  "09-03-2023",   "23-01-2023" ),
-                          end_date=c(  "11-01-2023",  "09-03-2023",   "23-01-2023" ),
-                          Days=c(      "0010000",     "0001000",      "1000000" ),
-                          STP=c(       "C",           "C",            "C" ),
-                          rowID=c(     4,             5,              6))
-    expectedResultDates <- fixCalendarDates( expectedResultDates )
-
-    res.calendar_dates = removeOriginalUidField( res.calendar_dates )
-    expectedResultDates = removeOriginalUidField( expectedResultDates )
-
-    expect_true(identical(expectedResult,res.calendar)
-                & identical(expectedResultDates,res.calendar_dates))
-  }
-
-})
-
-
-
-
-
-test_that("5:test makeCalendarInner:one day cancellations(current)", {
-
-  # all overlays 1 day cancellations
-  # this method splits up the base timetable, leaving gaps where there are cancellation days
-
-  # this can create schedule entries which are by the CIF rules incorrect, because we don't
-  # validate that the new start/end dates align with the day pattern bitmask
-
-  # while the cancellation part is no longer current, this is still a good test for all the date setting logic
-
-  testData = data.table(UID=c(       "uid1",       "uid1",        "uid1",        "uid1",         "uid1"),
-                        start_date=c("02-01-2023", "08-01-2023",  "11-01-2023",  "09-03-2023",   "23-01-2023" ),
-                        end_date=c(  "04-02-2023", "05-02-2023",  "11-01-2023",  "09-03-2023",   "23-01-2023" ),
-                        Days=c(      "1111110",    "0000001",     "0010000",     "0001000",      "1000000" ),
-                        STP=c(       "P",          "P",           "C",           "C",            "C" ),
-                        rowID=c(     1,            2,             4,             5,              6))
   testData <- fixCalendarDates( testData )
 
   res <- makeCalendarInner( testData )
@@ -847,12 +783,12 @@ test_that("5:test makeCalendarInner:one day cancellations(current)", {
   res.calendar <- res[[1]]
   res.calendar_dates <- res[[2]]
 
-  expectedResult = data.table(UID=c( "uid1 a",     "uid1 b",     "uid1 c",     "uid1 a2",     "uid1 b2",     "uid1 c2"),
-                        start_date=c("02-01-2023", "12-01-2023", "24-01-2023", "08-01-2023",  "12-01-2023",  "24-01-2023"),
-                        end_date=c(  "10-01-2023", "22-01-2023", "04-02-2023", "10-01-2023",  "22-01-2023",  "05-02-2023"),
-                        Days=c(      "1111110",    "1111110",    "1111110",    "0000001",     "0000001",     "0000001"),
-                        STP=c(       "P",          "P",          "P",          "P",           "P",           "P"),
-                        rowID=c(     1,            1,            1,            2,             2,             2))
+  expectedResult = data.table(UID=c(       "uid1 a",     "uid1 b",      "uid1 c"),
+                              start_date=c("02-01-2023", "08-01-2023",  "01-03-2023"),
+                              end_date=c(  "04-02-2023", "05-02-2023",  "31-03-2023"),
+                              Days=c(      "1111110",    "0000001",     "0011100"),
+                              STP=c(       "P",          "P",           "P"),
+                              rowID=c(     1,            2,             3))
   expectedResult <- fixCalendarDates( expectedResult )
 
   res.calendar = removeOriginalUidField( res.calendar )
@@ -861,7 +797,71 @@ test_that("5:test makeCalendarInner:one day cancellations(current)", {
   printDifferencesDf(expectedResult,res.calendar)
 
 
-  expect_true(identical(expectedResult,res.calendar) & is.na(res.calendar_dates))
+  expectedResultDates = data.table(UID=c("uid1",        "uid1",         "uid1"),
+                        start_date=c("11-01-2023",  "09-03-2023",   "23-01-2023" ),
+                        end_date=c(  "11-01-2023",  "09-03-2023",   "23-01-2023" ),
+                        Days=c(      "0010000",     "0001000",      "1000000" ),
+                        STP=c(       "C",           "C",            "C" ),
+                        rowID=c(     4,             5,              6))
+  expectedResultDates <- fixCalendarDates( expectedResultDates )
+
+  res.calendar_dates = removeOriginalUidField( res.calendar_dates )
+  expectedResultDates = removeOriginalUidField( expectedResultDates )
+
+  printDifferencesDf( expectedResultDates,res.calendar_dates )
+
+  expect_true(identical(expectedResult,res.calendar)
+              & identical(expectedResultDates,res.calendar_dates))
+})
+
+
+
+
+
+test_that("5:test makeCalendarInner:one day cancellations(old)", {
+
+  #there are multiple valid ways to process this - because of cancellations being handled at a higher level this
+  #test case no longer applies - but quite a bit of work to create the test case, so keep it for now.
+  expect_true(TRUE)
+
+  if(FALSE)
+  {
+    # all overlays 1 day cancellations
+    # this method splits up the base timetable, leaving gaps where there are cancellation days
+
+    # this can create schedule entries which are by the CIF rules incorrect, because we don't
+    # validate that the new start/end dates align with the day pattern bitmask
+
+    # while the cancellation part is no longer current, this is still a good test for all the date setting logic
+
+    testData = data.table(UID=c(       "uid1",       "uid1",        "uid1",        "uid1",         "uid1"),
+                          start_date=c("02-01-2023", "08-01-2023",  "11-01-2023",  "09-03-2023",   "23-01-2023" ),
+                          end_date=c(  "04-02-2023", "05-02-2023",  "11-01-2023",  "09-03-2023",   "23-01-2023" ),
+                          Days=c(      "1111110",    "0000001",     "0010000",     "0001000",      "1000000" ),
+                          STP=c(       "P",          "P",           "C",           "C",            "C" ),
+                          rowID=c(     1,            2,             4,             5,              6))
+    testData <- fixCalendarDates( testData )
+
+    res <- makeCalendarInner( testData )
+
+    res.calendar <- res[[1]]
+    res.calendar_dates <- res[[2]]
+
+    expectedResult = data.table(UID=c( "uid1 a",     "uid1 b",     "uid1 c",     "uid12"),
+                          start_date=c("02-01-2023", "12-01-2023", "24-01-2023", "08-01-2023"),
+                          end_date=c(  "10-01-2023", "22-01-2023", "04-02-2023", "05-02-2023"),
+                          Days=c(      "1111110",    "1111110",    "1111110",    "0000001"),
+                          STP=c(       "P",          "P",          "P",          "P"),
+                          rowID=c(     1,            1,            1,            2))
+    expectedResult <- fixCalendarDates( expectedResult )
+
+    res.calendar = removeOriginalUidField( res.calendar )
+    expectedResult = removeOriginalUidField( expectedResult )
+
+    printDifferencesDf(expectedResult,res.calendar)
+
+    expect_true(identical(expectedResult,res.calendar) & is.na(res.calendar_dates))
+  }
 })
 
 

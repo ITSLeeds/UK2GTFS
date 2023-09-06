@@ -634,15 +634,6 @@ splitDates <- function(cal) {
 #'
 makeCalendarInner <- function(calendarSub) {
 
-  if ( !is.null(STOP_PROCESSING_UID) )
-  {
-    if ( any( STOP_PROCESSING_UID==calendarSub$UID) )
-    {
-      message(paste0(Sys.time(), " Reached STOP_PROCESSING_UID value [", unique(calendarSub$UID), "] length=", length(calendarSub$UID)))
-      stop("Option:UK2GTFS_option_stopProcessingAtUid has been set: Stopped processing at UID=", STOP_PROCESSING_UID)
-    }
-  }
-
   if ( 1 == nrow(calendarSub) )
   {
     # make into an single entry
@@ -670,8 +661,8 @@ makeCalendarInner <- function(calendarSub) {
       #assume the input data is good and the base timetables don't break any of the overlaying /operating day rules
       res = list( appendLetterSuffix(calendarSub), NA)
     }
-    #if every overlay is a one day cancellation       #TODO remove this condition on only one base - code works, removing just breaks some tests that would need fixing
-    else if (all(overlayDurations == 1) && all(overlayTypes == "C") && sum(allTypes == baseType) == 1 )
+    #if every overlay is a one day cancellation
+    else if ( all(overlayDurations == 1) && all(overlayTypes == "C") )
     {
       warning("Unexpected item in the makeCalendarInner-ing area, cancellations should now be handled at a higher level (1)")
 
@@ -697,69 +688,25 @@ makeCalendarInner <- function(calendarSub) {
       }
       else # split by day pattern
       {
-        #this works if the day patterns don't overlap any operating days.
-        if ( any( countIntersectingDayPatterns(uniqueDayPatterns) > 1) )
-        {
-          #this scenario DOES exist in the downloaded ATOC test data
-          #stop(paste("Scenario with overlay pattern not matching base pattern is not currently handled. service=", unique(calendarSub$UID)))
-          res = makeCalendarForDifferentDayPatterns( calendarSub )
-        }
-        else
-        {
-          res = makeCalendarForDayPatterns( uniqueDayPatterns, calendarSub )
-        }
+        res = makeCalendarForDifferentDayPatterns( calendarSub, uniqueDayPatterns )
       }
     }
   }
 
-  #stopifnot( is.list(res) )
+
+  if ( !is.null(STOP_PROCESSING_UID) )
+  {
+    if ( any( STOP_PROCESSING_UID==calendarSub$UID) )
+    {
+      message(paste0(Sys.time(), " Reached STOP_PROCESSING_UID value [", unique(calendarSub$UID), "] length=", length(calendarSub$UID)))
+      stop("Option:UK2GTFS_option_stopProcessingAtUid has been set: Stopped processing at UID=", STOP_PROCESSING_UID)
+    }
+  }
+
   return (res)
 }
 
 
-#TODO see if makeCalendarForDifferentDayPatterns() covers this case too
-#- if so, remove this so there are fewer code paths to test
-makeCalendarForDayPatterns <- function( dayPatterns, calendar )
-{
-  splits <- list()
-
-  #performance pre-sort all the entries by the priority
-  #this speeds things up when we look up the required priority overlay **SEE_NOTE**
-  #calendar = calendar[ order(STP, duration), ]
-  setkey( calendar, STP, duration )
-  setindex( calendar, start_date, end_date)
-
-  for (k in seq(1, length(dayPatterns))) {
-    # select for each pattern but include cancellations with a
-    # different day pattern
-    calendarDay <- calendar[calendar$Days == dayPatterns[k] | calendar$STP == "C", ]
-    # TODO cancellations now handled elsewhere - remove this once code stable
-
-    if (all(calendarDay$STP == "C")) {
-      # ignore cases of everything is cancelled
-      splits[[k]] <- NULL
-      warning("unexpected item in the makeCalendarForDayPatterns-ing area, cancellations should now be handled at a higher level")
-    }
-    else {
-      calendarNewDay <- splitDates(calendarDay)
-
-      # rejects NAs
-      if (inherits(calendarNewDay, "data.frame")) {
-        splits[[k]] <- appendNumberSuffix( calendarNewDay, k )
-      }
-    }
-  }
-
-  splits <- data.table::rbindlist(splits, use.names=FALSE)
-
-  splits <- makeCalendarsUnique( splits )
-
-  # after all this faffing about and splitting and joining, it's quite likely we've created some
-  # small fragments of base timetable that aren't valid (e.g mon-fri service but start and end date on weekend)
-  splits <- splits[ checkOperatingDayActive( splits ) ]
-
-  return(list(splits, NA))
-}
 
 
 # this is a complex case where the overlays don't have the same day pattern as the base timetable
@@ -772,20 +719,24 @@ makeCalendarForDayPatterns <- function( dayPatterns, calendar )
 #
 # when we get to this latter complexity we just split the overlay into individual days and apply it that way.
 #
-makeCalendarForDifferentDayPatterns <- function( calendar )
+makeCalendarForDifferentDayPatterns <- function( calendar, uniqueDayPatterns )
 {
   baseType = max(calendar$STP)
   baseTimetables =  calendar[calendar$STP == baseType]
   overlayTimetables =  calendar[calendar$STP != baseType]
 
-  gappyOverlays = overlayTimetables[ hasGapInOperatingDays(overlayTimetables$Days) ]
-  continiousOverlays = overlayTimetables[ !hasGapInOperatingDays(overlayTimetables$Days) ]
+  #do the day patterns overlap each other in any way ?
+  #e.g. a mon-sat pattern with a wed-fri overlap.
+  if ( any( countIntersectingDayPatterns(uniqueDayPatterns) > 1) )
+  {
+    gappyOverlays = overlayTimetables[ hasGapInOperatingDays(overlayTimetables$Days) ]
+    continiousOverlays = overlayTimetables[ !hasGapInOperatingDays(overlayTimetables$Days) ]
 
-  gappyOverlays = makeAllOneDay( gappyOverlays )
-  continiousOverlays = expandAllWeeks( continiousOverlays )
+    gappyOverlays = makeAllOneDay( gappyOverlays )
+    continiousOverlays = expandAllWeeks( continiousOverlays )
 
-  overlays =  data.table::rbindlist( list(continiousOverlays,gappyOverlays), use.names=FALSE)
-
+    overlayTimetables =  data.table::rbindlist( list(continiousOverlays,gappyOverlays), use.names=FALSE)
+  }
 
   splits <- list()
 
@@ -795,7 +746,7 @@ makeCalendarForDifferentDayPatterns <- function( calendar )
 
     theseBases = baseTimetables[baseTimetables$Days == distinctBasePatterns[k] ]
 
-    theseOverlays = overlays[ intersectingDayPatterns( distinctBasePatterns[k], overlays$Days ) ]
+    theseOverlays = overlayTimetables[ intersectingDayPatterns( distinctBasePatterns[k], overlayTimetables$Days ) ]
 
     if (nrow(theseOverlays) <= 0)
     {
@@ -813,9 +764,8 @@ makeCalendarForDifferentDayPatterns <- function( calendar )
 
       thisSplit <- splitDates( timetablesForThisPattern )
 
-      # rejects NAs
+      # reject NAs
       if (inherits(thisSplit, "data.frame")) {
-
         splits[[k]] <- appendNumberSuffix( thisSplit, k )
       }
     }

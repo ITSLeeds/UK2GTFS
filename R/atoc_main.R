@@ -137,6 +137,7 @@ schedule2routes <- function(stop_times, stops, schedule, silent = TRUE, ncores =
 
   routes <- routes[, c("route_id", "route_type", "ATOC Code", "route_long_name", "Train Category" )]
   names(routes) <- c("route_id", "route_type", "agency_id", "route_long_name", "train_category" )
+
   # IDs are not meaningful, just leave out
   routes$route_short_name <- "" # was: routes$route_id
 
