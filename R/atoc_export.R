@@ -180,9 +180,9 @@ longnames <- function(routes, stop_times, stops) {
                              by = c("rowID" = "schedule"))
 
 
-  routes[`Train Category` == "SS", route_long_name := paste("Ship ",route_long_name)]
-  routes[`Train Category` %in% c("BS", "BR"), route_long_name := paste("Bus ",route_long_name)]
-  routes[!(`Train Category` %in% c("SS", "BS", "BR")), route_long_name := paste("Train ",route_long_name)]
+  routes[`Train Category` == "SS", route_long_name := paste("Ship",route_long_name)]
+  routes[`Train Category` %in% c("BS", "BR"), route_long_name := paste("Bus",route_long_name)]
+  routes[!(`Train Category` %in% c("SS", "BS", "BR")), route_long_name := paste("Train",route_long_name)]
   #TODO reflect the London Transport services being set to metro/underground in this naming code
 
   return(routes)
