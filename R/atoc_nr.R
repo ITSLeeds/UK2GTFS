@@ -77,14 +77,15 @@ nr2gtfs <- function(path_in,
       stops <- cbind(locations, sf::st_coordinates(locations))
       stops <- as.data.frame(stops)
       stops <- stops[, c( "stop_id", "stop_code", "stop_name", "Y", "X" )]
+      names(stops) <- c(  "stop_id", "stop_code", "stop_name", "stop_lat", "stop_lon" )
     }
     else
     {
       stops = locations
     }
-
-    names(stops) <- c(  "stop_id", "stop_code", "stop_name", "stop_lat", "stop_lon" )
-  } else {
+  }
+  else
+  {
     stops <- utils::read.csv(locations, stringsAsFactors = FALSE)
   }
 
