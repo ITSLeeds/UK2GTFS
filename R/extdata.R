@@ -59,7 +59,7 @@ download_data <- function(tag_name, package_location, date){
   utils::unzip(file.path(tempdir(),"UK2GTFS_load/all.zip"),
                exdir = file.path(package_location, "extdata"))
   unlink(file.path(tempdir(),"UK2GTFS_load"), recursive = TRUE)
-  writeLines(date, file.path(package_location, "extdata/date.txt"))
+  writeLines( as.character(date), file.path(package_location, "extdata/date.txt"))
 
 }
 

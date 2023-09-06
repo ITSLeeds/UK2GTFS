@@ -1,6 +1,13 @@
 # Run when package loads
+# bear in mind this runs in every worker process as we start them and load this package into the worker's namespace
 .onLoad <- function(libname, pkgname){
-  update_data()
+
+  tryCatch({
+    update_data()
+  }, error = function(err) {
+    warning(Sys.time(), " Process id=", Sys.getpid(), " threw errors during package load while calling update_date() :", err)
+  })
+
 }
 
 
