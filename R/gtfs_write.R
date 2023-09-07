@@ -170,8 +170,9 @@ formatAttributesToGtfsSchema <- function(dt)
     if (length(dateColumnsToFormat) > 0)
     {
       dt[, (dateColumnsToFormat) := lapply(.SD,
-                    function(d){ gsub("-", "", as.character(d) ) } ),
-                    .SDcols = dateColumnsToFormat]
+                     function(d){ sprintf("%04d%02d%02d", lubridate::year(d), lubridate::month(d), lubridate::mday(d)) } ),
+         .SDcols = dateColumnsToFormat]
+      #performance, sprintf runs 6x faster than as.character() (which calls format()), followed by gsub()
     }
   }
 

@@ -65,6 +65,27 @@ test_that("test changing module level variable", {
 
 
 
+
+test_that("test splitBitmask performance", {
+
+  execution_time <- system.time({
+    for (i in 1:100000)
+    {
+      res = splitBitmask(SINGLE_DAY_PATTERN_VECTOR)
+    }
+  })
+
+  message(paste0("write time=", execution_time, "\n"))
+
+  expectedResult = unlist(SINGLE_DAY_PATTERN_LIST)
+
+  expect_true( identical( res, expectedResult ) )
+})
+
+
+
+
+
 test_that("test countIntersectingDayPatterns:1", {
 
   OK = TRUE

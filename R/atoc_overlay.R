@@ -22,8 +22,9 @@ set_STOP_PROCESSING_UID <- function( value )
 }
 
 
-
-
+#performance - this is slow, must be generating on the fly each time subset happens - cache it. -
+LETTERS <- letters[1:26]
+TWO_LETTERS <- paste0(rep(letters, each = 26), rep(letters, times = 26))
 
 # Append to the UID to note the changes - and ensure that all service_id's in the output file remain unique
 appendLetterSuffix <- function( cal )
@@ -34,13 +35,12 @@ appendLetterSuffix <- function( cal )
   {
     if (rows <= 26)
     {
-      cal$UID <- paste0(cal$UID, " ", letters[1:rows])
+      cal$UID <- paste0(cal$UID, " ", LETTERS[1:rows])
     }
     else
     {
       # Cases where we need extra letters, gives up to 676 ids
-      lett <- paste0(rep(letters, each = 26), rep(letters, times = 26))
-      cal$UID <- paste0(cal$UID, " ", lett[1:rows])
+      cal$UID <- paste0(cal$UID, " ", TWO_LETTERS[1:rows])
     }
   }
 
@@ -130,13 +130,12 @@ splitBitmask <- function( bitmask, asInteger=FALSE )
 
   bitmask[duff] = "       "
 
-  splitDays = strsplit(bitmask, "")
+  splitDays = ( "1"== unlist( strsplit(bitmask, "") ) )
+  #performance, calling as.integer on string is surprisingly expensive, so do it this way instead which is twice as fast overall
 
-  splitDays = as.integer(unlist(splitDays))
-
-  if (!asInteger)
+  if (asInteger)
   {
-    splitDays = as.logical(splitDays)
+    splitDays = as.integer(splitDays)
   }
 
   return (splitDays)
@@ -155,6 +154,12 @@ checkOperatingDayActive <- function(calendar) {
   opDays <- splitBitmaskMat( calendar$Days, asInteger=FALSE )
   opDays <- split(opDays, row(opDays))
 
+  #performance - precalculate all the days
+  veryfirstDay = min(calendar$start_date)
+  allDays = lubridate::wday( seq.Date(from = veryfirstDay, to = max(calendar$end_date), by = "day")
+                             , label = FALSE, week_start=1 )
+  veryfirstDay = veryfirstDay - 1
+
   checkValid <- function(dur, sd, ed, od ){
 
     if (dur >= 7)
@@ -162,7 +167,10 @@ checkOperatingDayActive <- function(calendar) {
       return (any(od))
     }
 
-    dayNumbers <- lubridate::wday( seq.Date(from = sd, to = ed, by = "day"), label = FALSE, week_start=1 )
+    firstDay = as.integer(sd)-as.integer(veryfirstDay)
+    lastDay = as.integer(ed)-as.integer(veryfirstDay)
+
+    dayNumbers <- allDays[ firstDay:lastDay ]
 
     return ( any(od[dayNumbers]) )
   }
@@ -664,7 +672,7 @@ makeCalendarInner <- function(calendarSub) {
     #if every overlay is a one day cancellation
     else if ( all(overlayDurations == 1) && all(overlayTypes == "C") )
     {
-      warning("Unexpected item in the makeCalendarInner-ing area, cancellations should now be handled at a higher level (1)")
+      #warning("Unexpected item in the makeCalendarInner-ing area, cancellations should now be handled at a higher level (1)")
 
       # Apply the cancellation via entries in calendar_dates.txt
       res = list( appendLetterSuffix( calendarSub[calendarSub$STP != "C", ] ),
