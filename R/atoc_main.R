@@ -92,7 +92,7 @@ schedule2routes <- function(stop_times, stops, schedule, silent = TRUE, ncores =
     message(paste0(Sys.time(), " Duplicating necessary stop times"))
   }
 
-  #TODO find out why this hangs if ncores > 1
+  #TODO if ncores > 1 this takes forever - the data being joined must somehow trigger massive memory copying ?
   #also sets the trip_id on stop_times
   stop_times <- duplicate_stop_times(calendar = calendar, stop_times = stop_times, ncores = 1)
 
