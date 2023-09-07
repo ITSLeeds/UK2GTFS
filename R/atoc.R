@@ -161,6 +161,12 @@ atoc2gtfs <- function(path_in,
   # remove any unused stops
   stops <- stops[stops$stop_id %in% stop_times$stop_id, ]
 
+  if ( nrow(stops)<=0 )
+  {
+    stop("Could not match any stops in input data to stop database.")
+  }
+
+
   # Main Timetable Build
   timetables <- schedule2routes(
     stop_times = stop_times,
@@ -171,7 +177,6 @@ atoc2gtfs <- function(path_in,
   )
   rm(schedule)
   gc()
-  # load("data/atoc_agency.RData")
 
   # TODO: check for stop_times that are not valid stops
 

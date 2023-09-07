@@ -54,6 +54,7 @@ nr2gtfs <- function(path_in,
   }
 
   agency = getCachedAgencyData( agency )
+
   stops = getCachedLocationData( locations )
 
   # Is input a zip or a folder
@@ -76,7 +77,7 @@ nr2gtfs <- function(path_in,
   schedule <- mca[["schedule"]]
   rm(mca)
   gc()
-  # rm(alf, flf, mca, msn)
+
 
   stop_times <- stop_times[, c(
     "Arrival Time", "Departure Time", "Location", "stop_sequence", "Activity", "rowID", "schedule")]
@@ -88,7 +89,7 @@ nr2gtfs <- function(path_in,
 
   if ( nrow(stops)<=0 )
   {
-    stop("Could not match any stops in input data to internal stop database.")
+    stop("Could not match any stops in input data to stop database.")
   }
 
 
