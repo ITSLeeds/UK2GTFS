@@ -85,6 +85,46 @@ test_that("test splitBitmask performance", {
 
 
 
+test_that("test setupDatesCache", {
+
+  testData = data.table(
+    start_date=c("03-01-2023", "05-01-2023",  "14-02-2023",  "22-01-2023",  "26-01-2023" ),
+    end_date=c(  "01-02-2023", "05-02-2023",  "24-02-2023",  "23-01-2023",  "26-01-2023" ))
+
+  testData <- fixCalendarDates( testData )
+
+  setupDatesCache( testData )
+
+  start = c(2,3,4,5,6,7,1)
+  expected = rep( start, length.out = 53)
+
+  env = asNamespace("UK2GTFS")
+
+  OK = TRUE
+
+  OK = OK & identical( get("WDAY_LOOKUP_MAP", envir=env), as.integer(expected) )
+  OK = OK & identical( get("WDAY_LOOKUP_MIN_VALUE", envir=env), as.integer(19359) )
+  OK = OK & identical( get("WDAY_LOOKUP_MAX_VALUE", envir=env), as.integer(19412) )
+
+  set_TREAT_DATES_AS_INT(TRUE)
+
+  OK = OK & identical( local_lubridate_wday(19360), as.integer(2) )
+  OK = OK & identical( local_lubridate_wday(19412), as.integer(5) )
+
+  res = try(local_lubridate_wday(19359), silent = TRUE)
+  OK = OK & inherits(res, "try-error")
+
+  res = try(local_lubridate_wday(19413), silent = TRUE)
+  OK = OK & inherits(res, "try-error")
+
+  set_TREAT_DATES_AS_INT(FALSE)
+
+  expect_true( OK )
+})
+
+
+
+
 
 test_that("test countIntersectingDayPatterns:1", {
 
@@ -109,8 +149,29 @@ test_that("test countIntersectingDayPatterns:1", {
     OK = OK & identical(counts, expectedCounts)
   }
   {
+    #this is an invalid input - 4 gets coerced to true and then back to 1
     patterns = c("4000001", "1001100", "0000001")
-    expectedCounts = c(5,0,0,1,1,0,2)
+    expectedCounts = c(2,0,0,1,1,0,2)
+
+    counts <- countIntersectingDayPatterns( patterns )
+
+    printDifferences( counts, expectedCounts)
+    OK = OK & identical(counts, expectedCounts)
+  }
+  {
+    #this is an invalid input anything that isn't '0' coerced to true and then back to 1
+    patterns = c("a 00,01", "1001100", "0000001")
+    expectedCounts = c(2,1,0,1,2,0,2)
+
+    counts <- countIntersectingDayPatterns( patterns )
+
+    printDifferences( counts, expectedCounts)
+    OK = OK & identical(counts, expectedCounts)
+  }
+  {
+    #this is an invalid input anything that isn't of length 7 gets coerced to zero
+    patterns = c("1111111", "111111")
+    expectedCounts = c(1,1,1,1,1,1,1)
 
     counts <- countIntersectingDayPatterns( patterns )
 

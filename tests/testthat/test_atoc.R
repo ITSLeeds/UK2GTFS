@@ -14,7 +14,7 @@ test_that("test atoc data is there", {
 context("Test the main atoc function")
 
 test_that("test atoc2gtfs singlecore", {
-
+browser()
   gtfs <- atoc2gtfs(path_in = file.path(data_path,"atoc.zip"),
             ncores = 1)
 
@@ -27,6 +27,7 @@ test_that("test atoc2gtfs singlecore", {
 context("Test the main atoc function, with different settings")
 
 test_that("test atoc2gtfs singlecore", {
+  browser()
   gtfs <- atoc2gtfs(path_in = file.path(data_path,"atoc.zip"),
                     ncores = 1,
                     locations = "file")

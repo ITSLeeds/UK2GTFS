@@ -3,7 +3,10 @@
 .onLoad <- function(libname, pkgname){
 
   tryCatch({
-    update_data()
+    if( TRUE == UK2GTFS_option_updateCachedDataOnLibaryLoad() )
+    {
+      update_data()
+    }
   }, error = function(err) {
     warning(Sys.time(), " Process id=", Sys.getpid(), " threw errors during package load while calling update_date() :", err)
   })

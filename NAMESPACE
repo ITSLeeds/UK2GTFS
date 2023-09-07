@@ -2,6 +2,8 @@
 
 export(ATOC_shapes)
 export(UK2GTFS_option_stopProcessingAtUid)
+export(UK2GTFS_option_treatDatesAsInt)
+export(UK2GTFS_option_updateCachedDataOnLibaryLoad)
 export(atoc2gtfs)
 export(dl_example_file)
 export(get_bank_holidays)

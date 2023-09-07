@@ -2,18 +2,21 @@
 
 
 
+setValueInThisEnvironment <- function( name, value )
+{
+  env <- asNamespace("UK2GTFS")
+  unlockBinding(name, env)
+  assign(name, value, envir = env)
+  lockBinding(name, env)
+}
+
+
 
 assign("STOP_PROCESSING_UID", NULL )
 
 set_STOP_PROCESSING_UID <- function( value )
 {
-  env <- asNamespace("UK2GTFS")
-
-  unlockBinding("STOP_PROCESSING_UID", env)
-
-  assign("STOP_PROCESSING_UID", value, envir = env)
-
-  lockBinding("STOP_PROCESSING_UID", env)
+  setValueInThisEnvironment("STOP_PROCESSING_UID", value)
 
   if(!is.null(value))
   {
@@ -22,7 +25,87 @@ set_STOP_PROCESSING_UID <- function( value )
 }
 
 
-#performance - this is slow, must be generating on the fly each time subset happens - cache it. -
+
+#need to ensure these get set consistently into any worker processes as well as main thread
+
+assign("TREAT_DATES_AS_INT", FALSE )
+
+set_TREAT_DATES_AS_INT <- function( value )
+{
+  setValueInThisEnvironment("TREAT_DATES_AS_INT", as.logical(value))
+}
+
+
+assign("WDAY_LOOKUP_MIN_VALUE", NULL )
+
+set_WDAY_LOOKUP_MIN_VALUE <- function( value )
+{
+  setValueInThisEnvironment("WDAY_LOOKUP_MIN_VALUE", as.integer(as.integer(value)-1) )
+}
+
+assign("WDAY_LOOKUP_MAX_VALUE", NULL )
+
+set_WDAY_LOOKUP_MAX_VALUE <- function( value )
+{
+  setValueInThisEnvironment("WDAY_LOOKUP_MAX_VALUE", as.integer(value))
+}
+
+assign("WDAY_LOOKUP_MAP", NULL )
+
+set_WDAY_LOOKUP_MAP <- function( value )
+{
+  setValueInThisEnvironment("WDAY_LOOKUP_MAP", value)
+}
+
+
+
+local_lubridate_wday <- function( date, label = FALSE, week_start=1 )
+{
+  if (TRUE==TREAT_DATES_AS_INT)
+  {
+    if( any(date<=WDAY_LOOKUP_MIN_VALUE) || any(date>WDAY_LOOKUP_MAX_VALUE) )
+    {
+      stop("requested value index [", date, "] is outside lookup table")
+    }
+
+    return ( WDAY_LOOKUP_MAP[ date-WDAY_LOOKUP_MIN_VALUE ] )
+  }
+  else
+  {
+    return ( lubridate::wday( date, label = FALSE, week_start=1 ) )
+  }
+}
+
+
+local_seq_date<-function( from, to, by )
+{
+  if (TRUE==TREAT_DATES_AS_INT)
+  {
+    return ( seq.int(from = from, to = to) )
+  }
+  else
+  {
+    return ( seq.Date(from = from, to = to, by = by) )
+  }
+}
+
+
+setupDatesCache<-function( calendar )
+{
+  minDt = min(calendar$start_date)
+  maxDt = max(calendar$end_date)
+
+  set_WDAY_LOOKUP_MIN_VALUE( minDt )
+  set_WDAY_LOOKUP_MAX_VALUE( maxDt )
+
+  firstWeek = as.integer(lubridate::wday( seq.Date(from = minDt, to = minDt+6, by = "day"), label = FALSE, week_start=1 ))
+  allWeeks = rep( firstWeek, length.out=( as.integer(maxDt) - as.integer(minDt) +1 ) )
+  set_WDAY_LOOKUP_MAP( allWeeks )
+}
+
+
+
+#performance - this is slow, might be generating on the fly each time subset happens - cache it. -
 LETTERS <- letters[1:26]
 TWO_LETTERS <- paste0(rep(letters, each = 26), rep(letters, times = 26))
 
@@ -89,8 +172,8 @@ END_PATTERN_VECTOR = c("1000000","100000","10000","1000","100","10","1")
 #i.e. if the first day in the day bitmask is Tuesday - then the start date should be Tuesday, not some other day.
 validateCalendarDates <- function( calendar )
 {
-  start_day_number = lubridate::wday( calendar$start_date, label = FALSE, week_start=1 )
-  end_day_number = lubridate::wday( calendar$end_date, label = FALSE, week_start=1 )
+  start_day_number = local_lubridate_wday( calendar$start_date, label = FALSE, week_start=1 )
+  end_day_number = local_lubridate_wday( calendar$end_date, label = FALSE, week_start=1 )
 
   startOk <- START_PATTERN_VECTOR[ start_day_number ] == stringi::stri_sub(calendar$Days, 1, start_day_number)
   endOk <- END_PATTERN_VECTOR[ end_day_number ] == stringr::str_sub(calendar$Days, end_day_number, 7)
@@ -128,9 +211,9 @@ splitBitmask <- function( bitmask, asInteger=FALSE )
 {
   duff = which( nchar(bitmask) != 7 )
 
-  bitmask[duff] = "       "
+  bitmask[duff] = "0000000"
 
-  splitDays = ( "1"== unlist( strsplit(bitmask, "") ) )
+  splitDays = ( "0"!= unlist( strsplit(bitmask, "") ) )
   #performance, calling as.integer on string is surprisingly expensive, so do it this way instead which is twice as fast overall
 
   if (asInteger)
@@ -156,8 +239,16 @@ checkOperatingDayActive <- function(calendar) {
 
   #performance - precalculate all the days
   veryfirstDay = min(calendar$start_date)
-  allDays = lubridate::wday( seq.Date(from = veryfirstDay, to = max(calendar$end_date), by = "day")
+
+  if( TRUE==TREAT_DATES_AS_INT)
+  {
+    allDays = WDAY_LOOKUP_MAP[ (veryfirstDay - WDAY_LOOKUP_MIN_VALUE) : (max(calendar$end_date) - WDAY_LOOKUP_MIN_VALUE) ]
+  }
+  else
+  {
+    allDays = local_lubridate_wday( local_seq_date(from = veryfirstDay, to = max(calendar$end_date), by = "day")
                              , label = FALSE, week_start=1 )
+  }
   veryfirstDay = veryfirstDay - 1
 
   checkValid <- function(dur, sd, ed, od ){
@@ -252,14 +343,23 @@ makeReplicationDates <- function(cal, startDayNum, endDayNum){
   #                           and the end date so it's always sunday
   firstDate = min(cal$start_date) - 7
   lastDate = max(cal$end_date) + 7
-  allDates = seq.Date(from = firstDate, to = lastDate, by = "day")
+  allDates = local_seq_date(from = firstDate, to = lastDate, by = "day")
 
   offset = as.integer(cal$start_date)-startDayNum+2-as.integer(firstDate)
   end = as.integer(cal$end_date)+8-endDayNum-as.integer(firstDate)
 
   dates <- Map(function(o, e) allDates[o:e], offset, end)
 
-  return ( as.Date( unlist(dates), origin = DATE_EPOC ) )
+  if (TRUE==TREAT_DATES_AS_INT)
+  {
+    res = unlist(dates)
+  }
+  else
+  {
+    res = as.Date( unlist(dates), origin = DATE_EPOC )
+  }
+
+  return (res)
 }
 
 
@@ -282,8 +382,8 @@ makeAllOneDay <- function( cal )
   }
 
   #make a list of dates for each object being replicated
-  startDayNum = lubridate::wday( cal$start_date, label = FALSE, week_start=1 )
-  endDayNum = lubridate::wday( cal$end_date, label = FALSE, week_start=1 )
+  startDayNum = local_lubridate_wday( cal$start_date, label = FALSE, week_start=1 )
+  endDayNum = local_lubridate_wday( cal$end_date, label = FALSE, week_start=1 )
   dateSequence = makeReplicationDates( cal, startDayNum, endDayNum )
 
   #work out how many time we need to replicate each item: number of operating days in week * num weeks
@@ -304,7 +404,7 @@ makeAllOneDay <- function( cal )
 
   #tidy up the values so they are correct for the spilt items
   replicatedcal$duration <- 1
-  replicatedcal$Days = SINGLE_DAY_PATTERN_VECTOR[ lubridate::wday( replicatedcal$start_date, label = FALSE, week_start=1 ) ]
+  replicatedcal$Days = SINGLE_DAY_PATTERN_VECTOR[ local_lubridate_wday( replicatedcal$start_date, label = FALSE, week_start=1 ) ]
 
   return (replicatedcal)
 }
@@ -328,8 +428,8 @@ expandAllWeeks <- function( cal )
   #duration <- cal$end_date - cal$start_date + 1
 
   #make a list of dates for each object being replicated
-  startDayNum = lubridate::wday( cal$start_date, label = FALSE, week_start=1 )
-  endDayNum = lubridate::wday( cal$end_date, label = FALSE, week_start=1 )
+  startDayNum = local_lubridate_wday( cal$start_date, label = FALSE, week_start=1 )
+  endDayNum = local_lubridate_wday( cal$end_date, label = FALSE, week_start=1 )
   dateSequence = makeReplicationDates( cal, startDayNum, endDayNum )
 
   numWeeks <- ceiling(as.integer(cal$duration) / 7)

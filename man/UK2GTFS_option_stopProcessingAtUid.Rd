@@ -7,7 +7,7 @@
 UK2GTFS_option_stopProcessingAtUid(value)
 }
 \arguments{
-\item{value}{option value to be set}
+\item{value}{option value to be set (char)}
 }
 \description{
 sets/gets a UID value at which processing will stop - used for debugging
@@ -18,5 +18,4 @@ If no value passed in will return the current setting of the option. (Usually NU
   when an exact match for that value is encountered.
 
   THIS ONLY WORKS WITH ncores==1
-  (probably some environment nonsense I don't understand)
 }

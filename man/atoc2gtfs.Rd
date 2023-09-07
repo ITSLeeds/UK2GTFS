@@ -31,7 +31,7 @@ atoc2gtfs(
 
 \item{transfers}{Logical, should transfers.txt be generated (default TRUE)}
 
-\item{missing_tiplocs}{Logical, if locations = tiplocs, then will check for
+\item{missing_tiplocs}{Logical, if true will check for
 any missing tiplocs against the main file and add them.(default TRUE)}
 }
 \description{

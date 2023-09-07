@@ -200,94 +200,137 @@ longnames <- function(routes, stop_times, stops) {
 #' @noRd
 #'
 makeCalendar <- function(schedule, ncores = 1) {
-  # prep the inputs
-  calendar <- schedule[, c("Train UID", "Date Runs From", "Date Runs To", "Days Run", "STP indicator", "rowID" )]
-  names(calendar) <- c("UID", "start_date", "end_date", "Days", "STP", "rowID" )
 
-  calendar$STP <- as.character(calendar$STP)
-  calendar$duration <- calendar$end_date - calendar$start_date + 1
+  treatDatesAsInt = getOption("UK2GTFS_opt_treatDatesAsInt", default=FALSE)
+  treatDatesAsInt = TRUE
+  set_TREAT_DATES_AS_INT( treatDatesAsInt )
 
-  if ( !all(validateCalendarDates( calendar ) ) )
-  {
-    warning(paste0(Sys.time(), " Some calendar dates had incorrect start or end dates that did not align with operating day bitmask"))
-    #TODO be more verbose about which ones
-  }
+  tryCatch({
+
+    # prep the inputs
+    calendar <- schedule[, c("Train UID", "Date Runs From", "Date Runs To", "Days Run", "STP indicator", "rowID" )]
+    names(calendar) <- c("UID", "start_date", "end_date", "Days", "STP", "rowID" )
+
+    calendar$STP <- as.character(calendar$STP)
+
+    if ( !all(validateCalendarDates( calendar ) ) )
+    {
+      warning(paste0(Sys.time(), " Some calendar dates had incorrect start or end dates that did not align with operating day bitmask"))
+      #TODO be more verbose about which ones
+    }
+
+    #we're going to be splitting and replicating calendar entries - stash the original UID so we can join back on it later
+    calendar$originalUID <- calendar$UID
+
+    if( treatDatesAsInt )
+    {
+      setupDatesCache( calendar )
+      #treating date as int: seem to be about twice as fast on the critical line when selecting base timetable
+      calendar$start_date = as.integer( calendar$start_date )
+      calendar$end_date = as.integer( calendar$end_date )
+    }
+
+    calendar$duration <- calendar$end_date - calendar$start_date + 1
 
 
-  #we're going to be splitting and replicating calendar entries - stash the original UID so we can join back on it later
-  calendar$originalUID <- calendar$UID
+    #brutal, but makes code later on simpler, make all cancellations one day cancellations by splitting
+    #TODO don't split up into one day cancellations if all the operating day patterns on a service are identical
+    cancellations <- makeAllOneDay( calendar[calendar$STP == "C", ] )
+    calendar <- calendar[calendar$STP != "C", ]
 
-  #brutal, but makes code later on simpler, make all cancellations one day cancellations by splitting
-  #TODO don't split up into one day cancellations if all the operating day patterns on a service are identical
-  cancellations <- makeAllOneDay( calendar[calendar$STP == "C", ] )
-  calendar <- calendar[calendar$STP != "C", ]
 
-  #calendar$start_date = as.integer( calendar$start_date )
-  #calendar$end_date = as.integer( calendar$end_date )
-#test treating date as int: seem to be about twice as fast on the critical line when selecting base timetable
-#TODO add package option to switch between processing as date/int otherwise debugging is too hard
+    #debugging option
+    set_STOP_PROCESSING_UID( getOption("UK2GTFS_opt_stopProcessingAtUid") )
 
-  #debugging option
-  set_STOP_PROCESSING_UID( getOption("UK2GTFS_opt_stopProcessingAtUid") )
+    message(paste0(Sys.time(), " Constructing calendar and calendar_dates"))
+    calendar$`__TEMP__` <- calendar$UID
+    calendar_split <- calendar[, .(list(.SD)), by = `__TEMP__`][,V1]
 
-  message(paste0(Sys.time(), " Constructing calendar and calendar_dates"))
-  calendar$`__TEMP__` <- calendar$UID
-  calendar_split <- calendar[, .(list(.SD)), by = `__TEMP__`][,V1]
+    if (ncores > 1) {
+      cl <- parallel::makeCluster(ncores)
 
-  if (ncores > 1) {
-    cl <- parallel::makeCluster(ncores)
-    parallel::clusterEvalQ(cl, {
-      loadNamespace("UK2GTFS")
-    })
-    pbapply::pboptions(use_lb = TRUE)
-    res <- pbapply::pblapply(calendar_split,
-      makeCalendarInner,
-      cl = cl
-    )
-    parallel::stopCluster(cl)
-    rm(cl)
-  } else {
-    res <- pbapply::pblapply(
-      calendar_split,
-      makeCalendarInner
-    )
-  }
+      workerEnvs = parallel::clusterEvalQ(cl, {
+        #put any setup required for all worker processes in here
+        options( UK2GTFS_opt_updateCachedDataOnLibaryLoad = FALSE ) #stop the child workers from calling update_data()
+        workerEnv=loadNamespace("UK2GTFS")
+      })
 
-  res.calendar <- lapply(res, `[[`, 1)
-  res.calendar <- data.table::rbindlist(res.calendar, use.names=FALSE) #performance, takes 10 minutes to execute bind_rows on full GB daily timetable
+      parallel::clusterExport(cl, list("TREAT_DATES_AS_INT", "WDAY_LOOKUP_MIN_VALUE",
+                                       "WDAY_LOOKUP_MAX_VALUE", "WDAY_LOOKUP_MAP"), envir=asNamespace("UK2GTFS"))
 
-  res.cancellation_dates <- lapply(res, `[[`, 2)
-  res.cancellation_dates <- res.cancellation_dates[!is.na(res.cancellation_dates)]
-  res.cancellation_dates <- data.table::rbindlist(res.cancellation_dates, use.names=FALSE)
-  stopifnot( 0==nrow(res.cancellation_dates) )
-  rm(res.cancellation_dates)
-  #since we didn't pass in any cancellations we should no longer get any back
+      #set module level global in all workers TODO find out why this takes forever to run
+      #parallel::clusterCall(cl, function(val){ set_TREAT_DATES_AS_INT(val) }, val=treatDatesAsInt )
 
-  res.calendar = splitAndRebindBitmask( res.calendar )
-  cancellations = splitAndRebindBitmask( cancellations )
+      pbapply::pboptions(use_lb = TRUE)
+      res <- pbapply::pblapply(calendar_split,
+        makeCalendarInner,
+        cl = cl
+      )
 
-  #associate the split up cancellations with the (new) calendar they are associated with
-  #(only works because cancellations are all one day duration)
-  cancellations = allocateCancellationsAcrossCalendars( res.calendar, cancellations )
+      parallel::stopCluster(cl)
+      rm(cl)
+    } else {
+      res <- pbapply::pblapply(
+        calendar_split,
+        makeCalendarInner
+      )
+    }
 
-  #no longer need the field that was used to associate the original and replicated calendars together
-  cancellations$originalUID <- NULL
-  res.calendar$originalUID <- NULL
 
-  #error checking
-  dups = duplicated( res.calendar$UID )
-  if( any(TRUE==dups) )
-  {
-    dups = unique( res.calendar$UID[ dups ] )
+    res.calendar <- lapply(res, `[[`, 1)
+    res.calendar <- data.table::rbindlist(res.calendar, use.names=FALSE) #performance, takes 10 minutes to execute bind_rows on full GB daily timetable
 
-    warning(paste(Sys.time(), "Duplicate UIDs were created by the makeCalendar() process, this is likely to cause downstream proceessing errors. ",
-                                "Please capture the data and raise a bug / create a test case. ", dups))
-  }
+    res.cancellation_dates <- lapply(res, `[[`, 2)
+    res.cancellation_dates <- res.cancellation_dates[!is.na(res.cancellation_dates)]
+    res.cancellation_dates <- data.table::rbindlist(res.cancellation_dates, use.names=FALSE)
+    stopifnot( 0==nrow(res.cancellation_dates) )
+    rm(res.cancellation_dates)
+    #since we didn't pass in any cancellations we should no longer get any back
+
+    res.calendar = splitAndRebindBitmask( res.calendar )
+    cancellations = splitAndRebindBitmask( cancellations )
+
+    #associate the split up cancellations with the (new) calendar they are associated with
+    #(only works because cancellations are all one day duration)
+    cancellations = allocateCancellationsAcrossCalendars( res.calendar, cancellations )
+
+    #no longer need the field that was used to associate the original and replicated calendars together
+    cancellations$originalUID <- NULL
+    res.calendar$originalUID <- NULL
+
+    #error checking
+    dups = duplicated( res.calendar$UID )
+    if( any(TRUE==dups) )
+    {
+      dups = unique( res.calendar$UID[ dups ] )
+
+      warning(paste(Sys.time(), "Duplicate UIDs were created by the makeCalendar() process, this is likely to cause downstream proceessing errors. ",
+                    "Please capture the data and raise a bug / create a test case. ", dups))
+    }
+
+  }, finally = {
+    set_TREAT_DATES_AS_INT( FALSE )
+
+    #revert treating date as int
+    if( TRUE==treatDatesAsInt && exists("res.calendar") )
+    {
+      res.calendar = makeDateFieldsDateType( res.calendar )
+      cancellations = makeDateFieldsDateType( cancellations )
+    }
+  })
 
   return(list(res.calendar, cancellations))
 }
 
 
+makeDateFieldsDateType<- function( cal )
+{
+  cal$start_date = as.Date( cal$start_date, origin = DATE_EPOC )
+  cal$end_date = as.Date( cal$end_date, origin = DATE_EPOC )
+  cal$duration = cal$end_date - cal$start_date + 1
+
+  return (cal)
+}
 
 
 #' duplicateItem
@@ -351,6 +394,8 @@ duplicateItems <- function( dt, split_attribute, ncores=1, indexStart=1 )
   } else {
     cl <- parallel::makeCluster(ncores)
     parallel::clusterEvalQ(cl, {
+      #put any setup required for all worker processes in here
+      options( UK2GTFS_opt_updateCachedDataOnLibaryLoad = FALSE )
       loadNamespace("UK2GTFS")
     })
 
