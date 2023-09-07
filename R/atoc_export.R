@@ -211,7 +211,14 @@ makeCalendar <- function(schedule, ncores = 1) {
     calendar <- schedule[, c("Train UID", "Date Runs From", "Date Runs To", "Days Run", "STP indicator", "rowID" )]
     names(calendar) <- c("UID", "start_date", "end_date", "Days", "STP", "rowID" )
 
-    calendar$STP <- as.character(calendar$STP)
+    if( treatDatesAsInt )
+    {
+      setupDatesCache( calendar )
+      #treating date as int: seem to be about twice as fast on the critical line when selecting base timetable
+      calendar$start_date = as.integer( calendar$start_date )
+      calendar$end_date = as.integer( calendar$end_date )
+    }
+
 
     if ( !all(validateCalendarDates( calendar ) ) )
     {
@@ -221,15 +228,7 @@ makeCalendar <- function(schedule, ncores = 1) {
 
     #we're going to be splitting and replicating calendar entries - stash the original UID so we can join back on it later
     calendar$originalUID <- calendar$UID
-
-    if( treatDatesAsInt )
-    {
-      setupDatesCache( calendar )
-      #treating date as int: seem to be about twice as fast on the critical line when selecting base timetable
-      calendar$start_date = as.integer( calendar$start_date )
-      calendar$end_date = as.integer( calendar$end_date )
-    }
-
+    calendar$STP <- as.character(calendar$STP)
     calendar$duration <- calendar$end_date - calendar$start_date + 1
 
 
@@ -249,17 +248,26 @@ makeCalendar <- function(schedule, ncores = 1) {
     if (ncores > 1) {
       cl <- parallel::makeCluster(ncores)
 
-      workerEnvs = parallel::clusterEvalQ(cl, {
+      parallel::clusterEvalQ(cl, {
         #put any setup required for all worker processes in here
         options( UK2GTFS_opt_updateCachedDataOnLibaryLoad = FALSE ) #stop the child workers from calling update_data()
         workerEnv=loadNamespace("UK2GTFS")
       })
 
-      parallel::clusterExport(cl, list("TREAT_DATES_AS_INT", "WDAY_LOOKUP_MIN_VALUE",
-                                       "WDAY_LOOKUP_MAX_VALUE", "WDAY_LOOKUP_MAP"), envir=asNamespace("UK2GTFS"))
+      #copy variables from this context into global context of worker processes
+      varList = list("TREAT_DATES_AS_INT", "WDAY_LOOKUP_MIN_VALUE", "WDAY_LOOKUP_MAX_VALUE", "WDAY_LOOKUP_MAP")
+      parallel::clusterExport(cl=cl, varlist=varList, envir=asNamespace("UK2GTFS"))
 
-      #set module level global in all workers TODO find out why this takes forever to run
-      #parallel::clusterCall(cl, function(val){ set_TREAT_DATES_AS_INT(val) }, val=treatDatesAsInt )
+      #set module level global in all workers
+      parallel::clusterEvalQ(cl, {
+        copyFromGlobalEnvToPackageEnv<- function(varName){
+          UK2GTFS:::setValueInThisEnvironment(varName, get(varName, envir=.GlobalEnv))
+        }
+        copyFromGlobalEnvToPackageEnv("TREAT_DATES_AS_INT")
+        copyFromGlobalEnvToPackageEnv("WDAY_LOOKUP_MIN_VALUE")
+        copyFromGlobalEnvToPackageEnv("WDAY_LOOKUP_MAX_VALUE")
+        copyFromGlobalEnvToPackageEnv("WDAY_LOOKUP_MAP")
+      })
 
       pbapply::pboptions(use_lb = TRUE)
       res <- pbapply::pblapply(calendar_split,
