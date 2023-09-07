@@ -53,46 +53,8 @@ nr2gtfs <- function(path_in,
     message(paste0(Sys.time(), " This will take some time, make sure you use 'ncores' to enable multi-core processing"))
   }
 
-  if(inherits(agency,"character")){
-    if(agency == "atoc_agency"){
-      load_data("atoc_agency")
-      agency = atoc_agency
-      if ( !inherits(agency, "data.frame") || 0==nrow(agency) ){ stop("failed to load atoc_agency data.") }
-    }
-  }
-
-  if(inherits(locations,"character")){
-    if(locations == "tiplocs"){
-      load_data("tiplocs")
-      locations = tiplocs
-      if ( !inherits(locations, "data.frame") || 0==nrow(locations) ){ stop("failed to tiploc data.") }
-    }
-  }
-
-  # Get the Station Locations
-  if (inherits(locations, "data.frame"))
-  {
-    if (inherits(locations, "sf"))
-    {
-      stops <- cbind(locations, sf::st_coordinates(locations))
-      stops <- as.data.frame(stops)
-      stops <- stops[, c( "stop_id", "stop_code", "stop_name", "Y", "X" )]
-      names(stops) <- c(  "stop_id", "stop_code", "stop_name", "stop_lat", "stop_lon" )
-    }
-    else
-    {
-      stops = locations
-    }
-  }
-  else
-  {
-    stops <- utils::read.csv(locations, stringsAsFactors = FALSE)
-  }
-
-  stops$stop_lat <- round(stops$stop_lat, 5)
-  stops$stop_lon <- round(stops$stop_lon, 5)
-
-
+  agency = getCachedAgencyData( agency )
+  stops = getCachedLocationData( locations )
 
   # Is input a zip or a folder
   if (!grepl(".gz", path_in)) {
@@ -107,7 +69,6 @@ nr2gtfs <- function(path_in,
       working_timetable = working_timetable,
       public_only = public_only
   )
-
 
 
   # Construct the GTFS
@@ -153,4 +114,66 @@ nr2gtfs <- function(path_in,
   }
 
   return(timetables)
+}
+
+
+
+
+getCachedAgencyData <- function(agency = "atoc_agency")
+{
+  if(inherits(agency,"character"))
+  {
+    if(agency == "atoc_agency")
+    {
+      load_data("atoc_agency")
+      agency = atoc_agency
+    }
+    else #TODO test column names
+    {
+      checkmate::check_file_exists(agency)
+      agency <- utils::read.csv(agency, stringsAsFactors = FALSE)
+    }
+
+    if ( !inherits(agency, "data.frame") || 0==nrow(agency) ){ stop("failed to load atoc_agency data.") }
+  }
+
+  return (agency)
+}
+
+
+getCachedLocationData <- function(locations = "tiplocs")
+{
+  if(inherits(locations,"character"))
+  {
+    if(locations == "tiplocs")
+    {
+      load_data("tiplocs")
+      locations = tiplocs
+    }
+    else
+    {
+      checkmate::check_file_exists(locations)
+      locations <- utils::read.csv(locations, stringsAsFactors = FALSE)
+    }
+
+    if ( !inherits(locations, "data.frame") || 0==nrow(locations) ){ stop("failed to tiploc data.") }
+  }
+
+  # Get the Station Locations
+  if (inherits(locations, "sf"))
+  {
+    stops <- cbind(locations, sf::st_coordinates(locations))
+    stops <- as.data.frame(stops)
+    stops <- stops[, c( "stop_id", "stop_code", "stop_name", "Y", "X" )]
+    names(stops) <- c(  "stop_id", "stop_code", "stop_name", "stop_lat", "stop_lon" )
+  }
+  else #TODO test column names
+  {
+    stops = locations
+  }
+
+  stops$stop_lat <- round(stops$stop_lat, 5)
+  stops$stop_lon <- round(stops$stop_lon, 5)
+
+  return (stops)
 }

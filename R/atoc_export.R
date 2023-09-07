@@ -84,7 +84,7 @@ station2stops <- function(station, TI) {
 #' @param flf imported flf file from importFLF
 #' @noRd
 #'
-station2transfers <- function(station, flf, path_out) {
+station2transfers <- function(station, flf) {
 
   ### SECTION 4: ############################################################
   # make make the transfers.txt
