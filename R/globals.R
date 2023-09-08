@@ -8,12 +8,15 @@ utils::globalVariables(c(
   "monday", "tuesday", "wednesday", "thursday", "friday",
   "saturday", "sunday", "pattern", "schedule", "ATOC Code",
   "route_long_name", "Train Status", "i", "DaysOfWeek",
-  'speed','agency_id','agency_name',
-  'agency_url','agency_timezone',
-  'agency_lang','agency_id',   'Freq',
+  'speed','agency_id','agency_name', 'agency_url','agency_timezone',
+  'agency_lang','agency_id', 'Freq', 'operator_code','route_id',
   'UID','hash','vehicle_type','running_board','service_number',
-  'operator_code','route_id',
-  'speed_after','distance','school_terms','distance_after','historic_bank_holidays'
+  'speed_after','distance','school_terms','distance_after','historic_bank_holidays',
+  '%>%', '.', 'Activity', 'Arrival Time', 'Departure Time', 'N', 'Public Arrival Time',
+  'Public Departure Time','STP', 'Scheduled Arrival Time', 'Scheduled Departure Time',
+  'Train Category', 'V1', '_TEMP_', '__TEMP__', 'duration',
+  'i.friday', 'i.monday', 'i.saturday', 'i.sunday', 'i.thursday', 'i.tuesday', 'i.wednesday', 'originalUID',
+  'route_id_new', 'route_type', 'service_id', 'service_id_new', 'stop_name', 'trip_id_new'
 ))
 
 
