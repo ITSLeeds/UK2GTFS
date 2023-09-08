@@ -602,6 +602,35 @@ test_that("test hasGapInOperatingDays:1", {
 
 
 
+
+test_that("test process_activity:1", {
+
+  OK = TRUE
+
+  {
+    testData = data.table( Activity=c("            ", "TBT D U R TF", "abcdefghijkl", "abcdefghij  ", "TBT EEU XXTF", "    D U     ") )
+
+    res = process_activity( testData, TRUE )
+
+    expectedResult = data.table( Activity=c("TB,T,D,U,R,TF", "TB,T,U,TF", "D,U" ) )
+
+    OK = OK & identical(expectedResult,res)
+  }
+  {
+    testData = data.table( Activity=c("            ", "TBT D U R TF", "abcdefghijkl", "a  def  ijkl", "  cdefghij  ") )
+
+    res = process_activity( testData, FALSE )
+
+    expectedResult = data.table( Activity=c("TB,T,D,U,R,TF", "ab,cd,ef,gh,ij,kl", "a,d,ef,ij,kl","cd,ef,gh,ij"  ))
+
+    OK = OK & identical(expectedResult,res)
+  }
+
+  expect_true( OK )
+})
+
+
+
 #when running for real, this hangs if ncores>1 having trouble reproducing
 test_that("test duplicateItems:1", {
 

@@ -146,7 +146,7 @@ importMSN <- function(file, silent = TRUE) {
     col_types = rep("character", 17 - 1),
     widths = c(1, 4, 26 + 4, 1, 7, 3, 3, 3, 5, 1, 5, 2, 1, 1, 11, 3)
   )
-  station <- data.table(station)
+  setDT(station)
   names(station) <- c(
     "Record Type", "Reserved1", "Station Name",
     "CATE Interchange status", "TIPLOC Code", "CRS Reference Code",
@@ -194,7 +194,7 @@ importMSN <- function(file, silent = TRUE) {
     col_types = rep("character", 5 - 1),
     widths = c(1, 4, 26 + 4, 45)
   )
-  timetable <- data.table(timetable)
+  setDT(timetable)
   names(timetable) <- c(
     "Record Type", "Reserved1", "Station Name",
     "GBTT numbers"
@@ -217,7 +217,7 @@ importMSN <- function(file, silent = TRUE) {
     col_types = rep("character", 2),
     widths = c(1, 79)
   )
-  comment <- data.table(comment)
+  setDT(comment)
   names(comment) <- c("Record Type", "Comment")
 
   comment$`Record Type` <- NULL
@@ -233,7 +233,7 @@ importMSN <- function(file, silent = TRUE) {
     col_types = rep("character", 6 - 1),
     widths = c(1, 4, 26 + 5, 26, 20)
   )
-  alias <- data.table(alias)
+  setDT(alias)
   names(alias) <- c(
     "Record Type", "Reserved1", "Station Name",
     "Station Alias", "Reserved3"
@@ -322,53 +322,46 @@ process_times <- function(dt, working_timetable) {
 # Process Activity Codes
 process_activity <- function(dt, public_only) {
 
+#  if ( any( 12 != nchar(dt$Activity) ) )
+#  {
+#    stop("bad input data in process_activity(), all Activity fields should be 12 chars long")
+#  }
+# don't really need this test since we're reading in from fixed width files
+
   #performance, runs about twice as fast if we do processing outside data.table then insert it later
-  splitActivity = stringi::stri_extract_all_regex(dt$Activity, ".{2}")
+  splitActivity = unlist( stringi::stri_extract_all_regex(dt$Activity, ".{2}") )
 
-  if (public_only) {
-    # Filter to stops for passengers
-    #see https://wiki.openraildata.com/index.php?title=Activity_codes for definitions
-    acts <- c(
-      "TB", # Train Starts
-      "T ", # Stops to take up and set down passengers
-      "D ", # Stops to set down passengers
-      "U ", # Stops to take up passengers
-      "R ", # Request stop
-      "TF"  # Train Finishes
-    )
+  splitActivityMat = matrix(splitActivity, ncol=6, byrow=TRUE)
 
-    clean_activity3 <- function(x) {
-      x <- x[x %in% acts]
-      if (length(x) > 0) {
-        x <- paste(x, collapse = ",")
-        return(x)
-      } else {
-        return("Other")
-      }
-    }
-  } else {
+  # Filter to stops for passengers
+  #see https://wiki.openraildata.com/index.php?title=Activity_codes for definitions
+  acts <- c(
+    "TB", # Train Starts
+    "T " , # Stops to take up and set down passengers
+    "D ", # Stops to set down passengers
+    "U ", # Stops to take up passengers
+    "R ", # Request stop
+    "TF"  # Train Finishes
+  )
 
-
-    clean_activity3 <- function(x) {
-
-      #remove empty elements
-      x <- x[x != "  "]
-
-      if (length(x) > 0) {
-        x <- paste(x, collapse = ",")
-        return(x)
-      } else {
-        return("Other")
-      }
-    }
+  if(public_only)
+  {
+    allowed = ("  "!=splitActivityMat) & (splitActivityMat %in% acts)
+  }
+  else
+  {
+    allowed = ("  "!=splitActivityMat)
   }
 
+  splitActivityMat[!allowed] <- ""
 
-  dt$Activity = lapply(splitActivity, clean_activity3)
+  activity = sprintf("%s,%s,%s,%s,%s,%s", splitActivityMat[,1], splitActivityMat[,2], splitActivityMat[,3], splitActivityMat[,4], splitActivityMat[,5], splitActivityMat[,6] )
 
-  dt <- dt[Activity != "Other"]
+  #remove whitespace, replace multiple comma with single comma, remove leading comma, remove trailing comma.
+  dt$Activity <- gsub(",$", "", gsub("^,", "", gsub(",+", ",", gsub("\\s+", "", activity))))
 
-  dt[, Activity := gsub("\\s+", "", Activity)]
+  #remove rows with no activity we're interested in
+  dt <- dt[ ""!=dt$Activity ]
 
   return(dt)
 }
@@ -423,7 +416,7 @@ importMCA <- function(file,
       6, 1, 1, 1, 1, 4, 4, 1, 1
     )
   )
-  BS <- data.table(BS)
+  setDT(BS)
   names(BS) <- c(
     "Record Identity", "Transaction Type", "Train UID", "Date Runs From",
     "Date Runs To", "Days Run", "Bank Holiday Running", "Train Status",
@@ -463,7 +456,7 @@ importMCA <- function(file,
     col_types = rep("character", 8),
     widths = c(2, 4, 5, 2, 1, 8, 1, 57)
   )
-  BX <- data.table(BX)
+  setDT(BX)
   names(BX) <- c(
     "Record Identity", "Traction Class", "UIC Code", "ATOC Code",
     "Applicable Timetable Code", "Retail Train ID", "Source", "Spare"
@@ -488,7 +481,7 @@ importMCA <- function(file,
     col_types = rep("character", 12),
     widths = c(2, 7, 1, 5, 4, 3, 3, 2, 2, 12, 2, 37)
   )
-  LO <- data.table(LO)
+  setDT(LO)
   names(LO) <- c(
     "Record Identity", "Location", "Suffix", "Scheduled Departure Time",
     "Public Departure Time", "Platform", "Line", "Engineering Allowance",
@@ -519,7 +512,7 @@ importMCA <- function(file,
     col_types = rep("character", 16),
     widths = c(2, 7, 1, 5, 5, 5, 4, 4, 3, 3, 3, 12, 2, 2, 2, 20)
   )
-  LI <- data.table(LI)
+  setDT(LI)
   names(LI) <- c(
     "Record Identity", "Location", "Suffix", "Scheduled Arrival Time",
     "Scheduled Departure Time", "Scheduled Pass", "Public Arrival Time",
@@ -552,7 +545,7 @@ importMCA <- function(file,
     col_types = rep("character", 9),
     widths = c(2, 7, 1, 5, 4, 3, 3, 12, 43)
   )
-  LT <- data.table(LT)
+  setDT(LT)
   names(LT) <- c(
     "Record Identity", "Location", "Suffix", "Scheduled Arrival Time",
     "Public Arrival Time", "Platform", "Path", "Activity", "Spare"
@@ -586,7 +579,7 @@ importMCA <- function(file,
         4, 4, 5, 8, 5
       )
     )
-    CR <- data.table(CR)
+    setDT(CR)
     names(CR) <- c(
       "Record Identity", "Location", "Train Category", "Train Identity",
       "Headcode", "Course Indicator",
@@ -612,7 +605,7 @@ importMCA <- function(file,
       col_types = rep("character", 11),
       widths = c(2, 7, 2, 6, 1, 26, 5, 4, 3, 16, 8)
     )
-    TI <- data.table(TI)
+    setDT(TI)
     names(TI) <- c(
       "Record Identity", "TIPLOC code", "Capitals", "NALCO",
       "NLC Check Character", "TPS Description",
@@ -635,7 +628,7 @@ importMCA <- function(file,
       col_types = rep("character", 12),
       widths = c(2, 7, 2, 6, 1, 26, 5, 4, 3, 16, 7, 1)
     )
-    TA <- data.table(TA)
+    setDT(TA)
     names(TA) <- c(
       "Record Identity", "TIPLOC code", "Capitals", "NALCO",
       "NLC Check Character", "TPS Description", "STANOX", "PO MCP Code",
@@ -658,7 +651,7 @@ importMCA <- function(file,
       col_types = rep("character", 3),
       widths = c(2, 7, 71)
     )
-    TD <- data.table(TD)
+    setDT(TD)
     names(TD) <- c("Record Identity", "TIPLOC code", "Spare")
     TD$Spare <- NULL
     TD$`Record Identity` <- NULL
@@ -680,7 +673,7 @@ importMCA <- function(file,
       col_types = rep("character", 16),
       widths = c(2, 1, 6, 6, 6, 6, 7, 2, 1, 7, 1, 1, 1, 1, 31, 1)
     )
-    AA <- data.table(AA)
+    setDT(AA)
     names(AA) <- c(
       "Record Identity", "Transaction Type", "Base UID", "Assoc UID",
       "Assoc Start date", "Assoc End date", "Assoc Days", "Assoc Cat",
@@ -719,7 +712,7 @@ importMCA <- function(file,
     col_types = rep("character", 2),
     widths = c(2, 78)
   )
-  ZZ <- data.table(ZZ)
+  setDT(ZZ)
   names(ZZ) <- c("Record Identity", "Spare")
   ZZ$Spare <- NULL
   ZZ <- strip_whitespace(ZZ)
