@@ -9,9 +9,9 @@
 #'
 #' @export
 #'
-update_data <- function(){
+update_data <- function( timeout=60 ){
 
-  check <- check_data()
+  check <- check_data( timeout=timeout )
 
   if(check$date_package != check$date){
 
@@ -72,12 +72,12 @@ download_data <- function(tag_name, package_location, date){
 #' @return TRUE if data is up-to-date or if unable to check
 #' @noRd
 
-check_data <- function(default_tag = "v0.1.2"){
+check_data <- function( timeout = 60, default_tag = "v0.1.2"){
   # Try not to hammer the API
   Sys.sleep(5)
   # Check date on data repo
-  res = try(httr::GET("https://api.github.com/repos/ITSleeds/UK2GTFS-data/releases"),
-            silent = TRUE)
+  res = try(httr::GET("https://api.github.com/repos/ITSleeds/UK2GTFS-data/releases", httr::timeout(get("timeout")),
+            silent = TRUE ))
   if(inherits(res, "try-error")){
     message("Unable to check for latest data")
     date = Sys.time()
@@ -94,13 +94,20 @@ check_data <- function(default_tag = "v0.1.2"){
     }
   }
 
+  date = as.Date(date) #make it less sensitive by only comparing date rather than date+time
+
   #Check if date.txt in package
   package_location <- system.file(package = "UK2GTFS")
   if(!file.exists(file.path(package_location, "extdata/date.txt"))){
     writeLines("nodata", file.path(package_location, "extdata/date.txt"))
   }
 
-  date_package <- readLines(file.path(package_location, "extdata/date.txt"))
+  tryCatch({
+    date_package <- as.Date( readLines(file.path(package_location, "extdata/date.txt")) )
+  }, error = function(err) {
+    date_package = "nodata"
+  })
+
 
   return(list(date_package = date_package, date = date, tag_name = tag_name,
               package_location = package_location))

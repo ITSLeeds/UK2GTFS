@@ -5,7 +5,7 @@
   tryCatch({
     if( TRUE == UK2GTFS_option_updateCachedDataOnLibaryLoad() )
     {
-      update_data()
+      update_data( timeout=10 )
     }
   }, error = function(err) {
     warning(Sys.time(), " Process id=", Sys.getpid(), " threw errors during package load while calling update_data() :", err)
