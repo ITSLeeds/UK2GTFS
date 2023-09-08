@@ -219,10 +219,11 @@ makeCalendar <- function(schedule, ncores = 1) {
     }
 
 
-    if ( !all(validateCalendarDates( calendar ) ) )
+    okCalendarDates = validateCalendarDates( calendar )
+    if ( !all( okCalendarDates ) )
     {
-      warning(paste0(Sys.time(), " Some calendar dates had incorrect start or end dates that did not align with operating day bitmask"))
-      #TODO be more verbose about which ones
+      warning(Sys.time(), " Some calendar dates had incorrect start or end dates that did not align with operating day bitmask.\n Services=",
+              paste( unique( calendar$UID[ !okCalendarDates ] ), collapse = "," ) )
     }
 
     #we're going to be splitting and replicating calendar entries - stash the original UID so we can join back on it later
