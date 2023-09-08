@@ -12,6 +12,8 @@
 #' @param transfers Logical, should transfers.txt be generated (default TRUE)
 #' @param missing_tiplocs Logical, if true will check for
 #'   any missing tiplocs against the main file and add them.(default TRUE)
+#' @param working_timetable Logical, should WTT times be used instead of public times (default FALSE)
+#' @param public_only Logical, only return calls/services that are for public passenger pickup/set down (default TRUE)
 #' @family main
 #'
 #' @details Locations
@@ -44,7 +46,9 @@ atoc2gtfs <- function(path_in,
                       agency = "atoc_agency",
                       shapes = FALSE,
                       transfers = TRUE,
-                      missing_tiplocs = TRUE) {
+                      missing_tiplocs = TRUE,
+                      working_timetable = FALSE,
+                      public_only = TRUE) {
   # Checkmates
   checkmate::assert_character(path_in, len = 1)
   checkmate::assert_file_exists(path_in)
@@ -103,7 +107,9 @@ atoc2gtfs <- function(path_in,
       file = files[grepl(".mca", files)],
       silent = silent,
       ncores = 1,
-      full_import = TRUE
+      full_import = TRUE,
+      working_timetable = working_timetable,
+      public_only = public_only
   )
 
 
@@ -173,7 +179,8 @@ atoc2gtfs <- function(path_in,
     stops = stops,
     schedule = schedule,
     silent = silent,
-    ncores = ncores
+    ncores = ncores,
+    public_only = public_only
   )
   rm(schedule)
   gc()
