@@ -565,7 +565,7 @@ selectOverlayTimeableAndCopyAttributes <- function(cal, calNew, rowIndex)
 
 
 # triggered by test case "10:test makeCalendarInner"
-# when we have a 1 day overlay sitting on the start/end data of a base timetable
+# when we have a 1 day overlay sitting on the start/end date of a base timetable
 # the dates overlap - fix it
 fixOverlappingDates <- function( cal )
 {
