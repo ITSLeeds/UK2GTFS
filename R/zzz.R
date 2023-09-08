@@ -8,7 +8,7 @@
       update_data()
     }
   }, error = function(err) {
-    warning(Sys.time(), " Process id=", Sys.getpid(), " threw errors during package load while calling update_date() :", err)
+    warning(Sys.time(), " Process id=", Sys.getpid(), " threw errors during package load while calling update_data() :", err)
   })
 
 }
