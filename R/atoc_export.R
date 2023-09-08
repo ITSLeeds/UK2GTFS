@@ -201,8 +201,7 @@ longnames <- function(routes, stop_times, stops) {
 #'
 makeCalendar <- function(schedule, ncores = 1) {
 
-  treatDatesAsInt = getOption("UK2GTFS_opt_treatDatesAsInt", default=FALSE)
-  treatDatesAsInt = TRUE
+  treatDatesAsInt = getOption("UK2GTFS_opt_treatDatesAsInt", default=TRUE)
   set_TREAT_DATES_AS_INT( treatDatesAsInt )
 
   tryCatch({
