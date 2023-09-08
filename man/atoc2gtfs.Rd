@@ -12,7 +12,9 @@ atoc2gtfs(
   agency = "atoc_agency",
   shapes = FALSE,
   transfers = TRUE,
-  missing_tiplocs = TRUE
+  missing_tiplocs = TRUE,
+  working_timetable = FALSE,
+  public_only = TRUE
 )
 }
 \arguments{
@@ -33,6 +35,10 @@ atoc2gtfs(
 
 \item{missing_tiplocs}{Logical, if true will check for
 any missing tiplocs against the main file and add them.(default TRUE)}
+
+\item{working_timetable}{Logical, should WTT times be used instead of public times (default FALSE)}
+
+\item{public_only}{Logical, only return calls/services that are for public passenger pickup/set down (default TRUE)}
 }
 \description{
 Convert ATOC CIF files to GTFS
