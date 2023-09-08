@@ -320,10 +320,10 @@ makeCalendar <- function(schedule, ncores = 1) {
     set_TREAT_DATES_AS_INT( FALSE )
 
     #revert treating date as int
-    if( TRUE==treatDatesAsInt && exists("res.calendar") )
+    if( TRUE==treatDatesAsInt )
     {
-      res.calendar = makeDateFieldsDateType( res.calendar )
-      cancellations = makeDateFieldsDateType( cancellations )
+      if (exists("res.calendar")){ res.calendar = makeDateFieldsDateType( res.calendar ) }
+      if (exists("cancellations")){ cancellations = makeDateFieldsDateType( cancellations ) }
     }
   })
 
