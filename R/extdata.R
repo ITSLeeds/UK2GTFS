@@ -7,6 +7,8 @@
 #' Raw data can be viewed and contributed to at
 #' https://github.com/ITSLeeds/UK2GTFS-data
 #'
+#' @param timeout maximum duration (in seconds) to wait for a response from the server (github.com)
+#'
 #' @export
 #'
 update_data <- function( timeout=60 ){
