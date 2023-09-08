@@ -31,6 +31,7 @@ Imports:
   geodist,
   httr,
   iotools,
+  stringi,
   stringr,
   sf,
   parallel,
