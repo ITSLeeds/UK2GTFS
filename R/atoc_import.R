@@ -357,8 +357,9 @@ process_activity <- function(dt, public_only) {
 
   activity = sprintf("%s,%s,%s,%s,%s,%s", splitActivityMat[,1], splitActivityMat[,2], splitActivityMat[,3], splitActivityMat[,4], splitActivityMat[,5], splitActivityMat[,6] )
 
-  #remove whitespace, replace multiple comma with single comma, remove leading comma, remove trailing comma.
-  dt$Activity <- gsub(",$", "", gsub("^,", "", gsub(",+", ",", gsub("\\s+", "", activity))))
+  #replace multiple comma with single comma, remove whitespace, remove leading comma, remove trailing comma.
+  activity = gsub(",+", ",", activity)
+  dt[, Activity := gsub("\\s+|^,|,$", "", activity)]
 
   #remove rows with no activity we're interested in
   dt <- dt[ ""!=dt$Activity ]
