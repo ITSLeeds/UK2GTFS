@@ -212,7 +212,8 @@ PUBLIC_SERVICE_CATEGORY = c("OL", "OU", "OO", "OW", "XC", "XD", "XI",
 #' 4. Replace missing agency names with "MISSINGAGENCY"
 #' 5. If service is not public and public_only=TRUE then remove it (freight, 'trips' aka charters)
 #'        (these have a null route_type, so loading into OpenTripPlanner fails if these are present)
-#' 6' If public_only=TRUE then remove services with 'train_category' not for public use. e.g. EE (ECS-Empty Coaching Stock)
+#' 6. If public_only=TRUE then remove services with 'train_category' not for public use. e.g. EE (ECS-Empty Coaching Stock)
+#' 7. Remove shapes that no longer have any trips
 #'
 #' @export
 gtfs_clean <- function(gtfs, public_only =  FALSE) {
@@ -254,6 +255,20 @@ gtfs_clean <- function(gtfs, public_only =  FALSE) {
 
     gtfs$stop_times <- filteredCalls[, names( gtfs$stop_times ), with=FALSE]
 
+
+    #what is this batty code I hear you cry ?!
+    gtfs$stop_times$arrival_time = gtfs$stop_times$arrival_time[ 1: nrow(gtfs$stop_times) ]
+    gtfs$stop_times$departure_time = gtfs$stop_times$departure_time[ 1: nrow(gtfs$stop_times) ]
+    #well, it's a bug workaround. Not entirely sure of the trigger, but when we have 30M stop times, and filter down to 1M
+    #the hour and minute component of the Period 'object' report a length of 30M, when there is only supposed to be 1M of them.
+    #The nrow() in the data.table says 1M, and the number of seconds in the period 'object' says 1M.
+    #Clearly 'object' is in big air quotes......
+    #as a result it blows up in gtfs_write() when writing because the sprintf moans about the input vectors being different lengths.
+    #This fixes it.
+    #stamping on the gc() button at the end of this fn for good measure.
+    #- remember kids, R is not suitable for production use.....
+
+
     #after merging GTFS files we may have compressed the calendar and calendar_dates so a service pattern is used by
     #multiple trips - so don't remove calendar and calendar_dates that link to routes with NA route_type in case
     #it's in use by multiple trips/routes
@@ -279,7 +294,20 @@ gtfs_clean <- function(gtfs, public_only =  FALSE) {
     {
       gtfs$routes <- gtfs$routes[ !is.na( gtfs$routes$route_type ), ]
     }
+
+    rm(joinedCalls)
+    rm(joinedTrips)
+    rm(filteredCalls)
+    rm(filteredTrips)
+    gc()
   }
+
+  # 7 remove shapes that no longer have any trips
+  if ("shapes" %in% names(gtfs))
+  {
+    gtfs$shapes <- gtfs$shapes[gtfs$shapes$shape_id %in% gtfs$trips$shape_id, ]
+  }
+
 
   return(gtfs)
 }
