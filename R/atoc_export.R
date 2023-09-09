@@ -569,8 +569,8 @@ afterMidnight <- function(stop_times, safe = TRUE) {
   )
 
   stop_times <- dplyr::left_join(stop_times, stop_times.summary, by = "trip_id")
-  stop_times$arvfinal <- ifelse(stop_times$arv < stop_times$dept_first, stop_times$arv + 2400, stop_times$arv)
-  stop_times$depfinal <- ifelse(stop_times$dept < stop_times$dept_first, stop_times$dept + 2400, stop_times$dept)
+  stop_times$arvfinal <- ifelse(stop_times$arv < stop_times$dept_first, stop_times$arv + 240000, stop_times$arv)
+  stop_times$depfinal <- ifelse(stop_times$dept < stop_times$dept_first, stop_times$dept + 240000, stop_times$dept)
 
 
   if (safe) {
@@ -589,7 +589,7 @@ afterMidnight <- function(stop_times, safe = TRUE) {
 
   numb2time2 <- function(numb){
     #performance, substr is relatively expensive
-    numb <- sprintf("%02d:%02d:00", numb %/% 100, numb %% 100)
+    numb <- sprintf("%02d:%02d:%02d", numb %/% 10000, (numb %/% 100) %% 100, numb %% 100)
   }
 
   stop_times$arrival_time <- numb2time2(stop_times$arvfinal)
@@ -607,10 +607,10 @@ afterMidnight <- function(stop_times, safe = TRUE) {
 fixStopTimeData <- function(stop_times)
 {
   # Fix arrival_time / departure_time being 0000 for pick up only or drop off only trains
-  stop_times$departure_time <- dplyr::if_else(stop_times$departure_time == "0000" & stop_times$Activity == "D",
+  stop_times$departure_time <- dplyr::if_else(stop_times$departure_time == "000000" & stop_times$Activity == "D",
                                               stop_times$arrival_time,
                                               stop_times$departure_time)
-  stop_times$arrival_time <- dplyr::if_else(stop_times$arrival_time == "0000" & stop_times$Activity == "U",
+  stop_times$arrival_time <- dplyr::if_else(stop_times$arrival_time == "000000" & stop_times$Activity == "U",
                                             stop_times$departure_time,
                                             stop_times$arrival_time)
 

@@ -295,23 +295,26 @@ strip_whitespace <- function(dt) {
 
 
 
-#TODO update this to handle seconds instead of just truncating them (public TT is to nearest minute, WTT more accurate)
 process_times <- function(dt, working_timetable) {
-  if (working_timetable) {
+  #fill in the missing seconds - substituting H for 30 seconds.
+  if (working_timetable)
+  {
     if ("Scheduled Arrival Time" %in% colnames(dt)) {
-      dt[, `Arrival Time` := gsub("H", "", `Scheduled Arrival Time`)]
+      dt[, `Arrival Time` := gsub("^(\\d{4}) $","\\100",gsub("^(\\d{4})H$", "\\130", `Scheduled Arrival Time`))]
     }
 
     if ("Scheduled Departure Time" %in% colnames(dt)) {
-      dt[, `Departure Time` := gsub("H", "", `Scheduled Departure Time`)]
+      dt[, `Departure Time` := gsub("^(\\d{4}) $","\\100", gsub("^(\\d{4})H$", "\\130", `Scheduled Departure Time`))]
     }
-  } else {
+  }
+  else
+  {
     if ("Public Arrival Time" %in% colnames(dt)) {
-      dt[, `Arrival Time` := gsub("H", "", `Public Arrival Time`)]
+      dt[, `Arrival Time` := gsub("^(\\d{4})$", "\\100", `Public Arrival Time`)]
     }
 
     if ("Public Departure Time" %in% colnames(dt)) {
-      dt[, `Departure Time` := gsub("H", "", `Public Departure Time`)]
+      dt[, `Departure Time` := gsub("^(\\d{4})$", "\\100", `Public Departure Time`)]
     }
   }
 

@@ -85,6 +85,50 @@ test_that("test splitBitmask performance", {
 
 
 
+
+
+
+test_that("test process_times", {
+
+  testData = data.table(
+    `Scheduled Arrival Time`  =c("", "     ",  "0000 ",  "1234H"),
+    `Scheduled Departure Time`=c("", "     ",  "0106 ",  "2156H"),
+    `Public Arrival Time`     =c("",  "    ", "0135",    "tjkl"  ),
+    `Public Departure Time`   =c("",  "    ", "1234",    "tgbi"  ))
+
+  OK = TRUE
+
+  {
+    res = process_times( testData, FALSE )
+
+    res = res[,c("Arrival Time","Departure Time")]
+
+    expectedResult = data.table(
+      `Arrival Time`     =c("",  "    ", "013500", "tjkl"  ),
+      `Departure Time`   =c("",  "    ", "123400", "tgbi"  ))
+
+    printDifferencesDf(expectedResult, res)
+    OK = OK & identical(expectedResult, res)
+  }
+  {
+    res = process_times( testData, TRUE )
+
+    res = res[,c("Arrival Time","Departure Time")]
+
+    expectedResult = data.table(
+      `Arrival Time`     =c("",  "     ", "000000", "123430" ),
+      `Departure Time`   =c("",  "     ", "010600", "215630" ))
+
+    printDifferencesDf(expectedResult, res)
+    OK = OK & identical(expectedResult, res)
+  }
+
+  expect_true( OK )
+})
+
+
+
+
 test_that("test setupDatesCache", {
 
   testData = data.table(
