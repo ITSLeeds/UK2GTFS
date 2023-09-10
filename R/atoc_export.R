@@ -493,7 +493,7 @@ duplicate_related_items <- function(calendar, related_items, original_join_field
 
     #join the count of number of duplicates required to the stop times (so we can retrieve it later when doing the duplication)
     related_items <- dplyr::left_join(related_items, rowID.unique,
-                                   by = setNames("Var1",original_join_field)  )
+                                   by = stats::setNames("Var1",original_join_field)  )
 
     #set the number of duplications required
     related_items$`_reps` <- related_items$Freq
