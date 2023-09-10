@@ -24,5 +24,6 @@ Task done:
 4. Replace missing agency names with "MISSINGAGENCY"
 5. If service is not public and public_only=TRUE then remove it (freight, 'trips' aka charters)
        (these have a null route_type, so loading into OpenTripPlanner fails if these are present)
-6' If public_only=TRUE then remove services with 'train_category' not for public use. e.g. EE (ECS-Empty Coaching Stock)
+6. If public_only=TRUE then remove services with 'train_category' not for public use. e.g. EE (ECS-Empty Coaching Stock)
+7. Remove shapes that no longer have any trips
 }
