@@ -587,13 +587,14 @@ afterMidnight <- function(stop_times, safe = TRUE) {
     }
   }
 
-  numb2time2 <- function(numb){
+  numb2time2 <- function(dt, colNameDest, colNameSource){
     #performance, substr is relatively expensive
-    numb <- sprintf("%02d:%02d:%02d", numb %/% 10000, (numb %/% 100) %% 100, numb %% 100)
+    set(dt, j=colNameDest, value= sprintf("%02d:%02d:%02d",
+              dt[[colNameSource]] %/% 10000, (dt[[colNameSource]] %/% 100) %% 100, dt[[colNameSource]] %% 100) )
   }
 
-  stop_times$arrival_time <- numb2time2(stop_times$arvfinal)
-  stop_times$departure_time <- numb2time2(stop_times$depfinal)
+  numb2time2(stop_times, "arrival_time", "arvfinal")
+  numb2time2(stop_times, "departure_time", "depfinal")
 
   stop_times <- stop_times[, c("trip_id", "arrival_time", "departure_time",
                                "stop_id", "stop_sequence", "pickup_type",
