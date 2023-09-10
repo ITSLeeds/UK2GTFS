@@ -508,6 +508,7 @@ allocateCancellationsAcrossCalendars <- function( calendar, cancellations )
 
 
 
+CALENDAR_COLS_TO_COPY <- c("UID", "Days", "STP", "rowID" )
 
 NOT_NEEDED <- c("__NOT_NEEDED_MARKER__~@$$%&*((")
 
@@ -548,16 +549,8 @@ selectOverlayTimeableAndCopyAttributes <- function(cal, calNew, rowIndex)
   #this speeds things up when we look up the required priority overlay **SEE_NOTE**
   #so we don't need to sort again here, just pick the top filtered result
 
-  #stash the generated start & end dates
-  #performance - copying to separate variables seems to be fastest
-  start_date = calNew$start_date[rowIndex]
-  end_date = calNew$end_date[rowIndex]
-
-  calNew[rowIndex,] <- cal[baseTimetableIndexes[1],]
-  #this is the most time consuming line in this fn. takes about 10x longer than the single variable copy below
-
-  calNew$start_date[rowIndex] = start_date
-  calNew$end_date[rowIndex] = end_date
+  set( calNew, i = rowIndex, j = CALENDAR_COLS_TO_COPY, value = cal[ baseTimetableIndexes[1], CALENDAR_COLS_TO_COPY, with=FALSE ] )
+  #set() runs 3x faster than this style of copy      calNew[rowIndex,] <- cal[baseTimetableIndexes[1],]
 
   return (calNew)
 }
