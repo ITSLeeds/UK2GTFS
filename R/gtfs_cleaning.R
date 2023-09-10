@@ -265,6 +265,7 @@ gtfs_clean <- function(gtfs, public_only =  FALSE) {
     #Clearly 'object' is in big air quotes......
     #as a result it blows up in gtfs_write() when writing because the sprintf moans about the input vectors being different lengths.
     #This fixes it.
+    # see also stops_interpolate() "Needed because rbindlist doesn't work with periods for some reason" which smells like a similar workaround.
     #stamping on the gc() button at the end of this fn for good measure.
     #- remember kids, R is not suitable for production use.....
 
