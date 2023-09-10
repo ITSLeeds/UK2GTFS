@@ -274,6 +274,8 @@ strip_whitespace_df <- function(df) {
 #' Strip White Space
 #'
 #' @details
+#' Input data.table is modified in-place and returned to the caller.
+#'
 #' Strips trailing whitespace from all char columns in a data.table
 #' empty values are converted to NA
 #'     returns the data.table
@@ -286,35 +288,36 @@ strip_whitespace <- function(dt) {
   char_cols <- sapply(dt, is.character)
   char_col_names <- names(char_cols[char_cols])
 
-  return ( dt[, (char_col_names) := lapply(.SD, function(val) {
-    val <- trimws(val, which = "right")
-    val[val == ""] <- NA
-    return(val)
-  }), .SDcols = char_col_names] )
+  for (col_name in char_col_names) {
+    set(dt, j = col_name, value = trimws(dt[[col_name]], which = "right"))
+    dt[dt[[col_name]] == "", (col_name) := NA_character_]
+  }
+
+  return (dt)
 }
 
 
-
+#does in place-modification of input data.table
 process_times <- function(dt, working_timetable) {
   #fill in the missing seconds - substituting H for 30 seconds.
   if (working_timetable)
   {
     if ("Scheduled Arrival Time" %in% colnames(dt)) {
-      dt[, `Arrival Time` := gsub("^(\\d{4}) $","\\100",gsub("^(\\d{4})H$", "\\130", `Scheduled Arrival Time`))]
+      set(dt, j = "Arrival Time", value = gsub("^(\\d{4}) $","\\100",gsub("^(\\d{4})H$", "\\130", dt[["Scheduled Arrival Time"]])))
     }
 
     if ("Scheduled Departure Time" %in% colnames(dt)) {
-      dt[, `Departure Time` := gsub("^(\\d{4}) $","\\100", gsub("^(\\d{4})H$", "\\130", `Scheduled Departure Time`))]
+      set(dt, j = "Departure Time", value = gsub("^(\\d{4}) $","\\100",gsub("^(\\d{4})H$", "\\130", dt[["Scheduled Departure Time"]])))
     }
   }
   else
   {
     if ("Public Arrival Time" %in% colnames(dt)) {
-      dt[, `Arrival Time` := gsub("^(\\d{4})$", "\\100", `Public Arrival Time`)]
+      set(dt, j = "Arrival Time", value = gsub("^(\\d{4})$", "\\100", dt[["Public Arrival Time"]]))
     }
 
     if ("Public Departure Time" %in% colnames(dt)) {
-      dt[, `Departure Time` := gsub("^(\\d{4})$", "\\100", `Public Departure Time`)]
+      set(dt, j = "Departure Time", value = gsub("^(\\d{4})$", "\\100", dt[["Public Departure Time"]]))
     }
   }
 
@@ -362,7 +365,7 @@ process_activity <- function(dt, public_only) {
 
   #replace multiple comma with single comma, remove whitespace, remove leading comma, remove trailing comma.
   activity = gsub(",+", ",", activity)
-  dt[, Activity := gsub("\\s+|^,|,$", "", activity)]
+  set(dt, j="Activity", value = gsub("\\s+|^,|,$", "", activity))
 
   #remove rows with no activity we're interested in
   dt <- dt[ ""!=dt$Activity ]
@@ -402,6 +405,7 @@ importMCA <- function(file,
     n = -1
   )
   types <- substr(raw, 1, 2)
+  rowIds <- seq(from = 1, to = length(types))
 
   # break out each part of the file
   # Header Record
@@ -448,7 +452,7 @@ importMCA <- function(file,
   BS$Speed <- as.integer(BS$Speed)
 
   # Add the rowid
-  BS$rowID <- seq(from = 1, to = length(types))[types == "BS"]
+  BS$rowID <- rowIds[types == "BS"]
 
   # Basic Schedule Extra Details
   if (!silent) {
@@ -471,7 +475,7 @@ importMCA <- function(file,
   # clean data
 
   # Add the rowid
-  BX$rowID <- seq(from = 1, to = length(types))[types == "BX"]
+  BX$rowID <- rowIds[types == "BX"]
 
 
 
@@ -492,18 +496,13 @@ importMCA <- function(file,
     "Pathing Allowance", "Activity", "Performance Allowance",
     "Spare"
   )
-  LO$Spare <- NULL
-  LO$`Record Identity` <- NULL
+
   # Add the rowid
-  LO$rowID <- seq(from = 1, to = length(types))[types == "LO"]
+  LO$rowID <- rowIds[types == "LO"]
 
-  LO <- process_activity(LO, public_only)
-
-  LO <- process_times( LO, working_timetable )
-
-  LO <- LO[, c("rowID", "Location", "Activity", "Departure Time" )]
-
-  LO <- strip_whitespace(LO)
+  LO[, c("Scheduled Arrival Time","Public Arrival Time") := ""]
+  LO <- LO[, c("rowID", "Location", "Activity", "Scheduled Arrival Time", "Scheduled Departure Time",
+               "Public Arrival Time", "Public Departure Time" )]
 
 
   # Intermediate Station
@@ -524,19 +523,12 @@ importMCA <- function(file,
     "Engineering Allowance", "Pathing Allowance", "Performance Allowance",
     "Spare"
   )
-  LI$Spare <- NULL
-  LI$`Record Identity` <- NULL
+
   # Add the rowid
-  LI$rowID <- seq(from = 1, to = length(types))[types == "LI"]
+  LI$rowID <- rowIds[types == "LI"]
 
-  LI <- process_activity(LI, public_only)
-
-  LI <- process_times( LI, working_timetable )
-
-  LI <- LI[, c("rowID", "Location", "Activity", "Arrival Time", "Departure Time" )]
-
-  LI <- strip_whitespace(LI)
-
+  LI <- LI[, c("rowID", "Location", "Activity", "Scheduled Arrival Time", "Scheduled Departure Time",
+               "Public Arrival Time", "Public Departure Time" )]
 
 
   # Terminating Station
@@ -554,18 +546,13 @@ importMCA <- function(file,
     "Record Identity", "Location", "Suffix", "Scheduled Arrival Time",
     "Public Arrival Time", "Platform", "Path", "Activity", "Spare"
   )
-  LT$Spare <- NULL
-  LT$`Record Identity` <- NULL
+
   # Add the rowid
-  LT$rowID <- seq(from = 1, to = length(types))[types == "LT"]
+  LT$rowID <- rowIds[types == "LT"]
 
-  LT <- process_activity(LT, public_only)
-
-  LT <- process_times( LT, working_timetable )
-
-  LT <- LT[, c("rowID", "Location", "Activity", "Arrival Time" )]
-
-  LT <- strip_whitespace(LT)
+  LT[, c("Scheduled Departure Time","Public Departure Time") := ""]
+  LT <- LT[, c("rowID", "Location", "Activity", "Scheduled Arrival Time", "Scheduled Departure Time",
+               "Public Arrival Time", "Public Departure Time" )]
 
 
   # TIPLOC Insert
@@ -598,7 +585,7 @@ importMCA <- function(file,
     CR <- strip_whitespace(CR)
 
     # Add the rowid
-    CR$rowID <- seq(from = 1, to = length(types))[types == "CR"]
+    CR$rowID <- rowIds[types == "CR"]
 
     if (!silent) {
       message(paste0(Sys.time(), " importing TIPLOC Insert"))
@@ -620,7 +607,7 @@ importMCA <- function(file,
     TI <- strip_whitespace(TI)
 
     # Add the rowid
-    TI$rowID <- seq(from = 1, to = length(types))[types == "TI"]
+    TI$rowID <- rowIds[types == "TI"]
 
     # TIPLOC Amend
     if (!silent) {
@@ -643,7 +630,7 @@ importMCA <- function(file,
     TA <- strip_whitespace(TA)
 
     # Add the rowid
-    TA$rowID <- seq(from = 1, to = length(types))[types == "TA"]
+    TA$rowID <- rowIds[types == "TA"]
 
     # TIPLOC Delete
     if (!silent) {
@@ -662,7 +649,7 @@ importMCA <- function(file,
     TD <- strip_whitespace(TD)
 
     # Add the rowid
-    TD$rowID <- seq(from = 1, to = length(types))[types == "TD"]
+    TD$rowID <- rowIds[types == "TD"]
   }
 
 
@@ -703,7 +690,7 @@ importMCA <- function(file,
     AA$`Assoc Location Suffix` <- as.integer(AA$`Assoc Location Suffix`)
 
     # Add the rowid
-    AA$rowID <- seq(from = 1, to = length(types))[types == "AA"]
+    AA$rowID <- rowIds[types == "AA"]
   }
 
   # Trailer Record
@@ -722,14 +709,23 @@ importMCA <- function(file,
   ZZ <- strip_whitespace(ZZ)
 
   # Add the rowid
-  ZZ$rowID <- seq(from = 1, to = length(types))[types == "ZZ"]
+  ZZ$rowID <- rowIds[types == "ZZ"]
 
   # Prep the main files
   if (!silent) {
     message(paste0(Sys.time(), " Preparing Imported Data"))
   }
 
-  stop_times <- dplyr::bind_rows(list(LO, LI, LT))
+  stop_times <- data.table::rbindlist(list(LO, LI, LT), use.names=FALSE)
+
+  stop_times <- process_activity(stop_times, public_only)
+
+  stop_times <- process_times( stop_times, working_timetable )
+
+  stop_times <- stop_times[, c("rowID", "Location", "Activity", "Arrival Time", "Departure Time")]
+
+  stop_times <- strip_whitespace(stop_times)
+
   stop_times <- stop_times[order(stop_times$rowID), ]
 
   #the BS record is followed by the LO, LI, LT records relating to it
@@ -743,8 +739,8 @@ importMCA <- function(file,
 
   # the BX record appears the row after the BS record, so it's rowId is one more than it's corresponding BS record.
   # use this to join the two records together.
-  BX$rowIDm1 <- BX$rowID - 1
-  BX$rowID <- NULL
+  set(BX, j = "rowID", value = BX$rowID - 1)
+  setnames(BX, "rowID", "rowIDm1")
   schedule <- dplyr::left_join(BS, BX, by = c("rowID" = "rowIDm1"))
 
   if (full_import) {
