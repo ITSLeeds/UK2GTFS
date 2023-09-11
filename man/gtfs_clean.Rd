@@ -26,4 +26,5 @@ Task done:
        (these have a null route_type, so loading into OpenTripPlanner fails if these are present)
 6. If public_only=TRUE then remove services with 'train_category' not for public use. e.g. EE (ECS-Empty Coaching Stock)
 7. Remove shapes that no longer have any trips
+8  Remove frequencies that no longer have any trips
 }

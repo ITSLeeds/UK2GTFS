@@ -214,6 +214,7 @@ PUBLIC_SERVICE_CATEGORY = c("OL", "OU", "OO", "OW", "XC", "XD", "XI",
 #'        (these have a null route_type, so loading into OpenTripPlanner fails if these are present)
 #' 6. If public_only=TRUE then remove services with 'train_category' not for public use. e.g. EE (ECS-Empty Coaching Stock)
 #' 7. Remove shapes that no longer have any trips
+#' 8  Remove frequencies that no longer have any trips
 #'
 #' @export
 gtfs_clean <- function(gtfs, public_only =  FALSE) {
@@ -309,6 +310,11 @@ gtfs_clean <- function(gtfs, public_only =  FALSE) {
     gtfs$shapes <- gtfs$shapes[gtfs$shapes$shape_id %in% gtfs$trips$shape_id, ]
   }
 
+  # 8 remove frequencies that no longer have any trips
+  if ("frequencies" %in% names(gtfs))
+  {
+    gtfs$frequencies <- gtfs$frequencies[gtfs$frequencies$trip_id %in% gtfs$trips$trip_id, ]
+  }
 
   return(gtfs)
 }
