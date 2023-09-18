@@ -40,7 +40,7 @@ assign("WDAY_LOOKUP_MIN_VALUE", NULL )
 
 set_WDAY_LOOKUP_MIN_VALUE <- function( value )
 {
-  setValueInThisEnvironment("WDAY_LOOKUP_MIN_VALUE", as.integer(as.integer(value)-1) )
+  setValueInThisEnvironment("WDAY_LOOKUP_MIN_VALUE", as.integer(as.integer(value)-1L) )
 }
 
 assign("WDAY_LOOKUP_MAX_VALUE", NULL )
@@ -59,7 +59,7 @@ set_WDAY_LOOKUP_MAP <- function( value )
 
 
 
-local_lubridate_wday <- function( date, label = FALSE, week_start=1 )
+local_lubridate_wday <- function( date, label = FALSE, week_start=1L )
 {
   if (TRUE==TREAT_DATES_AS_INT)
   {
@@ -72,7 +72,7 @@ local_lubridate_wday <- function( date, label = FALSE, week_start=1 )
   }
   else
   {
-    return ( lubridate::wday( date, label = FALSE, week_start=1 ) )
+    return ( lubridate::wday( date, label = FALSE, week_start=1L ) )
   }
 }
 
@@ -98,32 +98,32 @@ setupDatesCache<-function( calendar )
   set_WDAY_LOOKUP_MIN_VALUE( minDt )
   set_WDAY_LOOKUP_MAX_VALUE( maxDt )
 
-  firstWeek = as.integer(lubridate::wday( seq.Date(from = minDt, to = minDt+6, by = "day"), label = FALSE, week_start=1 ))
-  allWeeks = rep( firstWeek, length.out=( as.integer(maxDt) - as.integer(minDt) +1 ) )
+  firstWeek = as.integer(lubridate::wday( seq.Date(from = minDt, to = minDt+6L, by = "day"), label = FALSE, week_start=1L ))
+  allWeeks = rep( firstWeek, length.out=( as.integer(maxDt) - as.integer(minDt) +1L ) )
   set_WDAY_LOOKUP_MAP( allWeeks )
 }
 
 
 
 #performance - this is slow, might be generating on the fly each time subset happens - cache it. -
-LETTERS <- letters[1:26]
-TWO_LETTERS <- paste0(rep(letters, each = 26), rep(letters, times = 26))
+LETTERS <- letters[1L:26L]
+TWO_LETTERS <- paste0(rep(letters, each = 26L), rep(letters, times = 26L))
 
 # Append to the UID to note the changes - and ensure that all service_id's in the output file remain unique
 appendLetterSuffix <- function( cal )
 {
   rows = nrow(cal)
 
-  if (rows > 1)
+  if (rows > 1L)
   {
-    if (rows <= 26)
+    if (rows <= 26L)
     {
       cal$UID <- paste0(cal$UID, " ", LETTERS[1:rows])
     }
     else
     {
       # Cases where we need extra letters, gives up to 676 ids
-      cal$UID <- paste0(cal$UID, " ", TWO_LETTERS[1:rows])
+      cal$UID <- paste0(cal$UID, " ", TWO_LETTERS[1L:rows])
     }
   }
 
@@ -134,7 +134,7 @@ appendLetterSuffix <- function( cal )
 # Append to the UID to note the changes - and ensure that all service_id's in the output file remain unique
 appendNumberSuffix<-function( cal, numToAppend )
 {
-  if( numToAppend>1 ) #don't need to append a new number if we only have one pattern
+  if( numToAppend>1L ) #don't need to append a new number if we only have one pattern
   {
     # further differentiate the UID by appending a number to the end for each different days pattern
     cal$UID <- paste0(cal$UID, numToAppend)
@@ -149,8 +149,8 @@ appendNumberSuffix<-function( cal, numToAppend )
 # e.g.    0010000 = FALSE      0011100 = FALSE       0101000 = TRUE
 hasGapInOperatingDays <- function( daysBitmask )
 {
-  firstDay = stringi::stri_locate_first( daysBitmask, fixed = "1" )[,1]
-  lastDay = stringi::stri_locate_last( daysBitmask, fixed = "1" )[,1]
+  firstDay = stringi::stri_locate_first( daysBitmask, fixed = "1" )[,1L]
+  lastDay = stringi::stri_locate_last( daysBitmask, fixed = "1" )[,1L]
 
   operatingDayCount = stringi::stri_count( daysBitmask, fixed = "1" )
 
@@ -172,11 +172,11 @@ END_PATTERN_VECTOR = c("1000000","100000","10000","1000","100","10","1")
 #i.e. if the first day in the day bitmask is Tuesday - then the start date should be Tuesday, not some other day.
 validateCalendarDates <- function( calendar )
 {
-  start_day_number = local_lubridate_wday( calendar$start_date, label = FALSE, week_start=1 )
-  end_day_number = local_lubridate_wday( calendar$end_date, label = FALSE, week_start=1 )
+  start_day_number = local_lubridate_wday( calendar$start_date, label = FALSE, week_start=1L )
+  end_day_number = local_lubridate_wday( calendar$end_date, label = FALSE, week_start=1L )
 
-  startOk <- START_PATTERN_VECTOR[ start_day_number ] == stringi::stri_sub(calendar$Days, 1, start_day_number)
-  endOk <- END_PATTERN_VECTOR[ end_day_number ] == stringr::str_sub(calendar$Days, end_day_number, 7)
+  startOk <- START_PATTERN_VECTOR[ start_day_number ] == stringi::stri_sub(calendar$Days, 1L, start_day_number)
+  endOk <- END_PATTERN_VECTOR[ end_day_number ] == stringr::str_sub(calendar$Days, end_day_number, 7L)
 
   return (startOk & endOk)
 }
@@ -209,7 +209,7 @@ splitBitmaskMat <- function( bitmaskVector, asInteger=FALSE )
 
 splitBitmask <- function( bitmask, asInteger=FALSE )
 {
-  duff = which( nchar(bitmask) != 7 )
+  duff = which( nchar(bitmask) != 7L )
 
   bitmask[duff] = "0000000"
 
@@ -228,7 +228,7 @@ splitBitmask <- function( bitmask, asInteger=FALSE )
 
 checkOperatingDayActive <- function(calendar) {
 
-  if (all(calendar$duration >= 7))
+  if (all(calendar$duration >= 7L))
   {
     return (calendar$Days!="0000000")
   }
@@ -249,11 +249,11 @@ checkOperatingDayActive <- function(calendar) {
     allDays = local_lubridate_wday( local_seq_date(from = veryfirstDay, to = max(calendar$end_date), by = "day")
                              , label = FALSE, week_start=1 )
   }
-  veryfirstDay = veryfirstDay - 1
+  veryfirstDay = veryfirstDay - 1L
 
   checkValid <- function(dur, sd, ed, od ){
 
-    if (dur >= 7)
+    if (dur >= 7L)
     {
       return (any(od))
     }
@@ -302,7 +302,7 @@ countIntersectingDayPatterns <- function( dayPatterns )
 
 intersectingDayPattern <- function( dayPattern1, dayPattern2 )
 {
-  return (any( countIntersectingDayPatterns( c(dayPattern1,dayPattern2) ) > 1) )
+  return (any( countIntersectingDayPatterns( c(dayPattern1,dayPattern2) ) > 1L) )
 }
 
 
@@ -319,7 +319,7 @@ intersectingDayPatterns <- function( dayPatternBase, dayPatternOverlay )
 
   intersects = unpackedBaseRepmat & unpackedOverlay
 
-  res <- apply(intersects, 1, any)
+  res <- apply(intersects, 1L, any)
 
   return ( res )
 }
@@ -341,12 +341,12 @@ makeReplicationDates <- function(cal, startDayNum, endDayNum){
 
   #make a sequences of dates, offsetting the start date so it's always monday (aligning with bitmask start day)
   #                           and the end date so it's always sunday
-  firstDate = min(cal$start_date) - 7
-  lastDate = max(cal$end_date) + 7
+  firstDate = min(cal$start_date) - 7L
+  lastDate = max(cal$end_date) + 7L
   allDates = local_seq_date(from = firstDate, to = lastDate, by = "day")
 
-  offset = as.integer(cal$start_date)-startDayNum+2-as.integer(firstDate)
-  end = as.integer(cal$end_date)+8-endDayNum-as.integer(firstDate)
+  offset = as.integer(cal$start_date)-startDayNum+2L-as.integer(firstDate)
+  end = as.integer(cal$end_date)+8L-endDayNum-as.integer(firstDate)
 
   dates <- Map(function(o, e) allDates[o:e], offset, end)
 
@@ -373,23 +373,23 @@ makeReplicationDates <- function(cal, startDayNum, endDayNum){
 #'
 makeAllOneDay <- function( cal )
 {
-  duration <- cal$end_date - cal$start_date + 1
+  duration <- cal$end_date - cal$start_date + 1L
 
-  if ( 0==nrow(cal) || all(1 == duration))
+  if ( 0L==nrow(cal) || all(1L == duration))
   {
     #nothing to do
     return (cal)
   }
 
   #make a list of dates for each object being replicated
-  startDayNum = local_lubridate_wday( cal$start_date, label = FALSE, week_start=1 )
-  endDayNum = local_lubridate_wday( cal$end_date, label = FALSE, week_start=1 )
+  startDayNum = local_lubridate_wday( cal$start_date, label = FALSE, week_start=1L )
+  endDayNum = local_lubridate_wday( cal$end_date, label = FALSE, week_start=1L )
   dateSequence = makeReplicationDates( cal, startDayNum, endDayNum )
 
   #work out how many time we need to replicate each item: number of operating days in week * num weeks
   bitmaskMat = splitBitmaskMat( cal$Days, asInteger=FALSE )
   dayCount = rowSums(bitmaskMat)
-  numWeeks <- ceiling(as.integer(cal$duration) / 7)
+  numWeeks <- ceiling(as.integer(cal$duration) / 7L)
   repetitions = dayCount * numWeeks
 
   #replicate the calendar rows the appropriate number of times
@@ -404,7 +404,7 @@ makeAllOneDay <- function( cal )
 
   #tidy up the values so they are correct for the spilt items
   replicatedcal$duration <- 1
-  replicatedcal$Days = SINGLE_DAY_PATTERN_VECTOR[ local_lubridate_wday( replicatedcal$start_date, label = FALSE, week_start=1 ) ]
+  replicatedcal$Days = SINGLE_DAY_PATTERN_VECTOR[ local_lubridate_wday( replicatedcal$start_date, label = FALSE, week_start=1L ) ]
 
   return (replicatedcal)
 }
@@ -419,7 +419,7 @@ makeAllOneDay <- function( cal )
 #'
 expandAllWeeks <- function( cal )
 {
-  if ( 0==nrow(cal) )
+  if ( 0L==nrow(cal) )
   {
     #nothing to do
     return (cal)
@@ -428,11 +428,11 @@ expandAllWeeks <- function( cal )
   #duration <- cal$end_date - cal$start_date + 1
 
   #make a list of dates for each object being replicated
-  startDayNum = local_lubridate_wday( cal$start_date, label = FALSE, week_start=1 )
-  endDayNum = local_lubridate_wday( cal$end_date, label = FALSE, week_start=1 )
+  startDayNum = local_lubridate_wday( cal$start_date, label = FALSE, week_start=1L )
+  endDayNum = local_lubridate_wday( cal$end_date, label = FALSE, week_start=1L )
   dateSequence = makeReplicationDates( cal, startDayNum, endDayNum )
 
-  numWeeks <- ceiling(as.integer(cal$duration) / 7)
+  numWeeks <- ceiling(as.integer(cal$duration) / 7L)
 
   #replicate a logical vector for the start date and use that to select the relevant dates from the date sequence
   startDayLogical <- SINGLE_DAY_PATTERN_LIST[startDayNum]
@@ -452,7 +452,7 @@ expandAllWeeks <- function( cal )
   replicatedcal$end_date <- endDates
 
   #tidy up the values so they are correct for the spilt items
-  replicatedcal$duration <- replicatedcal$end_date - replicatedcal$start_date + 1
+  replicatedcal$duration <- replicatedcal$end_date - replicatedcal$start_date + 1L
 
   return (replicatedcal)
 }
@@ -488,7 +488,7 @@ allocateCancellationsAcrossCalendars <- function( calendar, cancellations )
   #and the day of the cancellation is an operating day of the calendar item
   joined = cancellations[calendar, on = .(originalUID==originalUID,
                                           start_date>=start_date,
-                                          end_date<=end_date), nomatch = 0][
+                                          end_date<=end_date), nomatch = 0L][
                                             ((i.monday&monday) | (i.tuesday&tuesday) | (i.wednesday&wednesday)
                                              | (i.thursday&thursday) | (i.friday&friday) | (i.saturday&saturday) | (i.sunday&sunday)), ]
   #revert the stashed (join) fields
@@ -565,37 +565,37 @@ fixOverlappingDates <- function( cal )
   rowCount = nrow(cal)
 
   #forwards
-  for (j in seq(1, rowCount)) {
+  for (j in seq(1L, rowCount)) {
 
     #adjust our end date if next item a higher priority overlay
-    if (j<rowCount && !is.na(cal$UID[j]) && !is.na(cal$UID[j+1]) )
+    if (j<rowCount && !is.na(cal$UID[j]) && !is.na(cal$UID[j+1L]) )
     {
-      if ( cal$STP[j+1] < cal$STP[j] )
+      if ( cal$STP[j+1L] < cal$STP[j] )
       {
-        cal$end_date[j] <- cal$start_date[j+1] -1
+        cal$end_date[j] <- cal$start_date[j+1L] -1L
       }
 
-      if(j>1 && !is.na(cal$UID[j-1]) && cal$STP[j-1] < cal$STP[j] )
+      if(j>1 && !is.na(cal$UID[j-1L]) && cal$STP[j-1L] < cal$STP[j] )
       {
-        cal$start_date[j] <- cal$end_date[j-1] +1
+        cal$start_date[j] <- cal$end_date[j-1L] +1L
       }
     }
   }
 
   #backwards
-  for (j in seq(rowCount, 1)) {
+  for (j in seq(rowCount, 1L)) {
 
     #adjust our end date if previous item a higher priority overlay
-    if (j>1 && !is.na(cal$UID[j]) && !is.na(cal$UID[j-1]) )
+    if (j>1L && !is.na(cal$UID[j]) && !is.na(cal$UID[j-1L]) )
     {
-      if ( cal$STP[j-1] < cal$STP[j] )
+      if ( cal$STP[j-1L] < cal$STP[j] )
       {
-        cal$start_date[j] <- cal$end_date[j-1] +1
+        cal$start_date[j] <- cal$end_date[j-1L] +1L
       }
 
-      if(j<rowCount && !is.na(cal$UID[j+1]) && cal$STP[j+1] < cal$STP[j] )
+      if(j<rowCount && !is.na(cal$UID[j+1L]) && cal$STP[j+1L] < cal$STP[j] )
       {
-        cal$end_date[j] <- cal$start_date[j+1] -1
+        cal$end_date[j] <- cal$start_date[j+1L] -1L
       }
     }
   }
@@ -626,8 +626,8 @@ splitDates <- function(cal) {
 
   # create all unique pairs so we know how to chop the dates up into non-overlapping periods
   dates.dt <- unique( data.table(
-    start_date = dates[seq(1, length(dates) - 1)],
-    end_date = dates[seq(2, length(dates))]
+    start_date = dates[seq(1L, length(dates) - 1L)],
+    end_date = dates[seq(2L, length(dates))]
   ) )
 
   #left join back to the source data so we can see which (if any) date segments we have already covered, and which we need to replicate
@@ -643,46 +643,46 @@ splitDates <- function(cal) {
 
   rowCount = nrow(calNew)
 
-  for (i in seq(1,10)) #should really be a max of 3 passes because we can only have base, one overlay, and cancel
+  for (i in seq(1L,10L)) #should really be a max of 3 passes because we can only have base, one overlay, and cancel
   {
     #forwards
-    for (j in seq(1, rowCount)) {
+    for (j in seq(1L, rowCount)) {
 
       #if we are not valid & the next item is already valid, fill in our details and adjust our end date
-      if (j<rowCount && is.na(calNew$UID[j]) && !is.na(calNew$UID[j+1]) )
+      if (j<rowCount && is.na(calNew$UID[j]) && !is.na(calNew$UID[j+1L]) )
       {
         calNew <- selectOverlayTimeableAndCopyAttributes(cal, calNew, j)
 
-        if ( NOT_NEEDED != calNew$UID[j+1])
+        if ( NOT_NEEDED != calNew$UID[j+1L])
         {
-          calNew$end_date[j] <- calNew$start_date[j+1] -1
+          calNew$end_date[j] <- calNew$start_date[j+1L] -1L
         }
 
         #if previous item valid adjust our start date
-        if(j>1 && !is.na(calNew$UID[j-1]) && NOT_NEEDED != calNew$UID[j-1] )
+        if(j>1L && !is.na(calNew$UID[j-1L]) && NOT_NEEDED != calNew$UID[j-1L] )
         {
-          calNew$start_date[j] <- calNew$end_date[j-1] +1
+          calNew$start_date[j] <- calNew$end_date[j-1L] +1L
         }
       }
     }
 
     #backwards
-    for (j in seq(rowCount, 1)) {
+    for (j in seq(rowCount, 1L)) {
 
       #if we are not valid & the previous item is already valid, fill in our details and adjust our start date
-      if (j>1 && is.na(calNew$UID[j]) && !is.na(calNew$UID[j-1]) )
+      if (j>1L && is.na(calNew$UID[j]) && !is.na(calNew$UID[j-1L]) )
       {
         calNew <- selectOverlayTimeableAndCopyAttributes(cal, calNew, j)
 
-        if ( NOT_NEEDED != calNew$UID[j-1])
+        if ( NOT_NEEDED != calNew$UID[j-1L])
         {
-          calNew$start_date[j] <- calNew$end_date[j-1] +1
+          calNew$start_date[j] <- calNew$end_date[j-1L] +1L
         }
 
         #if next item valid adjust our start date
-        if(j<rowCount && !is.na(calNew$UID[j+1]) && NOT_NEEDED != calNew$UID[j+1]  )
+        if(j<rowCount && !is.na(calNew$UID[j+1L]) && NOT_NEEDED != calNew$UID[j+1L]  )
         {
-          calNew$end_date[j] <- calNew$start_date[j+1] -1
+          calNew$end_date[j] <- calNew$start_date[j+1L] -1L
         }
       }
     }
@@ -691,7 +691,7 @@ splitDates <- function(cal) {
   }
 
   # fix duration
-  calNew$duration <- calNew$end_date - calNew$start_date + 1
+  calNew$duration <- calNew$end_date - calNew$start_date + 1L
 
   #remove the items we know are not needed
   #  calNew <- calNew[ NOT_NEEDED != calNew$UID, ]
@@ -704,13 +704,13 @@ splitDates <- function(cal) {
   #  calNew <- calNew[calNew$STP != "C", ]
 
   # remove any zero or negative day schedules
-  #  calNew <- calNew[calNew$duration > 0, ]
+  #  calNew <- calNew[calNew$duration > 0L, ]
 
   #performance, do all subsets in one go
-  calNew <- calNew[ (!is.na(UID)) & (get("NOT_NEEDED") != UID) & (STP != "C") & (duration > 0), ]
+  calNew <- calNew[ (!is.na(UID)) & (get("NOT_NEEDED") != UID) & (STP != "C") & (duration > 0L), ]
 
   # Append UID to note the changes
-  if (nrow(calNew) > 0)
+  if (nrow(calNew) > 0L)
   {
     calNew <- appendLetterSuffix( calNew )
   }
@@ -735,14 +735,14 @@ splitDates <- function(cal) {
 #'
 makeCalendarInner <- function(calendarSub) {
 
-  if ( 1 == nrow(calendarSub) )
+  if ( 1L == nrow(calendarSub) )
   {
     # make into an single entry
     res = list(calendarSub, NA)
   }
   else
   {
-    if (length(unique(calendarSub$UID)) > 1)
+    if (length(unique(calendarSub$UID)) > 1L)
     {
       stop(paste("Error: makeCalendarInner was passed more than one service to work on. service=", unique(calendarSub$UID)))
     }
@@ -757,13 +757,13 @@ makeCalendarInner <- function(calendarSub) {
     overlayDurations <- as.numeric(calendarSub$duration[calendarSub$STP != baseType])
     overlayTypes <- calendarSub$STP[calendarSub$STP != baseType]
 
-    if( length(overlayDurations) <= 0 )
+    if( length(overlayDurations) <= 0L )
     {
       #assume the input data is good and the base timetables don't break any of the overlaying /operating day rules
       res = list( appendLetterSuffix(calendarSub), NA)
     }
     #if every overlay is a one day cancellation
-    else if ( all(overlayDurations == 1) && all(overlayTypes == "C") )
+    else if ( all(overlayDurations == 1L) && all(overlayTypes == "C") )
     {
       #warning("Unexpected item in the makeCalendarInner-ing area, cancellations should now be handled at a higher level (1)")
 
@@ -776,7 +776,7 @@ makeCalendarInner <- function(calendarSub) {
       uniqueDayPatterns <- unique(calendarSub$Days[calendarSub$STP != "C"])
 
       # if the day patterns are all identical
-      if (length(uniqueDayPatterns) <= 1 )
+      if (length(uniqueDayPatterns) <= 1L )
       {
         #performance pre-sort all the entries by the priority
         #this speeds things up when we look up the required priority overlay **SEE_NOTE**
@@ -828,7 +828,7 @@ makeCalendarForDifferentDayPatterns <- function( calendar, uniqueDayPatterns )
 
   #do the day patterns overlap each other in any way ?
   #e.g. a mon-sat pattern with a wed-fri overlap.
-  if ( any( countIntersectingDayPatterns(uniqueDayPatterns) > 1) )
+  if ( any( countIntersectingDayPatterns(uniqueDayPatterns) > 1L) )
   {
     gappyOverlays = overlayTimetables[ hasGapInOperatingDays(overlayTimetables$Days) ]
     continiousOverlays = overlayTimetables[ !hasGapInOperatingDays(overlayTimetables$Days) ]
@@ -843,13 +843,13 @@ makeCalendarForDifferentDayPatterns <- function( calendar, uniqueDayPatterns )
 
   distinctBasePatterns = unique( baseTimetables$Days )
 
-  for (k in seq(1, length(distinctBasePatterns))) {
+  for (k in seq(1L, length(distinctBasePatterns))) {
 
     theseBases = baseTimetables[baseTimetables$Days == distinctBasePatterns[k] ]
 
     theseOverlays = overlayTimetables[ intersectingDayPatterns( distinctBasePatterns[k], overlayTimetables$Days ) ]
 
-    if (nrow(theseOverlays) <= 0)
+    if (nrow(theseOverlays) <= 0L)
     {
       splits[[k]] <- appendNumberSuffix( appendLetterSuffix( theseBases ), k )
     }
