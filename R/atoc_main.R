@@ -153,10 +153,16 @@ schedule2routes <- function(stop_times, stops, schedule, silent = TRUE, ncores =
 
   #gtfs systems tend to be tolerant of additional fields, so expose the train_category and power_type so that the consumer can do analysis on them.
   #e.g. filter out ECS moves
+
+  #https://developers.google.com/transit/gtfs/reference#tripstxt 'trip_short_name'
+  #"Public facing text used to identify the trip to riders, e.g.to identify train numbers for commuter rail trips.
+  #If provided, should uniquely identify a trip within a service day; it should not be used for destination names or limited/express designations."
+  #best mapping from alpha headcode onto standard GTFS field is 'trip_short_name' since it's unique within a single day.
+
   # Ditch unnecessary columns
   routes <- routes[, c("route_id", "agency_id", "route_short_name", "route_long_name", "route_type", "train_category")]
   trips <- trips[, c("trip_id", "route_id", "service_id", "Train Identity", "Power Type")]
-  names(trips) <- c("trip_id", "route_id", "service_id", "train_identity", "power_type")
+  names(trips) <- c("trip_id", "route_id", "service_id", "trip_short_name", "power_type")
   stop_times <- stop_times[, c("trip_id", "arrival_time", "departure_time", "stop_id", "stop_sequence", "pickup_type", "drop_off_type")]
   calendar <- calendar[, c("service_id", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "start_date", "end_date")]
 
