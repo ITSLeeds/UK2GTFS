@@ -118,7 +118,7 @@ appendLetterSuffix <- function( cal )
   {
     if (rows <= 26L)
     {
-      cal$UID <- paste0(cal$UID, " ", LETTERS[1:rows])
+      cal$UID <- paste0(cal$UID, " ", LETTERS[1L:rows])
     }
     else
     {
@@ -154,7 +154,7 @@ hasGapInOperatingDays <- function( daysBitmask )
 
   operatingDayCount = stringi::stri_count( daysBitmask, fixed = "1" )
 
-  res = ( lastDay-firstDay+1 != operatingDayCount )
+  res = ( lastDay-firstDay+1L != operatingDayCount )
 
   res[is.na(res)] <- FALSE #shouldn't really get this, probably operating days are '0000000'
 
@@ -247,7 +247,7 @@ checkOperatingDayActive <- function(calendar) {
   else
   {
     allDays = local_lubridate_wday( local_seq_date(from = veryfirstDay, to = max(calendar$end_date), by = "day")
-                             , label = FALSE, week_start=1 )
+                             , label = FALSE, week_start=1L )
   }
   veryfirstDay = veryfirstDay - 1L
 
@@ -403,7 +403,7 @@ makeAllOneDay <- function( cal )
   replicatedcal$end_date <- replicatedcal$start_date <- selectedDates
 
   #tidy up the values so they are correct for the spilt items
-  replicatedcal$duration <- 1
+  replicatedcal$duration <- 1L
   replicatedcal$Days = SINGLE_DAY_PATTERN_VECTOR[ local_lubridate_wday( replicatedcal$start_date, label = FALSE, week_start=1L ) ]
 
   return (replicatedcal)
@@ -518,9 +518,9 @@ selectOverlayTimeableAndCopyAttributes <- function(cal, calNew, rowIndex)
 {
   #if we have two adjacent complete items e.g. ....end 13th Jan      start 14th jan.....
   #then it's not a real gap and just an artefact of the algorithm use to generate the dates
-  if( rowIndex>1 && rowIndex<nrow(calNew)
-      && !is.na(calNew$UID[rowIndex-1]) && !is.na(calNew$UID[rowIndex+1])
-      && calNew$end_date[rowIndex-1]+1 == calNew$start_date[rowIndex+1])
+  if( rowIndex>1L && rowIndex<nrow(calNew)
+      && !is.na(calNew$UID[rowIndex-1L]) && !is.na(calNew$UID[rowIndex+1L])
+      && calNew$end_date[rowIndex-1L]+1L == calNew$start_date[rowIndex+1L])
   {
     calNew$UID[rowIndex] <- NOT_NEEDED
     return (calNew)
@@ -531,7 +531,7 @@ selectOverlayTimeableAndCopyAttributes <- function(cal, calNew, rowIndex)
                               & cal$end_date >= calNew$end_date[rowIndex],,which=TRUE]
 
   #are we in a gap between two base timetables with no overlays
-  if ( length(baseTimetableIndexes)<=0 )
+  if ( length(baseTimetableIndexes)<=0L )
   {
     calNew$UID[rowIndex] <- NOT_NEEDED
     return (calNew)
@@ -549,7 +549,7 @@ selectOverlayTimeableAndCopyAttributes <- function(cal, calNew, rowIndex)
   #this speeds things up when we look up the required priority overlay **SEE_NOTE**
   #so we don't need to sort again here, just pick the top filtered result
 
-  set( calNew, i = rowIndex, j = CALENDAR_COLS_TO_COPY, value = cal[ baseTimetableIndexes[1], CALENDAR_COLS_TO_COPY, with=FALSE ] )
+  set( calNew, i = rowIndex, j = CALENDAR_COLS_TO_COPY, value = cal[ baseTimetableIndexes[1L], CALENDAR_COLS_TO_COPY, with=FALSE ] )
   #set() runs 3x faster than this style of copy      calNew[rowIndex,] <- cal[baseTimetableIndexes[1],]
 
   return (calNew)
@@ -575,7 +575,7 @@ fixOverlappingDates <- function( cal )
         cal$end_date[j] <- cal$start_date[j+1L] -1L
       }
 
-      if(j>1 && !is.na(cal$UID[j-1L]) && cal$STP[j-1L] < cal$STP[j] )
+      if(j>1L && !is.na(cal$UID[j-1L]) && cal$STP[j-1L] < cal$STP[j] )
       {
         cal$start_date[j] <- cal$end_date[j-1L] +1L
       }
