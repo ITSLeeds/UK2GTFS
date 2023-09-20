@@ -169,18 +169,21 @@ importMSN <- function(file, silent = TRUE) {
   # for some reason the coordinates are mangled
   #https://data.atoc.org/sites/all/themes/atoc/files/RSPS5046.pdf
   #east = Values are in 0.1 km units. Format is ‘1nnnn’ where nnnn is the distance in 0.1 km units.
-  #north = Values are in 0.1 km units. Format is ‘6nnnn’ where nnnn is the distance in 0.1 km units
   station$`Ordnance Survey Grid Ref East` <- as.numeric(station$`Ordnance Survey Grid Ref East`)
+  station$`Ordnance Survey Grid Ref East` <- ifelse(
+    (0==station$`Ordnance Survey Grid Ref East`), NA, station$`Ordnance Survey Grid Ref East` * 100 - 1e6)
+
+  #north = Values are in 0.1 km units. Format is ‘6nnnn’ where nnnn is the distance in 0.1 km units
   station$`Ordnance Survey Grid Ref North` <- as.numeric(station$`Ordnance Survey Grid Ref North`)
-  station$`Ordnance Survey Grid Ref East` <- station$`Ordnance Survey Grid Ref East` * 100 - 1e6
-  station$`Ordnance Survey Grid Ref North` <- station$`Ordnance Survey Grid Ref North` * 100 - 6e6
+  station$`Ordnance Survey Grid Ref North` <- ifelse(
+    (0==station$`Ordnance Survey Grid Ref North` | 69999==station$`Ordnance Survey Grid Ref North`), NA,
+      station$`Ordnance Survey Grid Ref North` * 100 - 6e6)
 
   station <- sf::st_as_sf(station,
-    coords = c(
-      "Ordnance Survey Grid Ref East",
-      "Ordnance Survey Grid Ref North"
-    ),
-    crs = 27700
+    coords = c(   "Ordnance Survey Grid Ref East",
+                  "Ordnance Survey Grid Ref North"),
+    crs = 27700,
+    na.fail = FALSE
   )
   station <- sf::st_transform(station, 4326)
 
