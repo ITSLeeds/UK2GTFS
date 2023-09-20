@@ -179,12 +179,18 @@ longnames <- function(routes, stop_times, stops) {
   routes <- dplyr::left_join(routes, stop_times_sub,
                              by = c("rowID" = "schedule"))
 
+  #you'd expect to only have to look at category to tell if it's a ship, but in practice the category for
+  #ships is NA, so we have to look at 'Train Status' too.
+  routes["SS" ==`Train Category` | "S"==`Train Status` | "4"==`Train Status`,
+                            route_long_name := paste("Ship",route_long_name)]
+  routes[`Train Category` %in% c("BS", "BR"),
+                            route_long_name := paste("Bus",route_long_name)]
 
-  routes[`Train Category` == "SS", route_long_name := paste("Ship",route_long_name)]
-  routes[`Train Category` %in% c("BS", "BR"), route_long_name := paste("Bus",route_long_name)]
-  routes[!(`Train Category` %in% c("SS", "BS", "BR")), route_long_name := paste("Train",route_long_name)]
-  #TODO reflect the London Transport services being set to metro/underground in this naming code
-
+  #Tyne & Wear metro is "OL" in data OL="London Underground/Metro Service"
+  routes[`Train Category` %in% c("EL", "OL"),
+                            route_long_name := paste("Metro",route_long_name)]
+  routes[!(`Train Category` %in% c("SS", "BS", "BR", "EL", "OL") | "S"==`Train Status` | "4"==`Train Status`),
+                            route_long_name := paste("Train",route_long_name)]
   return(routes)
 }
 

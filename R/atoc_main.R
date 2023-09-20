@@ -127,12 +127,17 @@ schedule2routes <- function(stop_times, stops, schedule, silent = TRUE, ncores =
   trips <- dplyr::left_join(trips, train_status, by = c("Train Status" = "train_status"))
   rm(train_status)
 
+  trips$route_type[trips$`Train Category` %in% c("EL", "OL") & trips$route_type == 2 ] <- 1
+  # London Underground is Metro (unless already identified as a bus/ship etc)
+  # "OL" is also used for Tyne & Wear metro
+
   routes <- trips
 
   routes <- dplyr::group_by(routes, `ATOC Code`, route_long_name, `Train Category`, route_type )
   routes <- dplyr::summarise(routes)
   routes$route_id <- 1:nrow(routes)
 
+  #join route_id back into trip table
   trips <- dplyr::left_join(trips, routes, by = c("ATOC Code", "route_long_name", "Train Category", "route_type"))
 
   routes <- routes[, c("route_id", "route_type", "ATOC Code", "route_long_name", "Train Category" )]
@@ -141,10 +146,6 @@ schedule2routes <- function(stop_times, stops, schedule, silent = TRUE, ncores =
   # IDs are not meaningful, just leave out
   routes$route_short_name <- "" # was: routes$route_id
 
-  routes$route_type[routes$agency_id == "LT" & routes$route_type == 2 ] <- 1
-      # London Underground is Metro (unless already identified as a bus/ship etc)
-      #TODO look at what this causes LizPurpCrossRailElizabethLine to be categorised as.
-      #TODO move to longnames()
 
   ### Section 6: #######################################################
   # Final Checks
