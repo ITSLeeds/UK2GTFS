@@ -164,9 +164,9 @@ getCachedLocationData <- function(locations = "tiplocs")
   if (inherits(locations, "sf"))
   {
     stops <- cbind(locations, sf::st_coordinates(locations))
-    stops <- as.data.frame(stops)
-    stops <- stops[, c( "stop_id", "stop_code", "stop_name", "Y", "X" )]
-    names(stops) <- c(  "stop_id", "stop_code", "stop_name", "stop_lat", "stop_lon" )
+    stops <- sf::st_drop_geometry(stops)
+    stops <- as.data.table(stops)
+    setnames(stops, old = c("Y", "X"), new = c("stop_lat", "stop_lon"))
   }
   else #TODO test column names
   {

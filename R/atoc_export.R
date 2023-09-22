@@ -161,15 +161,16 @@ longnames <- function(routes, stop_times, stops) {
     stop_times_sub,
     dplyr::rename(stops[, c("stop_id", "stop_name")], stop_name_a = stop_name),
     by = c("stop_id_a" = "stop_id"))
+
   stop_times_sub <- dplyr::left_join(
     stop_times_sub,
     dplyr::rename(stops[, c("stop_id", "stop_name")], stop_name_b = stop_name),
     by = c("stop_id_b" = "stop_id"))
 
   stop_times_sub$route_long_name <- paste0("from ",
-                                           stop_times_sub$stop_name_a,
+                    ifelse( is.na(stop_times_sub$stop_name_a), stop_times_sub$stop_id_a, stop_times_sub$stop_name_a),
                                            " to ",
-                                           stop_times_sub$stop_name_b)
+                    ifelse( is.na(stop_times_sub$stop_name_b), stop_times_sub$stop_id_b, stop_times_sub$stop_name_b) )
 
   stop_times_sub$route_long_name <- gsub(" Rail Station", "" , stop_times_sub$route_long_name)
 
