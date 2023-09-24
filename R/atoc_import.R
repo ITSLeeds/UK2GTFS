@@ -303,32 +303,66 @@ strip_whitespace <- function(dt) {
 }
 
 
-#does in place-modification of input data.table
+
 process_times <- function(dt, working_timetable) {
-  #fill in the missing seconds - substituting H for 30 seconds.
-  if (working_timetable)
-  {
-    if ("Scheduled Arrival Time" %in% colnames(dt)) {
-      set(dt, j = "Arrival Time", value = gsub("^(\\d{4}) $","\\100",gsub("^(\\d{4})H$", "\\130", dt[["Scheduled Arrival Time"]])))
-    }
 
-    if ("Scheduled Departure Time" %in% colnames(dt)) {
-      set(dt, j = "Departure Time", value = gsub("^(\\d{4}) $","\\100",gsub("^(\\d{4})H$", "\\130", dt[["Scheduled Departure Time"]])))
-    }
-  }
-  else
-  {
-    if ("Public Arrival Time" %in% colnames(dt)) {
-      set(dt, j = "Arrival Time", value = gsub("^(\\d{4})$", "\\100", dt[["Public Arrival Time"]]))
-    }
-
-    if ("Public Departure Time" %in% colnames(dt)) {
-      set(dt, j = "Departure Time", value = gsub("^(\\d{4})$", "\\100", dt[["Public Departure Time"]]))
-    }
-  }
+  dt = processOneTime(dt, working_timetable, "Arrival Time", "Scheduled Arrival Time", "Public Arrival Time")
+  dt = processOneTime(dt, working_timetable, "Departure Time", "Scheduled Departure Time", "Public Departure Time")
 
   return(dt)
 }
+
+
+#does in place-modification of input data.table
+#select the public arrive/depart times if they exist, otherwise select the wtt arrive/depart times if they exist, otherwise select the pass time
+#and at the same time fill in the missing seconds values (and 30 seconds if 'H' is indicated)
+processOneTime <- function(dt, working_timetable, targetField, sourceFieldWtt, sourceField)
+{
+  hasPass = "Scheduled Pass" %in% colnames(dt)
+
+  if (sourceFieldWtt %in% colnames(dt))
+  {
+    if (working_timetable)
+    {
+      if(hasPass)
+      {
+        set(dt, j = targetField, value = gsub("^(\\d{4}) $","\\100",gsub("^(\\d{4})H$", "\\130",
+                   data.table::fifelse( "     "==dt[[sourceFieldWtt]],
+                              dt[["Scheduled Pass"]],
+                              dt[[sourceFieldWtt]])))
+        )
+      }
+      else
+      {
+        set(dt, j = targetField, value = gsub("^(\\d{4}) $","\\100",gsub("^(\\d{4})H$", "\\130", dt[[sourceFieldWtt]])))
+      }
+    }
+    else
+    {
+      if(hasPass)
+      {
+        set(dt, j = targetField, value = data.table::fifelse( "0000"==dt[[sourceField]],
+                  gsub("^(\\d{4}) $","\\100",gsub("^(\\d{4})H$", "\\130",
+                        data.table::fifelse( "     "==dt[[sourceFieldWtt]],
+                               dt[["Scheduled Pass"]],
+                               dt[[sourceFieldWtt]]))),
+                  gsub("^(\\d{4})$", "\\100", dt[[sourceField]]))
+        )
+      }
+      else
+      {
+        #If there is no Public Arrival time this field will default to 0000. (we will use WTT instead)
+        set(dt, j = targetField, value = data.table::fifelse( "0000"==dt[[sourceField]],
+                  gsub("^(\\d{4}) $","\\100",gsub("^(\\d{4})H$", "\\130", dt[[sourceFieldWtt]])),
+                  gsub("^(\\d{4})$", "\\100", dt[[sourceField]]))
+        )
+      }
+    }
+  }
+
+  return (dt)
+}
+
 
 
 # Process Activity Codes
@@ -373,8 +407,11 @@ process_activity <- function(dt, public_only) {
   activity = gsub(",+", ",", activity)
   set(dt, j="Activity", value = gsub("\\s+|^,|,$", "", activity))
 
-  #remove rows with no activity we're interested in
-  dt <- dt[ ""!=dt$Activity ]
+  #remove rows with no activity we're interested in (there is no activity at 'pass' locations)
+  if(public_only)
+  {
+    dt <- dt[ ""!=dt$Activity ]
+  }
 
   return(dt)
 }
@@ -506,9 +543,9 @@ importMCA <- function(file,
   # Add the rowid
   LO$rowID <- rowIds[types == "LO"]
 
-  LO[, c("Scheduled Arrival Time","Public Arrival Time") := ""]
+  LO[, c("Scheduled Arrival Time","Public Arrival Time", "Scheduled Pass") := ""]
   LO <- LO[, c("rowID", "Location", "Activity", "Scheduled Arrival Time", "Scheduled Departure Time",
-               "Public Arrival Time", "Public Departure Time" )]
+               "Public Arrival Time", "Public Departure Time", "Scheduled Pass" )]
 
 
   # Intermediate Station
@@ -534,7 +571,7 @@ importMCA <- function(file,
   LI$rowID <- rowIds[types == "LI"]
 
   LI <- LI[, c("rowID", "Location", "Activity", "Scheduled Arrival Time", "Scheduled Departure Time",
-               "Public Arrival Time", "Public Departure Time" )]
+               "Public Arrival Time", "Public Departure Time", "Scheduled Pass" )]
 
 
   # Terminating Station
@@ -556,9 +593,9 @@ importMCA <- function(file,
   # Add the rowid
   LT$rowID <- rowIds[types == "LT"]
 
-  LT[, c("Scheduled Departure Time","Public Departure Time") := ""]
+  LT[, c("Scheduled Departure Time","Public Departure Time", "Scheduled Pass") := ""]
   LT <- LT[, c("rowID", "Location", "Activity", "Scheduled Arrival Time", "Scheduled Departure Time",
-               "Public Arrival Time", "Public Departure Time" )]
+               "Public Arrival Time", "Public Departure Time", "Scheduled Pass" )]
 
 
   # TIPLOC Insert

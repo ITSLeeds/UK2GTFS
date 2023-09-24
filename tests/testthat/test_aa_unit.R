@@ -84,17 +84,13 @@ test_that("test splitBitmask performance", {
 
 
 
-
-
-
-
 test_that("test process_times", {
 
   testData = data.table(
-    `Scheduled Arrival Time`  =c("", "     ",  "0000 ",  "1234H"),
-    `Scheduled Departure Time`=c("", "     ",  "0106 ",  "2156H"),
-    `Public Arrival Time`     =c("",  "    ", "0135",    "tjkl"  ),
-    `Public Departure Time`   =c("",  "    ", "1234",    "tgbi"  ))
+    `Scheduled Arrival Time`  =c("", "     ", "0000 ",  "1234H", "5678 "),
+    `Scheduled Departure Time`=c("", "     ", "0106 ",  "2156H", "8765H"),
+    `Public Arrival Time`     =c("",  "    ", "0135",   "tjkl",  "0000"),
+    `Public Departure Time`   =c("",  "    ", "1234",   "tgbi",  "0000"))
 
   OK = TRUE
 
@@ -104,8 +100,8 @@ test_that("test process_times", {
     res = res[,c("Arrival Time","Departure Time")]
 
     expectedResult = data.table(
-      `Arrival Time`     =c("",  "    ", "013500", "tjkl"  ),
-      `Departure Time`   =c("",  "    ", "123400", "tgbi"  ))
+      `Arrival Time`     =c("",  "    ", "013500", "tjkl", "567800"),
+      `Departure Time`   =c("",  "    ", "123400", "tgbi", "876530"))
 
     printDifferencesDf(expectedResult, res)
     OK = OK & identical(expectedResult, res)
@@ -116,12 +112,47 @@ test_that("test process_times", {
     res = res[,c("Arrival Time","Departure Time")]
 
     expectedResult = data.table(
-      `Arrival Time`     =c("",  "     ", "000000", "123430" ),
-      `Departure Time`   =c("",  "     ", "010600", "215630" ))
+      `Arrival Time`     =c("",  "     ", "000000", "123430", "567800" ),
+      `Departure Time`   =c("",  "     ", "010600", "215630", "876530" ))
 
     printDifferencesDf(expectedResult, res)
     OK = OK & identical(expectedResult, res)
   }
+
+
+  testData = data.table(
+    `Scheduled Arrival Time`  =c("", "     ", "     ",  "1234H", "     "),
+    `Scheduled Departure Time`=c("", "     ", "0106 ",  "2156H", "     "),
+    `Public Arrival Time`     =c("", "    ",  "0135",   "tjkl",  "0000"),
+    `Public Departure Time`   =c("", "    ",  "1234",   "tgbi",  "0000"),
+    `Scheduled Pass`          =c("", "1234 ", "0001 ",  "1234H", "5678 ")
+    )
+
+  {
+    res = process_times( testData, FALSE )
+
+    res = res[,c("Arrival Time","Departure Time")]
+
+    expectedResult = data.table(
+      `Arrival Time`     =c("",  "    ", "013500", "tjkl", "567800"),
+      `Departure Time`   =c("",  "    ", "123400", "tgbi", "567800"))
+
+    printDifferencesDf(expectedResult, res)
+    OK = OK & identical(expectedResult, res)
+  }
+  {
+    res = process_times( testData, TRUE )
+
+    res = res[,c("Arrival Time","Departure Time")]
+
+    expectedResult = data.table(
+      `Arrival Time`     =c("",  "123400", "000100", "123430", "567800" ),
+      `Departure Time`   =c("",  "123400", "010600", "215630", "567800" ))
+
+    printDifferencesDf(expectedResult, res)
+    OK = OK & identical(expectedResult, res)
+  }
+
 
   expect_true( OK )
 })
@@ -665,7 +696,7 @@ test_that("test process_activity:1", {
 
     res = process_activity( testData, FALSE )
 
-    expectedResult = data.table( Activity=c("TB,T,D,U,R,TF", "ab,cd,ef,gh,ij,kl", "a,d,ef,ij,kl","cd,ef,gh,ij"  ))
+    expectedResult = data.table( Activity=c("", "TB,T,D,U,R,TF", "ab,cd,ef,gh,ij,kl", "a,d,ef,ij,kl","cd,ef,gh,ij"  ))
 
     OK = OK & identical(expectedResult,res)
   }

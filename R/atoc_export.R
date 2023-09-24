@@ -652,14 +652,15 @@ clean_activities2 <- function(x, public_only = TRUE) {
       x$pickup_type[is.na(x$pickup_type)] <- 0
       x$drop_off_type[is.na(x$drop_off_type)] <- 0
     }
-    x <- x[, c("pickup_type", "drop_off_type")]
   }
   else #set all of the stops on a route to be valid for passenger boarding / alighting from a GTFS perspective
+       # (unless they are 'pass' which have no 'activity' as they woosh past - just like deadlines.)
   {
-    x$pickup_type <- 0
-    x$drop_off_type <- 0
-    x <- x[, c("pickup_type", "drop_off_type", "activity")]
+    x$pickup_type <- ifelse( is.na(x$activity), 1, 0 )
+    x$drop_off_type <- ifelse( is.na(x$activity), 1, 0 )
   }
+
+  x <- x[, c("pickup_type", "drop_off_type")]
 
   return(x)
 }
