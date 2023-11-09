@@ -142,7 +142,7 @@ transxchange2gtfs <- function(path_in,
     doSNOW::registerDoSNOW(cl)
     boot <- foreach::foreach(i = seq_len(length(files)), .options.snow = opts)
     res_all <- foreach::`%dopar%`(boot, {
-      transxchange_import_try(files[i],
+        UK2GTFS:::transxchange_import_try(files[i],
                               try_mode = try_mode)
     })
     parallel::stopCluster(cl)
@@ -180,7 +180,7 @@ transxchange2gtfs <- function(path_in,
     doSNOW::registerDoSNOW(cl)
     boot <- foreach::foreach(i = seq_len(length(res_all)), .options.snow = opts)
     gtfs_all <- foreach::`%dopar%`(boot, {
-      transxchange_export_try(res_all[[i]],
+        UK2GTFS:::transxchange_export_try(res_all[[i]],
                           cal = cal,
                           naptan = naptan_trim,
                           scotland = scotland,
