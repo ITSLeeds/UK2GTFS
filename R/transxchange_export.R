@@ -28,7 +28,7 @@ transxchange_export <- function(obj,
   VehicleJourneys_include <- obj[["DaysOfOperation"]]
   SpecialDaysOperation <- obj[["SpecialDaysOperation"]]
   VehicleJourneys_notes <- obj[["VehicleJourneys_notes"]]
-  # VehicleJourneysTimingLinks <- obj[["VehicleJourneysTimingLinks"]]
+  #VehicleJourneysTimingLinks <- obj[["VehicleJourneysTimingLinks"]]
   ServicedOrganisations <- obj[["ServicedOrganisations"]]
 
   # select holidays to use
@@ -66,7 +66,19 @@ transxchange_export <- function(obj,
     "BHDaysOfOperation", "BHDaysOfNonOperation"
   )]
   if (anyNA(VehicleJourneys$JourneyPatternRef)) {
-    warning(paste0("missing JourneyPatternRefs are excluded in ", Services_main$ServiceCode))
+    warning(paste0("missing JourneyPatternRefs are guessed in ", Services_main$ServiceCode))
+
+    if(is.na(VehicleJourneys$JourneyPatternRef[1])){
+      vjna = VehicleJourneys$JourneyPatternRef[!is.na(VehicleJourneys$JourneyPatternRef)]
+      VehicleJourneys$JourneyPatternRef[1] = vjna[1]
+    }
+
+    for(jpri in seq(2,length(VehicleJourneys$JourneyPatternRef))){
+      if(is.na(VehicleJourneys$JourneyPatternRef[jpri])){
+        VehicleJourneys$JourneyPatternRef[jpri] <- VehicleJourneys$JourneyPatternRef[jpri - 1]
+      }
+    }
+
   }
   VehicleJourneys <- VehicleJourneys[!is.na(VehicleJourneys$JourneyPatternRef), ]
   Services_main$StartDate <- as.Date(Services_main$StartDate)
