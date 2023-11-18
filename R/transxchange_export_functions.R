@@ -511,7 +511,7 @@ reorder_jps <- function(jps_sub, func = min){
 #' @noRd
 #'
 clean_timepoints <- function(tp) {
-  if (tp %in% c("OTH","otherPoint")) {
+  if (tp %in% c("OTH","otherPoint","timeInfoPoint")) {
     return(0L)
   } else if (tp %in% c("PTP", "TIP", "PPT",
                        "principleTimingPoint",
