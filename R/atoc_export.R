@@ -84,7 +84,7 @@ station2stops <- function(station, TI) {
 #' @param flf imported flf file from importFLF
 #' @noRd
 #'
-station2transfers <- function(station, flf, path_out) {
+station2transfers <- function(station, flf) {
 
   ### SECTION 4: ############################################################
   # make make the transfers.txt
@@ -134,175 +134,8 @@ station2transfers <- function(station, flf, path_out) {
   return(transfers)
 }
 
-#' split overlapping start and end dates#
-#'
-#' @param cal cal object
-#' @details split overlapping start and end dates
-#' @noRd
-
-splitDates <- function(cal) {
-
-  # get all the dates that
-  dates <- c(cal$start_date, cal$end_date)
-  dates <- dates[order(dates)]
-  # create all unique pairs
-  dates.df <- data.frame(
-    start_date = dates[seq(1, length(dates) - 1)],
-    end_date = dates[seq(2, length(dates))]
-  )
-
-  cal.new <- dplyr::right_join(cal, dates.df,
-    by = c( "start_date", "end_date" )
-  )
-
-  if ("P" %in% cal$STP) {
-    match <- "P"
-  } else {
-    match <- cal$STP[cal$STP != "C"]
-    match <- match[1]
-  }
-
-  # fill in the original missing schedule
-  for (j in seq(1, nrow(cal.new))) {
-    if (is.na(cal.new$UID[j])) {
-      st_tmp <- cal.new$start_date[j]
-      ed_tmp <- cal.new$end_date[j]
-      new.UID <- cal$UID[cal$STP == match & cal$start_date <= st_tmp &
-        cal$end_date >= ed_tmp]
-      new.Days <- cal$Days[cal$STP == match & cal$start_date <= st_tmp &
-        cal$end_date >= ed_tmp]
-      new.roWID <- cal$rowID[cal$STP == match & cal$start_date <= st_tmp &
-        cal$end_date >= ed_tmp]
-      new.ATOC <- cal$`ATOC Code`[cal$STP == match & cal$start_date <= st_tmp &
-        cal$end_date >= ed_tmp]
-      new.Retail <- cal$`Retail Train ID`[cal$STP == match &
-        cal$start_date <= st_tmp &
-        cal$end_date >= ed_tmp]
-      new.head <- cal$Headcode[cal$STP == match & cal$start_date <= st_tmp &
-        cal$end_date >= ed_tmp]
-      new.Status <- cal$`Train Status`[cal$STP == match &
-        cal$start_date <= st_tmp &
-        cal$end_date >= ed_tmp]
-      if (length(new.UID) == 1) {
-        cal.new$UID[j] <- new.UID
-        cal.new$Days[j] <- new.Days
-        cal.new$rowID[j] <- new.roWID
-        cal.new$`ATOC Code`[j] <- new.ATOC
-        cal.new$`Retail Train ID`[j] <- new.Retail
-        cal.new$`Train Status`[j] <- new.Status
-        cal.new$Headcode[j] <- new.head
-        cal.new$STP[j] <- match
-      } else if (length(new.UID) > 1) {
-        message("Going From")
-        print(cal)
-        message("To")
-        print(cal.new)
-        stop()
-        # readline(prompt="Press [enter] to continue")print()
-      }
-    }
-  }
-
-  # remove any gaps
-  cal.new <- cal.new[!is.na(cal.new$UID), ]
-
-  # remove duplicated rows
-  cal.new <- cal.new[!duplicated(cal.new), ]
-
-  # modify end and start dates
-  for (j in seq(1, nrow(cal.new))) {
-    if (cal.new$STP[j] == "P") {
-      # check if end date need changing
-      if (j < nrow(cal.new)) {
-        if (cal.new$end_date[j] == cal.new$start_date[j + 1]) {
-          cal.new$end_date[j] <- (cal.new$end_date[j] - 1)
-        }
-      }
-      # check if start date needs changing
-      if (j > 1) {
-        if (cal.new$start_date[j] == cal.new$end_date[j - 1]) {
-          cal.new$start_date[j] <- (cal.new$start_date[j] + 1)
-        }
-      }
-    }
-  }
-
-  # remove cancelled trips
-  cal.new <- cal.new[cal.new$STP != "C", ]
-
-  # fix duration
-  cal.new$duration <- cal.new$end_date - cal.new$start_date + 1
-
-  # remove any zero or negative day schedules
-  cal.new <- cal.new[cal.new$duration > 0, ]
-
-  # Append UID to note the changes
-  if (nrow(cal.new) > 0) {
-    if (nrow(cal.new) < 27) {
-      cal.new$UID <- paste0(cal.new$UID, " ", letters[1:nrow(cal.new)])
-    } else {
-      # Cases where we need extra letters, gives upto 676 ids
-      lett <- paste0(rep(letters, each = 26), rep(letters, times = 26))
-      cal.new$UID <- paste0(cal.new$UID, " ", lett[1:nrow(cal.new)])
-    }
-  } else {
-    cal.new <- NA
-  }
 
 
-  return(cal.new)
-}
-
-
-
-DATE_EPOC <- as.Date("01/01/1970", format = "%d/%m/%Y")
-WEEKDAY_NAME_VECTOR <- c("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
-CHECKROWS_NAME_VECTOR <- c(WEEKDAY_NAME_VECTOR, "duration", "start_date", "end_date")
-
-DURATION_INDEX <- match("duration", CHECKROWS_NAME_VECTOR)
-START_DATE_INDEX <- match("start_date", CHECKROWS_NAME_VECTOR)
-END_DATE_INDEX <- match("end_date", CHECKROWS_NAME_VECTOR)
-MONDAY_INDEX <- match("monday", CHECKROWS_NAME_VECTOR)
-SUNDAY_INDEX <- match("sunday", CHECKROWS_NAME_VECTOR)
-
-# TODO: Does not work within functions, rejig to work in package.
-#
-#' internal function for cleaning calendar
-#'
-#' @details
-#' check for schedules that don't overlay with the days they run i.e.
-#'     Mon - Sat schedules for a sunday only service
-#' return a logical vector of if the calendar is valid
-#'
-#' @param tmp 1 row dataframe
-#' @noRd
-#'
-checkrows <- function(tmp) {
-  #tmp = res[i,]
-  # message(paste0("done ",i))
-
-  if (tmp[DURATION_INDEX] < 7) {
-
-    days.valid <- weekdays(seq.POSIXt(
-      from = as.POSIXct.Date( as.Date(tmp[START_DATE_INDEX], DATE_EPOC) ),
-      to = as.POSIXct.Date( as.Date(tmp[END_DATE_INDEX], DATE_EPOC) ),
-      by = "DSTday"
-    ))
-    days.valid <- tolower(days.valid)
-
-    #get a vector of names of days of week that the timetable is valid on
-    days.match <- tmp[MONDAY_INDEX:SUNDAY_INDEX]
-    days.match <- WEEKDAY_NAME_VECTOR[ 1==days.match ]
-
-    if (any(days.valid %in% days.match)) {
-      return(TRUE)
-    } else {
-      return(FALSE)
-    }
-  } else {
-    return(TRUE)
-  }
-}
 
 #' internal function for constructing longnames of routes
 #'
@@ -315,28 +148,29 @@ checkrows <- function(tmp) {
 #' @noRd
 #'
 longnames <- function(routes, stop_times, stops) {
+
   stop_times_sub <- dplyr::group_by(stop_times, trip_id)
   stop_times_sub <- dplyr::summarise(stop_times_sub,
     schedule = unique(schedule),
     stop_id_a = stop_id[stop_sequence == 1],
     # seq = min(stop_sequence),
-    stop_id_b = stop_id[stop_sequence == max(stop_sequence)]
-  )
+    stop_id_b = stop_id[stop_sequence == max(stop_sequence)]  )
 
   # Add names for `stop_id_[a|b]` as `stop_name_[a|b]`
   stop_times_sub <- dplyr::left_join(
     stop_times_sub,
     dplyr::rename(stops[, c("stop_id", "stop_name")], stop_name_a = stop_name),
     by = c("stop_id_a" = "stop_id"))
+
   stop_times_sub <- dplyr::left_join(
     stop_times_sub,
     dplyr::rename(stops[, c("stop_id", "stop_name")], stop_name_b = stop_name),
     by = c("stop_id_b" = "stop_id"))
 
-  stop_times_sub$route_long_name <- paste0("From ",
-                                           stop_times_sub$stop_name_a,
+  stop_times_sub$route_long_name <- paste0("from ",
+                    ifelse( is.na(stop_times_sub$stop_name_a), stop_times_sub$stop_id_a, stop_times_sub$stop_name_a),
                                            " to ",
-                                           stop_times_sub$stop_name_b)
+                    ifelse( is.na(stop_times_sub$stop_name_b), stop_times_sub$stop_id_b, stop_times_sub$stop_name_b) )
 
   stop_times_sub$route_long_name <- gsub(" Rail Station", "" , stop_times_sub$route_long_name)
 
@@ -346,8 +180,22 @@ longnames <- function(routes, stop_times, stops) {
   routes <- dplyr::left_join(routes, stop_times_sub,
                              by = c("rowID" = "schedule"))
 
+  #you'd expect to only have to look at category to tell if it's a ship, but in practice the category for
+  #ships is NA, so we have to look at 'Train Status' too.
+  routes["SS" ==`Train Category` | "S"==`Train Status` | "4"==`Train Status`,
+                            route_long_name := paste("Ship",route_long_name)]
+  routes[`Train Category` %in% c("BS", "BR"),
+                            route_long_name := paste("Bus",route_long_name)]
+
+  #Tyne & Wear metro is "OL" in data OL="London Underground/Metro Service"
+  routes[`Train Category` %in% c("EL", "OL"),
+                            route_long_name := paste("Metro",route_long_name)]
+  routes[!(`Train Category` %in% c("SS", "BS", "BR", "EL", "OL") | "S"==`Train Status` | "4"==`Train Status`),
+                            route_long_name := paste("Train",route_long_name)]
   return(routes)
 }
+
+
 
 #' make calendar
 #'
@@ -359,254 +207,362 @@ longnames <- function(routes, stop_times, stops) {
 #' @noRd
 #'
 makeCalendar <- function(schedule, ncores = 1) {
-  # prep the inputs
-  calendar <- schedule[, c("Train UID", "Date Runs From", "Date Runs To",
-                           "Days Run", "STP indicator", "rowID", "Headcode",
-                           "ATOC Code", "Retail Train ID", "Train Status")]
-  calendar$`STP indicator` <- as.character(calendar$`STP indicator`)
-  # calendar = calendar[order(-calendar$`STP indicator`),]
-  names(calendar) <- c("UID", "start_date", "end_date", "Days", "STP",
-                       "rowID", "Headcode", "ATOC Code",
-                       "Retail Train ID", "Train Status")
-  calendar$duration <- calendar$end_date - calendar$start_date + 1
 
-  # UIDs = unique(calendar$UID)
-  # length_todo = length(UIDs)
-  message(paste0(Sys.time(), " Constructing calendar and calendar_dates"))
-  calendar_split <- split(calendar, calendar$UID)
+  treatDatesAsInt = getOption("UK2GTFS_opt_treatDatesAsInt", default=TRUE)
+  set_TREAT_DATES_AS_INT( treatDatesAsInt )
+
+  tryCatch({
+
+    # prep the inputs
+    calendar <- schedule[, c("Train UID", "Date Runs From", "Date Runs To", "Days Run", "STP indicator", "rowID" )]
+    names(calendar) <- c("UID", "start_date", "end_date", "Days", "STP", "rowID" )
+
+    if( treatDatesAsInt )
+    {
+      setupDatesCache( calendar )
+      #treating date as int: seem to be about twice as fast on the critical line when selecting base timetable
+      calendar$start_date = as.integer( calendar$start_date )
+      calendar$end_date = as.integer( calendar$end_date )
+    }
 
 
-  if (ncores > 1) {
-    cl <- parallel::makeCluster(ncores)
-    # parallel::clusterExport(
-    #   cl = cl,
-    #   varlist = c("calendar", "UIDs"),
-    #   envir = environment()
-    # )
-    parallel::clusterEvalQ(cl, {
-      loadNamespace("UK2GTFS")
-    })
-    pbapply::pboptions(use_lb = TRUE)
-    res <- pbapply::pblapply(calendar_split,
-      makeCalendar.inner,
-      cl = cl
-    )
-    parallel::stopCluster(cl)
-    rm(cl)
-  } else {
-    res <- pbapply::pblapply(
-      calendar_split,
-      makeCalendar.inner)
-  }
+    okCalendarDates = validateCalendarDates( calendar )
+    if ( !all( okCalendarDates ) )
+    {
+      warning(Sys.time(), " Some calendar dates had incorrect start or end dates that did not align with operating day bitmask.\n Services=",
+              paste( unique( calendar$UID[ !okCalendarDates ] ), collapse = "," ) )
+    }
 
-  res.calendar <- lapply(res, `[[`, 1)
-  res.calendar <- data.table::rbindlist(res.calendar, use.names=FALSE) #performance, was taking 10 minutes to execute bind_rows
-  res.calendar_dates <- lapply(res, `[[`, 2)
-  res.calendar_dates <- res.calendar_dates[!is.na(res.calendar_dates)]
-  res.calendar_dates <- data.table::rbindlist(res.calendar_dates, use.names=FALSE)
+    #we're going to be splitting and replicating calendar entries - stash the original UID so we can join back on it later
+    calendar$originalUID <- calendar$UID
+    calendar$STP <- as.character(calendar$STP)
+    calendar$duration <- calendar$end_date - calendar$start_date + 1
 
-  days <- lapply(res.calendar$Days, function(x) {
-    as.integer(substring(x, 1:7, 1:7))
+
+    #brutal, but makes code later on simpler, make all cancellations one day cancellations by splitting
+    #TODO don't split up into one day cancellations if all the operating day patterns on a service are identical
+    cancellations <- makeAllOneDay( calendar[calendar$STP == "C", ] )
+    calendar <- calendar[calendar$STP != "C", ]
+
+
+    #debugging option
+    set_STOP_PROCESSING_UID( getOption("UK2GTFS_opt_stopProcessingAtUid") )
+
+    message(paste0(Sys.time(), " Constructing calendar and calendar_dates"))
+    calendar$`__TEMP__` <- calendar$UID
+    calendar_split <- calendar[, .(list(.SD)), by = `__TEMP__`][,V1]
+
+    if (ncores > 1) {
+      cl <- parallel::makeCluster(ncores)
+
+      parallel::clusterEvalQ(cl, {
+        #put any setup required for all worker processes in here
+        options( UK2GTFS_opt_updateCachedDataOnLibaryLoad = FALSE ) #stop the child workers from calling update_data()
+        workerEnv=loadNamespace("UK2GTFS")
+      })
+
+      #copy variables from this context into global context of worker processes
+      varList = list("TREAT_DATES_AS_INT", "WDAY_LOOKUP_MIN_VALUE", "WDAY_LOOKUP_MAX_VALUE", "WDAY_LOOKUP_MAP")
+      parallel::clusterExport(cl=cl, varlist=varList, envir=asNamespace("UK2GTFS"))
+
+      #set module level global in all workers
+      parallel::clusterEvalQ(cl, {
+        copyFromGlobalEnvToPackageEnv<- function(varName){
+          UK2GTFS:::setValueInThisEnvironment(varName, get(varName, envir=.GlobalEnv))
+        }
+        copyFromGlobalEnvToPackageEnv("TREAT_DATES_AS_INT")
+        copyFromGlobalEnvToPackageEnv("WDAY_LOOKUP_MIN_VALUE")
+        copyFromGlobalEnvToPackageEnv("WDAY_LOOKUP_MAX_VALUE")
+        copyFromGlobalEnvToPackageEnv("WDAY_LOOKUP_MAP")
+      })
+
+      pbapply::pboptions(use_lb = TRUE)
+      res <- pbapply::pblapply(calendar_split,
+        makeCalendarInner,
+        cl = cl
+      )
+
+      parallel::stopCluster(cl)
+      rm(cl)
+    } else {
+      res <- pbapply::pblapply(
+        calendar_split,
+        makeCalendarInner
+      )
+    }
+
+
+    res.calendar <- lapply(res, `[[`, 1)
+    res.calendar <- data.table::rbindlist(res.calendar, use.names=FALSE) #performance, takes 10 minutes to execute bind_rows on full GB daily timetable
+
+    res.cancellation_dates <- lapply(res, `[[`, 2)
+    res.cancellation_dates <- res.cancellation_dates[!is.na(res.cancellation_dates)]
+    res.cancellation_dates <- data.table::rbindlist(res.cancellation_dates, use.names=FALSE)
+    stopifnot( 0==nrow(res.cancellation_dates) )
+    rm(res.cancellation_dates)
+    #since we didn't pass in any cancellations we should no longer get any back
+
+    res.calendar = splitAndRebindBitmask( res.calendar )
+    cancellations = splitAndRebindBitmask( cancellations )
+
+    #associate the split up cancellations with the (new) calendar they are associated with
+    #(only works because cancellations are all one day duration)
+    cancellations = allocateCancellationsAcrossCalendars( res.calendar, cancellations )
+
+    #no longer need the field that was used to associate the original and replicated calendars together
+    cancellations$originalUID <- NULL
+    res.calendar$originalUID <- NULL
+
+    #error checking
+    dups = duplicated( res.calendar$UID )
+    if( any(TRUE==dups) )
+    {
+      dups = unique( res.calendar$UID[ dups ] )
+
+      warning(paste(Sys.time(), "Duplicate UIDs were created by the makeCalendar() process, this is likely to cause downstream proceessing errors. ",
+                    "Please capture the data and raise a bug / create a test case. ", dups))
+    }
+
+  }, finally = {
+    set_TREAT_DATES_AS_INT( FALSE )
+
+    #revert treating date as int
+    if( TRUE==treatDatesAsInt )
+    {
+      if (exists("res.calendar")){ res.calendar = makeDateFieldsDateType( res.calendar ) }
+      if (exists("cancellations")){ cancellations = makeDateFieldsDateType( cancellations ) }
+    }
   })
-  days <- matrix(unlist(days), ncol = 7, byrow = TRUE)
-  days <- as.data.frame(days)
-  names(days) <- WEEKDAY_NAME_VECTOR
 
-  res.calendar <- cbind(res.calendar, days)
-  res.calendar$Days <- NULL
-
-  message(paste0(
-    Sys.time(),
-    " Removing trips that only occur on days of the week that are outside the timetable validity period"
-  ))
-
-  #res.calendar.split <- split(res.calendar, seq(1, nrow(res.calendar)))
-  #performance - doing this split on 500k rows takes 60s - longer than the parallel execution below and consumes 3gb memory.
-
-  res.calendar.days <- res.calendar[,CHECKROWS_NAME_VECTOR]
-  res.calendar.days <- data.table::transpose(res.calendar.days)
-  #transpose on the same size runs in around 3s, but causes named dataframe with mixed datatypes to be coerced to unnamed vector of integer.
-
-
-  if (ncores > 1) {
-    cl <- parallel::makeCluster(ncores)
-    parallel::clusterEvalQ(cl, {
-      loadNamespace("UK2GTFS")
-    })
-    keep <- pbapply::pbsapply(res.calendar.days, checkrows,
-      cl = cl
-    )
-    parallel::stopCluster(cl)
-    rm(cl)
-  } else {
-    keep <- pbapply::pbsapply(res.calendar.days, checkrows)
-  }
-
-  res.calendar <- res.calendar[keep, ]
-
-  return(list(res.calendar, res.calendar_dates))
+  return(list(res.calendar, cancellations))
 }
 
-#' make calendar helper function
-#' @param i row number to do
+
+makeDateFieldsDateType<- function( cal )
+{
+  cal$start_date = as.Date( cal$start_date, origin = DATE_EPOC )
+  cal$end_date = as.Date( cal$end_date, origin = DATE_EPOC )
+  cal$duration = cal$end_date - cal$start_date + 1
+
+  return (cal)
+}
+
+
+#' duplicateItem
+#'
+#' @details
+#' Function that duplicates a data.table, adding a "index" column to all rows in the output indicating which
+#' instance of the duplication the row is associated with
+#'
+#' @param dt data.table
+#' @param reps number of duplicates to be created
+#' @param indexStart starting number for the "index" value added to the item
 #' @noRd
 #'
-makeCalendar.inner <- function(calendar.sub) { # i, UIDs, calendar){
-  # UIDs.sub = UIDs[i]
-  # calendar.sub = calendar[calendar$UID == UIDs.sub,]
-  # calendar.sub = schedule[schedule$`Train UID` == UIDs.sub,]
-  if (nrow(calendar.sub) == 1) {
-    # make into an single entry
-    return(list(calendar.sub, NA))
-  } else {
-    # check duration and types
-    dur <- as.numeric(calendar.sub$duration[calendar.sub$STP != "P"])
-    typ <- calendar.sub$STP[calendar.sub$STP != "P"]
-    typ.all <- calendar.sub$STP
-    if (all(dur == 1) & all(typ == "C") & length(typ) > 0 &
-      length(typ.all) == 2) {
-      # One Day cancellations
-      # Modify in the calendar_dates.txt
-      return(list(
-        calendar.sub[calendar.sub$STP == "P", ],
-        calendar.sub[calendar.sub$STP != "P", ]
-      ))
-    } else {
-      # check for identical day pattern
-      if (length(unique(calendar.sub$Days)) == 1 &
-        sum(typ.all == "P") == 1) {
-        calendar.new <- splitDates(calendar.sub)
-        #calendar.new <- UK2GTFS:::splitDates(calendar.sub)
-        return(list(calendar.new, NA))
-      } else {
-        # split by day pattern
-        splits <- list()
-        daypatterns <- unique(calendar.sub$Days)
-        for (k in seq(1, length(daypatterns))) {
-          # select for each pattern but include cancellations with a
-          # different day pattern
-          calendar.sub.day <- calendar.sub[calendar.sub$Days == daypatterns[k] |
-                                             calendar.sub$STP == "C", ]
+duplicateItem <- function( dt, reps, indexStart=1 )
+{
+  if ( is.na(reps) | reps<1 ) return (NULL)
 
-          if (all(calendar.sub.day$STP == "C")) {
-            # ignore cases of only cancelled
-            splits[[k]] <- NULL
-          } else {
-            calendar.new.day <- splitDates(calendar.sub.day)
-            # rejects nas
-            if (inherits(calendar.new.day, "data.frame")) {
-              calendar.new.day$UID <- paste0(calendar.new.day$UID, k)
-              splits[[k]] <- calendar.new.day
-            }
-          }
-        }
-        splits <- data.table::rbindlist(splits, use.names=FALSE) # dplyr::bind_rows(splits)
-        return(list(splits, NA))
-      }
-    }
-  }
+  #replicate all the rows in dt       times=reps
+  duplicates <- dt[rep(seq(1, nrow(dt)), reps), ]
+
+  #create and apply indexes to the created rows- each group of replicated rows gets the same index number.
+  index <- rep(seq( indexStart, indexStart-1+reps ), nrow(dt))
+
+  duplicates$index <- index[order(index)]
+
+  return(duplicates)
 }
+
+
+
+
+#' duplicateItems
+#'
+#' @details
+#' Function that duplicates a large data.table, adding a "index" column to all rows in the output indicating which
+#' instance of the duplication the row is associated with
+#'
+#' requires a column called "_reps" on the object to determine how many times it is to be duplicated
+#'
+#' @param dt data.table
+#' @param split_attribute name of attribute to split the items between worker tasks
+#' @param indexStart starting number for the "index" value added to the item
+#' @noRd
+#'
+duplicateItems <- function( dt, split_attribute, ncores=1, indexStart=1 )
+{
+  #add an additional column before splitting on it - so that the value we're really splitting on still appears in the output.
+  dt[, `_TEMP_` := get(split_attribute) ]
+  dt_split <- dt[, .(list(.SD)), by = `_TEMP_`][,V1]
+  dt$`_TEMP_` <- NULL
+
+
+  duplicate_int <- function(dta) {
+    rep <- dta$`_reps`[1]
+    return ( duplicateItem( dta, rep, indexStart ) )
+  }
+
+
+  if (ncores == 1) {
+    duplicates <- pbapply::pblapply(dt_split, duplicate_int)
+  } else {
+    cl <- parallel::makeCluster(ncores)
+    parallel::clusterEvalQ(cl, {
+      #put any setup required for all worker processes in here
+      options( UK2GTFS_opt_updateCachedDataOnLibaryLoad = FALSE )
+      loadNamespace("UK2GTFS")
+    })
+
+    duplicates <- pbapply::pblapply(dt_split,
+                                        duplicate_int,
+                                        cl = cl)
+    parallel::stopCluster(cl)
+    rm(cl)
+  }
+
+  duplicates <- data.table::rbindlist(duplicates, use.names=FALSE)
+
+  duplicates$`_reps` <- NULL #performance, putting this inside duplicate_int roughly doubles the execution time
+
+  return (duplicates)
+}
+
+
+
+
 
 #' Duplicate stop_times
 #'
 #' @details
-#' Function that duplicates top times for trips that have been split into
-#'     multiple trips
+#' Function that duplicates stop times for trips that have been split into
+#'     multiple trips and sets the new trip id on the duplicated stop_times
 #'
 #' @param calendar calendar data.frame
 #' @param stop_times stop_times data.frame
 #' @param ncores number of processes for parallel processing (default = 1)
 #' @noRd
 #'
-duplicate.stop_times_alt <- function(calendar, stop_times, ncores = 1) {
-  calendar.nodup <- calendar[!duplicated(calendar$rowID), ]
-  calendar.dup <- calendar[duplicated(calendar$rowID), ]
-  rowID.unique <- as.data.frame(table(calendar.dup$rowID))
-  rowID.unique$Var1 <- as.integer(as.character(rowID.unique$Var1))
-  stop_times <- dplyr::left_join(stop_times, rowID.unique,
-    by = c("schedule" = "Var1")
+duplicate_stop_times <- function(calendar, stop_times, ncores = 1) {
+
+  outputColumnNames = c(
+    "trip_id", "arrival_time", "departure_time", "stop_id", "stop_sequence",
+    "pickup_type", "drop_off_type", "schedule"
   )
-  stop_times_split <- split(stop_times, stop_times$schedule)
 
-  # TODO: The could handle cases of non duplicated stoptimes within duplicate.stop_times.int
-  # rather than splitting and rejoining, would bring code tidyness and speed improvements
-  duplicate.stop_times.int <- function(stop_times.tmp) {
-    # message(i)
-    # stop_times.tmp = stop_times[stop_times$schedule == rowID.unique$Var1[i],]
-    # reps = rowID.unique$Freq[i]
-    reps <- stop_times.tmp$Freq[1]
-    if (is.na(reps)) {
-      return(NULL)
-    } else {
-      index <- rep(seq(1, reps), nrow(stop_times.tmp))
-      index <- index[order(index)]
-      stop_times.tmp <- stop_times.tmp[rep(seq(1, nrow(stop_times.tmp)), reps), ]
-      stop_times.tmp$index <- index
-      return(stop_times.tmp)
-    }
-  }
+  #it's pretty marginal doing this on multiple threads. With a typical sized day all GB file,
+  #doing the split takes 2.4s and the duplication 7.8s (on one thread)
+  #TODO look at avoiding the split if threads=1
 
-  if (ncores == 1) {
-    stop_times.dup <- pbapply::pblapply(stop_times_split, duplicate.stop_times.int)
-  } else {
-    cl <- parallel::makeCluster(ncores)
-    stop_times.dup <- pbapply::pblapply(stop_times_split,
-      duplicate.stop_times.int,
-      cl = cl
-    )
-    parallel::stopCluster(cl)
-    rm(cl)
-  }
-
-  stop_times.dup <- dplyr::bind_rows(stop_times.dup)
-  # stop_times.dup$index <- NULL
-
-  # Join on the nonduplicated trip_ids
-  trip.ids.nodup <- calendar.nodup[, c("rowID", "trip_id")]
-  stop_times <- dplyr::left_join(stop_times, trip.ids.nodup, by = c("schedule" = "rowID"))
-  stop_times <- stop_times[!is.na(stop_times$trip_id), ] # when routes are cancled their stop times are left without valid trip_ids
-
-  # join on the duplicated trip_ids
-  calendar2 <- dplyr::group_by(calendar, rowID)
-  calendar2 <- dplyr::mutate(calendar2, Index = seq(1, dplyr::n()))
-
-  stop_times.dup$index2 <- as.integer(stop_times.dup$index + 1)
-  trip.ids.dup <- calendar2[, c("rowID", "trip_id", "Index")]
-  trip.ids.dup <- as.data.frame(trip.ids.dup)
-  stop_times.dup <- dplyr::left_join(stop_times.dup, trip.ids.dup, by = c("schedule" = "rowID", "index2" = "Index"))
-  stop_times.dup <- stop_times.dup[, c(
-    "arrival_time", "departure_time", "stop_id", "stop_sequence",
-    "pickup_type", "drop_off_type", "rowID", "schedule", "trip_id"
-  )]
-  stop_times <- stop_times[, c(
-    "arrival_time", "departure_time", "stop_id", "stop_sequence",
-    "pickup_type", "drop_off_type", "rowID", "schedule", "trip_id"
-  )]
-
-  # stop_times.dup = stop_times.dup[order(stop_times.dup$rowID),]
-
-  stop_times.comb <- data.table::rbindlist(list(stop_times, stop_times.dup), use.names=FALSE)
-
-  return(stop_times.comb)
+  return ( duplicate_related_items( calendar, stop_times,
+                                    original_join_field = "schedule",
+                                    new_join_field = "trip_id",
+                                    outputColumnNames = outputColumnNames,
+                                    ncores=ncores ) )
 }
 
 
 
-#' fix times for jounrneys that run past midnight
+#' Duplicate related items
 #'
 #' @details
-#' When train runs over midnight GTFS requries the stop times to be in
+#' Function that duplicates items that are related to calendar
+#'     expected input are calendar items have been duplicated but retain the same (now duplicate) 'rowID'
+#'     this tells us which objects to duplicate and how many are required
+#'     the related_items have an attribute <original_join_field>, which joins back to 'rowID' on the calendar items
+#'
+#'     After duplication the duplicated items are joined back onto the input calendar items
+#'     to create an additional attribute on the output objects
+#'
+#'     The calendar item attribute <new_join_field> forms the new relation between the calendar items and
+#'     related items, so must be unique.
+#'
+#' @param calendar calendar data.frame
+#' @param related_items data.frame of items to be replicated
+#' @param ncores number of processes for parallel processing (default = 1) (currently hangs/crashes if >1)
+#' @noRd
+#'
+duplicate_related_items <- function(calendar, related_items, original_join_field, new_join_field, outputColumnNames, ncores = 1) {
+
+  calendar.dup <- calendar[duplicated(calendar$rowID), ]
+
+  if( nrow(calendar.dup) <= 0 )
+  {
+    #no duplicating to do
+    warning("duplicate_related_items: there were no duplicates detected. In real data this may indicate there has been an error earlier in the processing.")
+    related_items_dup = data.table()
+  }
+  else
+  {
+    #create a count of the number of each duplicate of rowID
+    rowID.unique <- as.data.frame(table(calendar.dup$rowID))
+    rowID.unique$Var1 <- as.integer(as.character(rowID.unique$Var1))
+
+    #join the count of number of duplicates required to the stop times (so we can retrieve it later when doing the duplication)
+    related_items <- dplyr::left_join(related_items, rowID.unique,
+                                   by = stats::setNames("Var1",original_join_field)  )
+
+    #set the number of duplications required
+    related_items$`_reps` <- related_items$Freq
+
+    # TODO: The could handle cases of non duplicated stoptimes within duplicate.stop_times.int
+    # rather than splitting and rejoining, would bring code tidyness and speed improvements
+    related_items_dup <- duplicateItems( related_items, original_join_field, ncores=ncores, indexStart=1 )
+
+
+    # join via rowID+index to get new de-duplicated trip_id
+
+    #create index on the table we want to join to - group by the rowId, index runs from 0..count()-1 of group size
+    #we start at zero so we don't effect the original stop_times rows and just join in the duplicated rows
+    new_join_ids <- dplyr::group_by(calendar, rowID)
+    new_join_ids <- dplyr::mutate(new_join_ids, Index = seq(0, dplyr::n()-1))
+    new_join_ids <- as.data.frame( new_join_ids[, c("rowID", new_join_field, "Index")] )
+
+    related_items_dup <- dplyr::left_join(related_items_dup, new_join_ids, by = setNames(c("rowID","Index"),c(original_join_field,"index")) )
+
+    #select columns required
+    related_items_dup <- related_items_dup[, outputColumnNames, with=FALSE]
+  }
+
+  calendar.nodup <- calendar[!duplicated(calendar$rowID), ]
+
+  # when routes are cancelled their stop times are left without valid trip_ids - remove those rows
+  # this only applies to the non-duplicated rows
+  # Join via rowID to determine the trip_id
+  related_ids_nodup <- calendar.nodup[, c("rowID", new_join_field), with=FALSE]
+  related_items_no_dup <- dplyr::left_join(related_items, related_ids_nodup, by = setNames("rowID",original_join_field))
+  related_items_no_dup <- related_items_no_dup[!is.na(related_items_no_dup[[new_join_field]]), ]
+
+
+  #select columns required, join output results together
+  related_items_no_dup <- related_items_no_dup[, outputColumnNames, with=FALSE]
+
+  related_items_comb <- data.table::rbindlist(list(related_items_no_dup, related_items_dup), use.names=FALSE)
+
+  return(related_items_comb)
+}
+
+
+
+
+
+
+
+#' fix times for journeys that run past midnight
+#'
+#' @details
+#' When train runs over midnight GTFS requires the stop times to be in
 #'    24h+ e.g. 26:30:00
 #'
 #' @param stop_times stop_times data.frame
 #' @param safe logical (default = TRUE) should the check for trains
-#'    running more than 24h be perfomed?
+#'    running more than 24h be performed?
 #'
 #' @details
 #' Not running the 24 check is faster, if the check is run a warning
 #'    is returned, but the error is not fixed. As the longest train
-#'    jounrey in the UK is 13 hours (Aberdeen to Penzance) this is
-#'    unlikley to be a problem.
+#'    journey in the UK is 13 hours (Aberdeen to Penzance) this is
+#'    unlikely to be a problem.
 #' @noRd
 #'
 afterMidnight <- function(stop_times, safe = TRUE) {
@@ -620,8 +576,8 @@ afterMidnight <- function(stop_times, safe = TRUE) {
   )
 
   stop_times <- dplyr::left_join(stop_times, stop_times.summary, by = "trip_id")
-  stop_times$arvfinal <- ifelse(stop_times$arv < stop_times$dept_first, stop_times$arv + 2400, stop_times$arv)
-  stop_times$depfinal <- ifelse(stop_times$dept < stop_times$dept_first, stop_times$dept + 2400, stop_times$dept)
+  stop_times$arvfinal <- ifelse(stop_times$arv < stop_times$dept_first, stop_times$arv + 240000, stop_times$arv)
+  stop_times$depfinal <- ifelse(stop_times$dept < stop_times$dept_first, stop_times$dept + 240000, stop_times$dept)
 
 
   if (safe) {
@@ -638,19 +594,39 @@ afterMidnight <- function(stop_times, safe = TRUE) {
     }
   }
 
-  numb2time2 <- function(numb){
-    numb <- stringr::str_pad(as.character(numb), 4, pad = "0")
-    numb <- paste0(substr(numb,1,2),":",substr(numb,3,4),":00")
-    numb
+  numb2time2 <- function(dt, colNameDest, colNameSource){
+    #performance, substr is relatively expensive
+    set(dt, j=colNameDest, value= sprintf("%02d:%02d:%02d",
+              dt[[colNameSource]] %/% 10000, (dt[[colNameSource]] %/% 100) %% 100, dt[[colNameSource]] %% 100) )
   }
 
-  stop_times$arrival_time <- numb2time2(stop_times$arvfinal)
-  stop_times$departure_time <- numb2time2(stop_times$depfinal)
+  numb2time2(stop_times, "arrival_time", "arvfinal")
+  numb2time2(stop_times, "departure_time", "depfinal")
 
   stop_times <- stop_times[, c("trip_id", "arrival_time", "departure_time",
                                "stop_id", "stop_sequence", "pickup_type",
                                "drop_off_type")]
   return(stop_times)
+}
+
+
+
+
+fixStopTimeData <- function(stop_times)
+{
+  # Fix arrival_time / departure_time being 0000 for pick up only or drop off only trains
+  stop_times$departure_time <- dplyr::if_else(stop_times$departure_time == "000000" & stop_times$Activity == "D",
+                                              stop_times$arrival_time,
+                                              stop_times$departure_time)
+  stop_times$arrival_time <- dplyr::if_else(stop_times$arrival_time == "000000" & stop_times$Activity == "U",
+                                            stop_times$departure_time,
+                                            stop_times$arrival_time)
+
+  #fix missing arrival / departure times by copying from the other time.
+  stop_times$arrival_time[is.na(stop_times$arrival_time)] <- stop_times$departure_time[is.na(stop_times$arrival_time)]
+  stop_times$departure_time[is.na(stop_times$departure_time)] <- stop_times$arrival_time[is.na(stop_times$departure_time)]
+
+  return (stop_times)
 }
 
 
@@ -663,17 +639,28 @@ afterMidnight <- function(stop_times, safe = TRUE) {
 #'
 #' @noRd
 #'
-clean_activities2 <- function(x) {
+clean_activities2 <- function(x, public_only = TRUE) {
 
   x <- data.frame(activity = x, stringsAsFactors = FALSE)
-  x <- dplyr::left_join(x, activity_codes, by = c("activity"))
-  if (anyNA(x$pickup_type)) {
-    mss <- unique(x$activity[is.na(x$pickup_type)])
-    message("Unknown Activity codes '", paste(unique(mss), collapse = "' '"), "' please report these codes as a GitHub Issue")
-    x$pickup_type[is.na(x$pickup_type)] <- 0
-    x$drop_off_type[is.na(x$drop_off_type)] <- 0
+
+  if (public_only)
+  {
+    x <- dplyr::left_join(x, activity_codes, by = c("activity"))
+    if (anyNA(x$pickup_type)) {
+      mss <- unique(x$activity[is.na(x$pickup_type)])
+      warning("Unknown Activity codes '", paste(unique(mss), collapse = "' '"), "' please report these codes as a GitHub Issue")
+      x$pickup_type[is.na(x$pickup_type)] <- 0
+      x$drop_off_type[is.na(x$drop_off_type)] <- 0
+    }
+  }
+  else #set all of the stops on a route to be valid for passenger boarding / alighting from a GTFS perspective
+       # (unless they are 'pass' which have no 'activity' as they woosh past - just like deadlines.)
+  {
+    x$pickup_type <- ifelse( is.na(x$activity), 1, 0 )
+    x$drop_off_type <- ifelse( is.na(x$activity), 1, 0 )
   }
 
   x <- x[, c("pickup_type", "drop_off_type")]
+
   return(x)
 }

@@ -4,17 +4,29 @@
 \alias{gtfs_merge}
 \title{merge a list of gtfs files}
 \usage{
-gtfs_merge(gtfs_list, force = FALSE, quiet = TRUE)
+gtfs_merge(
+  gtfs_list,
+  force = FALSE,
+  quiet = TRUE,
+  condenseServicePatterns = TRUE
+)
 }
 \arguments{
 \item{gtfs_list}{a list of gtfs objects to be merged}
 
-\item{force}{logical, if TRUE duplicated values are merged taking the fist}
-
-\item{quiet}{logical, if TRUE less messages
+\item{force}{logical, if TRUE duplicated values are merged taking the fist
 instance to be the correct instance, in most cases this is ok, but may
 cause some errors}
+
+\item{quiet}{logical, if TRUE less messages}
+
+\item{condenseServicePatterns}{logical, if TRUE service patterns across all routes are condensed into a unique set of patterns}
 }
 \description{
-merge a list of gtfs files
+!WARNING! only the tables:
+agency, stops, routes, trips, stop_times, calendar, calendar_dates, shapes, frequencies
+are processed, any other tables in the input timetables are passed through
+}
+\details{
+if duplicate IDs are detected then completely new IDs for all rows will be generated in the output.
 }

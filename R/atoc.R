@@ -10,8 +10,10 @@
 #' @param agency where to get agency.txt (see details)
 #' @param shapes Logical, should shapes.txt be generated (default FALSE)
 #' @param transfers Logical, should transfers.txt be generated (default TRUE)
-#' @param missing_tiplocs Logical, if locations = tiplocs, then will check for
+#' @param missing_tiplocs Logical, if true will check for
 #'   any missing tiplocs against the main file and add them.(default TRUE)
+#' @param working_timetable Logical, should WTT times be used instead of public times (default FALSE)
+#' @param public_only Logical, only return calls/services that are for public passenger pickup/set down (default TRUE)
 #' @family main
 #'
 #' @details Locations
@@ -44,22 +46,9 @@ atoc2gtfs <- function(path_in,
                       agency = "atoc_agency",
                       shapes = FALSE,
                       transfers = TRUE,
-                      missing_tiplocs = TRUE) {
-
-  if(inherits(locations,"character")){
-    if(locations == "tiplocs"){
-      load_data("tiplocs")
-      locations = tiplocs
-    }
-  }
-
-  if(inherits(agency,"character")){
-    if(agency == "atoc_agency"){
-      load_data("atoc_agency")
-      agency = atoc_agency
-    }
-  }
-
+                      missing_tiplocs = TRUE,
+                      working_timetable = FALSE,
+                      public_only = TRUE) {
   # Checkmates
   checkmate::assert_character(path_in, len = 1)
   checkmate::assert_file_exists(path_in)
@@ -73,6 +62,14 @@ atoc2gtfs <- function(path_in,
       " This will take some time, make sure you use 'ncores' to enable multi-core processing"
     ))
   }
+
+  agency = getCachedAgencyData( agency )
+
+  if ( !inherits(locations, "character") || "file"!=locations )
+  {
+    stops_sf = getCachedLocationData( locations )
+  }
+
   # Is input a zip or a folder
   if (grepl(".zip", path_in)) {
     # Unzip
@@ -110,61 +107,29 @@ atoc2gtfs <- function(path_in,
       file = files[grepl(".mca", files)],
       silent = silent,
       ncores = 1,
-      full_import = TRUE
+      full_import = TRUE,
+      working_timetable = working_timetable,
+      public_only = public_only
   )
 
 
-  # Get the Station Locations
-  # Are locations provided?
-  if ("sf" %in% class(locations)) {
-    stops_sf <- cbind(locations, sf::st_coordinates(locations))
-    stops_sf <- as.data.frame(stops_sf)
-    stops_sf <- stops_sf[, c(
-      "stop_id", "stop_code", "stop_name",
-      "Y", "X"
-    )]
-    names(stops_sf) <- c(
-      "stop_id", "stop_code", "stop_name",
-      "stop_lat", "stop_lon"
-    )
-    stops_sf$stop_lat <- round(stops_sf$stop_lat, 5)
-    stops_sf$stop_lon <- round(stops_sf$stop_lon, 5)
-  }
-
   # Should the file be checked
-  check_file <- FALSE
-  if("sf" %in% class(locations) & missing_tiplocs){
-    check_file <- TRUE
-  }
-
-  if ("character" %in% class(locations)) {
-    if(locations == "file"){
-      check_file <- TRUE
-    }
-  }
-
-  if (check_file) {
+  if ( TRUE==missing_tiplocs ||
+       ( inherits(locations, "character") && "file"==locations ) )
+  {
     msn <- importMSN(files[grepl(".msn", files)], silent = silent)
     station <- msn[[1]]
     TI <- mca[["TI"]]
     stops.list <- station2stops(station = station, TI = TI)
     stops_file <- stops.list[["stops"]]
     rm(msn,TI,stops.list)
-  }
 
-  # Was a csv provided
-  if ("character" %in% class(locations)) {
-    if(locations != "file"){
-      checkmate::check_file_exists(locations)
-      stops_csv <- utils::read.csv(locations, stringsAsFactors = FALSE)
+    if( FALSE==missing_tiplocs || !exists("stops_sf") )
+    {
+      stops <- stops_file
     }
-  }
-
-  # Chose Correct stops
-  if(exists("stops_csv")){
-    stops <- stops_csv
-  } else if(exists("stops_sf")){
-    if(missing_tiplocs == TRUE){
+    else
+    {
       # Combine
       stops_missing <- stops_file[!stops_file$stop_id %in% stops_sf$stop_id,]
       if(nrow(stops_missing) > 0){
@@ -173,12 +138,11 @@ atoc2gtfs <- function(path_in,
       } else {
         stops <- stops_sf
       }
-
-    } else {
-      stops <- stops_sf
     }
-  } else if(exists("stops_file")){
-    stops <- stops_file
+  }
+  else
+  {
+    stops <- stops_sf
   }
 
 
@@ -203,17 +167,23 @@ atoc2gtfs <- function(path_in,
   # remove any unused stops
   stops <- stops[stops$stop_id %in% stop_times$stop_id, ]
 
+  if ( nrow(stops)<=0 )
+  {
+    stop("Could not match any stops in input data to stop database.")
+  }
+
+
   # Main Timetable Build
   timetables <- schedule2routes(
     stop_times = stop_times,
     stops = stops,
     schedule = schedule,
     silent = silent,
-    ncores = ncores
+    ncores = ncores,
+    public_only = public_only
   )
   rm(schedule)
   gc()
-  # load("data/atoc_agency.RData")
 
   # TODO: check for stop_times that are not valid stops
 

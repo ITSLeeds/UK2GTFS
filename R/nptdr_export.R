@@ -108,7 +108,7 @@ nptdr_makeCalendar <- function(schedule, exceptions, historic_bank_holidays = hi
   calendar$bank_holiday <- NULL
 
   # TODO: Detect Scotland and NI
-  message("Unique Scotland and NI bank holidays not correctly handeled")
+  message("Unique Scotland and NI bank holidays are not correctly handled")
 
   bh <- historic_bank_holidays[historic_bank_holidays$date >= min(calendar$start_date, na.rm = TRUE),]
   bh <- bh[bh$date <= min(calendar$end_date, na.rm = TRUE), ]

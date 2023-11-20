@@ -1,9 +1,10 @@
-
 context("Get the example atoc files")
 file_path <- file.path(tempdir(),"uk2gtfs_tests")
 dir.create(file_path)
 data_path <- file.path(tempdir(),"uk2gtfs_data")
 dir.create(data_path)
+
+
 
 test_that("test atoc data is there", {
   expect_true(dl_example_file(data_path, "atoc"))
@@ -13,6 +14,7 @@ test_that("test atoc data is there", {
 context("Test the main atoc function")
 
 test_that("test atoc2gtfs singlecore", {
+
   gtfs <- atoc2gtfs(path_in = file.path(data_path,"atoc.zip"),
             ncores = 1)
 
@@ -20,9 +22,12 @@ test_that("test atoc2gtfs singlecore", {
 })
 
 
+
+
 context("Test the main atoc function, with different settings")
 
 test_that("test atoc2gtfs singlecore", {
+
   gtfs <- atoc2gtfs(path_in = file.path(data_path,"atoc.zip"),
                     ncores = 1,
                     locations = "file")

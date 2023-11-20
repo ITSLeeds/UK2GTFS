@@ -4,7 +4,10 @@
 \alias{update_data}
 \title{Update the data inside the UK2GTFS package}
 \usage{
-update_data()
+update_data(timeout = 60)
+}
+\arguments{
+\item{timeout}{maximum duration (in seconds) to wait for a response from the server (github.com)}
 }
 \description{
 As UK2GTFS has large datasets that update separately to the R package they

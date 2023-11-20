@@ -39,7 +39,11 @@ gtfs_interpolate_times <- function(gtfs, ncores = 1){
     stop_times <- pbapply::pblapply(stop_times, stops_interpolate)
   } else {
     cl <- parallel::makeCluster(ncores)
-    parallel::clusterEvalQ(cl, {loadNamespace("UK2GTFS")})
+    parallel::clusterEvalQ(cl, {
+      #put any setup required for all worker processes in here
+      options( UK2GTFS_opt_updateCachedDataOnLibaryLoad = FALSE )
+      loadNamespace("UK2GTFS")
+    })
     stop_times <- pbapply::pblapply(stop_times,
                                     stops_interpolate,
                                     cl = cl
