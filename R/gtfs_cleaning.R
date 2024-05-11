@@ -194,57 +194,126 @@ gtfs_fast_stops <- function(gtfs, maxspeed = 83) {
 # }
 
 
+PUBLIC_SERVICE_CATEGORY = c("OL", "OU", "OO", "OW", "XC", "XD", "XI",
+                            "XR", "XU", "XX", "XZ", "BR", "BS", "SS" )
+
+
 #' Clean simple errors from GTFS files
 #'
 #' @param gtfs gtfs list
-#' @param removeNonPublic logical if TRUE remove routes with route_type missing
+#' @param public_only Logical, if TRUE remove routes with route_type missing
 #' @details
 #' Task done:
 #'
 #' 0. Remove stops with no coordinates
 #' 1. Remove stops with no location information
-#' 2. Remove stops that are never used
-#' 3. Replace missing agency names with "MISSINGAGENCY"
-#' 4. If service is not public and removeNonPublic=TRUE then remove it (freight, 'trips' aka charters)
+#' 2. Remove trips with less than two stops
+#' 3. Remove stops that are never used
+#' 4. Replace missing agency names with "MISSINGAGENCY"
+#' 5. If service is not public and public_only=TRUE then remove it (freight, 'trips' aka charters)
 #'        (these have a null route_type, so loading into OpenTripPlanner fails if these are present)
+#' 6. If public_only=TRUE then remove services with 'train_category' not for public use. e.g. EE (ECS-Empty Coaching Stock)
+#' 7. Remove shapes that no longer have any trips
+#' 8  Remove frequencies that no longer have any trips
 #'
 #' @export
-gtfs_clean <- function(gtfs, removeNonPublic =  FALSE) {
+gtfs_clean <- function(gtfs, public_only =  FALSE) {
   # 0 Remove stops with no coordinates
   gtfs$stops <- gtfs$stops[!is.na(gtfs$stops$stop_lon) & !is.na(gtfs$stops$stop_lat), ]
 
   # 1 Remove stop times with no locations
   gtfs$stop_times <- gtfs$stop_times[gtfs$stop_times$stop_id %in% unique(gtfs$stops$stop_id), ]
 
-  # 2 Remove stops that are never used
+  # 2 Remove trips with less than two stops
+  stop_count <- gtfs$stop_times[, .N, by = "trip_id"]
+  gtfs$trips <- gtfs$trips[!("trip_id" %in% stop_count[N<2]$trip_id)]
+
+  # 3 Remove stops that are never used
   gtfs$stops <- gtfs$stops[gtfs$stops$stop_id %in% unique(gtfs$stop_times$stop_id), ]
 
-  # 3 Replace "" agency_id with dummy name
+  # 4 Replace "" agency_id with dummy name
   gtfs$agency$agency_id[gtfs$agency$agency_id == ""] <- "MISSINGAGENCY"
   gtfs$routes$agency_id[gtfs$routes$agency_id == ""] <- "MISSINGAGENCY"
   gtfs$agency$agency_name[gtfs$agency$agency_name == ""] <- "MISSINGAGENCY"
 
-  # 4 remove calls, trips and routes that have an empty route_type (non public services)
-  if (removeNonPublic)
+  # 5 remove calls, trips and routes that have an empty route_type (non public services)
+  # in addition to all the previous filtering - ECS moves were still making it into the output GTFS file, this removes them
+  if (public_only)
   {
     joinedTrips <- merge(gtfs$trips, gtfs$routes, by = "route_id", all.x = TRUE)
 
     joinedCalls <- merge(gtfs$stop_times, joinedTrips, by = "trip_id", all.x = TRUE)
-    filteredCalls <- joinedCalls[ !is.na( joinedCalls$route_type ), ]
-    gtfs$stop_times <- filteredCalls[, names( gtfs$stop_times )]
 
-    joinedCalendar <- merge(gtfs$calendar, joinedTrips, by = "service_id", all.x = TRUE)
-    filteredCalendar <- joinedCalendar[ !is.na( joinedCalendar$route_type ), ]
-    gtfs$calendar <- filteredCalendar[, names( gtfs$calendar )]
+    if ("train_category" %in% names(joinedCalls) )
+    {
+      filteredCalls <- joinedCalls[ !is.na( joinedCalls$route_type) &
+                                    joinedCalls$train_category %in% PUBLIC_SERVICE_CATEGORY, ]
+    }
+    else
+    {
+      filteredCalls <- joinedCalls[ !is.na( joinedCalls$route_type), ]
+    }
 
-    joinedCalendarDates <- merge(gtfs$calendar_dates, joinedTrips, by = "service_id", all.x = TRUE)
-    filteredCalendarDates <- joinedCalendarDates[ !is.na( joinedCalendarDates$route_type ), ]
-    gtfs$calendar_dates <- filteredCalendarDates[, names( gtfs$calendar_dates )]
+    gtfs$stop_times <- filteredCalls[, names( gtfs$stop_times ), with=FALSE]
 
-    filteredTrips <- joinedTrips[ !is.na( joinedTrips$route_type ), ]
-    gtfs$trips <- filteredTrips[, names( gtfs$trips )]
 
-    gtfs$routes <- gtfs$routes[ !is.na( gtfs$routes$route_type ), ]
+    #what is this batty code I hear you cry ?!
+    gtfs$stop_times$arrival_time = gtfs$stop_times$arrival_time[ 1: nrow(gtfs$stop_times) ]
+    gtfs$stop_times$departure_time = gtfs$stop_times$departure_time[ 1: nrow(gtfs$stop_times) ]
+    #well, it's a bug workaround. Not entirely sure of the trigger, but when we have 30M stop times, and filter down to 1M
+    #the hour and minute component of the Period 'object' report a length of 30M, when there is only supposed to be 1M of them.
+    #The nrow() in the data.table says 1M, and the number of seconds in the period 'object' says 1M.
+    #Clearly 'object' is in big air quotes......
+    #as a result it blows up in gtfs_write() when writing because the sprintf moans about the input vectors being different lengths.
+    #This fixes it.
+    # see also stops_interpolate() "Needed because rbindlist doesn't work with periods for some reason" which smells like a similar workaround.
+    #stamping on the gc() button at the end of this fn for good measure.
+    #- remember kids, R is not suitable for production use.....
+
+
+    #after merging GTFS files we may have compressed the calendar and calendar_dates so a service pattern is used by
+    #multiple trips - so don't remove calendar and calendar_dates that link to routes with NA route_type in case
+    #it's in use by multiple trips/routes
+
+    if ("train_category" %in% names(joinedTrips) )
+    {
+      filteredTrips <- joinedTrips[ !is.na( joinedTrips$route_type ) &
+                                      joinedTrips$train_category %in% PUBLIC_SERVICE_CATEGORY, ]
+    }
+    else
+    {
+      filteredTrips <- joinedTrips[ !is.na( joinedTrips$route_type ), ]
+    }
+
+    gtfs$trips <- filteredTrips[, names( gtfs$trips ), with=FALSE]
+
+    if ("train_category" %in% names(gtfs$routes) )
+    {
+      gtfs$routes <- gtfs$routes[ !is.na( gtfs$routes$route_type ) &
+                                    gtfs$routes$train_category %in% PUBLIC_SERVICE_CATEGORY, ]
+    }
+    else
+    {
+      gtfs$routes <- gtfs$routes[ !is.na( gtfs$routes$route_type ), ]
+    }
+
+    rm(joinedCalls)
+    rm(joinedTrips)
+    rm(filteredCalls)
+    rm(filteredTrips)
+    gc()
+  }
+
+  # 7 remove shapes that no longer have any trips
+  if ("shapes" %in% names(gtfs))
+  {
+    gtfs$shapes <- gtfs$shapes[gtfs$shapes$shape_id %in% gtfs$trips$shape_id, ]
+  }
+
+  # 8 remove frequencies that no longer have any trips
+  if ("frequencies" %in% names(gtfs))
+  {
+    gtfs$frequencies <- gtfs$frequencies[gtfs$frequencies$trip_id %in% gtfs$trips$trip_id, ]
   }
 
   return(gtfs)

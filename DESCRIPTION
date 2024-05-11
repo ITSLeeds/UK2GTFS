@@ -1,12 +1,13 @@
 Package: UK2GTFS
 Type: Package
 Title: Converts UK transport timetable datasets to GTFS format
-Version: 0.2.1
+Version: 1.0
 Authors@R: c(
     person("Malcolm", "Morgan", email = "m.morgan1@leeds.ac.uk", role = c("aut","cre"), 
       comment = c(ORCID = "0000-0002-9488-9183")),
     person("Adrian", "Schönig", role = c("ctb")),
-    person("Owen", "O'Neill",  role = c("ctb"))
+    person("Owen", "O'Neill", email = "owen@wvr.org.uk", role = c("aut"), 
+      comment = c(ORCID = "0009-0008-0595-3042"))
     )
 Maintainer: Malcolm Morgan <m.morgan1@leeds.ac.uk>
 Description: The UK uses a range of odd formats to store timetable data, this package converts them to the nice GTFS format.
@@ -31,14 +32,16 @@ Imports:
   geodist,
   httr,
   iotools,
-  stringr,
-  sf,
-  parallel,
   lubridate,
+  parallel,
   purrr (>= 1.0),
   pbapply,
-  readr (>= 2.0),
   RcppSimdJson,
+  readr (>= 2.0),
+  sf,
+  stats,
+  stringi,
+  stringr,
   xml2,
   zip,
 Suggests: 
