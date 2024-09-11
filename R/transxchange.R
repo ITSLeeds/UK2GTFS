@@ -135,18 +135,28 @@ transxchange2gtfs <- function(path_in,
   } else {
     message(paste0(Sys.time(), " Importing TransXchange files, multicore"))
 
-    pb <- utils::txtProgressBar(max = length(files), style = 3)
-    progress <- function(n) utils::setTxtProgressBar(pb, n)
-    opts <- list(progress = progress, preschedule = FALSE)
-    cl <- parallel::makeCluster(ncores)
-    doSNOW::registerDoSNOW(cl)
-    boot <- foreach::foreach(i = seq_len(length(files)), .options.snow = opts)
-    res_all <- foreach::`%dopar%`(boot, {
-        UK2GTFS:::transxchange_import_try(files[i],
-                              try_mode = try_mode)
-    })
-    parallel::stopCluster(cl)
-    rm(cl, boot, opts, pb, progress)
+    future::plan(future::multisession, workers = ncores)
+    res_all <- furrr::future_map(.x = files,
+                             .f = transxchange_import_try,
+                             run_debug = TRUE,
+                             full_import = FALSE,
+                             try_mode = try_mode,
+                             .progress = TRUE)
+    future::plan(future::sequential)
+
+
+    # pb <- utils::txtProgressBar(max = length(files), style = 3)
+    # progress <- function(n) utils::setTxtProgressBar(pb, n)
+    # opts <- list(progress = progress, preschedule = FALSE)
+    # cl <- parallel::makeCluster(ncores)
+    # doSNOW::registerDoSNOW(cl)
+    # boot <- foreach::foreach(i = seq_len(length(files)), .options.snow = opts)
+    # res_all <- foreach::`%dopar%`(boot, {
+    #     UK2GTFS:::transxchange_import_try(files[i],
+    #                           try_mode = try_mode)
+    # })
+    # parallel::stopCluster(cl)
+    # rm(cl, boot, opts, pb, progress)
 
     res_all_message <- res_all[sapply(res_all, class) == "character"]
     res_all <- res_all[sapply(res_all, class) == "list"]
@@ -173,23 +183,35 @@ transxchange2gtfs <- function(path_in,
     message(" ")
     message(paste0(Sys.time(), " Converting to GTFS, multicore"))
 
-    pb <- utils::txtProgressBar(min = 0, max = length(res_all), style = 3)
-    progress <- function(n) utils::setTxtProgressBar(pb, n)
-    opts <- list(progress = progress, preschedule = FALSE)
-    cl <- parallel::makeCluster(ncores)
-    doSNOW::registerDoSNOW(cl)
-    boot <- foreach::foreach(i = seq_len(length(res_all)), .options.snow = opts)
-    gtfs_all <- foreach::`%dopar%`(boot, {
-        UK2GTFS:::transxchange_export_try(res_all[[i]],
-                          cal = cal,
-                          naptan = naptan_trim,
-                          scotland = scotland,
-                          try_mode = try_mode)
-      # setTxtProgressBar(pb, i)
-    })
+    future::plan(future::multisession, workers = ncores)
+    gtfs_all <- furrr::future_map(.x = res_all,
+                                 .f = transxchange_export_try,
+                                 run_debug = TRUE,
+                                 cal = cal,
+                                 naptan = naptan,
+                                 scotland = scotland,
+                                 try_mode = try_mode,
+                                 .progress = TRUE)
+    future::plan(future::sequential)
 
-    parallel::stopCluster(cl)
-    rm(cl, boot, opts, pb, progress)
+
+    # pb <- utils::txtProgressBar(min = 0, max = length(res_all), style = 3)
+    # progress <- function(n) utils::setTxtProgressBar(pb, n)
+    # opts <- list(progress = progress, preschedule = FALSE)
+    # cl <- parallel::makeCluster(ncores)
+    # doSNOW::registerDoSNOW(cl)
+    # boot <- foreach::foreach(i = seq_len(length(res_all)), .options.snow = opts)
+    # gtfs_all <- foreach::`%dopar%`(boot, {
+    #     UK2GTFS:::transxchange_export_try(res_all[[i]],
+    #                       cal = cal,
+    #                       naptan = naptan_trim,
+    #                       scotland = scotland,
+    #                       try_mode = try_mode)
+    #   # setTxtProgressBar(pb, i)
+    # })
+    #
+    # parallel::stopCluster(cl)
+    # rm(cl, boot, opts, pb, progress)
   }
 
   unlink(file.path(tempdir(), "txc"), recursive = TRUE)

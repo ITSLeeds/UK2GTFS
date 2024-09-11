@@ -36,16 +36,24 @@ gtfs_interpolate_times <- function(gtfs, ncores = 1){
   stop_times <- dplyr::group_split(stop_times)
 
   if(ncores == 1){
-    stop_times <- pbapply::pblapply(stop_times, stops_interpolate)
+    #stop_times <- pbapply::pblapply(stop_times, stops_interpolate)
+    stop_times <- purrr::map(stop_times, stops_interpolate, .progress = TRUE)
   } else {
-    cl <- parallel::makeCluster(ncores)
-    parallel::clusterEvalQ(cl, {loadNamespace("UK2GTFS")})
-    stop_times <- pbapply::pblapply(stop_times,
-                                    stops_interpolate,
-                                    cl = cl
-    )
-    parallel::stopCluster(cl)
-    rm(cl)
+    # cl <- parallel::makeCluster(ncores)
+    # parallel::clusterEvalQ(cl, {loadNamespace("UK2GTFS")})
+    # stop_times <- pbapply::pblapply(stop_times,
+    #                                 stops_interpolate,
+    #                                 cl = cl
+    # )
+    # parallel::stopCluster(cl)
+    # rm(cl)
+
+    future::plan(future::multisession, workers = ncores)
+    keep <- furrr::future_map(.x = stop_times,
+                              .f = stops_interpolate,
+                              .progress = TRUE)
+    future::plan(future::sequential)
+
   }
 
   stop_times <- data.table::rbindlist(stop_times)

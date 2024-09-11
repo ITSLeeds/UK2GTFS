@@ -564,15 +564,22 @@ duplicate.stop_times_alt <- function(calendar, stop_times, ncores = 1) {
   }
 
   if (ncores == 1) {
-    stop_times.dup <- pbapply::pblapply(stop_times_split, duplicate.stop_times.int)
+    #stop_times.dup <- pbapply::pblapply(stop_times_split, duplicate.stop_times.int)
+    stop_times.dup <- purrr::map(stop_times_split, duplicate.stop_times.int, .progress = TRUE)
   } else {
-    cl <- parallel::makeCluster(ncores)
-    stop_times.dup <- pbapply::pblapply(stop_times_split,
-      duplicate.stop_times.int,
-      cl = cl
-    )
-    parallel::stopCluster(cl)
-    rm(cl)
+    # cl <- parallel::makeCluster(ncores)
+    # stop_times.dup <- pbapply::pblapply(stop_times_split,
+    #   duplicate.stop_times.int,
+    #   cl = cl
+    # )
+    # parallel::stopCluster(cl)
+    # rm(cl)
+
+    future::plan(future::multisession, workers = ncores)
+    res <- furrr::future_map(.x = stop_times_split,
+                             .f = duplicate.stop_times.int,
+                             .progress = TRUE)
+    future::plan(future::sequential)
   }
 
   stop_times.dup <- dplyr::bind_rows(stop_times.dup)
