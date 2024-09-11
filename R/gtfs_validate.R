@@ -8,22 +8,22 @@ gtfs_validate_internal <- function(gtfs) {
   # Basic checks
   # Rows
   if (nrow(gtfs$agency) < 1) {
-    warning("No rows in agency")
+    message("No rows in agency")
   }
   if (nrow(gtfs$stops) < 1) {
-    warning("No rows in stops")
+    message("No rows in stops")
   }
   if (nrow(gtfs$routes) < 1) {
-    warning("No rows in routes")
+    message("No rows in routes")
   }
   if (nrow(gtfs$trips) < 1) {
-    warning("No rows in trips")
+    message("No rows in trips")
   }
   if (nrow(gtfs$stop_times) < 1) {
-    warning("No rows in warning_times")
+    message("No rows in warning_times")
   }
   if (nrow(gtfs$calendar) < 1) {
-    warning("No rows in calendar")
+    message("No rows in calendar")
   }
 
   # Columns
@@ -34,12 +34,12 @@ gtfs_validate_internal <- function(gtfs) {
   nm_agency_op <- c("agency_lang","agency_phone","agency_fare_url",
                      "agency_email")
   if (!all(nm_agency_req %in% nm_agency)) {
-    warning(paste(nm_agency_req[!nm_agency_req %in% nm_agency],
+    message(paste(nm_agency_req[!nm_agency_req %in% nm_agency],
                   collapse = ", ") ,"are required columns missing from agency.txt")
   }
 
   if (!all(nm_agency %in% c(nm_agency_req, nm_agency_op))) {
-    warning(paste(nm_agency[!nm_agency %in% c(nm_agency_req, nm_agency_op)],
+    message(paste(nm_agency[!nm_agency %in% c(nm_agency_req, nm_agency_op)],
                   collapse = ", ") ,"are invalid columns in agency.txt")
   }
 
@@ -52,12 +52,12 @@ gtfs_validate_internal <- function(gtfs) {
                    "parent_station","stop_timezone","wheelchair_boarding",
                    "level_id","platform_code")
   if (!all(nm_stops_req %in% nm_stops)) {
-    warning(paste(nm_stops_req[!nm_stops_req %in% nm_stops],
+    message(paste(nm_stops_req[!nm_stops_req %in% nm_stops],
                   collapse = ", ") ," are required columns missing from stops.txt")
   }
 
   if (!all(nm_stops %in% c(nm_stops_req, nm_stops_op))) {
-    warning(paste(nm_stops[!nm_stops %in% c(nm_stops_req, nm_stops_op)],
+    message(paste(nm_stops[!nm_stops %in% c(nm_stops_req, nm_stops_op)],
                   collapse = ", ") ," are invalid columns in stops.txt")
   }
 
@@ -69,12 +69,12 @@ gtfs_validate_internal <- function(gtfs) {
                     "route_sort_order","continuous_pickup",
                     "continuous_drop_off")
   if (!all(nm_routes_req %in% nm_routes)) {
-    warning(paste(nm_routes_req[!nm_routes_req %in% nm_routes],
+    message(paste(nm_routes_req[!nm_routes_req %in% nm_routes],
                   collapse = ", ") ," are required columns missing from routes.txt")
   }
 
   if (!all(nm_routes %in% c(nm_routes_req, nm_routes_op))) {
-    warning(paste(nm_routes[!nm_routes %in% c(nm_routes_req, nm_routes_op)],
+    message(paste(nm_routes[!nm_routes %in% c(nm_routes_req, nm_routes_op)],
                   collapse = ", ") ," are invalid columns in routes.txt")
   }
 
@@ -85,18 +85,18 @@ gtfs_validate_internal <- function(gtfs) {
                    "block_id","shape_id","wheelchair_accessible",
                    "bikes_allowed")
   if (!all(nm_trips_req %in% nm_trips)) {
-    warning(paste(nm_trips_req[!nm_trips_req %in% nm_trips],
+    message(paste(nm_trips_req[!nm_trips_req %in% nm_trips],
                   collapse = ", ") ," are required columns missing from trips.txt")
   }
 
   if (!all(nm_trips %in% c(nm_trips_req, nm_trips_op))) {
-    warning(paste(nm_trips[!nm_trips %in% c(nm_trips_req, nm_trips_op)],
+    message(paste(nm_trips[!nm_trips %in% c(nm_trips_req, nm_trips_op)],
                   collapse = ", ") ," are invalid columns in trips.txt")
   }
 
   if (any(duplicated(gtfs$trips$trip_id))) {
-    warning("Duplicated trip_id in trips:")
-    warning(gtfs$trips$trip_id[duplicated(gtfs$trips$trip_id)])
+    message("Duplicated trip_id in trips:")
+    message(gtfs$trips$trip_id[duplicated(gtfs$trips$trip_id)])
   }
 
   # stop_times
@@ -107,12 +107,12 @@ gtfs_validate_internal <- function(gtfs) {
                         "continuous_pickup","continuous_drop_off",
                         "shape_dist_traveled","timepoint")
   if (!all(nm_stop_times_req %in% nm_stop_times)) {
-    warning(paste(nm_stop_times_req[!nm_stop_times_req %in% nm_stop_times],
+    message(paste(nm_stop_times_req[!nm_stop_times_req %in% nm_stop_times],
                   collapse = ", ") ," are required columns missing from stop_times.txt")
   }
 
   if (!all(nm_stop_times %in% c(nm_stop_times_req, nm_stop_times_op))) {
-    warning(paste(nm_stop_times[!nm_stop_times %in% c(nm_stop_times_req, nm_stop_times_op)],
+    message(paste(nm_stop_times[!nm_stop_times %in% c(nm_stop_times_req, nm_stop_times_op)],
                   collapse = ", ") ," are invalid columns in stop_times.txt")
   }
 
@@ -121,12 +121,12 @@ gtfs_validate_internal <- function(gtfs) {
   nm_calendar_req <- c("service_id","monday","tuesday","wednesday","thursday",
                        "friday","saturday","sunday","start_date","end_date")
   if (!all(nm_calendar_req %in% nm_calendar)) {
-    warning(paste(nm_calendar_req[!nm_calendar_req %in% nm_calendar],
+    message(paste(nm_calendar_req[!nm_calendar_req %in% nm_calendar],
                   collapse = ", ") ," are required columns missing from calendar.txt")
   }
 
   if (!all(nm_calendar %in% c(nm_calendar_req))) {
-    warning(paste(nm_calendar[!nm_calendar %in% c(nm_calendar_req)],
+    message(paste(nm_calendar[!nm_calendar %in% c(nm_calendar_req)],
                   collapse = ", ") ," are invalid columns in calendar.txt")
   }
 
@@ -135,87 +135,87 @@ gtfs_validate_internal <- function(gtfs) {
     nm_calendar_dates <- names(gtfs$calendar_dates)
     nm_calendar_dates_req <- c("service_id","date","exception_type")
     if (!all(nm_calendar_dates_req %in% nm_calendar_dates)) {
-      warning(paste(nm_calendar_dates_req[!nm_calendar_dates_req %in% nm_calendar_dates],
+      message(paste(nm_calendar_dates_req[!nm_calendar_dates_req %in% nm_calendar_dates],
                     collapse = ", ") ," are required columns missing from calendar_dates.txt")
     }
 
     if (!all(nm_calendar_dates %in% c(nm_calendar_dates_req))) {
-      warning(paste(nm_calendar_dates[!nm_calendar_dates %in% c(nm_calendar_dates_req)],
+      message(paste(nm_calendar_dates[!nm_calendar_dates %in% c(nm_calendar_dates_req)],
                     collapse = ", ") ," are invalid columns in calendar_dates.txt")
     }
   } else {
-    warning("No calendar_dates.txt")
+    message("No calendar_dates.txt")
   }
 
   # check for NAs
   if(anyNA(gtfs$agency)){
-    warning("NA values in agency")
+    message("NA values in agency")
   }
 
   if(anyNA(gtfs$stops)){
-    warning("NA values in stops")
+    message("NA values in stops")
   }
 
   if(anyNA(gtfs$routes)){
-    warning("NA values in routes")
+    message("NA values in routes")
   }
 
   if(anyNA(gtfs$trips)){
-    warning("NA values in trips")
+    message("NA values in trips")
   }
 
   if(anyNA(gtfs$stop_times)){
-    warning("NA values in stop_times")
+    message("NA values in stop_times")
   }
 
   if(anyNA(gtfs$calendar)){
-    warning("NA values in calendar")
+    message("NA values in calendar")
   }
 
   if(anyNA(gtfs$calendar_dates)){
-    warning("NA values in calendar_dates")
+    message("NA values in calendar_dates")
   }
 
   # Check for missing values
   if (!all(gtfs$routes$agency_id %in% gtfs$agency$agency_id)) {
     unknown = unique(gtfs$routes$agency_id[!(gtfs$routes$agency_id %in% gtfs$agency$agency_id)])
-    warning("Unknown agency_id in routes: (", length(unknown), ") ", paste(unknown, collapse=" ") )
+    message("Unknown agency_id in routes: (", length(unknown), ") ", paste(unknown, collapse=" ") )
   }
 
   if (!all(gtfs$stop_times$trip_id %in% gtfs$trips$trip_id)) {
     unknown = unique(gtfs$stop_times$trip_id[!(gtfs$stop_times$trip_id %in% gtfs$trips$trip_id)])
-    warning("Unknown trip_id in stop_times: (", length(unknown), ") values:")
-    warning( paste(unknown, collapse=" ") )
+    message("Unknown trip_id in stop_times: (", length(unknown), ") values:")
+    message( paste(unknown, collapse=" ") )
   }
 
   if (!all(gtfs$stop_times$stop_id %in% gtfs$stops$stop_id)) {
     unknown = unique(gtfs$stop_times$stop_id[!(gtfs$stop_times$stop_id %in% gtfs$stops$stop_id)])
-    warning("Unknown stop_id in stop_times: (", length(unknown), ") values: (TIPLOC data may need refreshing)")
-    warning( paste(unknown, collapse=" ") )
+    message("Unknown stop_id in stop_times: (", length(unknown), ") values: (TIPLOC data may need refreshing)")
+    message( paste(unknown, collapse=" ") )
   }
 
   # Duplicated IDs
   if (any(duplicated(gtfs$agency$agency_id))) {
     unknown = unique(gtfs$agency$agency_id[duplicated(gtfs$agency$agency_id)])
-    warning("Duplicated agency_id in agency: (", length(unknown), ") ", paste(unknown, collapse=" ") )
+    message("Duplicated agency_id in agency: (", length(unknown), ") ", paste(unknown, collapse=" ") )
   }
 
   if (any(duplicated(gtfs$stops$stop_id))) {
     unknown = unique(gtfs$stops$stop_id[duplicated(gtfs$stops$stop_id)])
-    warning("Duplicated stop_id in stops: (", length(unknown), ") values:")
-    warning( paste(unknown, collapse=" ") )
+    message("Duplicated stop_id in stops: (", length(unknown), ") values:")
+    message( paste(unknown, collapse=" ") )
   }
 
   if (any(duplicated(gtfs$trips$trip_id))) {
     unknown = unique(gtfs$trips$trip_id[duplicated(gtfs$trips$trip_id)])
-    warning("Duplicated trip_id in trips: (", length(unknown), ") values:")
-    warning( paste(unknown, collapse=" "))
+    message("Duplicated trip_id in trips: (", length(unknown), ") values:")
+    message( paste(unknown, collapse=" "))
   }
 
   if (any(duplicated(gtfs$routes$route_id))) {
     unknown = unique(gtfs$routes$route_id[duplicated(gtfs$routes$route_id)])
-    warning("Duplicated route_id in routes: (", length(unknown), ") values:")
-    warning( paste(unknown, collapse=" "))
+    message("Duplicated route_id in routes: (", length(unknown), ") values:")
+    message( paste(unknown, collapse=" "))
   }
 
 
