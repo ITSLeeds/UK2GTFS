@@ -13,6 +13,13 @@ utils::globalVariables(c(
   'agency_lang','agency_id',   'Freq',
   'UID','hash','vehicle_type','running_board','service_number',
   'operator_code','route_id',
-  'speed_after','distance','school_terms','distance_after','historic_bank_holidays'
+  'speed_after','distance','school_terms','distance_after','historic_bank_holidays',
+  'runs_monday','runs_tuesday','runs_wednesday','runs_thursday','runs_friday',
+  'runs_saturday','runs_sunday', 'total_sunday',
+  'runs_Mon','runs_Tue','runs_Wed','runs_Thu','runs_Fri',
+  'runs_Sat','runs_Sun',
+  'tot_Mon','tot_Tue','tot_Wed','tot_Thu','tot_Fri',
+  'tot_Sat','tot_Sun',
+  'service_id','zone_id','time_bands','stop_name'
 ))
 
