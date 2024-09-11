@@ -433,7 +433,7 @@ makeCalendar <- function(schedule, ncores = 1) {
   CHECKROWS_NAME_VECTOR <- c(WEEKDAY_NAME_VECTOR, "duration", "start_date", "end_date")
 
 
-  res.calendar.days <- res.calendar[,..CHECKROWS_NAME_VECTOR]
+  res.calendar.days <- res.calendar[,CHECKROWS_NAME_VECTOR]
   res.calendar.days <- data.table::transpose(res.calendar.days)
   #transpose on the same size runs in around 3s, but causes named dataframe with mixed datatypes to be coerced to unnamed vector of integer.
 
