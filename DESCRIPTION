@@ -27,7 +27,9 @@ Imports:
   doSNOW,
   dplyr,
   digest,
-  foreach, 
+  foreach,
+  future,
+  future.apply,
   geodist,
   httr,
   iotools,
@@ -39,6 +41,7 @@ Imports:
   pbapply,
   readr (>= 2.0),
   RcppSimdJson,
+  tidyr,
   xml2,
   zip,
 Suggests: 
@@ -48,4 +51,4 @@ Suggests:
     rmarkdown,
     testthat
 VignetteBuilder: knitr
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1

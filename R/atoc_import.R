@@ -641,17 +641,26 @@ importMCA <- function(file,
     message(paste0(Sys.time(), " importing Trailer Record"))
   }
   ZZ <- raw[types == "ZZ"]
-  ZZ <- iotools::dstrfw(
-    x = ZZ,
-    col_types = rep("character", 2),
-    widths = c(2, 78)
-  )
-  names(ZZ) <- c("Record Identity", "Spare")
-  ZZ$Spare <- NULL
-  ZZ <- strip_whitespace(ZZ)
+  if(length(ZZ) > 0){
+    ZZ <- iotools::dstrfw(
+      x = ZZ,
+      col_types = rep("character", 2),
+      widths = c(2, 78)
+    )
+    names(ZZ) <- c("Record Identity", "Spare")
+    ZZ$Spare <- NULL
+    ZZ <- strip_whitespace(ZZ)
 
-  # Add the rowid
-  ZZ$rowID <- seq(from = 1, to = length(types))[types == "ZZ"]
+    # Add the rowid
+    ZZ$rowID <- seq(from = 1, to = length(types))[types == "ZZ"]
+  } else {
+    # Trailer Record Missing
+    ZZ <- data.frame(`Record Identity` = "ZZ", `Spare` = "")
+    names(ZZ) <- c("Record Identity", "Spare")
+    ZZ$rowID = length(types) + 1
+  }
+
+
 
   # Prep the main files
   if (!silent) {

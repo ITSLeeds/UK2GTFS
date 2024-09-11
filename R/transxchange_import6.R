@@ -61,7 +61,9 @@ transxchange_import <- function(file, run_debug = TRUE, full_import = FALSE) {
     JourneyPatternSections <- NULL
   }
 
+  ## VehicleJourneysTimingLinks #############################
 
+  VehicleJourneysTimingLinks <- NULL
 
   ## Services ##########################################
   Services <- xml2::xml_child(xml, "d1:Services")
@@ -143,7 +145,9 @@ transxchange_import <- function(file, run_debug = TRUE, full_import = FALSE) {
   DaysOfNonOperation <- VehicleJourneys$DaysOfNonOperation
   VehicleJourneys_notes <- VehicleJourneys$VJ_Notes
   VehicleJourneys <- VehicleJourneys$VehicleJourneys
-  VehicleJourneysTimingLinks <- NULL
+
+
+
 
 
   ## Final Steps #########################################
