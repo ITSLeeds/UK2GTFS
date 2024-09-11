@@ -433,7 +433,7 @@ makeCalendar <- function(schedule, ncores = 1) {
   CHECKROWS_NAME_VECTOR <- c(WEEKDAY_NAME_VECTOR, "duration", "start_date", "end_date")
 
 
-  res.calendar.days <- res.calendar[,..CHECKROWS_NAME_VECTOR]
+  res.calendar.days <- res.calendar[,CHECKROWS_NAME_VECTOR]
   res.calendar.days <- data.table::transpose(res.calendar.days)
   #transpose on the same size runs in around 3s, but causes named dataframe with mixed datatypes to be coerced to unnamed vector of integer.
 
@@ -444,7 +444,7 @@ makeCalendar <- function(schedule, ncores = 1) {
                              .f = checkrows,
                              .progress = TRUE)
     future::plan(future::sequential)
-    keep <- unlist(keep)
+
 
     # cl <- parallel::makeCluster(ncores)
     # parallel::clusterEvalQ(cl, {
@@ -458,6 +458,7 @@ makeCalendar <- function(schedule, ncores = 1) {
   } else {
     keep <- purrr::map(res.calendar.days, checkrows, .progress = TRUE)
   }
+  keep <- unlist(keep)
 
   res.calendar <- res.calendar[keep, ]
 
@@ -564,15 +565,22 @@ duplicate.stop_times_alt <- function(calendar, stop_times, ncores = 1) {
   }
 
   if (ncores == 1) {
-    stop_times.dup <- pbapply::pblapply(stop_times_split, duplicate.stop_times.int)
+    #stop_times.dup <- pbapply::pblapply(stop_times_split, duplicate.stop_times.int)
+    stop_times.dup <- purrr::map(stop_times_split, duplicate.stop_times.int, .progress = TRUE)
   } else {
-    cl <- parallel::makeCluster(ncores)
-    stop_times.dup <- pbapply::pblapply(stop_times_split,
-      duplicate.stop_times.int,
-      cl = cl
-    )
-    parallel::stopCluster(cl)
-    rm(cl)
+    # cl <- parallel::makeCluster(ncores)
+    # stop_times.dup <- pbapply::pblapply(stop_times_split,
+    #   duplicate.stop_times.int,
+    #   cl = cl
+    # )
+    # parallel::stopCluster(cl)
+    # rm(cl)
+
+    future::plan(future::multisession, workers = ncores)
+    res <- furrr::future_map(.x = stop_times_split,
+                             .f = duplicate.stop_times.int,
+                             .progress = TRUE)
+    future::plan(future::sequential)
   }
 
   stop_times.dup <- dplyr::bind_rows(stop_times.dup)

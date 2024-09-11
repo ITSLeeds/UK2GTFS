@@ -462,10 +462,10 @@ transxchange_export <- function(obj,
     bank_holidays_inc <- break_up_holidays2(bank_holidays, "BankHolidaysOperate", cal = cal)
     bank_holidays_exc <- break_up_holidays2(bank_holidays, "BankHolidaysNoOperate", cal = cal)
     if (!is.null(bank_holidays_inc)) {
-      bank_holidays_inc <- dplyr::left_join(bank_holidays_inc, cal, by = c("hols" = "name"))
+      bank_holidays_inc <- dplyr::left_join(bank_holidays_inc, cal, by = c("hols" = "name"), relationship = "many-to-many")
     }
     if (!is.null(bank_holidays_exc)) {
-      bank_holidays_exc <- dplyr::left_join(bank_holidays_exc, cal, by = c("hols" = "name"))
+      bank_holidays_exc <- dplyr::left_join(bank_holidays_exc, cal, by = c("hols" = "name"), relationship = "many-to-many")
     }
     bank_holidays <- rbind(bank_holidays_inc, bank_holidays_exc)
     bank_holidays <- bank_holidays[, c("trip_id", "date", "exception_type")]

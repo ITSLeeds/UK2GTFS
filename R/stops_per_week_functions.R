@@ -335,7 +335,12 @@ gtfs_trips_per_zone <- function(gtfs,
   res <- dplyr::group_by(stop_times, zone_id)
   res <- dplyr::group_split(res)
   future::plan(future::multisession)
-  res <- future.apply::future_lapply(res, internal_trips_per_zone, by_mode, days_tot)
+  #res <- future.apply::future_lapply(res, internal_trips_per_zone, by_mode, days_tot)
+  res <- furrr::future_map(.x = res,
+                           .f = internal_trips_per_zone,
+                           by_mode = by_mode,
+                           days_tot = days_tot,
+                           .progress = TRUE)
   future::plan(future::sequential)
 
 

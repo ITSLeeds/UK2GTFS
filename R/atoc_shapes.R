@@ -93,7 +93,8 @@ ATOC_shapes <- function(gtfs) {
     }
   }
 
-  dp.list <- pbapply::pblapply(dp.list, path_to_sf, verts = verts)
+  #dp.list <- pbapply::pblapply(dp.list, path_to_sf, verts = verts)
+  dp.list <- purrr::map(dp.list, path_to_sf, verts = verts, .progress = TRUE)
   dp.list <- unname(dp.list)
   pairs$geometry <- sf::st_sfc(dp.list, crs = 4326)
   rm(dp.list, verts)
@@ -110,7 +111,8 @@ ATOC_shapes <- function(gtfs) {
   }
 
   message(paste0(Sys.time()," Invert routes"))
-  pairs_opp$geometry <- pbapply::pblapply(pairs_opp$geometry, invert_linestring)
+  #pairs_opp$geometry <- pbapply::pblapply(pairs_opp$geometry, invert_linestring)
+  pairs_opp$geometry <- purrr::map(pairs_opp$geometry, invert_linestring, .progress = TRUE)
   pairs_opp$geometry <- sf::st_as_sfc(pairs_opp$geometry, crs = 4326)
   pairs_opp <- sf::st_as_sf(pairs_opp)
   pairs_opp <- pairs_opp[, names(pairs)]
@@ -135,7 +137,8 @@ ATOC_shapes <- function(gtfs) {
 
   message(paste0(Sys.time()," final formatting"))
   rm(graph, pairs)
-  shape_res <- pbapply::pblapply(st_split, match_lines)
+  #shape_res <- pbapply::pblapply(st_split, match_lines)
+  shape_res <- purrr::map(st_split, match_lines, .progress = TRUE)
 
   str5 <- lapply(shape_res, `[[`, 2)
   shapes <- lapply(shape_res, `[[`, 1)

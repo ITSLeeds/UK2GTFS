@@ -17,7 +17,7 @@ importMCA(
 
 \item{silent}{logical, should messages be displayed}
 
-\item{ncores}{number of cores to use when paralell processing}
+\item{ncores}{number of cores to use when parallel processing}
 
 \item{full_import}{import all data, default FALSE}
 

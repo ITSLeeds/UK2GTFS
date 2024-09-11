@@ -273,7 +273,7 @@ strip_whitespace <- function(df) {
 #'
 #' @param file Path to .mca file
 #' @param silent logical, should messages be displayed
-#' @param ncores number of cores to use when paralell processing
+#' @param ncores number of cores to use when parallel processing
 #' @param full_import import all data, default FALSE
 #' @param working_timetable use rail industry scheduling times instead of public times
 #' @export

@@ -27,7 +27,7 @@ transxchange2gtfs(
 \item{naptan}{Naptan stop locations from get_naptan()}
 
 \item{scotland}{character, should Scottish bank holidays be used? Can be
-"auto" (defualt), "yes", "no". If "auto" and path_in ends with "S.zip"
+"auto" (default), "yes", "no". If "auto" and path_in ends with "S.zip"
 Scottish bank holidays will be used, otherwise England and Wales bank
 holidays are used.}
 
@@ -46,12 +46,12 @@ TransXchange to GTFS
 \details{
 Convert transxchange files to GTFS
 
-This is a meta fucntion which aids TransXchange to GTFS conversion. It simple
+This is a meta function which aids TransXchange to GTFS conversion. It simple
 runs transxchange_import(), transxchange_export(), gtfs_merge(), gtfs_write()
 
 Progress Bars
 
-To minimise overall processing when using mulitple cores the fucntion works
+To minimise overall processing when using multiple cores the function works
 from largest to smallest file.This can mean the progress bar sits a 0% for
 quite some time, before starting to move rapidly.
 }

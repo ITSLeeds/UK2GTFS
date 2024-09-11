@@ -1,6 +1,6 @@
 #' Write GTFS
 #'
-#' Takes a list of data frames represneting the GTFS fromat and saves them as GTFS
+#' Takes a list of data frames representing the GTFS format and saves them as GTFS
 #' Zip file.
 #'
 #' @param gtfs named list of data.frames
@@ -9,7 +9,7 @@
 #' @param stripComma logical, should commas be stripped from text, default = TRUE
 #' @param stripTab logical, should tab be stripped from text, default = TRUE
 #' @param stripNewline logical, should newline tag be stripped from text, default = TRUE
-#' @param quote logical, should strings be quoted, default = FALSE, passed to data.table::fwrite
+#' @param quote logical, should strings be quoted, default = FALSE, passed to `data.table::fwrite`
 #' @export
 #'
 gtfs_write <- function(gtfs,

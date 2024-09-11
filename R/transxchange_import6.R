@@ -112,7 +112,7 @@ transxchange_import <- function(file, run_debug = TRUE, full_import = FALSE) {
     if (nrow(Operators) != 1) {
       Operators <- Operators[Operators$OperatorCode %in% Services_main$RegisteredOperatorRef, ]
       if (nrow(Operators) != 1) {
-        warning("Can't match operators to services, forcing link")
+        message("Can't match operators to services, forcing link")
         if (nrow(Operators) == 0) {
           Operators <- xml2::xml_child(xml, "d1:Operators")
           Operators <- import_operators(Operators)
