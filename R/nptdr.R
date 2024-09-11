@@ -66,7 +66,7 @@ nptdr2gtfs <- function(path = "D:/OneDrive - University of Leeds/Data/UK2GTFS/NP
     message(length(fls_cif)," CIF files found")
   }
 
-  # Import the NapTAN
+  # Import the NaPTAN
   stops <- nptdr_naptan_import(fls_naptan)
 
 

@@ -100,7 +100,7 @@ gtfs_fast_trips <- function(gtfs, maxspeed = 83, routes = TRUE) {
 }
 
 #' Find fast stops
-#' @description A varient of gtfs_fast_trips that can detect stops that may be in the wrong location
+#' @description A variant of gtfs_fast_trips that can detect stops that may be in the wrong location
 #' @param gtfs list of gtfs tables
 #' @param maxspeed the maximum allowed speed in metres per second default 83 m/s
 #'   (about 185 mph the max speed of trains on HS1 line)

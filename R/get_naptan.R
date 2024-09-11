@@ -6,7 +6,7 @@
 #' @param naptan_extra data frame of missing stops default uses `naptan_missing`
 #' @return data frame of stop locations
 #' @details TransXchange does not store the location of bus stops, so this
-#'   functions downloads them from the offical DfT source. NaPTAN has some
+#'   functions downloads them from the official DfT source. NaPTAN has some
 #'   missing bus stops which are added by UK2GTFS. See `naptan_missing`
 #'
 #'

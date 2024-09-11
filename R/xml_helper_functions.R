@@ -1,4 +1,4 @@
-# TransXchange import fucntions
+# TransXchange import functions
 
 #' Import Simple
 #' ????

@@ -8,7 +8,7 @@
 #' @param cal Calendar object from get_bank_holidays()
 #' @param naptan Naptan stop locations from get_naptan()
 #' @param scotland character, should Scottish bank holidays be used? Can be
-#'   "auto" (defualt), "yes", "no". If "auto" and path_in ends with "S.zip"
+#'   "auto" (default), "yes", "no". If "auto" and path_in ends with "S.zip"
 #'   Scottish bank holidays will be used, otherwise England and Wales bank
 #'   holidays are used.
 #' @param try_mode Logical, if TRUE import and conversion are wrapped in try
@@ -18,12 +18,12 @@
 #' @return A GTFS named list
 #' @details
 #'
-#' This is a meta fucntion which aids TransXchange to GTFS conversion. It simple
+#' This is a meta function which aids TransXchange to GTFS conversion. It simple
 #' runs transxchange_import(), transxchange_export(), gtfs_merge(), gtfs_write()
 #'
 #' Progress Bars
 #'
-#' To minimise overall processing when using mulitple cores the fucntion works
+#' To minimise overall processing when using multiple cores the function works
 #' from largest to smallest file.This can mean the progress bar sits a 0% for
 #' quite some time, before starting to move rapidly.
 #'

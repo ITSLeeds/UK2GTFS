@@ -27,9 +27,9 @@ gtfs_write(
 
 \item{stripNewline}{logical, should newline tag be stripped from text, default = TRUE}
 
-\item{quote}{logical, should strings be quoted, default = FALSE, passed to data.table::fwrite}
+\item{quote}{logical, should strings be quoted, default = FALSE, passed to `data.table::fwrite`}
 }
 \description{
-Takes a list of data frames represneting the GTFS fromat and saves them as GTFS
+Takes a list of data frames representing the GTFS format and saves them as GTFS
 Zip file.
 }
