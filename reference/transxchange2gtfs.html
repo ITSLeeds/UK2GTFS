@@ -104,7 +104,7 @@
 
 <dt id="arg-scotland">scotland<a class="anchor" aria-label="anchor" href="#arg-scotland"></a></dt>
 <dd><p>character, should Scottish bank holidays be used? Can be
-"auto" (defualt), "yes", "no". If "auto" and path_in ends with "S.zip"
+"auto" (default), "yes", "no". If "auto" and path_in ends with "S.zip"
 Scottish bank holidays will be used, otherwise England and Wales bank
 holidays are used.</p></dd>
 
@@ -126,10 +126,10 @@ fail. Warning this could result in a GTFS file with missing routes.</p></dd>
     <div id="details">
     <h2>Details</h2>
     <p>Convert transxchange files to GTFS</p>
-<p>This is a meta fucntion which aids TransXchange to GTFS conversion. It simple
+<p>This is a meta function which aids TransXchange to GTFS conversion. It simple
 runs transxchange_import(), transxchange_export(), gtfs_merge(), gtfs_write()</p>
 <p>Progress Bars</p>
-<p>To minimise overall processing when using mulitple cores the fucntion works
+<p>To minimise overall processing when using multiple cores the function works
 from largest to smallest file.This can mean the progress bar sits a 0<!-- % for -->
 quite some time, before starting to move rapidly.</p>
     </div>
