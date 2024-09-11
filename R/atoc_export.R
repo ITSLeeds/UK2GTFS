@@ -444,7 +444,7 @@ makeCalendar <- function(schedule, ncores = 1) {
                              .f = checkrows,
                              .progress = TRUE)
     future::plan(future::sequential)
-    keep <- unlist(keep)
+
 
     # cl <- parallel::makeCluster(ncores)
     # parallel::clusterEvalQ(cl, {
@@ -458,6 +458,7 @@ makeCalendar <- function(schedule, ncores = 1) {
   } else {
     keep <- purrr::map(res.calendar.days, checkrows, .progress = TRUE)
   }
+  keep <- unlist(keep)
 
   res.calendar <- res.calendar[keep, ]
 
