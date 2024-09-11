@@ -72,13 +72,15 @@ schedule2routes <- function(stop_times, stops, schedule, silent = TRUE, ncores =
   calendar$end_date <- as.character(calendar$end_date)
   calendar$end_date <- gsub("-", "", calendar$end_date)
 
-  calendar_dates <- calendar_dates[, c("UID", "start_date")]
-  names(calendar_dates) <- c("service_id", "date")
-  calendar_dates$date <- as.character(calendar_dates$date)
-  calendar_dates$date <- gsub("-", "", calendar_dates$date)
-  calendar_dates$exception_type <- 2 # all events passed to calendar_dates are single day cancellations
+  if(nrow(calendar_dates) > 0){
+    calendar_dates <- calendar_dates[, c("UID", "start_date")]
+    names(calendar_dates) <- c("service_id", "date")
+    calendar_dates$date <- as.character(calendar_dates$date)
+    calendar_dates$date <- gsub("-", "", calendar_dates$date)
+    calendar_dates$exception_type <- 2 # all events passed to calendar_dates are single day cancellations
+  }
 
-
+  calendar_dates = as.data.frame(calendar_dates)
 
   ### SECTION 3: ###############################################################################
   # When splitting the calendar rowIDs are duplicated

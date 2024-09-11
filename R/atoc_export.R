@@ -377,27 +377,34 @@ makeCalendar <- function(schedule, ncores = 1) {
 
 
   if (ncores > 1) {
-    cl <- parallel::makeCluster(ncores)
-    # parallel::clusterExport(
-    #   cl = cl,
-    #   varlist = c("calendar", "UIDs"),
-    #   envir = environment()
+    future::plan(future::multisession, workers = ncores)
+    res <- furrr::future_map(.x = calendar_split,
+                             .f = makeCalendar.inner,
+                             .progress = TRUE)
+    future::plan(future::sequential)
+
+    # cl <- parallel::makeCluster(ncores)
+    # # parallel::clusterExport(
+    # #   cl = cl,
+    # #   varlist = c("calendar", "UIDs"),
+    # #   envir = environment()
+    # # )
+    # parallel::clusterEvalQ(cl, {
+    #   loadNamespace("UK2GTFS")
+    # })
+    # pbapply::pboptions(use_lb = TRUE)
+    # res <- pbapply::pblapply(calendar_split,
+    #   makeCalendar.inner,
+    #   cl = cl
     # )
-    parallel::clusterEvalQ(cl, {
-      loadNamespace("UK2GTFS")
-    })
-    pbapply::pboptions(use_lb = TRUE)
-    res <- pbapply::pblapply(calendar_split,
-      makeCalendar.inner,
-      cl = cl
-    )
-    parallel::stopCluster(cl)
-    rm(cl)
+    # parallel::stopCluster(cl)
+    # rm(cl)
   } else {
-    res <- pbapply::pblapply(
-      calendar_split,
-      makeCalendar.inner)
+    res <- purrr::map(.x = calendar_split,
+                      .f = makeCalendar.inner,
+                      .progress = TRUE)
   }
+  message("\n") # Newline beak after progress bars
 
   res.calendar <- lapply(res, `[[`, 1)
   res.calendar <- data.table::rbindlist(res.calendar, use.names=FALSE) #performance, was taking 10 minutes to execute bind_rows
@@ -422,24 +429,34 @@ makeCalendar <- function(schedule, ncores = 1) {
 
   #res.calendar.split <- split(res.calendar, seq(1, nrow(res.calendar)))
   #performance - doing this split on 500k rows takes 60s - longer than the parallel execution below and consumes 3gb memory.
+  WEEKDAY_NAME_VECTOR <- c("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
+  CHECKROWS_NAME_VECTOR <- c(WEEKDAY_NAME_VECTOR, "duration", "start_date", "end_date")
 
-  res.calendar.days <- res.calendar[,CHECKROWS_NAME_VECTOR]
+
+  res.calendar.days <- res.calendar[,..CHECKROWS_NAME_VECTOR]
   res.calendar.days <- data.table::transpose(res.calendar.days)
   #transpose on the same size runs in around 3s, but causes named dataframe with mixed datatypes to be coerced to unnamed vector of integer.
 
 
   if (ncores > 1) {
-    cl <- parallel::makeCluster(ncores)
-    parallel::clusterEvalQ(cl, {
-      loadNamespace("UK2GTFS")
-    })
-    keep <- pbapply::pbsapply(res.calendar.days, checkrows,
-      cl = cl
-    )
-    parallel::stopCluster(cl)
-    rm(cl)
+    future::plan(future::multisession, workers = ncores)
+    keep <- furrr::future_map(.x = res.calendar.days,
+                             .f = checkrows,
+                             .progress = TRUE)
+    future::plan(future::sequential)
+    keep <- unlist(keep)
+
+    # cl <- parallel::makeCluster(ncores)
+    # parallel::clusterEvalQ(cl, {
+    #   loadNamespace("UK2GTFS")
+    # })
+    # keep <- pbapply::pbsapply(res.calendar.days, checkrows,
+    #   cl = cl
+    # )
+    # parallel::stopCluster(cl)
+    # rm(cl)
   } else {
-    keep <- pbapply::pbsapply(res.calendar.days, checkrows)
+    keep <- purrr::map(res.calendar.days, checkrows, .progress = TRUE)
   }
 
   res.calendar <- res.calendar[keep, ]

@@ -29,6 +29,7 @@ Imports:
   digest,
   foreach,
   future,
+  furrr,
   future.apply,
   geodist,
   httr,
