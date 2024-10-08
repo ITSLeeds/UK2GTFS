@@ -9,16 +9,17 @@
 #' @param stripComma logical, should commas be stripped from text, default = TRUE
 #' @param stripTab logical, should tab be stripped from text, default = TRUE
 #' @param stripNewline logical, should newline tag be stripped from text, default = TRUE
-#' @param quote logical, should strings be quoted, default = FALSE, passed to `data.table::fwrite`
+#' @param quote logical, should strings be quoted, default = FALSE, passed to data.table::fwrite
 #' @export
 #'
 gtfs_write <- function(gtfs,
                        folder = getwd(),
                        name = "gtfs",
-                       stripComma = TRUE,
-                       stripTab = TRUE,
-                       stripNewline = TRUE,
-                       quote = FALSE) {
+                       stripComma = FALSE,
+                       stripTab = FALSE,
+                       stripNewline = FALSE,
+                       quote = TRUE) {
+
   if (stripComma) {
     for (i in seq_len(length(gtfs))) {
       gtfs[[i]] <- stripCommas(gtfs[[i]])
@@ -32,49 +33,46 @@ gtfs_write <- function(gtfs,
   }
 
 
-  #Format Dates
+  if (FALSE)
+  {
+    #Format times
+    if(inherits(gtfs$stop_times$arrival_time, "Period")){
+      gtfs$stop_times$arrival_time <- period2gtfs(gtfs$stop_times$arrival_time)
+    }
 
-  if(inherits(gtfs$calendar$start_date, "Date")){
-    gtfs$calendar$start_date <- format(gtfs$calendar$start_date, "%Y%m%d")
+    if(inherits(gtfs$stop_times$departure_time, "Period")){
+      gtfs$stop_times$departure_time <- period2gtfs(gtfs$stop_times$departure_time)
+    }
+
+    if("frequencies" %in% names(gtfs))
+    {
+      if("difftime" %in% class(gtfs$frequencies$start_time)){
+        gtfs$frequencies$start_time <- format(gtfs$frequencies$start_time, format = "%H:%M:%S")
+      }
+
+      if("difftime" %in% class(gtfs$frequencies$end_time)){
+        gtfs$frequencies$end_time <- format(gtfs$frequencies$end_time, format = "%H:%M:%S")
+      }
+    }
   }
-
-  if(inherits(gtfs$calendar$end_date, "Date")){
-    gtfs$calendar$end_date <- format(gtfs$calendar$end_date, "%Y%m%d")
-  }
-
-  if(inherits(gtfs$calendar_dates$date, "Date")){
-    gtfs$calendar_dates$date <- format(gtfs$calendar_dates$date, "%Y%m%d")
-  }
-
-  #Format times
-  if(inherits(gtfs$stop_times$arrival_time, "Period")){
-    gtfs$stop_times$arrival_time <- period2gtfs(gtfs$stop_times$arrival_time)
-  }
-
-  if(inherits(gtfs$stop_times$departure_time, "Period")){
-    gtfs$stop_times$departure_time <- period2gtfs(gtfs$stop_times$departure_time)
-  }
-
 
   dir.create(paste0(tempdir(), "/gtfs_temp"))
-  data.table::fwrite(gtfs$calendar, paste0(tempdir(), "/gtfs_temp/calendar.txt"), row.names = FALSE, quote = quote)
-  if (nrow(gtfs$calendar_dates) > 0) {
-    data.table::fwrite(gtfs$calendar_dates, paste0(tempdir(), "/gtfs_temp/calendar_dates.txt"), row.names = FALSE, quote = quote)
+
+  for ( tableName in names(gtfs) )
+  {
+    table <- gtfs[[tableName]]
+
+    table <- formatAttributesToGtfsSchema( table )
+
+    if ( !is.null(table) & nrow(table) > 0 )
+    {
+      data.table::fwrite(table, file.path(tempdir(), "gtfs_temp", paste0(tableName, ".txt")), row.names = FALSE, quote = quote)
+    }
   }
-  data.table::fwrite(gtfs$routes, paste0(tempdir(), "/gtfs_temp/routes.txt"), row.names = FALSE, quote = quote)
-  data.table::fwrite(gtfs$stop_times, paste0(tempdir(), "/gtfs_temp/stop_times.txt"), row.names = FALSE, quote = quote)
-  data.table::fwrite(gtfs$trips, paste0(tempdir(), "/gtfs_temp/trips.txt"), row.names = FALSE, quote = quote)
-  data.table::fwrite(gtfs$stops, paste0(tempdir(), "/gtfs_temp/stops.txt"), row.names = FALSE, quote = quote)
-  data.table::fwrite(gtfs$agency, paste0(tempdir(), "/gtfs_temp/agency.txt"), row.names = FALSE, quote = quote)
-  if ("transfers" %in% names(gtfs)) {
-    data.table::fwrite(gtfs$transfers, paste0(tempdir(), "/gtfs_temp/transfers.txt"), row.names = FALSE, quote = quote)
-  }
-  if ("shapes" %in% names(gtfs)) {
-    data.table::fwrite(gtfs$shapes, paste0(tempdir(), "/gtfs_temp/shapes.txt"), row.names = FALSE, quote = quote)
-  }
+
   zip::zipr(paste0(folder, "/", name, ".zip"), list.files(paste0(tempdir(), "/gtfs_temp"), full.names = TRUE), recurse = FALSE)
+
   unlink(paste0(tempdir(), "/gtfs_temp"), recursive = TRUE)
-  message(paste0(folder, "/", name, ".zip"))
 }
 
 
@@ -126,9 +124,11 @@ stripTabs <- function(df, stripNewline) {
 
 
 #' Convert Period to GTFS timestamps
+#' When writing a 400mb (zipped) file, we spend nearly 4 minutes in this fn(), about 10x longer than writing the files to the filesystem.
+#' profiler reports this being mostly nchar(), so we optimise down to one sprintf which reduces the time to 1 minute
+#' .format() is about 7x slower than sprintf() in this situation. Performance may be different on a data.table
 #'
-#'
-#' @param x peridos
+#' @param x periods
 #' @noRd
 #'
 period2gtfs <- function(x) {
@@ -139,14 +139,70 @@ period2gtfs <- function(x) {
     stop("Days detected in period objects, incorectly formatted period object")
   }
 
-  hrs <- as.character(lubridate::hour(x))
-  min <- as.character(lubridate::minute(x))
-  sec <- as.character(lubridate::second(x))
-
-  hrs <- ifelse(nchar(hrs) == 1,paste0("0",hrs), hrs)
-  min <- ifelse(nchar(min) == 1,paste0("0",min), min)
-  sec <- ifelse(nchar(sec) == 1,paste0("0",sec), sec)
-
-  return(paste0(hrs,":",min,":",sec))
+  return( sprintf("%02d:%02d:%02d", lubridate::hour(x), lubridate::minute(x), lubridate::second(x)) )
 }
+
+
+formatAttributesToGtfsSchema <- function(dt)
+{
+
+  {
+    periodColumnsToFormat <- names(dt)[ sapply(dt, function(x){ inherits(x, "Period") }) ]
+
+    if (length(periodColumnsToFormat) > 0)
+    {
+      dt[, (periodColumnsToFormat) := lapply(.SD, period2gtfs), .SDcols = periodColumnsToFormat]
+    }
+  }
+
+  {
+    diffTimeColumnsToFormat <- names(dt)[ sapply(dt, function(x){ "difftime" %in% class( x ) }) ]
+
+    if (length(diffTimeColumnsToFormat) > 0)
+    {
+      dt[, (diffTimeColumnsToFormat) := lapply(.SD, format, format = "%H:%M:%S"), .SDcols = diffTimeColumnsToFormat]
+    }
+  }
+
+  {
+    dateColumnsToFormat <- names(dt)[ sapply(dt, function(x){ inherits(x, "Date") }) ]
+
+    if (length(dateColumnsToFormat) > 0)
+    {
+      dt[, (dateColumnsToFormat) := lapply(.SD,
+                     function(d){ as.integer(sprintf("%04d%02d%02d", lubridate::year(d), lubridate::month(d), lubridate::mday(d))) } ),
+         .SDcols = dateColumnsToFormat]
+      #performance, sprintf runs 6x faster than as.character() (which calls format()), followed by gsub()
+      #coercing back to int prevents value being quoted in output file
+    }
+  }
+
+  {
+    factorColumnsToFormat <- names(dt)[ sapply(dt, function(x){ is.factor( x ) }) ]
+
+    if (length(factorColumnsToFormat) > 0)
+    {
+      dt[, (factorColumnsToFormat) := lapply(.SD, as.character), .SDcols = factorColumnsToFormat]
+    }
+  }
+
+
+  {
+    logicalColumnsToFormat <- names(dt)[ sapply(dt, function(x){ is.logical( x ) }) ]
+
+    if (length(logicalColumnsToFormat) > 0)
+    {
+      dt[, (logicalColumnsToFormat) := lapply(.SD, as.integer), .SDcols = logicalColumnsToFormat]
+    }
+  }
+
+  return (dt)
+}
+
+
+
+
+
+
+
 
