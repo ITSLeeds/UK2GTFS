@@ -7,11 +7,13 @@
 #' Raw data can be viewed and contributed to at
 #' https://github.com/ITSLeeds/UK2GTFS-data
 #'
+#' @param timeout maximum duration (in seconds) to wait for a response from the server (github.com)
+#'
 #' @export
 #'
-update_data <- function(){
+update_data <- function( timeout=60 ){
 
-  check <- check_data()
+  check <- check_data( timeout=timeout )
 
   if(check$date_package != check$date){
 
@@ -59,7 +61,7 @@ download_data <- function(tag_name, package_location, date){
   utils::unzip(file.path(tempdir(),"UK2GTFS_load/all.zip"),
                exdir = file.path(package_location, "extdata"))
   unlink(file.path(tempdir(),"UK2GTFS_load"), recursive = TRUE)
-  writeLines(date, file.path(package_location, "extdata/date.txt"))
+  writeLines( as.character(date), file.path(package_location, "extdata/date.txt"))
 
 }
 
@@ -72,12 +74,12 @@ download_data <- function(tag_name, package_location, date){
 #' @return TRUE if data is up-to-date or if unable to check
 #' @noRd
 
-check_data <- function(default_tag = "v0.1.2"){
+check_data <- function( timeout = 60, default_tag = "v0.1.2"){
   # Try not to hammer the API
   Sys.sleep(5)
   # Check date on data repo
-  res = try(httr::GET("https://api.github.com/repos/ITSleeds/UK2GTFS-data/releases"),
-            silent = TRUE)
+  res = try(httr::GET("https://api.github.com/repos/ITSleeds/UK2GTFS-data/releases", httr::timeout(get("timeout")),
+            silent = TRUE ))
   if(inherits(res, "try-error")){
     message("Unable to check for latest data")
     date = Sys.time()
@@ -94,13 +96,20 @@ check_data <- function(default_tag = "v0.1.2"){
     }
   }
 
+  date = as.Date(date) #make it less sensitive by only comparing date rather than date+time
+
   #Check if date.txt in package
   package_location <- system.file(package = "UK2GTFS")
   if(!file.exists(file.path(package_location, "extdata/date.txt"))){
     writeLines("nodata", file.path(package_location, "extdata/date.txt"))
   }
 
-  date_package <- readLines(file.path(package_location, "extdata/date.txt"))
+  tryCatch({
+    date_package <- as.Date( readLines(file.path(package_location, "extdata/date.txt")) )
+  }, error = function(err) {
+    date_package = "nodata"
+  })
+
 
   return(list(date_package = date_package, date = date, tag_name = tag_name,
               package_location = package_location))
@@ -130,7 +139,7 @@ check_data <- function(default_tag = "v0.1.2"){
 #'
 #' The ATOC data has inaccurate locations for many tiplocs, this is an improved dataset
 #'
-#' "naptan_missing" Bus Stop Locations missing from NaPTAN
+#' "naptan_missing" Bus Stop Locations missing from NapTAN
 #'
 #' A database of bus stops that are missing from the NAPTAN but are known to
 #' have been used. For some reason the official NAPTAN file is missing a small
