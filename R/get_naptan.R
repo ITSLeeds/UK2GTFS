@@ -78,6 +78,7 @@ get_naptan <- function(url = "https://naptan.api.dft.gov.uk/v1/access-nodes?data
 #' For more information on NaPTAN see https://beta-naptan.dft.gov.uk/
 #' @param url character, url to the xml format NaPTAN
 #' @param timeout int, timeout in seconds to wait for download to complete
+#' @param method passed to url
 #' @return xml document node
 #' @details TransXchange does not store the location of bus stops, so this
 #'   functions downloads them from the offical DfT source.

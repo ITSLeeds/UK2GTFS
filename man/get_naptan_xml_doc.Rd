@@ -14,6 +14,8 @@ get_naptan_xml_doc(
 \item{url}{character, url to the xml format NaPTAN}
 
 \item{timeout}{int, timeout in seconds to wait for download to complete}
+
+\item{method}{passed to url}
 }
 \value{
 xml document node
