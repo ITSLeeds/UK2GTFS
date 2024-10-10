@@ -3,12 +3,14 @@
 #' Convert ATOC CIF files from Network Rail to GTFS
 #'
 #' @param path_in Character, path to Network Rail ATOC file e.g."C:/input/toc-full.CIF.gz"
-#' @param silent Logical, should progress messages be suppressed (default TRUE)
+#' @param silent Logical, should progress messages be surpressed (default TRUE)
 #' @param ncores Numeric, When parallel processing how many cores to use
 #'   (default 1)
 #' @param locations where to get tiploc locations (see details)
 #' @param agency where to get agency.txt (see details)
 #' @param shapes Logical, should shapes.txt be generated (default FALSE)
+#' @param working_timetable Logical, should WTT times be used instead of public times (default FALSE)
+#' @param public_only Logical, only return calls/services that are for public passenger pickup/set down (default TRUE)
 #' @family main
 #' @return A gtfs list
 #'
@@ -37,22 +39,9 @@ nr2gtfs <- function(path_in,
                       ncores = 1,
                       locations = "tiplocs",
                       agency = "atoc_agency",
-                      shapes = FALSE) {
-
-  if(inherits(locations,"character")){
-    if(locations == "tiplocs"){
-      load_data("tiplocs")
-      locations = tiplocs
-    }
-  }
-
-  if(inherits(agency,"character")){
-    if(agency == "atoc_agency"){
-      load_data("atoc_agency")
-      agency = atoc_agency
-    }
-  }
-
+                      shapes = FALSE,
+                      working_timetable = FALSE,
+                      public_only = TRUE) {
   # checkmate
   checkmate::assert_character(path_in, len = 1)
   checkmate::assert_file_exists(path_in)
@@ -61,11 +50,13 @@ nr2gtfs <- function(path_in,
   checkmate::assert_logical(shapes)
 
   if (ncores == 1) {
-    message(paste0(
-      Sys.time(),
-      " This will take some time, make sure you use 'ncores' to enable multi-core processing"
-    ))
+    message(paste0(Sys.time(), " This will take some time, make sure you use 'ncores' to enable multi-core processing"))
   }
+
+  agency = getCachedAgencyData( agency )
+
+  stops = getCachedLocationData( locations )
+
   # Is input a zip or a folder
   if (!grepl(".gz", path_in)) {
     stop("path_in is not a .gz file")
@@ -74,48 +65,33 @@ nr2gtfs <- function(path_in,
   # Read In each File
   mca <- importMCA(
       file = path_in,
-      silent = silent, ncores = 1
+      silent = silent,
+      ncores = 1,
+      working_timetable = working_timetable,
+      public_only = public_only
   )
 
-
-  # Get the Station Locations
-  if ("sf" %in% class(locations)) {
-    stops <- cbind(locations, sf::st_coordinates(locations))
-    stops <- as.data.frame(stops)
-    stops <- stops[, c(
-      "stop_id", "stop_code", "stop_name",
-      "Y", "X"
-    )]
-    names(stops) <- c(
-      "stop_id", "stop_code", "stop_name",
-      "stop_lat", "stop_lon"
-    )
-    stops$stop_lat <- round(stops$stop_lat, 5)
-    stops$stop_lon <- round(stops$stop_lon, 5)
-  } else {
-    stops <- utils::read.csv(locations, stringsAsFactors = FALSE)
-  }
 
   # Construct the GTFS
   stop_times <- mca[["stop_times"]]
   schedule <- mca[["schedule"]]
   rm(mca)
   gc()
-  # rm(alf, flf, mca, msn)
+
 
   stop_times <- stop_times[, c(
-    "Arrival Time",
-    "Departure Time",
-    "Location", "stop_sequence",
-    "Activity", "rowID", "schedule"
-  )]
+    "Arrival Time", "Departure Time", "Location", "stop_sequence", "Activity", "rowID", "schedule")]
   names(stop_times) <- c(
-    "arrival_time", "departure_time", "stop_id",
-    "stop_sequence", "Activity", "rowID", "schedule"
-  )
+    "arrival_time", "departure_time", "stop_id", "stop_sequence", "Activity", "rowID", "schedule")
 
   # remove any unused stops
   stops <- stops[stops$stop_id %in% stop_times$stop_id, ]
+
+  if ( nrow(stops)<=0 )
+  {
+    stop("Could not match any stops in input data to stop database.")
+  }
+
 
   # Main Timetable Build
   timetables <- schedule2routes(
@@ -123,7 +99,8 @@ nr2gtfs <- function(path_in,
     stops = stops,
     schedule = schedule,
     silent = silent,
-    ncores = ncores
+    ncores = ncores,
+    public_only = public_only
   )
   rm(schedule)
 
@@ -139,3 +116,8 @@ nr2gtfs <- function(path_in,
 
   return(timetables)
 }
+
+
+
+
+
