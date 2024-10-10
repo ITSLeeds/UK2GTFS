@@ -13,7 +13,7 @@ gtfs_fast_stops(gtfs, maxspeed = 83)
 (about 185 mph the max speed of trains on HS1 line)}
 }
 \description{
-A variant of gtfs_fast_trips that can detect stops that may be in the wrong location
+A varient of gtfs_fast_trips that can detect stops that may be in the wrong location
 }
 \details{
 The function looks a straight line distance between each stop and

@@ -36,7 +36,7 @@ So this data is provided in the package.
 
 The ATOC data has inaccurate locations for many tiplocs, this is an improved dataset
 
-"naptan_missing" Bus Stop Locations missing from NaPTAN
+"naptan_missing" Bus Stop Locations missing from NapTAN
 
 A database of bus stops that are missing from the NAPTAN but are known to
 have been used. For some reason the official NAPTAN file is missing a small

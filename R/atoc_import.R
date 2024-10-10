@@ -2,12 +2,12 @@
 #' @importFrom data.table ":="
 
 
-# Import the .alf file
+#' Import the .alf file
 #'
+#' @param file Path to .alf file
 #' @details
 #' Imports the .alf file and returns data.frame
 #'
-#' @param file Path to .alf file
 #' @export
 #'
 importALF <- function(file) {

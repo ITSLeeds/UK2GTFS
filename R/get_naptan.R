@@ -258,7 +258,6 @@ as_data_table_naptan_stop_point <- function( doc, stopTypes = c("RLY") )
 #' Unpacks selected naptan XML doc elements into data.table
 #' @param doc xml document node
 #' @return data table of stop areas
-#' @details
 #'
 #' @export
 as_data_table_naptan_stop_area <- function( doc )

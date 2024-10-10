@@ -9,7 +9,8 @@ importMCA(
   silent = TRUE,
   ncores = 1,
   full_import = FALSE,
-  working_timetable = FALSE
+  working_timetable = FALSE,
+  public_only = TRUE
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ importMCA(
 \item{full_import}{import all data, default FALSE}
 
 \item{working_timetable}{use rail industry scheduling times instead of public times}
+
+\item{public_only}{only return calls that are for public passenger pick up/set down}
 }
 \description{
 Import the .mca file

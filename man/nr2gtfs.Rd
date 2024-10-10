@@ -10,13 +10,15 @@ nr2gtfs(
   ncores = 1,
   locations = "tiplocs",
   agency = "atoc_agency",
-  shapes = FALSE
+  shapes = FALSE,
+  working_timetable = FALSE,
+  public_only = TRUE
 )
 }
 \arguments{
 \item{path_in}{Character, path to Network Rail ATOC file e.g."C:/input/toc-full.CIF.gz"}
 
-\item{silent}{Logical, should progress messages be suppressed (default TRUE)}
+\item{silent}{Logical, should progress messages be surpressed (default TRUE)}
 
 \item{ncores}{Numeric, When parallel processing how many cores to use
 (default 1)}
@@ -26,6 +28,10 @@ nr2gtfs(
 \item{agency}{where to get agency.txt (see details)}
 
 \item{shapes}{Logical, should shapes.txt be generated (default FALSE)}
+
+\item{working_timetable}{Logical, should WTT times be used instead of public times (default FALSE)}
+
+\item{public_only}{Logical, only return calls/services that are for public passenger pickup/set down (default TRUE)}
 }
 \value{
 A gtfs list
