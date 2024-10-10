@@ -1,7 +1,3 @@
-#' @import data.table
-#' @importFrom data.table ":="
-
-
 #' Import the .alf file
 #'
 #' @param file Path to .alf file
