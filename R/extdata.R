@@ -101,15 +101,14 @@ check_data <- function( timeout = 60, default_tag = "v0.1.2"){
   #Check if date.txt in package
   package_location <- system.file(package = "UK2GTFS")
   if(!file.exists(file.path(package_location, "extdata/date.txt"))){
-    writeLines("nodata", file.path(package_location, "extdata/date.txt"))
+    writeLines("1970-01-01", file.path(package_location, "extdata/date.txt"))
   }
 
-  tryCatch({
-    date_package <- as.Date( readLines(file.path(package_location, "extdata/date.txt")) )
-  }, error = function(err) {
-    date_package = "nodata"
-  })
-
+  date_package <- try(as.Date( readLines(file.path(package_location, "extdata/date.txt")) ),
+                      silent = TRUE)
+  if(inherits(date_package, "try-error")){
+    date_package = lubridate::ymd("1970-01-01")
+  }
 
   return(list(date_package = date_package, date = date, tag_name = tag_name,
               package_location = package_location))
